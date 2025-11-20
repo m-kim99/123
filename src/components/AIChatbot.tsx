@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { generateResponse, searchDocuments, type ChatSearchResult } from '@/lib/chatbot';
+import { generateResponse, searchDocuments, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 
 interface ChatMessage {
   id: string;
@@ -24,7 +24,7 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
     {
       id: '1',
       role: 'assistant',
-      content: '안녕하세요! 문서 관리 시스템 AI 챗봇입니다. 무엇을 도와드릴까요?',
+      content: '안녕하세요! 저는 TrayStorage의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
       timestamp: new Date(Date.now() - 60000),
     },
   ]);
@@ -53,26 +53,37 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const reply = generateResponse(trimmed);
-      const searchResults = searchDocuments(trimmed);
+    (async () => {
+      try {
+        const history: ChatHistoryItem[] = [...messages, userMessage].map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
-      const assistantMessage: ChatMessage = {
-        id: `${Date.now()}-assistant`,
-        role: 'assistant',
-        content: reply,
-        timestamp: new Date(),
-        searchResults: searchResults.length > 0 ? searchResults : undefined,
-      };
+        const [reply, searchResults] = await Promise.all([
+          generateResponse(trimmed, history),
+          Promise.resolve(searchDocuments(trimmed)),
+        ]);
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 500);
+        const assistantMessage: ChatMessage = {
+          id: `${Date.now()}-assistant`,
+          role: 'assistant',
+          content: reply,
+          timestamp: new Date(),
+          searchResults: searchResults.length > 0 ? searchResults : undefined,
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+    })();
   };
 
   const handleSendMessage = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
+    console.log('메시지 전송:', inputValue);
     sendMessage(inputValue);
   };
 

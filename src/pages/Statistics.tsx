@@ -8,7 +8,7 @@ export function Statistics() {
   const user = useAuthStore((state) => state.user);
   const { departments, documents } = useDocumentStore();
   const isAdmin = user?.role === 'admin';
-  const primaryColor = isAdmin ? '#FF8C42' : '#10B981';
+  const primaryColor = '#2563eb';
 
   const monthlyData = [
     { month: '1월', uploads: 45 },

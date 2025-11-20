@@ -36,10 +36,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
-  const primaryColor = isAdmin ? '#FF8C42' : '#10B981';
+  const primaryColor = '#2563eb';
+
+  const handleLogoClick = () => {
+    const targetPath = user?.role === 'admin' ? '/admin' : '/team';
+    navigate(targetPath);
+  };
+
+  const handleSearch = () => {
+    const query = searchQuery.trim();
+    const targetPath = isAdmin ? '/admin/documents' : '/team/documents';
+
+    if (query) {
+      navigate(`${targetPath}?q=${encodeURIComponent(query)}`);
+    } else {
+      navigate(targetPath);
+    }
+  };
 
   const navigation = [
     { name: '홈', href: basePath, icon: Home },
@@ -56,7 +73,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f8f9fa]">
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -125,7 +142,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-40 bg-white border-b">
+        <header className="sticky top-0 z-40 border-b bg-[#1e40af]">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             <div className="flex items-center gap-4 flex-1">
               <Button
@@ -137,12 +154,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Menu className="h-5 w-5" />
               </Button>
 
+              <span
+                onClick={handleLogoClick}
+                className="font-bold text-xl text-white hover:opacity-80 cursor-pointer"
+              >
+                TrayStorage CONNECT
+              </span>
+
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
+                  onClick={handleSearch}
+                />
                 <Input
                   type="search"
                   placeholder="문서 검색..."
                   className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                 />
               </div>
             </div>

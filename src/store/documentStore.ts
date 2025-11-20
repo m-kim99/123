@@ -230,7 +230,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
               }
 
               // 해당 카테고리들의 문서 개수 계산
-              const categoryIds = categories.map((cat) => cat.id);
+              const categoryIds = categories.map((cat: { id: string }) => cat.id);
               const { count } = await supabase
                 .from('documents')
                 .select('*', { count: 'exact', head: true })

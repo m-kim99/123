@@ -13,7 +13,7 @@ export function CategoryDetail() {
   const user = useAuthStore((state) => state.user);
   const { categories, documents, departments } = useDocumentStore();
   const isAdmin = user?.role === 'admin';
-  const primaryColor = isAdmin ? '#FF8C42' : '#10B981';
+  const primaryColor = '#2563eb';
 
   const category = categories.find((c) => c.id === categoryId);
   const categoryDocuments = documents.filter((d) => d.categoryId === categoryId);

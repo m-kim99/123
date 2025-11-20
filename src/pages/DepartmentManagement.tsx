@@ -27,7 +27,7 @@ export function DepartmentManagement() {
               <Card key={dept.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="bg-[#FF8C42] p-3 rounded-xl">
+                    <div className="bg-[#2563eb] p-3 rounded-xl">
                       <Building2 className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -72,7 +72,7 @@ export function DepartmentManagement() {
                         {deptCategories.slice(0, 3).map((cat) => (
                           <span
                             key={cat.id}
-                            className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-md"
+                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
                           >
                             {cat.name}
                           </span>

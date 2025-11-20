@@ -30,18 +30,14 @@ async function convertPDFPageToImage(
 
     // Canvas 생성
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Canvas context를 가져올 수 없습니다.');
-    }
-
+    
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
     // PDF 페이지를 Canvas에 렌더링
     await page.render({
-      canvasContext: context,
-      viewport: viewport,
+      canvas,
+      viewport,
     }).promise;
 
     return canvas;
@@ -206,6 +202,11 @@ export async function extractTextFromPDF(
     );
   }
 }
+
+
+
+
+
 
 
 

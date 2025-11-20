@@ -68,7 +68,7 @@ export function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full bg-[#FF8C42] hover:bg-[#FF7A2E]">
+                <Button type="submit" className="w-full">
                   관리자 로그인
                 </Button>
               </form>
@@ -103,7 +103,7 @@ export function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full bg-[#10B981] hover:bg-[#059669]">
+                <Button type="submit" className="w-full">
                   팀원 로그인
                 </Button>
               </form>

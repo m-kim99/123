@@ -23,7 +23,7 @@ export function TeamDashboard() {
       title: '내 부서 문서',
       value: userDocuments.length,
       icon: FileText,
-      color: '#10B981',
+      color: '#2563eb',
     },
     {
       title: '카테고리',
@@ -85,7 +85,7 @@ export function TeamDashboard() {
                   className="pl-9"
                 />
               </div>
-              <Button className="bg-[#10B981] hover:bg-[#059669]">검색</Button>
+              <Button>검색</Button>
             </div>
           </CardContent>
         </Card>
@@ -110,7 +110,7 @@ export function TeamDashboard() {
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="bg-[#10B981] p-2 rounded-lg">
+                    <div className="bg-[#2563eb] p-2 rounded-lg">
                       <FileText className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -16,7 +16,7 @@ export function AdminDashboard() {
       title: '총 부서',
       value: departments.length,
       icon: Building2,
-      color: '#FF8C42',
+      color: '#2563eb',
     },
     {
       title: '총 문서',
@@ -28,7 +28,7 @@ export function AdminDashboard() {
       title: '활성 사용자',
       value: 20,
       icon: Users,
-      color: '#10B981',
+      color: '#3b82f6',
     },
     {
       title: '이번 달 업로드',
@@ -86,7 +86,7 @@ export function AdminDashboard() {
                   className="pl-9"
                 />
               </div>
-              <Button className="bg-[#FF8C42] hover:bg-[#FF7A2E]">검색</Button>
+              <Button>검색</Button>
             </div>
           </CardContent>
         </Card>
@@ -112,7 +112,7 @@ export function AdminDashboard() {
                   onClick={() => navigate('/admin/documents')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="bg-[#FF8C42] p-2 rounded-lg">
+                    <div className="bg-[#2563eb] p-2 rounded-lg">
                       <Building2 className="h-5 w-5 text-white" />
                     </div>
                     <div>

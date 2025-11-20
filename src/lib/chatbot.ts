@@ -1,5 +1,7 @@
 import { useDocumentStore } from '@/store/documentStore';
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 export interface ChatSearchResult {
   id: string;
   name: string;
@@ -7,6 +9,11 @@ export interface ChatSearchResult {
   departmentName: string;
   storageLocation: string | null;
   uploadDate: string;
+}
+
+export interface ChatHistoryItem {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 // 키워드 기반 문서 검색 (제목 + OCR 텍스트)
@@ -18,27 +25,30 @@ export function searchDocuments(query: string): ChatSearchResult[] {
     return [];
   }
 
-  return documents.filter((doc) => {
-    const titleMatch = doc.name.toLowerCase().includes(keyword);
-    const ocrMatch = (doc.ocrText || '').toLowerCase().includes(keyword);
-    return titleMatch || ocrMatch;
-  }).map((doc) => {
-    const category = categories.find((c) => c.id === doc.categoryId);
-    const department = departments.find((d) => d.id === doc.departmentId);
+  return documents
+    .filter((doc) => {
+      const titleMatch = doc.name.toLowerCase().includes(keyword);
+      const ocrMatch = (doc.ocrText || '').toLowerCase().includes(keyword);
+      return titleMatch || ocrMatch;
+    })
+    .map((doc) => {
+      const category = categories.find((c) => c.id === doc.categoryId);
+      const department = departments.find((d) => d.id === doc.departmentId);
 
-    return {
-      id: doc.id,
-      name: doc.name,
-      categoryName: category?.name ?? '',
-      departmentName: department?.name ?? '',
-      storageLocation: category?.storageLocation ?? null,
-      uploadDate: doc.uploadDate,
-    };
-  });
+      return {
+        id: doc.id,
+        name: doc.name,
+        categoryName: category?.name ?? '',
+        departmentName: department?.name ?? '',
+        storageLocation: category?.storageLocation ?? null,
+        uploadDate: doc.uploadDate,
+      };
+    });
 }
 
-// 사용자 메시지에 따른 응답 생성
-export function generateResponse(message: string) {
+// 기존 규칙 기반 응답 (Gemini 장애 시 폴백용)
+function generateFallbackResponse(message: string): string {
+  console.log('fallback 로직 사용');
   const text = message.trim();
   const store = useDocumentStore.getState();
   const { documents, categories, departments } = store;
@@ -120,4 +130,155 @@ export function generateResponse(message: string) {
   });
 
   return ['다음 문서를 찾았습니다:', ...lines].join('\n');
+}
+
+// Google Gemini API를 사용한 응답 생성 (필요 시 폴백)
+export async function generateResponse(
+  message: string,
+  history: ChatHistoryItem[] = []
+): Promise<string> {
+  console.log('generateResponse 호출됨:', message);
+  console.log('Gemini API 키:', import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 10));
+
+  const text = message.trim();
+  if (!text) {
+    return generateFallbackResponse(text);
+  }
+
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+
+  // API 키가 없으면 기존 규칙 기반 로직 사용
+  if (!apiKey) {
+    return generateFallbackResponse(text);
+  }
+
+  // 빠른 답변이 필요한 질문들 (즉시 fallback 처리)
+  const fastReplyQuestions = [
+    '카테고리 목록 보여줘',
+    '전체 문서 수는?',
+    '부서별 문서 수 알려줘',
+  ];
+
+  if (fastReplyQuestions.includes(text)) {
+    return generateFallbackResponse(text);
+  }
+
+  const searchResults = searchDocuments(text).slice(0, 10);
+
+  const contextPayload = {
+    query: text,
+    documents: searchResults,
+  };
+
+  const historyContents = history
+    .slice(-10)
+    .map((item) => ({
+      role: item.role === 'assistant' ? 'model' : 'user',
+      parts: [
+        {
+          text: item.content,
+        },
+      ],
+    }));
+
+  const systemPrompt =
+    '당신의 이름은 트로이(Troy)입니다. TrayStorage 문서 관리 시스템의 AI 어시스턴트로서 다음과 같이 행동하세요:\n\n' +
+    '- 친절하고 전문적인 톤으로 답변\n' +
+    '- 한국어로 자연스럽게 대화\n' +
+    '- 문서 위치, 카테고리, 부서 정보를 정확하게 안내\n' +
+    '- 사용자가 문서를 쉽게 찾을 수 있도록 단계별로 설명\n' +
+    '- 이모지를 적절히 사용하여 친근감 있게\n' +
+    '- 간결하면서도 충분한 정보 제공\n' +
+    '- 매번 자기소개하지 말고, 질문에 바로 답변하세요\n\n' +
+    '아래 JSON으로 제공되는 문서 목록을 참고하여 사용자의 질문에 답변하세요. ' +
+    '검색된 문서가 없으면 일반 대화로 자연스럽게 답변하세요. 문서와 관련 없는 질문도 친근하게 대답해주세요. ' +
+    '답변만 간결하게 텍스트로 작성하세요.';
+
+  const userContent = [
+    `문서 컨텍스트 JSON: ${JSON.stringify(contextPayload)}`,
+    `사용자 질문: ${text}`,
+  ].join('\n\n');
+
+  try {
+    console.log('Gemini API 호출 시작');
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=` +
+        encodeURIComponent(apiKey),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: '너는 트로이야. 항상 자신을 트로이라고 소개해.',
+                },
+              ],
+            },
+            {
+              role: 'model',
+              parts: [
+                {
+                  text: '알겠습니다. 저는 트로이입니다.',
+                },
+              ],
+            },
+            ...historyContents,
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `${systemPrompt}\n\n${userContent}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500,
+            topP: 0.9,
+            topK: 40,
+          },
+        }),
+      }
+    );
+
+    console.log('Gemini API 응답:', response);
+
+    if (!response.ok) {
+      console.error('Gemini API 에러:', {
+        status: response.status,
+        body: await response.text(),
+      });
+      return generateFallbackResponse(text);
+    }
+
+    const data: any = await response.json();
+    const rawText: string =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: any) => p?.text ?? '')
+        .join('') ?? '';
+
+    if (!rawText) {
+      return generateFallbackResponse(text);
+    }
+
+    // Gemini 응답에서 마크다운 코드 블록만 제거하고 그대로 반환
+    try {
+      const cleanedText = rawText.replace(/```json\n?|```\n?/g, '').trim();
+      return cleanedText;
+    } catch (err) {
+      console.error('Gemini API 에러:', err);
+      // 최종적으로는 원본 텍스트를 그대로 노출
+      return rawText;
+    }
+  } catch (error) {
+    console.error('Gemini API 에러:', error);
+    return generateFallbackResponse(text);
+  }
 }

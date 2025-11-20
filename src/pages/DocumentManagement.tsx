@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import {
   FileText,
@@ -49,7 +49,7 @@ export function DocumentManagement() {
     useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
-  const primaryColor = isAdmin ? '#FF8C42' : '#10B981';
+  const primaryColor = '#2563eb';
 
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -70,13 +70,45 @@ export function DocumentManagement() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const rawQuery = (searchParams.get('q') || '').trim();
+  const searchKeyword = rawQuery.toLowerCase();
+
   const filteredCategories = isAdmin
     ? categories
     : categories.filter((c) => c.departmentId === user?.departmentId);
 
-  const filteredDocuments = isAdmin
+  const roleFilteredDocuments = isAdmin
     ? documents
     : documents.filter((d) => d.departmentId === user?.departmentId);
+
+  const filteredDocuments = searchKeyword
+    ? roleFilteredDocuments.filter((doc) => {
+        const keyword = searchKeyword;
+        const titleMatch = doc.name.toLowerCase().includes(keyword);
+        const category = categories.find((c) => c.id === doc.categoryId);
+        const department = departments.find((d) => d.id === doc.departmentId);
+        const categoryName = (category?.name || '').toLowerCase();
+        const departmentName = (department?.name || '').toLowerCase();
+        const ocrMatch = (doc.ocrText || '').toLowerCase().includes(keyword);
+
+        return (
+          titleMatch ||
+          categoryName.includes(keyword) ||
+          departmentName.includes(keyword) ||
+          ocrMatch
+        );
+      })
+    : roleFilteredDocuments;
+
+  useEffect(() => {
+    if (searchKeyword) {
+      setActiveTab('documents');
+    }
+  }, [searchKeyword]);
 
   const handleAddCategory = () => {
     if (newCategory.name && newCategory.departmentId) {
@@ -214,7 +246,13 @@ export function DocumentManagement() {
           <p className="text-slate-500 mt-1">카테고리와 문서를 관리하세요</p>
         </div>
 
-        <Tabs defaultValue="categories" className="space-y-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(value as 'categories' | 'documents' | 'upload')
+          }
+          className="space-y-4"
+        >
           <TabsList>
             <TabsTrigger value="categories">카테고리 관리</TabsTrigger>
             <TabsTrigger value="documents">전체 문서</TabsTrigger>
@@ -377,11 +415,17 @@ export function DocumentManagement() {
             <Card>
               <CardHeader>
                 <CardTitle>전체 문서 목록</CardTitle>
+                {rawQuery && (
+                  <CardDescription className="mt-1">
+                    검색어: "{rawQuery}" · {filteredDocuments.length}건
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {filteredDocuments.map((doc) => {
                     const category = categories.find((c) => c.id === doc.categoryId);
+                    const dept = departments.find((d) => d.id === doc.departmentId);
                     return (
                       <div
                         key={doc.id}
@@ -407,11 +451,18 @@ export function DocumentManagement() {
                               )}
                             </div>
                             <p className="text-sm text-slate-500">
-                              {doc.uploadDate} · {doc.uploader} · {category?.name}
+                              {doc.uploadDate} · {doc.uploader} · {category?.name} · {dept?.name}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(doc.fileUrl, '_blank')}
+                          >
+                            문서 보기
+                          </Button>
                           <Button variant="outline" size="icon">
                             <Download className="h-4 w-4" />
                           </Button>
