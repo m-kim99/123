@@ -12,7 +12,6 @@ export function CategoryDetail() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { categories, documents, departments } = useDocumentStore();
-  const isAdmin = user?.role === 'admin';
   const primaryColor = '#2563eb';
 
   const category = categories.find((c) => c.id === categoryId);
