@@ -6,7 +6,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Download,
   Upload,
   Smartphone,
   Loader2,
@@ -42,10 +41,12 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
-  const { departments, categories, documents, addCategory, deleteCategory, deleteDocument, uploadDocument } =
+  const { departments, categories, documents, addCategory, deleteCategory, uploadDocument, fetchDocuments } =
     useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -120,6 +121,97 @@ export function DocumentManagement() {
         departmentId: '',
         nfcRegistered: false,
         storageLocation: '',
+      });
+    }
+  };
+
+  const handleDownloadDocument = async (documentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('file_path, title')
+        .eq('id', documentId)
+        .single();
+
+      if (error || !data) {
+        throw error || new Error('문서를 찾을 수 없습니다.');
+      }
+
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('123')
+        .download(data.file_path);
+
+      if (downloadError || !fileData) {
+        throw downloadError || new Error('파일을 다운로드할 수 없습니다.');
+      }
+
+      const blob = fileData as Blob;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.title || 'document';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('문서 다운로드 실패:', error);
+      toast({
+        title: '다운로드 실패',
+        description: '문서를 다운로드하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteDocumentClick = async (documentId: string) => {
+    const confirmed = window.confirm('정말 삭제하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('file_path')
+        .eq('id', documentId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const filePath = data?.file_path as string | undefined;
+
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('123')
+          .remove([{ path: filePath }]);
+
+        if (storageError) {
+          throw storageError;
+        }
+      }
+
+      const { error: dbError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      await fetchDocuments();
+
+      toast({
+        title: '삭제 완료',
+        description: '문서가 삭제되었습니다.',
+      });
+    } catch (error) {
+      console.error('문서 삭제 실패:', error);
+      toast({
+        title: '삭제 실패',
+        description: '문서를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
       });
     }
   };
@@ -488,15 +580,20 @@ export function DocumentManagement() {
                           >
                             문서 보기
                           </Button>
-                          <Button variant="outline" size="icon">
-                            <Download className="h-4 w-4" />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDownloadDocument(doc.id)}
+                          >
+                            ⬇️
                           </Button>
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => deleteDocument(doc.id)}
+                            className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                            onClick={() => handleDeleteDocumentClick(doc.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            🗑️
                           </Button>
                         </div>
                       </div>
