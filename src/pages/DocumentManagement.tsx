@@ -72,6 +72,18 @@ export function DocumentManagement() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [ocrTextPreview, setOcrTextPreview] = useState('');
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<
+    | {
+        id: string;
+        title: string;
+        url: string;
+        type: 'image' | 'pdf' | 'other';
+      }
+    | null
+  >(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
 
   const location = useLocation();
@@ -122,6 +134,62 @@ export function DocumentManagement() {
         nfcRegistered: false,
         storageLocation: '',
       });
+    }
+  };
+
+  const handleOpenPreviewDocument = async (documentId: string) => {
+    try {
+      setPreviewLoading(true);
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('file_path, title')
+        .eq('id', documentId)
+        .single();
+
+      if (error || !data) {
+        throw error || new Error('문서를 찾을 수 없습니다.');
+      }
+
+      const { data: publicData } = supabase.storage
+        .from('123')
+        .getPublicUrl(data.file_path);
+
+      const publicUrl = publicData?.publicUrl;
+
+      if (!publicUrl) {
+        throw new Error('파일 URL을 생성할 수 없습니다.');
+      }
+
+      const lowerPath = data.file_path.toLowerCase();
+      let type: 'image' | 'pdf' | 'other' = 'other';
+
+      if (lowerPath.endsWith('.pdf')) {
+        type = 'pdf';
+      } else if (
+        lowerPath.endsWith('.jpg') ||
+        lowerPath.endsWith('.jpeg') ||
+        lowerPath.endsWith('.png')
+      ) {
+        type = 'image';
+      }
+
+      setPreviewDoc({
+        id: documentId,
+        title: data.title,
+        url: publicUrl,
+        type,
+      });
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('문서 미리보기 로드 실패:', error);
+      toast({
+        title: '문서를 불러오지 못했습니다.',
+        description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -576,7 +644,7 @@ export function DocumentManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(doc.fileUrl, '_blank')}
+                            onClick={() => handleOpenPreviewDocument(doc.id)}
                           >
                             문서 보기
                           </Button>
@@ -761,6 +829,49 @@ export function DocumentManagement() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-[80vw] max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+              <DialogDescription>
+                {previewDoc?.type === 'image'
+                  ? '이미지 문서 미리보기'
+                  : previewDoc?.type === 'pdf'
+                  ? 'PDF 문서 미리보기'
+                  : '문서 미리보기'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex items-center justify-center">
+              {previewLoading && (
+                <p className="text-sm text-slate-500">문서를 불러오는 중입니다...</p>
+              )}
+              {!previewLoading && previewDoc && previewDoc.type === 'image' && (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.title}
+                  className="max-w-full max-h-[70vh] object-contain"
+                />
+              )}
+              {!previewLoading && previewDoc && previewDoc.type === 'pdf' && (
+                <iframe
+                  src={previewDoc.url}
+                  className="w-full h-[70vh] border rounded-md"
+                />
+              )}
+              {!previewLoading && previewDoc && previewDoc.type === 'other' && (
+                <p className="text-sm text-slate-500">
+                  이 파일 형식은 미리보기를 지원하지 않습니다. 다운로드 기능을 이용해 주세요.
+                </p>
+              )}
+            </div>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                닫기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
