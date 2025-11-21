@@ -219,7 +219,7 @@ export function DocumentManagement() {
         departmentId: category.departmentId,
         uploader: user.name || user.email || 'Unknown',
         classified: false,
-        fileUrl: uploadFile.name, // 실제 파일 경로는 추후 Supabase Storage로 업로드
+        file: uploadFile, // 실제 파일은 Supabase Storage '123' 버킷에 업로드됨
         ocrText: ocrText,
       });
 

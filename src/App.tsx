@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -7,6 +8,8 @@ import { CategoryDetail } from './pages/CategoryDetail';
 import { DepartmentManagement } from './pages/DepartmentManagement';
 import { Statistics } from './pages/Statistics';
 import { useAuthStore } from './store/authStore';
+import { useDocumentStore } from './store/documentStore';
+import { Toaster } from '@/components/ui/toaster';
 
 function ProtectedRoute({
   children,
@@ -29,9 +32,29 @@ function ProtectedRoute({
 }
 
 function App() {
+  const { isAuthenticated } = useAuthStore();
+  const { fetchDepartments, fetchCategories, fetchDocuments } = useDocumentStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    (async () => {
+      try {
+        await Promise.all([
+          fetchDepartments(),
+          fetchCategories(),
+          fetchDocuments(),
+        ]);
+      } catch (error) {
+        console.error('초기 데이터 로드 실패:', error);
+      }
+    })();
+  }, [isAuthenticated, fetchDepartments, fetchCategories, fetchDocuments]);
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <>
+      <BrowserRouter>
+        <Routes>
         <Route path="/" element={<LoginPage />} />
 
         <Route
@@ -111,6 +134,8 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    <Toaster />
+    </>
   );
 }
 

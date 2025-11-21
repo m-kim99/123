@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from '@/hooks/use-toast';
 import { supabase, type Department as SupabaseDepartment, type Category as SupabaseCategory, type Document as SupabaseDocument } from '@/lib/supabase';
 
 export interface Department {
@@ -42,7 +43,7 @@ interface DocumentState {
   addCategory: (category: Omit<Category, 'id' | 'documentCount'>) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  uploadDocument: (document: Omit<Document, 'id' | 'uploadDate'> & { ocrText?: string }) => Promise<void>;
+  uploadDocument: (document: Omit<Document, 'id' | 'uploadDate' | 'fileUrl'> & { file: File; ocrText?: string }) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
 }
 
@@ -261,6 +262,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     } catch (err) {
       console.error('Failed to fetch departments from Supabase, using mock data:', err);
       // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      toast({
+        title: '부서 데이터를 불러오지 못했습니다.',
+        description: '임시 데이터로 계속 표시합니다.',
+        variant: 'destructive',
+      });
       set({ departments: mockDepartments, error: null });
     } finally {
       set({ isLoading: false });
@@ -317,6 +323,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     } catch (err) {
       console.error('Failed to fetch categories from Supabase, using mock data:', err);
       // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      toast({
+        title: '카테고리 데이터를 불러오지 못했습니다.',
+        description: '임시 데이터로 계속 표시합니다.',
+        variant: 'destructive',
+      });
       set({ categories: mockCategories, error: null });
     } finally {
       set({ isLoading: false });
@@ -334,44 +345,19 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // 각 문서의 department_id를 카테고리를 통해 가져오기
-        const documents: Document[] = await Promise.all(
-          data.map(async (doc: SupabaseDocument) => {
-            try {
-              // 카테고리 정보 가져오기 (department_id 포함)
-              const { data: category } = await supabase
-                .from('categories')
-                .select('department_id')
-                .eq('id', doc.category_id)
-                .single();
-
-              return {
-                id: doc.id,
-                name: doc.title, // title을 name으로 매핑
-                categoryId: doc.category_id,
-                departmentId: category?.department_id || '',
-                uploadDate: doc.uploaded_at,
-                uploader: doc.uploaded_by, // uploaded_by를 uploader로 매핑
-                classified: doc.is_classified, // is_classified를 classified로 매핑
-                fileUrl: doc.file_path || '#', // file_path를 fileUrl로 매핑
-                ocrText: doc.ocr_text || null,
-              };
-            } catch {
-              // 카테고리 조회 실패 시 department_id 없이 반환
-              return {
-                id: doc.id,
-                name: doc.title,
-                categoryId: doc.category_id,
-                departmentId: '',
-                uploadDate: doc.uploaded_at,
-                uploader: doc.uploaded_by,
-                classified: doc.is_classified,
-                fileUrl: doc.file_path || '#',
-                ocrText: doc.ocr_text || null,
-              };
-            }
-          })
-        );
+        const documents: Document[] = (data as SupabaseDocument[]).map((doc) => ({
+          id: doc.id,
+          name: doc.title, // title을 name으로 매핑
+          categoryId: doc.category_id,
+          departmentId: doc.department_id,
+          uploadDate: doc.uploaded_at,
+          uploader: doc.uploaded_by || '', // uploaded_by를 uploader로 매핑 (nullable)
+          classified: doc.is_classified, // is_classified를 classified로 매핑
+          fileUrl:
+            supabase.storage.from('123').getPublicUrl(doc.file_path).data
+              .publicUrl || '#',
+          ocrText: doc.ocr_text || null,
+        }));
         set({ documents });
       } else {
         // 데이터가 없을 경우 mock 데이터 사용
@@ -380,6 +366,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     } catch (err) {
       console.error('Failed to fetch documents from Supabase, using mock data:', err);
       // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      toast({
+        title: '문서 데이터를 불러오지 못했습니다.',
+        description: '임시 데이터로 계속 표시합니다.',
+        variant: 'destructive',
+      });
       set({ documents: mockDocuments, error: null });
     } finally {
       set({ isLoading: false });
@@ -438,6 +429,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         categories: [...state.categories, newCategory],
         error: 'Failed to add category to Supabase, added locally only',
       }));
+      toast({
+        title: '카테고리 추가 실패',
+        description: '네트워크 오류로 인해 카테고리를 로컬에만 추가했습니다.',
+        variant: 'destructive',
+      });
     }
   },
 
@@ -493,6 +489,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         ),
         error: 'Failed to update category in Supabase, updated locally only',
       }));
+      toast({
+        title: '카테고리 수정 실패',
+        description: '네트워크 오류로 인해 카테고리를 서버에 반영하지 못했습니다.',
+        variant: 'destructive',
+      });
     }
   },
 
@@ -518,21 +519,37 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         documents: state.documents.filter((doc) => doc.categoryId !== id),
         error: 'Failed to delete category from Supabase, removed locally only',
       }));
+      toast({
+        title: '카테고리 삭제 실패',
+        description: '네트워크 오류로 인해 카테고리를 서버에서 삭제하지 못했습니다.',
+        variant: 'destructive',
+      });
     }
   },
 
   uploadDocument: async (document) => {
     try {
+      const filePath = `${Date.now()}_${document.name}`;
+
+      const { error: storageError } = await supabase.storage
+        .from('123')
+        .upload(filePath, document.file);
+
+      if (storageError) {
+        throw storageError;
+      }
+
       const { data, error } = await supabase
         .from('documents')
         .insert({
           title: document.name, // name을 title로 매핑
           category_id: document.categoryId,
-          file_path: document.fileUrl, // fileUrl을 file_path로 매핑
-          uploaded_by: document.uploader, // uploader를 uploaded_by로 매핑
-          is_classified: document.classified, // classified를 is_classified로 매핑
-          file_size: null, // 파일 크기는 추후 처리
+          department_id: document.departmentId,
+          file_path: filePath,
+          file_size: document.file.size,
           ocr_text: document.ocrText || null, // OCR 텍스트
+          uploaded_by: null,
+          is_classified: document.classified ?? false, // classified를 is_classified로 매핑
         })
         .select()
         .single();
@@ -540,49 +557,36 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       if (error) throw error;
 
       if (data) {
-        // department_id를 카테고리를 통해 가져오기
-        try {
-          const { data: category } = await supabase
-            .from('categories')
-            .select('department_id')
-            .eq('id', data.category_id)
-            .single();
+        let fileUrl = '#';
 
-          set((state) => ({
-            documents: [
-              {
-                id: data.id,
-                name: data.title, // title을 name으로 매핑
-                categoryId: data.category_id,
-                departmentId: category?.department_id || document.departmentId,
-                uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
-                uploader: data.uploaded_by, // uploaded_by를 uploader로 매핑
-                classified: data.is_classified, // is_classified를 classified로 매핑
-                fileUrl: data.file_path || '#', // file_path를 fileUrl로 매핑
-                ocrText: data.ocr_text || null,
-              },
-              ...state.documents,
-            ],
-          }));
+        try {
+          const { data: publicUrlData } = supabase.storage
+            .from('123')
+            .getPublicUrl(data.file_path);
+
+          if (publicUrlData?.publicUrl) {
+            fileUrl = publicUrlData.publicUrl;
+          }
         } catch {
-          // 카테고리 조회 실패 시 기존 departmentId 사용
-          set((state) => ({
-            documents: [
-              {
-                id: data.id,
-                name: data.title,
-                categoryId: data.category_id,
-                departmentId: document.departmentId,
-                uploadDate: data.uploaded_at,
-                uploader: data.uploaded_by,
-                classified: data.is_classified,
-                fileUrl: data.file_path || '#',
-                ocrText: data.ocr_text || null,
-              },
-              ...state.documents,
-            ],
-          }));
+          fileUrl = '#';
         }
+
+        set((state) => ({
+          documents: [
+            {
+              id: data.id,
+              name: data.title, // title을 name으로 매핑
+              categoryId: data.category_id,
+              departmentId: data.department_id,
+              uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
+              uploader: data.uploaded_by || '', // uploaded_by를 uploader로 매핑
+              classified: data.is_classified, // is_classified를 classified로 매핑
+              fileUrl,
+              ocrText: data.ocr_text || null,
+            },
+            ...state.documents,
+          ],
+        }));
       }
     } catch (err) {
       console.error('Failed to upload document to Supabase:', err);
@@ -594,19 +598,47 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         departmentId: document.departmentId,
         uploadDate: new Date().toISOString().split('T')[0],
         uploader: document.uploader,
-        classified: document.classified,
-        fileUrl: document.fileUrl,
+        classified: document.classified ?? false,
+        fileUrl: '#',
         ocrText: document.ocrText || null,
       };
       set((state) => ({
         documents: [newDocument, ...state.documents],
         error: 'Failed to upload document to Supabase, added locally only',
       }));
+      toast({
+        title: '문서 업로드 실패',
+        description: '네트워크 오류로 인해 문서를 로컬에만 추가했습니다.',
+        variant: 'destructive',
+      });
     }
   },
 
   deleteDocument: async (id) => {
     try {
+      let filePath: string | null = null;
+
+      try {
+        const { data: existing } = await supabase
+          .from('documents')
+          .select('file_path')
+          .eq('id', id)
+          .single();
+
+        filePath = existing?.file_path || null;
+      } catch {
+      }
+
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('123')
+          .remove([{ path: filePath }]);
+
+        if (storageError) {
+          console.error('Failed to delete file from Supabase Storage:', storageError);
+        }
+      }
+
       const { error } = await supabase
         .from('documents')
         .delete()
@@ -625,6 +657,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         documents: state.documents.filter((doc) => doc.id !== id),
         error: 'Failed to delete document from Supabase, removed locally only',
       }));
+      toast({
+        title: '문서 삭제 실패',
+        description: '네트워크 오류로 인해 문서를 완전히 삭제하지 못했습니다.',
+        variant: 'destructive',
+      });
     }
   },
 }));

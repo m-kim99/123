@@ -37,11 +37,12 @@ export interface Category {
 export interface Document {
   id: string;
   category_id: string;
+  department_id: string;
   title: string;
   file_path: string;
   file_size: number | null;
   ocr_text: string | null;
-  uploaded_by: string;
+  uploaded_by: string | null;
   uploaded_at: string;
   is_classified: boolean;
 }
