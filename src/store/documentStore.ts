@@ -193,6 +193,12 @@ const mockDocuments: Document[] = [
   },
 ];
 
+const sanitizeFileName = (originalName: string) => {
+  const timestamp = Date.now();
+  const ext = originalName.split('.').pop();
+  return `${timestamp}.${ext}`;
+};
+
 export const useDocumentStore = create<DocumentState>((set) => ({
   departments: mockDepartments,
   categories: mockCategories,
@@ -529,7 +535,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
 
   uploadDocument: async (document) => {
     try {
-      const filePath = `${Date.now()}_${document.name}`;
+      const filePath = sanitizeFileName(document.name);
 
       const { error: storageError } = await supabase.storage
         .from('123')
