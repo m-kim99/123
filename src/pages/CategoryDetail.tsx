@@ -5,12 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
-import { useAuthStore } from '@/store/authStore';
 
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
   const { categories, documents, departments } = useDocumentStore();
   const primaryColor = '#2563eb';
 
