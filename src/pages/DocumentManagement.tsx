@@ -41,7 +41,7 @@ import {
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
-import { extractTextFromPDF } from '@/lib/ocr';
+import { extractText } from '@/lib/ocr';
 
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
@@ -69,6 +69,7 @@ export function DocumentManagement() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [ocrTextPreview, setOcrTextPreview] = useState('');
 
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
 
@@ -128,12 +129,20 @@ export function DocumentManagement() {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      const lowerName = file.name.toLowerCase();
+      const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+      const isImage =
+        file.type.startsWith('image/') ||
+        lowerName.endsWith('.jpg') ||
+        lowerName.endsWith('.jpeg') ||
+        lowerName.endsWith('.png');
+
+      if (isPdf || isImage) {
         setUploadFile(file);
         setUploadError(null);
         setUploadSuccess(false);
       } else {
-        setUploadError('PDF 파일만 업로드 가능합니다.');
+        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
         setUploadFile(null);
       }
     }
@@ -143,6 +152,8 @@ export function DocumentManagement() {
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
     },
     multiple: false,
     maxSize: 10 * 1024 * 1024, // 10MB
@@ -151,7 +162,7 @@ export function DocumentManagement() {
       if (rejection.errors[0]?.code === 'file-too-large') {
         setUploadError('파일 크기는 10MB를 초과할 수 없습니다.');
       } else if (rejection.errors[0]?.code === 'file-invalid-type') {
-        setUploadError('PDF 파일만 업로드 가능합니다.');
+        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
       } else {
         setUploadError('파일 업로드에 실패했습니다.');
       }
@@ -166,9 +177,10 @@ export function DocumentManagement() {
 
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStatus('파일 업로드 중...');
+    setUploadStatus('파일 처리 준비 중...');
     setUploadError(null);
     setUploadSuccess(false);
+    setOcrTextPreview('');
 
     try {
       // 카테고리에서 부서 정보 가져오기
@@ -178,17 +190,19 @@ export function DocumentManagement() {
       }
 
       // OCR 처리
-      setUploadStatus('OCR 처리 중...');
       let ocrText = '';
       
       try {
-        ocrText = await extractTextFromPDF(uploadFile, (progress) => {
+        ocrText = await extractText(uploadFile, (progress) => {
           // OCR 진행률을 업로드 진행률로 변환 (0-90%)
           const ocrProgress = Math.round(progress.percent * 0.9);
           setUploadProgress(ocrProgress);
-          setUploadStatus(progress.status || 'OCR 처리 중...');
+          setUploadStatus(
+            progress.status || (progress.type === 'image' ? '이미지 처리 중...' : 'PDF 처리 중...')
+          );
         });
         console.log('OCR 텍스트 추출 완료:', ocrText.length, '자');
+        setOcrTextPreview(ocrText);
       } catch (ocrError) {
         console.error('OCR 처리 오류:', ocrError);
         // OCR 실패해도 업로드는 계속 진행
@@ -235,6 +249,17 @@ export function DocumentManagement() {
       setUploadProgress(0);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleCopyOcrText = async () => {
+    if (!ocrTextPreview) return;
+    try {
+      await navigator.clipboard.writeText(ocrTextPreview);
+      setUploadStatus('OCR 텍스트가 클립보드에 복사되었습니다.');
+    } catch (error) {
+      console.error('텍스트 복사 오류:', error);
+      setUploadError('텍스트 복사 중 오류가 발생했습니다.');
     }
   };
 
@@ -539,7 +564,7 @@ export function DocumentManagement() {
                           : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
                       </p>
                       <p className="text-xs text-slate-500">
-                        PDF 파일만 업로드 가능 (최대 10MB)
+                        PDF, JPG, PNG 파일 업로드 가능 (최대 10MB)
                       </p>
                     </div>
                   </div>
@@ -576,12 +601,41 @@ export function DocumentManagement() {
                   )}
                 </div>
 
+                {ocrTextPreview && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>OCR 추출 텍스트</CardTitle>
+                      <CardDescription>
+                        {ocrTextPreview.length.toLocaleString()}자 추출됨
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          {ocrTextPreview.length.toLocaleString()}자 추출됨
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyOcrText}
+                        >
+                          복사
+                        </Button>
+                      </div>
+                      <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                        {ocrTextPreview}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-medium text-blue-900 mb-2">
                     업로드 가이드라인
                   </h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• PDF 파일 형식만 지원됩니다</li>
+                    <li>• PDF, JPG, PNG 파일 형식을 지원합니다</li>
                     <li>• 파일 크기는 10MB를 초과할 수 없습니다</li>
                     <li>• 문서명은 명확하게 작성해주세요</li>
                     <li>• 기밀 문서는 별도로 표시해주세요</li>

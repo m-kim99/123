@@ -203,10 +203,94 @@ export async function extractTextFromPDF(
   }
 }
 
+export async function extractTextFromImage(file: File): Promise<string> {
+  let tesseractWorker: any = null;
+  try {
+    const mimeType = file.type;
+    const fileName = file.name.toLowerCase();
+    const isSupportedImage =
+      mimeType.startsWith('image/') ||
+      fileName.endsWith('.jpg') ||
+      fileName.endsWith('.jpeg') ||
+      fileName.endsWith('.png');
 
+    if (!isSupportedImage) {
+      throw new Error('JPG, PNG 이미지 파일만 처리할 수 있습니다.');
+    }
 
+    tesseractWorker = await createWorker('kor+eng', 1, {});
 
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('이미지 데이터를 읽을 수 없습니다.'));
+        }
+      };
+      reader.onerror = () => {
+        reject(reader.error || new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'));
+      };
+      reader.readAsDataURL(file);
+    });
 
+    const {
+      data: { text },
+    } = await tesseractWorker.recognize(dataUrl);
 
+    const result = (text || '').trim();
+    return result;
+  } catch (error) {
+    console.error('이미지 텍스트 추출 오류:', error);
+    throw new Error(
+      `이미지 텍스트 추출 중 오류가 발생했습니다: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  } finally {
+    if (tesseractWorker) {
+      try {
+        await tesseractWorker.terminate();
+      } catch (terminateError) {
+        console.error('이미지 Worker 종료 오류:', terminateError);
+      }
+    }
+  }
+}
 
+export async function extractText(
+  file: File,
+  onProgress?: (progress: { percent: number; status: string; type: 'pdf' | 'image' }) => void
+): Promise<string> {
+  const mimeType = file.type;
+  const fileName = file.name.toLowerCase();
 
+  const isPdf = mimeType === 'application/pdf' || fileName.endsWith('.pdf');
+  const isImage =
+    mimeType.startsWith('image/') ||
+    fileName.endsWith('.jpg') ||
+    fileName.endsWith('.jpeg') ||
+    fileName.endsWith('.png');
+
+  if (isPdf) {
+    onProgress?.({ percent: 0, status: 'PDF 처리 중...', type: 'pdf' });
+    const text = await extractTextFromPDF(file, (progress) => {
+      onProgress?.({
+        percent: progress.percent,
+        status: progress.status,
+        type: 'pdf',
+      });
+    });
+    return text;
+  }
+
+  if (isImage) {
+    onProgress?.({ percent: 0, status: '이미지 처리 중...', type: 'image' });
+    const text = await extractTextFromImage(file);
+    onProgress?.({ percent: 100, status: '이미지 처리 완료', type: 'image' });
+    return text;
+  }
+
+  throw new Error('지원하지 않는 파일 형식입니다. PDF, JPG, PNG만 지원됩니다.');
+}
