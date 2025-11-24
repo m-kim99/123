@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Smartphone, MapPin } from 'lucide-react';
+import { ArrowLeft, FileText, Smartphone, MapPin, Upload } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
   DialogContent,
@@ -25,12 +27,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/lib/supabase';
+import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
 
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, documents, departments, fetchDocuments } = useDocumentStore();
+  const { categories, documents, departments, fetchDocuments, uploadDocument } = useDocumentStore();
+  const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
   const category = categories.find((c) => c.id === categoryId);
@@ -52,6 +56,14 @@ export function CategoryDetail() {
   >(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
   if (!category) {
     return (
       <DashboardLayout>
@@ -68,6 +80,15 @@ export function CategoryDetail() {
       </DashboardLayout>
     );
   }
+
+  const handleUploadClick = () => {
+    setUploadDialogOpen(true);
+    setUploadFile(null);
+    setUploadProgress(0);
+    setUploadStatus('');
+    setUploadError(null);
+    setUploadSuccess(false);
+  };
 
   const handleOpenPreviewDocument = async (documentId: string) => {
     try {
@@ -122,6 +143,117 @@ export function CategoryDetail() {
       });
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      const lowerName = file.name.toLowerCase();
+      const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+      const isImage =
+        file.type.startsWith('image/') ||
+        lowerName.endsWith('.jpg') ||
+        lowerName.endsWith('.jpeg') ||
+        lowerName.endsWith('.png');
+
+      if (isPdf || isImage) {
+        setUploadFile(file);
+        setUploadError(null);
+        setUploadSuccess(false);
+      } else {
+        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+        setUploadFile(null);
+      }
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+    },
+    multiple: false,
+    maxSize: 10 * 1024 * 1024, // 10MB
+    onDropRejected: (fileRejections) => {
+      const rejection = fileRejections[0];
+      if (rejection.errors[0]?.code === 'file-too-large') {
+        setUploadError('파일 크기는 10MB를 초과할 수 없습니다.');
+      } else if (rejection.errors[0]?.code === 'file-invalid-type') {
+        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+      } else {
+        setUploadError('파일 업로드에 실패했습니다.');
+      }
+    },
+  });
+
+  const handleUpload = async () => {
+    if (!uploadFile || !category || !user) {
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus('파일 처리 준비 중...');
+    setUploadError(null);
+    setUploadSuccess(false);
+
+    try {
+      let ocrText = '';
+
+      try {
+        ocrText = await extractText(uploadFile, (progress) => {
+          setUploadProgress(progress.percent);
+          setUploadStatus(progress.status || (progress.type === 'image' ? '이미지 처리 중...' : 'PDF 처리 중...'));
+        });
+        console.log('OCR 텍스트 추출 완료:', ocrText.length, '자');
+      } catch (ocrError) {
+        console.error('OCR 처리 오류:', ocrError);
+        setUploadStatus('OCR 처리 실패, 업로드 계속 진행 중...');
+      }
+
+      setUploadProgress(95);
+      setUploadStatus('문서 저장 중...');
+
+      await uploadDocument({
+        name: uploadFile.name,
+        categoryId: category.id,
+        departmentId: category.departmentId,
+        uploader: user.name || user.email || 'Unknown',
+        classified: false,
+        file: uploadFile,
+        ocrText,
+      });
+
+      await fetchDocuments();
+
+      setUploadProgress(100);
+      setUploadStatus('완료!');
+      setUploadSuccess(true);
+
+      toast({
+        title: '업로드 완료',
+        description: '문서가 업로드되었습니다.',
+      });
+
+      setTimeout(() => {
+        setUploadFile(null);
+        setUploadProgress(0);
+        setUploadStatus('');
+        setUploadSuccess(false);
+        setUploadDialogOpen(false);
+      }, 1000);
+    } catch (error) {
+      console.error('업로드 오류:', error);
+      setUploadError(
+        error instanceof Error ? error.message : '문서 업로드 중 오류가 발생했습니다.'
+      );
+      setUploadStatus('');
+      setUploadProgress(0);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -301,8 +433,12 @@ export function CategoryDetail() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>문서 목록</CardTitle>
+            <Button onClick={handleUploadClick} disabled={isUploading}>
+              <Upload className="h-4 w-4 mr-2" />
+              문서 업로드
+            </Button>
           </CardHeader>
           <CardContent>
             {categoryDocuments.length === 0 ? (
@@ -398,6 +534,71 @@ export function CategoryDetail() {
             </AlertDialog>
           </CardContent>
         </Card>
+        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>문서 업로드</DialogTitle>
+              <DialogDescription>
+                이 카테고리에 새 문서를 업로드합니다. PDF, JPG, PNG 형식을 지원합니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div
+                {...getRootProps({
+                  className:
+                    'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-slate-50 transition-colors',
+                })}
+              >
+                <input {...getInputProps()} />
+                <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                {isDragActive ? (
+                  <p className="text-sm text-slate-600">여기로 파일을 드롭하세요...</p>
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    클릭하거나 파일을 드래그해서 업로드할 문서를 선택하세요
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-slate-400">PDF, JPG, PNG · 최대 10MB</p>
+                {uploadFile && (
+                  <p className="mt-2 text-xs text-slate-600">선택된 파일: {uploadFile.name}</p>
+                )}
+              </div>
+              <div className="space-y-1 text-sm">
+                <p className="text-slate-600">카테고리: {category.name}</p>
+                {uploadStatus && (
+                  <p className="text-slate-500">상태: {uploadStatus}</p>
+                )}
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <p className="text-slate-500">진행률: {uploadProgress}%</p>
+                )}
+                {uploadError && (
+                  <p className="text-red-500 text-xs mt-1">{uploadError}</p>
+                )}
+                {uploadSuccess && (
+                  <p className="text-emerald-600 text-xs mt-1">업로드가 완료되었습니다.</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUploadDialogOpen(false)}
+                disabled={isUploading}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleUpload}
+                style={{ backgroundColor: primaryColor }}
+                disabled={!uploadFile || isUploading}
+              >
+                {isUploading ? '업로드 중...' : '업로드'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-[80vw] max-h-[80vh]">
             <DialogHeader>

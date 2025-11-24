@@ -282,7 +282,7 @@ export async function generateResponse(
           ],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 500,
+            maxOutputTokens: 2000,
             topP: 0.9,
             topK: 40,
           },
