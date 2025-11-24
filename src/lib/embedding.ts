@@ -45,15 +45,27 @@ export async function searchDocumentsByEmbedding(
   threshold = 0.7,
   limit = 5
 ) {
-  const queryEmbedding = await generateEmbedding(query);
+  console.log('searchDocumentsByEmbedding 호출됨');
+  console.log('쿼리:', query);
 
-  const { data, error } = await supabase.rpc('match_documents', {
-    query_embedding: queryEmbedding,
-    match_threshold: threshold,
-    match_count: limit,
-  });
+  try {
+    const queryEmbedding = await generateEmbedding(query);
+    console.log('쿼리 임베딩 생성 완료, 길이:', queryEmbedding.length);
 
-  if (error) throw error;
+    const { data, error } = await supabase.rpc('match_documents', {
+      query_embedding: queryEmbedding,
+      match_threshold: threshold,
+      match_count: limit,
+    });
 
-  return data;
+    console.log('Supabase RPC 결과:', data?.length, '개');
+    console.log('Supabase RPC 에러:', error);
+
+    if (error) throw error;
+
+    return data || [];
+  } catch (error) {
+    console.error('searchDocumentsByEmbedding 에러:', error);
+    throw error;
+  }
 }

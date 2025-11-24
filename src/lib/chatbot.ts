@@ -166,16 +166,36 @@ export async function generateResponse(
 
   let vectorResults: any[] = [];
   try {
-    const embeddingResults = await searchDocumentsByEmbedding(text, 0.7, 5);
+    console.log('=== 벡터 검색 시작 ===');
+    console.log('질문:', text);
+
+    const embeddingResults = await searchDocumentsByEmbedding(text, 0.3, 5);
+    console.log('벡터 검색 원본 결과:', embeddingResults);
+
     vectorResults = Array.isArray(embeddingResults) ? embeddingResults : [];
+    console.log('벡터 검색 결과 개수:', vectorResults.length);
+
+    if (vectorResults.length > 0) {
+      console.log(
+        '벡터 검색 문서 제목들:',
+        vectorResults.map((r) => r.title)
+      );
+    }
   } catch (error) {
     console.error('벡터 검색 오류:', error);
     vectorResults = [];
   }
 
   const keywordResults = searchDocuments(text).slice(0, 10);
+  console.log('키워드 검색 결과 개수:', keywordResults.length);
+
   const contextDocuments: any[] =
     vectorResults.length > 0 ? vectorResults : keywordResults;
+  console.log('최종 사용된 컨텍스트:', contextDocuments.length, '개 문서');
+  console.log(
+    '컨텍스트 소스:',
+    vectorResults.length > 0 ? '벡터 검색' : '키워드 검색'
+  );
 
   const context = contextDocuments
     .map((r: any) => {
