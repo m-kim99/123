@@ -1,18 +1,200 @@
-import { Building2, FileText, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Building2, FileText, Users, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 
 export function DepartmentManagement() {
-  const { departments, categories, documents } = useDocumentStore();
+  const { departments, categories, documents, fetchDepartments } = useDocumentStore();
+  const navigate = useNavigate();
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptCode, setNewDeptCode] = useState('');
+  const [newDeptDescription, setNewDeptDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [codeError, setCodeError] = useState('');
+
+  const resetForm = () => {
+    setNewDeptName('');
+    setNewDeptCode('');
+    setNewDeptDescription('');
+    setNameError('');
+    setCodeError('');
+  };
+
+  const handleGenerateCode = () => {
+    if (!newDeptName.trim()) {
+      setCodeError('먼저 부서 이름을 입력하세요');
+      return;
+    }
+
+    const base = newDeptName.trim().toUpperCase().replace(/\s+/g, '_');
+    const code = base.slice(0, 10);
+    setNewDeptCode(code);
+    setCodeError('');
+  };
+
+  const handleSaveDepartment = async () => {
+    const name = newDeptName.trim();
+    const code = newDeptCode.trim();
+
+    let hasError = false;
+    if (!name) {
+      setNameError('부서 이름을 입력하세요');
+      hasError = true;
+    } else {
+      setNameError('');
+    }
+
+    if (!code) {
+      setCodeError('부서 코드를 입력하거나 자동 생성하세요');
+      hasError = true;
+    } else {
+      setCodeError('');
+    }
+
+    if (hasError) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from('departments')
+        .insert({
+          name,
+          code,
+          // description 컬럼이 있다면 함께 저장 (없으면 무시됨)
+          description: newDeptDescription || null,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      await fetchDepartments();
+
+      toast({
+        title: '부서 추가 완료',
+        description: '새 부서가 추가되었습니다.',
+      });
+
+      setIsAddDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      console.error('부서 추가 실패:', err);
+      toast({
+        title: '부서 추가 실패',
+        description: '부서를 추가하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">부서 관리</h1>
-          <p className="text-slate-500 mt-1">전체 부서 현황을 관리합니다</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">부서 관리</h1>
+            <p className="text-slate-500 mt-1">전체 부서 현황을 관리합니다</p>
+          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            부서 추가
+          </Button>
         </div>
+
+        <Dialog
+          open={isAddDialogOpen}
+          onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              resetForm();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>새 부서 추가</DialogTitle>
+              <DialogDescription>
+                새로운 부서를 생성하고 코드와 설명을 설정합니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>부서 이름</Label>
+                <Input
+                  value={newDeptName}
+                  onChange={(e) => setNewDeptName(e.target.value)}
+                  placeholder="예: 인사팀"
+                />
+                {nameError && (
+                  <p className="text-xs text-red-500 mt-1">{nameError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>부서 코드</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newDeptCode}
+                    onChange={(e) => setNewDeptCode(e.target.value)}
+                    placeholder="예: HR001"
+                  />
+                  <Button type="button" variant="outline" onClick={handleGenerateCode}>
+                    자동 생성
+                  </Button>
+                </div>
+                {codeError && (
+                  <p className="text-xs text-red-500 mt-1">{codeError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>설명</Label>
+                <Textarea
+                  value={newDeptDescription}
+                  onChange={(e) => setNewDeptDescription(e.target.value)}
+                  placeholder="부서 역할 및 설명을 입력하세요"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+                disabled={isSaving}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveDepartment}
+                disabled={isSaving}
+              >
+                {isSaving ? '저장 중...' : '저장'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {departments.map((dept) => {
@@ -24,7 +206,11 @@ export function DepartmentManagement() {
             );
 
             return (
-              <Card key={dept.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={dept.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate(`/admin/departments/${dept.id}`)}
+              >
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="bg-[#2563eb] p-3 rounded-xl">

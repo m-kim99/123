@@ -6,6 +6,7 @@ import { TeamDashboard } from './pages/TeamDashboard';
 import { DocumentManagement } from './pages/DocumentManagement';
 import { CategoryDetail } from './pages/CategoryDetail';
 import { DepartmentManagement } from './pages/DepartmentManagement';
+import { DepartmentDetail } from './pages/DepartmentDetail';
 import { Statistics } from './pages/Statistics';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
@@ -70,6 +71,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <DepartmentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/departments/:departmentId"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <DepartmentDetail />
             </ProtectedRoute>
           }
         />

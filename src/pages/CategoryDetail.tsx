@@ -57,12 +57,15 @@ export function CategoryDetail() {
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [fileStatuses, setFileStatuses] = useState<
+    { name: string; status: string; error?: string | null }[]
+  >([]);
 
   if (!category) {
     return (
@@ -83,11 +86,12 @@ export function CategoryDetail() {
 
   const handleUploadClick = () => {
     setUploadDialogOpen(true);
-    setUploadFile(null);
+    setUploadFiles([]);
     setUploadProgress(0);
     setUploadStatus('');
     setUploadError(null);
     setUploadSuccess(false);
+    setFileStatuses([]);
   };
 
   const handleOpenPreviewDocument = async (documentId: string) => {
@@ -146,9 +150,12 @@ export function CategoryDetail() {
     }
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
+  const handleFileDrop = useCallback((acceptedFiles: File[]) => {
+    if (!acceptedFiles || acceptedFiles.length === 0) {
+      return;
+    }
+
+    const validFiles = acceptedFiles.filter((file) => {
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
       const isImage =
@@ -157,31 +164,39 @@ export function CategoryDetail() {
         lowerName.endsWith('.jpeg') ||
         lowerName.endsWith('.png');
 
-      if (isPdf || isImage) {
-        setUploadFile(file);
-        setUploadError(null);
-        setUploadSuccess(false);
-      } else {
-        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
-        setUploadFile(null);
-      }
+      return isPdf || isImage;
+    });
+
+    if (validFiles.length === 0) {
+      setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+      setUploadFiles([]);
+      setFileStatuses([]);
+      return;
     }
+
+    setUploadFiles(validFiles);
+    setUploadError(null);
+    setUploadSuccess(false);
+    setFileStatuses(
+      validFiles.map((file) => ({
+        name: file.name,
+        status: '대기 중',
+        error: null,
+      }))
+    );
+    setUploadStatus(`${validFiles.length}개 파일 선택됨`);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+    onDrop: handleFileDrop,
     accept: {
+      'image/*': ['.jpg', '.jpeg', '.png'],
       'application/pdf': ['.pdf'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
     },
-    multiple: false,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    multiple: true,
     onDropRejected: (fileRejections) => {
       const rejection = fileRejections[0];
-      if (rejection.errors[0]?.code === 'file-too-large') {
-        setUploadError('파일 크기는 10MB를 초과할 수 없습니다.');
-      } else if (rejection.errors[0]?.code === 'file-invalid-type') {
+      if (rejection?.errors[0]?.code === 'file-invalid-type') {
         setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
       } else {
         setUploadError('파일 업로드에 실패했습니다.');
@@ -190,7 +205,7 @@ export function CategoryDetail() {
   });
 
   const handleUpload = async () => {
-    if (!uploadFile || !category || !user) {
+    if (!uploadFiles.length || !category || !user) {
       return;
     }
 
@@ -201,48 +216,110 @@ export function CategoryDetail() {
     setUploadSuccess(false);
 
     try {
-      let ocrText = '';
+      const totalFiles = uploadFiles.length;
+      let completedCount = 0;
+      let successCount = 0;
+      let failureCount = 0;
 
-      try {
-        ocrText = await extractText(uploadFile, (progress) => {
-          setUploadProgress(progress.percent);
-          setUploadStatus(progress.status || (progress.type === 'image' ? '이미지 처리 중...' : 'PDF 처리 중...'));
-        });
-        console.log('OCR 텍스트 추출 완료:', ocrText.length, '자');
-      } catch (ocrError) {
-        console.error('OCR 처리 오류:', ocrError);
-        setUploadStatus('OCR 처리 실패, 업로드 계속 진행 중...');
-      }
+      setFileStatuses(
+        uploadFiles.map((file) => ({
+          name: file.name,
+          status: '대기 중',
+          error: null,
+        }))
+      );
 
-      setUploadProgress(95);
-      setUploadStatus('문서 저장 중...');
+      await Promise.all(
+        uploadFiles.map(async (file, index) => {
+          try {
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = { ...next[index], status: '처리 중...' };
+              }
+              return next;
+            });
 
-      await uploadDocument({
-        name: uploadFile.name,
-        categoryId: category.id,
-        departmentId: category.departmentId,
-        uploader: user.name || user.email || 'Unknown',
-        classified: false,
-        file: uploadFile,
-        ocrText,
-      });
+            let ocrText = '';
+
+            try {
+              ocrText = await extractText(file);
+              console.log('OCR 텍스트 추출 완료:', file.name, ocrText.length, '자');
+            } catch (ocrError) {
+              console.error('OCR 처리 오류:', file.name, ocrError);
+            }
+
+            await uploadDocument({
+              name: file.name,
+              categoryId: category.id,
+              departmentId: category.departmentId,
+              uploader: user.name || user.email || 'Unknown',
+              classified: false,
+              file,
+              ocrText,
+            });
+
+            successCount += 1;
+
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = { ...next[index], status: '완료', error: null };
+              }
+              return next;
+            });
+          } catch (fileError) {
+            console.error('업로드 오류:', file.name, fileError);
+            failureCount += 1;
+
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = {
+                  ...next[index],
+                  status: '실패',
+                  error:
+                    fileError instanceof Error
+                      ? fileError.message
+                      : '문서 업로드 중 오류가 발생했습니다.',
+                };
+              }
+              return next;
+            });
+          } finally {
+            completedCount += 1;
+            setUploadStatus(`파일 ${completedCount}/${totalFiles} 업로드 중...`);
+            setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+          }
+        })
+      );
 
       await fetchDocuments();
 
-      setUploadProgress(100);
-      setUploadStatus('완료!');
-      setUploadSuccess(true);
+      if (successCount > 0) {
+        setUploadSuccess(true);
+        toast({
+          title: '업로드 완료',
+          description: `${successCount}개 파일이 업로드되었습니다.`,
+        });
+      }
 
-      toast({
-        title: '업로드 완료',
-        description: '문서가 업로드되었습니다.',
-      });
+      if (failureCount > 0) {
+        setUploadError(
+          failureCount === totalFiles
+            ? '모든 파일 업로드에 실패했습니다.'
+            : `${failureCount}개 파일 업로드에 실패했습니다.`,
+        );
+      }
+
+      setUploadStatus('업로드 완료');
 
       setTimeout(() => {
-        setUploadFile(null);
+        setUploadFiles([]);
         setUploadProgress(0);
         setUploadStatus('');
         setUploadSuccess(false);
+        setFileStatuses([]);
         setUploadDialogOpen(false);
       }, 1000);
     } catch (error) {
@@ -555,12 +632,14 @@ export function CategoryDetail() {
                   <p className="text-sm text-slate-600">여기로 파일을 드롭하세요...</p>
                 ) : (
                   <p className="text-sm text-slate-600">
-                    클릭하거나 파일을 드래그해서 업로드할 문서를 선택하세요
+                    클릭하거나 파일을 드래그해서 업로드할 문서를 선택하세요 (여러 파일 선택 가능)
                   </p>
                 )}
-                <p className="mt-1 text-xs text-slate-400">PDF, JPG, PNG · 최대 10MB</p>
-                {uploadFile && (
-                  <p className="mt-2 text-xs text-slate-600">선택된 파일: {uploadFile.name}</p>
+                <p className="mt-1 text-xs text-slate-400">PDF, JPG, PNG · 여러 파일 선택 가능</p>
+                {uploadFiles.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-600">
+                    선택된 파일: {uploadFiles.length === 1 ? uploadFiles[0].name : `${uploadFiles.length}개 파일`}
+                  </p>
                 )}
               </div>
               <div className="space-y-1 text-sm">
@@ -577,6 +656,33 @@ export function CategoryDetail() {
                 {uploadSuccess && (
                   <p className="text-emerald-600 text-xs mt-1">업로드가 완료되었습니다.</p>
                 )}
+                {fileStatuses.length > 0 && (
+                  <div className="mt-1 space-y-0.5 text-xs text-left">
+                    {fileStatuses.map(
+                      (
+                        file: { name: string; status: string; error?: string | null }
+                      ) => (
+                        <div
+                          key={file.name}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span className="truncate max-w-[60%]">{file.name}</span>
+                          <span
+                            className={
+                              file.error
+                                ? 'text-red-500'
+                                : file.status === '완료'
+                                ? 'text-emerald-600'
+                                : 'text-slate-600'
+                            }
+                          >
+                            {file.error ? '실패' : file.status}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -592,7 +698,7 @@ export function CategoryDetail() {
                 type="button"
                 onClick={handleUpload}
                 style={{ backgroundColor: primaryColor }}
-                disabled={!uploadFile || isUploading}
+                disabled={uploadFiles.length === 0 || isUploading}
               >
                 {isUploading ? '업로드 중...' : '업로드'}
               </Button>
