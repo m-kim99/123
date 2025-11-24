@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -37,8 +38,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import type { Category } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
@@ -46,7 +58,7 @@ import { toast } from '@/hooks/use-toast';
 
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
-  const { departments, categories, documents, addCategory, deleteCategory, uploadDocument, fetchDocuments } =
+  const { departments, categories, documents, addCategory, uploadDocument, fetchDocuments, fetchCategories } =
     useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -59,6 +71,21 @@ export function DocumentManagement() {
     nfcRegistered: false,
     storageLocation: '',
   });
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryForm, setEditCategoryForm] = useState({
+    name: '',
+    description: '',
+    storageLocation: '',
+    nfcRegistered: false,
+  });
+  const [editCategoryNameError, setEditCategoryNameError] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadData, setUploadData] = useState({
@@ -118,6 +145,11 @@ export function DocumentManagement() {
       })
     : roleFilteredDocuments;
 
+  const deletingCategory = deletingCategoryId
+    ? categories.find((c) => c.id === deletingCategoryId)
+    : null;
+  const deletingCategoryDocCount = deletingCategory?.documentCount ?? 0;
+
   useEffect(() => {
     if (searchKeyword) {
       setActiveTab('documents');
@@ -134,6 +166,138 @@ export function DocumentManagement() {
         nfcRegistered: false,
         storageLocation: '',
       });
+    }
+  };
+
+  const handleOpenEditDialog = (category: Category) => {
+    setEditingCategoryId(category.id);
+    setEditCategoryForm({
+      name: category.name || '',
+      description: category.description || '',
+      storageLocation: category.storageLocation || '',
+      nfcRegistered: category.nfcRegistered,
+    });
+    setEditCategoryNameError('');
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingCategoryId(null);
+    setEditCategoryNameError('');
+  };
+
+  const handleSaveCategory = async () => {
+    if (!editingCategoryId) {
+      return;
+    }
+
+    if (!editCategoryForm.name.trim()) {
+      setEditCategoryNameError('이름을 입력하세요');
+      return;
+    }
+
+    setIsSavingCategory(true);
+    setEditCategoryNameError('');
+
+    try {
+      const updates: any = {
+        name: editCategoryForm.name.trim(),
+        description: editCategoryForm.description || null,
+        storage_location: editCategoryForm.storageLocation || null,
+      };
+
+      if (editCategoryForm.nfcRegistered) {
+        try {
+          const { data: currentCategory } = await supabase
+            .from('categories')
+            .select('nfc_tag_id')
+            .eq('id', editingCategoryId)
+            .single();
+
+          if (!currentCategory?.nfc_tag_id) {
+            updates.nfc_tag_id = `NFC_${Date.now()}`;
+          }
+        } catch {
+          updates.nfc_tag_id = `NFC_${Date.now()}`;
+        }
+      } else {
+        updates.nfc_tag_id = null;
+      }
+
+      const { error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', editingCategoryId);
+
+      if (error) {
+        throw error;
+      }
+
+      await fetchCategories();
+
+      toast({
+        title: '수정 완료',
+        description: '카테고리가 성공적으로 수정되었습니다.',
+      });
+
+      handleCloseEditDialog();
+    } catch (error) {
+      console.error('카테고리 수정 실패:', error);
+      toast({
+        title: '수정 실패',
+        description: '카테고리를 수정하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  const handleOpenDeleteDialog = (category: Category) => {
+    setDeletingCategoryId(category.id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setDeletingCategoryId(null);
+    setIsDeletingCategory(false);
+  };
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!deletingCategoryId) {
+      return;
+    }
+
+    setIsDeletingCategory(true);
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', deletingCategoryId);
+
+      if (error) {
+        throw error;
+      }
+
+      await fetchCategories();
+
+      toast({
+        title: '삭제 완료',
+        description: '카테고리가 삭제되었습니다.',
+      });
+
+      handleCloseDeleteDialog();
+    } catch (error) {
+      console.error('카테고리 삭제 실패:', error);
+      toast({
+        title: '삭제 실패',
+        description: '카테고리를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+      setIsDeletingCategory(false);
     }
   };
 
@@ -530,6 +694,139 @@ export function DocumentManagement() {
               </Dialog>
             </div>
 
+            <Dialog
+              open={editDialogOpen}
+              onOpenChange={(open) => {
+                if (!open) {
+                  handleCloseEditDialog();
+                }
+              }}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>카테고리 수정</DialogTitle>
+                  <DialogDescription>
+                    선택한 카테고리 정보를 수정합니다
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>카테고리 이름</Label>
+                    <Input
+                      value={editCategoryForm.name}
+                      onChange={(e) =>
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="예: 계약서"
+                    />
+                    {editCategoryNameError && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {editCategoryNameError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>설명</Label>
+                    <Textarea
+                      value={editCategoryForm.description}
+                      onChange={(e) =>
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      placeholder="카테고리 설명"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>보관 위치</Label>
+                    <Input
+                      value={editCategoryForm.storageLocation}
+                      onChange={(e) =>
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          storageLocation: e.target.value,
+                        }))
+                      }
+                      placeholder="예: A동 2층 캐비닛 3"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-nfc-registered"
+                      checked={editCategoryForm.nfcRegistered}
+                      onCheckedChange={(checked) =>
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          nfcRegistered: Boolean(checked),
+                        }))
+                      }
+                    />
+                    <Label htmlFor="edit-nfc-registered">NFC 등록 여부</Label>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseEditDialog}
+                    disabled={isSavingCategory}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSaveCategory}
+                    style={{ backgroundColor: primaryColor }}
+                    disabled={isSavingCategory}
+                  >
+                    {isSavingCategory ? '저장 중...' : '저장'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <AlertDialog
+              open={deleteDialogOpen}
+              onOpenChange={(open) => {
+                if (!open) {
+                  handleCloseDeleteDialog();
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <p>
+                      "{deletingCategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
+                    </p>
+                    <p className="mt-1">
+                      이 카테고리에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
+                    </p>
+                    <p className="mt-3 text-sm font-medium text-red-600">
+                      삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                    </p>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeletingCategory}>
+                    취소
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleConfirmDeleteCategory}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    disabled={isDeletingCategory}
+                  >
+                    {isDeletingCategory ? '삭제 중...' : '삭제'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCategories.map((category) => {
                 const dept = departments.find((d) => d.id === category.departmentId);
@@ -577,14 +874,19 @@ export function DocumentManagement() {
                         )}
                       </div>
                       <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleOpenEditDialog(category)}
+                        >
                           <Edit className="h-3 w-3 mr-1" />
                           수정
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => deleteCategory(category.id)}
+                          onClick={() => handleOpenDeleteDialog(category)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
