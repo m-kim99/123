@@ -1,6 +1,5 @@
-import { Users, FileText, Building2, TrendingUp, Search } from 'lucide-react';
+import { Users, FileText, Building2, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
@@ -71,25 +70,6 @@ export function AdminDashboard() {
             );
           })}
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>빠른 검색</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  type="search"
-                  placeholder="문서명, 부서, 카테고리로 검색..."
-                  className="pl-9"
-                />
-              </div>
-              <Button>검색</Button>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

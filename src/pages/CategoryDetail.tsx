@@ -2,9 +2,12 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Smartphone, MapPin, Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { jsPDF } from 'jspdf';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -29,6 +32,52 @@ import {
 import { supabase } from '@/lib/supabase';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
+
+function splitFilesByType(files: File[]) {
+  const pdfFiles: File[] = [];
+  const imageFiles: File[] = [];
+
+  files.forEach((file) => {
+    const lowerName = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+    const isImage =
+      file.type.startsWith('image/') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.png');
+
+    if (isPdf) {
+      pdfFiles.push(file);
+    } else if (isImage) {
+      imageFiles.push(file);
+    }
+  });
+
+  return { pdfFiles, imageFiles };
+}
+
+function getBaseNameWithoutExt(fileName: string) {
+  const lastDot = fileName.lastIndexOf('.');
+  if (lastDot === -1) return fileName;
+  return fileName.slice(0, lastDot);
+}
+
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('이미지 데이터를 읽을 수 없습니다.'));
+      }
+    };
+    reader.onerror = () => {
+      reject(reader.error || new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -67,6 +116,8 @@ export function CategoryDetail() {
     { name: string; status: string; error?: string | null }[]
   >([]);
 
+  const [documentTitle, setDocumentTitle] = useState('');
+
   if (!category) {
     return (
       <DashboardLayout>
@@ -92,6 +143,7 @@ export function CategoryDetail() {
     setUploadError(null);
     setUploadSuccess(false);
     setFileStatuses([]);
+    setDocumentTitle('');
   };
 
   const handleOpenPreviewDocument = async (documentId: string) => {
@@ -177,6 +229,17 @@ export function CategoryDetail() {
     setUploadFiles(validFiles);
     setUploadError(null);
     setUploadSuccess(false);
+
+    const { pdfFiles, imageFiles } = splitFilesByType(validFiles);
+
+    if (imageFiles.length > 0 && pdfFiles.length === 0) {
+      setDocumentTitle(getBaseNameWithoutExt(imageFiles[0].name));
+    } else if (pdfFiles.length === 1 && imageFiles.length === 0) {
+      setDocumentTitle(getBaseNameWithoutExt(pdfFiles[0].name));
+    } else {
+      setDocumentTitle('');
+    }
+
     setFileStatuses(
       validFiles.map((file) => ({
         name: file.name,
@@ -184,7 +247,14 @@ export function CategoryDetail() {
         error: null,
       }))
     );
-    setUploadStatus(`${validFiles.length}개 파일 선택됨`);
+
+    if (imageFiles.length > 0 && pdfFiles.length === 0 && imageFiles.length > 1) {
+      setUploadStatus(`${imageFiles.length}개 이미지를 하나의 문서로 업로드합니다.`);
+    } else if (imageFiles.length > 0 && pdfFiles.length > 0) {
+      setUploadStatus(`PDF ${pdfFiles.length}개와 이미지 묶음 1개가 업로드됩니다.`);
+    } else {
+      setUploadStatus(`${validFiles.length}개 파일 선택됨`);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -204,6 +274,13 @@ export function CategoryDetail() {
     },
   });
 
+  const { pdfFiles: selectedPdfFiles, imageFiles: selectedImageFiles } =
+    splitFilesByType(uploadFiles);
+  const hasSelectedImageGroup = selectedImageFiles.length > 0;
+  const totalDocsToCreate =
+    selectedPdfFiles.length + (hasSelectedImageGroup ? 1 : 0);
+  const canEditTitle = totalDocsToCreate === 1;
+
   const handleUpload = async () => {
     if (!uploadFiles.length || !category || !user) {
       return;
@@ -216,6 +293,7 @@ export function CategoryDetail() {
     setUploadSuccess(false);
 
     try {
+      const { pdfFiles, imageFiles } = splitFilesByType(uploadFiles);
       const totalFiles = uploadFiles.length;
       let completedCount = 0;
       let successCount = 0;
@@ -229,8 +307,94 @@ export function CategoryDetail() {
         }))
       );
 
-      await Promise.all(
-        uploadFiles.map(async (file, index) => {
+      const getSingleDocTitle = () => {
+        const trimmed = documentTitle.trim();
+        if (trimmed) return trimmed;
+        if (imageFiles.length > 0) {
+          return getBaseNameWithoutExt(imageFiles[0].name);
+        }
+        if (pdfFiles.length === 1) {
+          return getBaseNameWithoutExt(pdfFiles[0].name);
+        }
+        return '문서';
+      };
+
+      for (const file of pdfFiles) {
+        const index = uploadFiles.indexOf(file);
+        try {
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: '처리 중...' };
+            }
+            return next;
+          });
+
+          let ocrText = '';
+
+          try {
+            ocrText = await extractText(file);
+          } catch (ocrError) {
+            console.error('OCR 처리 오류:', file.name, ocrError);
+          }
+
+          const baseName = getBaseNameWithoutExt(file.name);
+          const title =
+            pdfFiles.length === 1 && imageFiles.length === 0
+              ? getSingleDocTitle()
+              : baseName;
+
+          await uploadDocument({
+            name: title,
+            originalFileName: file.name,
+            categoryId: category.id,
+            departmentId: category.departmentId,
+            uploader: user.name || user.email || 'Unknown',
+            classified: false,
+            file,
+            ocrText,
+          });
+
+          successCount += 1;
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: '완료', error: null };
+            }
+            return next;
+          });
+        } catch (fileError) {
+          console.error('업로드 오류:', file.name, fileError);
+          failureCount += 1;
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = {
+                ...next[index],
+                status: '실패',
+                error:
+                  fileError instanceof Error
+                    ? fileError.message
+                    : '문서 업로드 중 오류가 발생했습니다.',
+              };
+            }
+            return next;
+          });
+        } finally {
+          completedCount += 1;
+          setUploadStatus(`파일 ${completedCount}/${totalFiles} 업로드 중...`);
+          setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+        }
+      }
+
+      if (imageFiles.length > 1) {
+        const ocrParts: string[] = [];
+
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          const index = uploadFiles.indexOf(file);
           try {
             setFileStatuses((prev) => {
               const next = [...prev];
@@ -240,26 +404,18 @@ export function CategoryDetail() {
               return next;
             });
 
-            let ocrText = '';
+            setUploadStatus(`이미지 ${i + 1}/${imageFiles.length} OCR 처리 중...`);
 
+            let ocrText = '';
             try {
               ocrText = await extractText(file);
-              console.log('OCR 텍스트 추출 완료:', file.name, ocrText.length, '자');
             } catch (ocrError) {
               console.error('OCR 처리 오류:', file.name, ocrError);
             }
 
-            await uploadDocument({
-              name: file.name,
-              categoryId: category.id,
-              departmentId: category.departmentId,
-              uploader: user.name || user.email || 'Unknown',
-              classified: false,
-              file,
-              ocrText,
-            });
-
-            successCount += 1;
+            if (ocrText && ocrText.trim()) {
+              ocrParts.push(`--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`);
+            }
 
             setFileStatuses((prev) => {
               const next = [...prev];
@@ -288,11 +444,149 @@ export function CategoryDetail() {
             });
           } finally {
             completedCount += 1;
-            setUploadStatus(`파일 ${completedCount}/${totalFiles} 업로드 중...`);
             setUploadProgress(Math.round((completedCount / totalFiles) * 100));
           }
-        })
-      );
+        }
+
+        const allOcrText = ocrParts.join('\n');
+
+        try {
+          setUploadStatus('PDF 생성 중...');
+
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+
+          for (let i = 0; i < imageFiles.length; i++) {
+            const file = imageFiles[i];
+            const imgData = await readFileAsDataURL(file);
+
+            if (i > 0) {
+              pdf.addPage();
+            }
+
+            const lowerName = file.name.toLowerCase();
+            const isPng =
+              file.type === 'image/png' ||
+              lowerName.endsWith('.png');
+
+            pdf.addImage(
+              imgData,
+              isPng ? 'PNG' : 'JPEG',
+              0,
+              0,
+              pageWidth,
+              pageHeight
+            );
+          }
+
+          const pdfBlob = pdf.output('blob');
+
+          const firstImage = imageFiles[0];
+          const imageTitle =
+            pdfFiles.length === 0 && imageFiles.length > 0
+              ? getSingleDocTitle()
+              : getBaseNameWithoutExt(firstImage.name);
+
+          const pdfFileNameBase = imageTitle || getBaseNameWithoutExt(firstImage.name);
+          const pdfFileName = `${pdfFileNameBase || 'document'}.pdf`;
+          const pdfFile = new File([pdfBlob], pdfFileName, {
+            type: 'application/pdf',
+          });
+
+          setUploadStatus('업로드 중...');
+
+          await uploadDocument({
+            name: imageTitle,
+            originalFileName: pdfFileName,
+            categoryId: category.id,
+            departmentId: category.departmentId,
+            uploader: user.name || user.email || 'Unknown',
+            classified: false,
+            file: pdfFile,
+            ocrText: allOcrText,
+          });
+
+          successCount += 1;
+          setUploadStatus(`완료: ${imageFiles.length}장을 하나의 문서로 업로드했습니다!`);
+        } catch (groupError) {
+          console.error('이미지 묶음 업로드 오류:', groupError);
+          failureCount += 1;
+          setUploadError(
+            groupError instanceof Error
+              ? groupError.message
+              : '이미지 문서 업로드 중 오류가 발생했습니다.',
+          );
+        }
+      } else if (imageFiles.length === 1) {
+        const file = imageFiles[0];
+        const index = uploadFiles.indexOf(file);
+        try {
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: '처리 중...' };
+            }
+            return next;
+          });
+
+          setUploadStatus('이미지 1/1 OCR 처리 중...');
+
+          let ocrText = '';
+          try {
+            ocrText = await extractText(file);
+          } catch (ocrError) {
+            console.error('OCR 처리 오류:', file.name, ocrError);
+          }
+
+          const imageTitle =
+            pdfFiles.length === 0
+              ? getSingleDocTitle()
+              : getBaseNameWithoutExt(file.name);
+
+          await uploadDocument({
+            name: imageTitle,
+            originalFileName: file.name,
+            categoryId: category.id,
+            departmentId: category.departmentId,
+            uploader: user.name || user.email || 'Unknown',
+            classified: false,
+            file,
+            ocrText,
+          });
+
+          successCount += 1;
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: '완료', error: null };
+            }
+            return next;
+          });
+        } catch (fileError) {
+          console.error('업로드 오류:', file.name, fileError);
+          failureCount += 1;
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = {
+                ...next[index],
+                status: '실패',
+                error:
+                  fileError instanceof Error
+                    ? fileError.message
+                    : '문서 업로드 중 오류가 발생했습니다.',
+              };
+            }
+            return next;
+          });
+        } finally {
+          completedCount += 1;
+          setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+        }
+      }
 
       await fetchDocuments();
 
@@ -300,7 +594,7 @@ export function CategoryDetail() {
         setUploadSuccess(true);
         toast({
           title: '업로드 완료',
-          description: `${successCount}개 파일이 업로드되었습니다.`,
+          description: `${successCount}개 문서가 업로드되었습니다.`,
         });
       }
 
@@ -321,6 +615,7 @@ export function CategoryDetail() {
         setUploadSuccess(false);
         setFileStatuses([]);
         setUploadDialogOpen(false);
+        setDocumentTitle('');
       }, 1000);
     } catch (error) {
       console.error('업로드 오류:', error);
@@ -681,6 +976,21 @@ export function CategoryDetail() {
                         </div>
                       )
                     )}
+                  </div>
+                )}
+                {canEditTitle && uploadFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <Label>문서 제목</Label>
+                    <Input
+                      value={documentTitle}
+                      onChange={(e) => setDocumentTitle(e.target.value)}
+                      placeholder="문서 제목을 입력하세요"
+                    />
+                    <p className="text-xs text-slate-500">
+                      {selectedImageFiles.length > 1
+                        ? `${selectedImageFiles.length}개 이미지를 하나의 문서로 묶어 업로드합니다.`
+                        : '원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요.'}
+                    </p>
                   </div>
                 )}
               </div>

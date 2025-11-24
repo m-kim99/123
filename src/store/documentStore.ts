@@ -45,7 +45,13 @@ interface DocumentState {
   addCategory: (category: Omit<Category, 'id' | 'documentCount'>) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  uploadDocument: (document: Omit<Document, 'id' | 'uploadDate' | 'fileUrl'> & { file: File; ocrText?: string }) => Promise<void>;
+  uploadDocument: (
+    document: Omit<Document, 'id' | 'uploadDate' | 'fileUrl'> & {
+      file: File;
+      ocrText?: string;
+      originalFileName?: string;
+    }
+  ) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
 }
 
@@ -540,7 +546,8 @@ export const useDocumentStore = create<DocumentState>((set) => ({
 
   uploadDocument: async (document) => {
     try {
-      const filePath = sanitizeFileName(document.name);
+      const originalNameForStorage = document.originalFileName || document.name;
+      const filePath = sanitizeFileName(originalNameForStorage);
 
       const { error: storageError } = await supabase.storage
         .from('123')
