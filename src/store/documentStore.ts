@@ -7,6 +7,7 @@ export interface Department {
   id: string;
   name: string;
   code: string;
+  description?: string | null;
   documentCount: number;
 }
 
@@ -233,6 +234,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
                   id: dept.id,
                   name: dept.name,
                   code: dept.code,
+                  description: (dept as any).description ?? null,
                   documentCount: 0,
                 };
               }
@@ -248,6 +250,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
                 id: dept.id,
                 name: dept.name,
                 code: dept.code,
+                description: (dept as any).description ?? null,
                 documentCount: count || 0,
               };
             } catch {
@@ -256,6 +259,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
                 id: dept.id,
                 name: dept.name,
                 code: dept.code,
+                description: (dept as any).description ?? null,
                 documentCount: 0,
               };
             }

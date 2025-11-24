@@ -106,25 +106,27 @@ export function AdminDashboard() {
           <CardContent>
             <div className="space-y-4">
               {departments.map((dept) => (
-                <div
+                <Card
                   key={dept.id}
-                  className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                  onClick={() => navigate('/admin/documents')}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/admin/departments/${dept.id}`)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-[#2563eb] p-2 rounded-lg">
-                      <Building2 className="h-5 w-5 text-white" />
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[#2563eb] p-2 rounded-lg">
+                        <Building2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{dept.name}</p>
+                        <p className="text-sm text-slate-500">{dept.code}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{dept.name}</p>
-                      <p className="text-sm text-slate-500">{dept.code}</p>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">{dept.documentCount}</p>
+                      <p className="text-xs text-slate-500">문서</p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">{dept.documentCount}</p>
-                    <p className="text-xs text-slate-500">문서</p>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </CardContent>
