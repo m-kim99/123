@@ -1,4 +1,5 @@
 import { useDocumentStore } from '@/store/documentStore';
+import { searchDocumentsByEmbedding } from '@/lib/embedding';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -163,11 +164,31 @@ export async function generateResponse(
     return generateFallbackResponse(text);
   }
 
-  const searchResults = searchDocuments(text).slice(0, 10);
+  let vectorResults: any[] = [];
+  try {
+    const embeddingResults = await searchDocumentsByEmbedding(text, 0.7, 5);
+    vectorResults = Array.isArray(embeddingResults) ? embeddingResults : [];
+  } catch (error) {
+    console.error('벡터 검색 오류:', error);
+    vectorResults = [];
+  }
+
+  const keywordResults = searchDocuments(text).slice(0, 10);
+  const contextDocuments: any[] =
+    vectorResults.length > 0 ? vectorResults : keywordResults;
+
+  const context = contextDocuments
+    .map((r: any) => {
+      const title = (r.title ?? r.name ?? '').toString();
+      const ocrText = (r.ocr_text ?? '').toString();
+      const snippet = ocrText.slice(0, 500);
+      return `문서: ${title}\n내용: ${snippet}`;
+    })
+    .join('\n\n');
 
   const contextPayload = {
     query: text,
-    documents: searchResults,
+    documents: contextDocuments,
   };
 
   const historyContents = history
@@ -196,6 +217,7 @@ export async function generateResponse(
 
   const userContent = [
     `문서 컨텍스트 JSON: ${JSON.stringify(contextPayload)}`,
+    `문서 컨텍스트 요약:\n${context || '관련 문서를 찾지 못했습니다.'}`,
     `사용자 질문: ${text}`,
   ].join('\n\n');
 

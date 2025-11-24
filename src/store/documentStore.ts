@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type Department as SupabaseDepartment, type Category as SupabaseCategory, type Document as SupabaseDocument } from '@/lib/supabase';
+import { generateEmbedding } from '@/lib/embedding';
 
 export interface Department {
   id: string;
@@ -545,6 +546,23 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         throw storageError;
       }
 
+      let embedding: number[] | null = null;
+
+      try {
+        embedding = await generateEmbedding(
+          `${document.name} ${document.ocrText || ''}`
+        );
+      } catch (embeddingError) {
+        console.error('Failed to generate embedding for document:', embeddingError);
+        toast({
+          title: '임베딩 생성 실패',
+          description:
+            '문서 검색 품질이 저하될 수 있습니다. 그래도 업로드는 계속 진행됩니다.',
+          variant: 'destructive',
+        });
+        embedding = null;
+      }
+
       const { data, error } = await supabase
         .from('documents')
         .insert({
@@ -556,6 +574,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
           ocr_text: document.ocrText || null, // OCR 텍스트
           uploaded_by: null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
+          embedding: embedding,
         })
         .select()
         .single();
