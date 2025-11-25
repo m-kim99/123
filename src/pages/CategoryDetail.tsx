@@ -698,14 +698,18 @@ export function CategoryDetail() {
       }
 
       const filePath = data?.file_path as string | undefined;
+      console.log('삭제할 파일 경로:', filePath);
+      console.log('타입:', typeof filePath);
 
-      if (filePath) {
+      if (!filePath) {
+        console.error('파일 경로가 없습니다');
+      } else {
         const { error: storageError } = await supabase.storage
           .from('123')
-          .remove([{ path: filePath }]);
+          .remove([filePath]);
 
         if (storageError) {
-          throw storageError;
+          console.error('Storage 삭제 실패:', storageError);
         }
       }
 
@@ -1016,35 +1020,33 @@ export function CategoryDetail() {
           </DialogContent>
         </Dialog>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-[80vw] max-h-[80vh]">
+          <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden">
             <DialogHeader>
               <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
-              <DialogDescription>
-                {previewDoc?.type === 'image'
-                  ? '이미지 문서 미리보기'
-                  : previewDoc?.type === 'pdf'
-                  ? 'PDF 문서 미리보기'
-                  : '문서 미리보기'}
-              </DialogDescription>
             </DialogHeader>
-            <div className="mt-4 flex items-center justify-center">
+
+            <div className="flex-1 overflow-auto min-h-0">
               {previewLoading && (
-                <p className="text-sm text-slate-500">문서를 불러오는 중입니다...</p>
+                <p>문서를 불러오는 중입니다...</p>
               )}
+
+              {!previewLoading && previewDoc && previewDoc.type === 'pdf' && (
+                <iframe
+                  src={previewDoc.url}
+                  className="w-full h-full border-0"
+                  title={previewDoc.title}
+                />
+              )}
+
               {!previewLoading && previewDoc && previewDoc.type === 'image' && (
                 <img
                   src={previewDoc.url}
                   alt={previewDoc.title}
-                  className="max-w-full max-h-[70vh] object-contain"
-                />
-              )}
-              {!previewLoading && previewDoc && previewDoc.type === 'pdf' && (
-                <iframe
-                  src={previewDoc.url}
-                  className="w-full h-[70vh] border rounded-md"
+                  className="w-full h-full object-contain"
                 />
               )}
             </div>
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setPreviewOpen(false)}>
                 닫기

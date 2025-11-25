@@ -668,7 +668,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       if (filePath) {
         const { error: storageError } = await supabase.storage
           .from('123')
-          .remove([{ path: filePath }]);
+          .remove([filePath]);
 
         if (storageError) {
           console.error('Failed to delete file from Supabase Storage:', storageError);
