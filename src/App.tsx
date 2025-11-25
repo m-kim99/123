@@ -37,6 +37,11 @@ function App() {
   const { fetchDepartments, fetchCategories, fetchDocuments } = useDocumentStore();
 
   useEffect(() => {
+    const { checkSession } = useAuthStore.getState();
+    checkSession();
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
     (async () => {

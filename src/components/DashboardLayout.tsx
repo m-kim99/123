@@ -170,8 +170,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
   ];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
