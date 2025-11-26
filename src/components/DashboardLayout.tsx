@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FileText,
@@ -44,6 +44,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<{
+    recent: string[];
+    popular: string[];
+    related: string[];
+  }>({ recent: [], popular: [], related: [] });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
@@ -57,20 +64,123 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
 
+  const debounceTimer = useRef<number | null>(null);
+
+  const fetchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSearchSuggestions({ recent: [], popular: [], related: [] });
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+
+    try {
+      const trimmed = query.trim();
+
+      // 최근 검색어 (현재 사용자)
+      const { data: recentData } = await supabase
+        .from('search_history')
+        .select('query')
+        .eq('user_id', user?.id)
+        .ilike('query', `%${trimmed}%`)
+        .order('searched_at', { ascending: false })
+        .limit(5);
+
+      // 인기 검색어 (전체 사용자)
+      const { data: popularData } = await supabase
+        .from('search_history')
+        .select('query, search_count')
+        .ilike('query', `%${trimmed}%`)
+        .order('search_count', { ascending: false })
+        .limit(5);
+
+      // 연관 검색어 (문서 제목에서)
+      const { data: relatedData } = await supabase
+        .from('documents')
+        .select('title')
+        .ilike('title', `%${trimmed}%`)
+        .limit(5);
+
+      setSearchSuggestions({
+        recent: recentData?.map((r: any) => r.query) || [],
+        popular: popularData?.map((p: any) => p.query) || [],
+        related: relatedData?.map((d: any) => d.title) || [],
+      });
+    } catch (error) {
+      console.error('자동완성 로드 실패:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (debounceTimer.current) {
+      window.clearTimeout(debounceTimer.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchSuggestions({ recent: [], popular: [], related: [] });
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceTimer.current = window.setTimeout(() => {
+      if (searchQuery.trim()) {
+        fetchSuggestions(searchQuery);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) {
+        window.clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchQuery]);
+
   const handleLogoClick = () => {
     const targetPath = user?.role === 'admin' ? '/admin' : '/team';
     navigate(targetPath);
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const query = searchQuery.trim();
+    if (!query) return;
+
     const targetPath = isAdmin ? '/admin/documents' : '/team/documents';
 
-    if (query) {
-      navigate(`${targetPath}?q=${encodeURIComponent(query)}`);
-    } else {
-      navigate(targetPath);
+    try {
+      const { data: existing } = await supabase
+        .from('search_history')
+        .select('id, search_count')
+        .eq('user_id', user?.id)
+        .eq('query', query)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('search_history')
+          .update({
+            search_count: (existing as any).search_count + 1,
+            searched_at: new Date().toISOString(),
+          })
+          .eq('id', (existing as any).id);
+      } else {
+        await supabase.from('search_history').insert({
+          user_id: user?.id,
+          query,
+          searched_at: new Date().toISOString(),
+          search_count: 1,
+        });
+      }
+    } catch (error) {
+      console.error('검색 기록 저장 실패:', error);
     }
+
+    navigate(`${targetPath}?q=${encodeURIComponent(query)}`);
+    setShowSuggestions(false);
   };
 
   const openProfileDialog = () => {
@@ -260,8 +370,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 TrayStorage CONNECT
               </span>
 
-              <div className="flex-1 max-w-md">
-                <div className="flex gap-2">
+              <div className="flex-1 max-w-md flex gap-2">
+                <div className="relative flex-1">
                   <Input
                     type="search"
                     placeholder="문서 검색..."
@@ -273,17 +383,114 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         handleSearch();
                       }
                     }}
+                    onFocus={() => {
+                      if (searchQuery.trim()) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      // 클릭 선택 여유를 위해 약간 지연 후 닫기
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
-                    onClick={handleSearch}
-                  >
-                    🔍
-                  </Button>
+
+                  {showSuggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                      {isLoadingSuggestions ? (
+                        <div className="p-4 text-center text-slate-500 text-sm">
+                          검색 중...
+                        </div>
+                      ) : (
+                        <>
+                          {searchSuggestions.recent.length > 0 && (
+                            <div className="p-2">
+                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
+                                최근 검색어
+                              </p>
+                              {searchSuggestions.recent.map((item, idx) => (
+                                <div
+                                  key={`recent-${idx}`}
+                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setSearchQuery(item);
+                                    handleSearch();
+                                  }}
+                                >
+                                  <span>🕐</span>
+                                  <span className="truncate">{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {searchSuggestions.popular.length > 0 && (
+                            <div className="p-2 border-t">
+                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
+                                인기 검색어
+                              </p>
+                              {searchSuggestions.popular.map((item, idx) => (
+                                <div
+                                  key={`popular-${idx}`}
+                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setSearchQuery(item);
+                                    handleSearch();
+                                  }}
+                                >
+                                  <span>🔥</span>
+                                  <span className="truncate">{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {searchSuggestions.related.length > 0 && (
+                            <div className="p-2 border-t">
+                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
+                                관련 문서
+                              </p>
+                              {searchSuggestions.related.map((item, idx) => (
+                                <div
+                                  key={`related-${idx}`}
+                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setSearchQuery(item);
+                                    handleSearch();
+                                  }}
+                                >
+                                  <span>📄</span>
+                                  <span className="truncate">{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {!isLoadingSuggestions &&
+                            searchSuggestions.recent.length === 0 &&
+                            searchSuggestions.popular.length === 0 &&
+                            searchSuggestions.related.length === 0 && (
+                              <div className="p-4 text-center text-slate-500 text-sm">
+                                검색 결과가 없습니다
+                              </div>
+                            )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+                  onClick={handleSearch}
+                >
+                  🔍
+                </Button>
               </div>
             </div>
 

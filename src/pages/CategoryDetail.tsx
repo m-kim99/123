@@ -104,6 +104,8 @@ export function CategoryDetail() {
     | null
   >(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [imageZoom, setImageZoom] = useState(100); // 확대/축소 %
+  const [imageRotation, setImageRotation] = useState(0); // 회전 각도
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -1019,40 +1021,214 @@ export function CategoryDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
-            </DialogHeader>
+        <Dialog
+          open={previewOpen}
+          onOpenChange={(open) => {
+            setPreviewOpen(open);
+            if (!open) {
+              setImageZoom(100);
+              setImageRotation(0);
+            }
+          }}
+        >
+          {/* PDF 미리보기: 기존 브라우저 뷰어 유지 */}
+          {previewDoc?.type === 'pdf' && (
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+              </DialogHeader>
 
-            <div className="flex-1 overflow-auto min-h-0">
-              {previewLoading && (
-                <p>문서를 불러오는 중입니다...</p>
-              )}
+              <div className="flex-1 overflow-auto min-h-0">
+                {previewLoading ? (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-slate-500">문서를 불러오는 중입니다...</p>
+                  </div>
+                ) : (
+                  previewDoc && (
+                    <iframe
+                      src={previewDoc.url}
+                      className="w-full h-full border-0"
+                      title={previewDoc.title}
+                    />
+                  )
+                )}
+              </div>
 
-              {!previewLoading && previewDoc && previewDoc.type === 'pdf' && (
-                <iframe
-                  src={previewDoc.url}
-                  className="w-full h-full border-0"
-                  title={previewDoc.title}
-                />
-              )}
+              <DialogFooter className="border-t pt-3">
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-slate-500">PDF 문서</span>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPreviewOpen(false);
+                      setImageZoom(100);
+                      setImageRotation(0);
+                    }}
+                  >
+                    닫기
+                  </Button>
+                </div>
+              </DialogFooter>
+            </DialogContent>
+          )}
 
-              {!previewLoading && previewDoc && previewDoc.type === 'image' && (
-                <img
-                  src={previewDoc.url}
-                  alt={previewDoc.title}
-                  className="w-full h-full object-contain"
-                />
-              )}
-            </div>
+          {/* 이미지 미리보기: 전문 뷰어 레이아웃 */}
+          {previewDoc?.type === 'image' && (
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+              </DialogHeader>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
-                닫기
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+              {/* 상단 툴바 */}
+              <div className="flex items-center justify-center gap-2 p-2 border-b bg-slate-50">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom((prev) => Math.max(25, prev - 25))}
+                >
+                  ➖
+                </Button>
+
+                <span className="text-sm font-medium min-w-[60px] text-center">
+                  {imageZoom}%
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom((prev) => Math.min(200, prev + 25))}
+                >
+                  ➕
+                </Button>
+
+                <div className="w-px h-6 bg-slate-300 mx-2" />
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom(100)}
+                >
+                  100%
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom(50)}
+                  title="화면에 맞추기"
+                >
+                  화면 맞춤
+                </Button>
+
+                <div className="w-px h-6 bg-slate-300 mx-2" />
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                  title="90도 회전"
+                >
+                  🔄
+                </Button>
+
+                <div className="w-px h-6 bg-slate-300 mx-2" />
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const elem = document.querySelector('.image-viewer');
+                    elem?.requestFullscreen?.();
+                  }}
+                  title="전체화면"
+                >
+                  ⛶
+                </Button>
+
+                <div className="w-px h-6 bg-slate-300 mx-2" />
+
+                {previewDoc && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadDocument(previewDoc.id)}
+                      title="다운로드"
+                    >
+                      ⬇️
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const printWindow = window.open(previewDoc.url);
+                        if (printWindow) {
+                          printWindow.onload = () => {
+                            setTimeout(() => {
+                              printWindow.print();
+                            }, 500);
+                          };
+                        }
+                      }}
+                      title="인쇄"
+                    >
+                      🖨️
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* 메인 이미지 영역 (스크롤 가능) */}
+              <div
+                className="image-viewer flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-8"
+                onWheel={(e) => {
+                  if (e.ctrlKey) {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -10 : 10;
+                    setImageZoom((prev) =>
+                      Math.max(25, Math.min(200, prev + delta)),
+                    );
+                  }
+                }}
+              >
+                {previewLoading ? (
+                  <p className="text-slate-500">이미지를 불러오는 중입니다...</p>
+                ) : (
+                  previewDoc && (
+                    <img
+                      src={previewDoc.url}
+                      alt={previewDoc.title}
+                      style={{
+                        transform: `scale(${imageZoom / 100}) rotate(${imageRotation}deg)` ,
+                        transition: 'transform 0.2s ease',
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                      }}
+                      className="shadow-lg"
+                    />
+                  )
+                )}
+              </div>
+
+              {/* 하단 푸터 */}
+              <DialogFooter className="border-t pt-3">
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-slate-500">이미지 문서</span>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPreviewOpen(false);
+                      setImageZoom(100);
+                      setImageRotation(0);
+                    }}
+                  >
+                    닫기
+                  </Button>
+                </div>
+              </DialogFooter>
+            </DialogContent>
+          )}
         </Dialog>
       </div>
     </DashboardLayout>
