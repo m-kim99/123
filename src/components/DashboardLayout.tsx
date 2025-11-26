@@ -6,8 +6,6 @@ import {
   Building2,
   BarChart3,
   LogOut,
-  Menu,
-  X,
   ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +41,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<{
     recent: string[];
@@ -286,11 +283,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
+      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r">
         <div className="flex items-center justify-between h-16 px-6 border-b">
           <div className="flex items-center gap-2">
             <div
@@ -301,14 +294,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <span className="font-bold text-lg">문서관리</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
 
         <nav className="p-4 space-y-1">
@@ -349,19 +334,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-40 border-b bg-[#1e40af]">
-          <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+      <div className="pl-64 w-full">
+        <header className="sticky top-0 z-40 border-b bg-[#1e40af] w-full">
+          <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-
               <button
                 type="button"
                 onClick={handleLogoClick}
@@ -374,7 +350,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 />
               </button>
 
-              <div className="flex-1 max-w-md flex gap-2">
+              <div className="flex-1 flex gap-2">
                 <div className="relative flex-1">
                   <Input
                     type="search"
