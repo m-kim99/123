@@ -77,24 +77,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     try {
       const trimmed = query.trim();
 
-      // 최근 검색어 (현재 사용자)
+      // 최근 검색어 (필터링 없이 최근 5개)
       const { data: recentData } = await supabase
         .from('search_history')
         .select('query')
         .eq('user_id', user?.id)
-        .ilike('query', `%${trimmed}%`)
         .order('searched_at', { ascending: false })
         .limit(5);
 
-      // 인기 검색어 (전체 사용자)
+      // 인기 검색어 (필터링 없이 상위 5개)
       const { data: popularData } = await supabase
         .from('search_history')
         .select('query, search_count')
-        .ilike('query', `%${trimmed}%`)
         .order('search_count', { ascending: false })
         .limit(5);
 
-      // 연관 검색어 (문서 제목에서)
+      // 연관 검색어 (문서 제목에서, 입력값으로 필터링)
       const { data: relatedData } = await supabase
         .from('documents')
         .select('title')
@@ -395,88 +393,89 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
 
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-[600px]">
                       {isLoadingSuggestions ? (
-                        <div className="p-4 text-center text-slate-500 text-sm">
-                          검색 중...
-                        </div>
+                        <div className="p-4 text-center text-slate-500">검색 중...</div>
                       ) : (
-                        <>
-                          {searchSuggestions.recent.length > 0 && (
-                            <div className="p-2">
-                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
-                                최근 검색어
-                              </p>
-                              {searchSuggestions.recent.map((item, idx) => (
-                                <div
-                                  key={`recent-${idx}`}
-                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setSearchQuery(item);
-                                    handleSearch();
-                                  }}
-                                >
-                                  <span>🕐</span>
-                                  <span className="truncate">{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {searchSuggestions.popular.length > 0 && (
-                            <div className="p-2 border-t">
-                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
-                                인기 검색어
-                              </p>
-                              {searchSuggestions.popular.map((item, idx) => (
-                                <div
-                                  key={`popular-${idx}`}
-                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setSearchQuery(item);
-                                    handleSearch();
-                                  }}
-                                >
-                                  <span>🔥</span>
-                                  <span className="truncate">{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {searchSuggestions.related.length > 0 && (
-                            <div className="p-2 border-t">
-                              <p className="text-xs font-semibold text-slate-500 px-2 mb-1">
-                                관련 문서
-                              </p>
-                              {searchSuggestions.related.map((item, idx) => (
+                        <div className="flex">
+                          {/* 좌측: 관련 문서 (자동완성) */}
+                          <div className="flex-1 border-r p-3 max-h-80 overflow-y-auto">
+                            <p className="text-xs font-semibold text-slate-500 mb-2">
+                              관련 문서
+                            </p>
+                            {searchSuggestions.related.length > 0 ? (
+                              searchSuggestions.related.map((item, idx) => (
                                 <div
                                   key={`related-${idx}`}
-                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm flex items-center gap-2"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
+                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                  onClick={() => {
                                     setSearchQuery(item);
                                     handleSearch();
                                   }}
                                 >
-                                  <span>📄</span>
-                                  <span className="truncate">{item}</span>
+                                  📄 {item}
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                              ))
+                            ) : (
+                              <p className="text-sm text-slate-400 px-3">
+                                관련 문서가 없습니다
+                              </p>
+                            )}
+                          </div>
 
-                          {!isLoadingSuggestions &&
-                            searchSuggestions.recent.length === 0 &&
-                            searchSuggestions.popular.length === 0 &&
-                            searchSuggestions.related.length === 0 && (
-                              <div className="p-4 text-center text-slate-500 text-sm">
-                                검색 결과가 없습니다
+                          {/* 우측: 최근/인기 검색어 */}
+                          <div className="w-56 p-3 max-h-80 overflow-y-auto">
+                            {/* 최근 검색어 */}
+                            {searchSuggestions.recent.length > 0 && (
+                              <div className="mb-4">
+                                <p className="text-xs font-semibold text-slate-500 mb-2">
+                                  최근 검색어
+                                </p>
+                                {searchSuggestions.recent.map((item, idx) => (
+                                  <div
+                                    key={`recent-${idx}`}
+                                    className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                    onClick={() => {
+                                      setSearchQuery(item);
+                                      handleSearch();
+                                    }}
+                                  >
+                                    🕐 {item}
+                                  </div>
+                                ))}
                               </div>
                             )}
-                        </>
+
+                            {/* 인기 검색어 */}
+                            {searchSuggestions.popular.length > 0 && (
+                              <div>
+                                <p className="text-xs font-semibold text-slate-500 mb-2">
+                                  인기 검색어
+                                </p>
+                                {searchSuggestions.popular.map((item, idx) => (
+                                  <div
+                                    key={`popular-${idx}`}
+                                    className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                    onClick={() => {
+                                      setSearchQuery(item);
+                                      handleSearch();
+                                    }}
+                                  >
+                                    🔥 {item}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* 우측이 비어있을 때 */}
+                            {searchSuggestions.recent.length === 0 &&
+                              searchSuggestions.popular.length === 0 && (
+                                <p className="text-sm text-slate-400 text-center py-4">
+                                  검색 기록이 없습니다
+                                </p>
+                              )}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}
@@ -523,7 +522,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-6 py-6">{children}</div>
+        </main>
       </div>
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
