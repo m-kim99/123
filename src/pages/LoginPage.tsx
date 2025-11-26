@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +22,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
+import logo from '@/assets/logo.png';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -136,14 +136,18 @@ export function LoginPage() {
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-slate-900 p-3 rounded-xl">
-              <FileText className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">문서 관리 시스템</CardTitle>
-          <CardDescription>계정으로 로그인하거나 새로 회원가입하세요</CardDescription>
+        <CardHeader className="text-center">
+          <CardTitle className="flex justify-center">
+            <img
+              src={logo}
+              alt="문서 관리 시스템 로고"
+              className="h-16"
+            />
+          </CardTitle>
+          <CardDescription>
+            <br />
+            계정으로 로그인하거나 새로 회원가입하세요
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="admin" className="w-full">

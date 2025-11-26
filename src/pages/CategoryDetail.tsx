@@ -739,13 +739,14 @@ export function CategoryDetail() {
         description: '문서를 삭제하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+    } finally {
       setIsDeletingDocument(false);
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div>
           <Button
             variant="ghost"

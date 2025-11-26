@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import logo2 from '@/assets/logo2.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -361,12 +362,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Menu className="h-5 w-5" />
               </Button>
 
-              <span
+              <button
+                type="button"
                 onClick={handleLogoClick}
-                className="font-bold text-xl text-white hover:opacity-80 cursor-pointer"
+                className="flex items-center hover:opacity-80 focus:outline-none bg-transparent border-none p-0"
               >
-                TrayStorage CONNECT
-              </span>
+                <img
+                  src={logo2}
+                  alt="TrayStorage CONNECT"
+                  className="h-9"
+                />
+              </button>
 
               <div className="flex-1 max-w-md flex gap-2">
                 <div className="relative flex-1">
@@ -522,8 +528,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto px-6 py-6">{children}</div>
+        <main className="flex-1 overflow-auto p-6">
+          {children}
         </main>
       </div>
 
