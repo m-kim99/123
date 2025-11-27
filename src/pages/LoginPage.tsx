@@ -137,23 +137,36 @@ export function LoginPage() {
     <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
-          <CardTitle className="flex justify-center">
+          <CardTitle className="flex justify-center items-center gap-2">
             <img
               src={logo}
               alt="문서 관리 시스템 로고"
               className="h-16"
             />
+            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+              BETA
+            </span>
           </CardTitle>
           <CardDescription>
             <br />
-            계정으로 로그인하거나 새로 회원가입하세요
+            우리 회사 문서, AI로 스마트하게 관리하세요.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="admin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="admin">관리자</TabsTrigger>
-              <TabsTrigger value="team">팀원</TabsTrigger>
+              <TabsTrigger
+                value="admin"
+                className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                관리자
+              </TabsTrigger>
+              <TabsTrigger
+                value="team"
+                className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                팀원
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="admin">
               <form
@@ -195,7 +208,7 @@ export function LoginPage() {
                   <Button
                     type="button"
                     variant="link"
-                    className="text-white hover:text-white/80 px-0 h-auto"
+                    className="text-white hover:text-white/80 px-4 h-auto"
                     onClick={() => {
                       resetSignupForm();
                       setSignupRole('admin');
@@ -247,7 +260,7 @@ export function LoginPage() {
                   <Button
                     type="button"
                     variant="link"
-                    className="text-white hover:text-white/80 px-0 h-auto"
+                    className="text-white hover:text-white/80 px-4 h-auto"
                     onClick={() => {
                       resetSignupForm();
                       setSignupRole('team');
@@ -261,6 +274,14 @@ export function LoginPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
+        <div className="px-6 pb-4 text-center">
+          <p className="text-xs text-slate-400">
+            COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            (주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다.
+          </p>
+        </div>
       </Card>
 
       {signupOpen && (

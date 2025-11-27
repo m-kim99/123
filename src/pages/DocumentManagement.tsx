@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -1082,7 +1081,7 @@ export function DocumentManagement() {
                 }
               }}
             >
-              <DialogContent>
+              <DialogContent closeClassName="text-white data-[state=open]:text-white">
                 <DialogHeader>
                   <DialogTitle>카테고리 수정</DialogTitle>
                   <DialogDescription>
@@ -1134,18 +1133,46 @@ export function DocumentManagement() {
                       placeholder="예: A동 2층 캐비닛 3"
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-nfc-registered"
-                      checked={editCategoryForm.nfcRegistered}
-                      onCheckedChange={(checked) =>
-                        setEditCategoryForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: Boolean(checked),
-                        }))
-                      }
-                    />
-                    <Label htmlFor="edit-nfc-registered">NFC 등록 여부</Label>
+                  <div className="space-y-2">
+                    <Label>NFC 등록 여부</Label>
+                    <div className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="nfc-yes"
+                          name="nfc-registered"
+                          checked={editCategoryForm.nfcRegistered === true}
+                          onChange={() =>
+                            setEditCategoryForm((prev) => ({
+                              ...prev,
+                              nfcRegistered: true,
+                            }))
+                          }
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor="nfc-yes" className="font-normal cursor-pointer">
+                          등록됨
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="nfc-no"
+                          name="nfc-registered"
+                          checked={editCategoryForm.nfcRegistered === false}
+                          onChange={() =>
+                            setEditCategoryForm((prev) => ({
+                              ...prev,
+                              nfcRegistered: false,
+                            }))
+                          }
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor="nfc-no" className="font-normal cursor-pointer">
+                          미등록
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>

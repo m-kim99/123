@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
-import { MessageSquare, X, Send } from 'lucide-react';
+import { MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -229,19 +229,22 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
               onSubmit={handleSendMessage}
               className="p-4 border-t flex gap-2"
             >
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="질문하세요..."
-                className="text-sm"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+              <div className="relative flex-1">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="질문하세요..."
+                  className="text-sm pr-10"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  ↵
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
