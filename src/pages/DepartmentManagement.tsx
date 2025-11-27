@@ -132,7 +132,7 @@ export function DepartmentManagement() {
             }
           }}
         >
-          <DialogContent>
+          <DialogContent closeClassName="text-white data-[state=open]:text-white">
             <DialogHeader>
               <DialogTitle>새 부서 추가</DialogTitle>
               <DialogDescription>

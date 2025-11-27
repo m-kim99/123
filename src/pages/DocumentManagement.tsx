@@ -1011,7 +1011,7 @@ export function DocumentManagement() {
                     카테고리 추가
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent closeClassName="text-white data-[state=open]:text-white">
                   <DialogHeader>
                     <DialogTitle>새 카테고리 추가</DialogTitle>
                     <DialogDescription>
@@ -1074,6 +1074,53 @@ export function DocumentManagement() {
                         }
                         placeholder="예: A동 2층 캐비닛 3"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>NFC 등록 여부</Label>
+                      <div className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="new-nfc-yes"
+                            name="new-nfc-registered"
+                            checked={newCategory.nfcRegistered === true}
+                            onChange={() =>
+                              setNewCategory({
+                                ...newCategory,
+                                nfcRegistered: true,
+                              })
+                            }
+                            className="h-4 w-4"
+                          />
+                          <Label
+                            htmlFor="new-nfc-yes"
+                            className="font-normal cursor-pointer"
+                          >
+                            등록됨
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="new-nfc-no"
+                            name="new-nfc-registered"
+                            checked={newCategory.nfcRegistered === false}
+                            onChange={() =>
+                              setNewCategory({
+                                ...newCategory,
+                                nfcRegistered: false,
+                              })
+                            }
+                            className="h-4 w-4"
+                          />
+                          <Label
+                            htmlFor="new-nfc-no"
+                            className="font-normal cursor-pointer"
+                          >
+                            미등록
+                          </Label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>

@@ -299,9 +299,19 @@ export function LoginPage() {
                 value={signupRole}
                 onValueChange={(v) => setSignupRole(v as 'admin' | 'team')}
               >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="admin">관리자</TabsTrigger>
-                  <TabsTrigger value="team">팀원</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger
+                    value="admin"
+                    className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                  >
+                    관리자
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="team"
+                    className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                  >
+                    팀원
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
 
