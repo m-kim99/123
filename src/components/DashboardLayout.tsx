@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import logo2 from '@/assets/logo2.png';
+import logo from '@/assets/logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,11 +135,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     };
   }, [searchQuery]);
-
-  const handleLogoClick = () => {
-    const targetPath = user?.role === 'admin' ? '/admin' : '/team';
-    navigate(targetPath);
-  };
 
   const handleSearch = async () => {
     const query = searchQuery.trim();
@@ -286,13 +281,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r">
         <div className="flex items-center justify-between h-16 px-6 border-b">
           <div className="flex items-center gap-2">
-            <div
-              className="p-2 rounded-lg"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-lg">문서관리</span>
+            <img src={logo} alt="TrayStorage" className="h-10" />
           </div>
         </div>
 
@@ -323,6 +312,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+          <div className="text-center mb-3">
+            <p className="text-xs text-slate-400 whitespace-nowrap">
+              COPYRIGHT © TRAYSTORAGE CONNECT.
+            </p>
+            <p className="text-xs text-slate-400">ALL RIGHTS RESERVED.</p>
+          </div>
           <div className="flex items-center gap-3 px-3 py-2">
             <div>
               <p className="text-sm font-medium">{user?.name}</p>
@@ -338,19 +333,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="sticky top-0 z-40 border-b bg-[#1e40af] w-full">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
-              <button
-                type="button"
-                onClick={handleLogoClick}
-                className="flex items-center hover:opacity-80 focus:outline-none bg-transparent border-none p-0"
-              >
-                <img
-                  src={logo2}
-                  alt="TrayStorage CONNECT"
-                  className="h-9"
-                />
-              </button>
-
-              <div className="flex-1 flex gap-2">
+              <div className="flex-1 flex gap-2 max-w-2xl">
                 <div className="relative flex-1">
                   <Input
                     type="search"

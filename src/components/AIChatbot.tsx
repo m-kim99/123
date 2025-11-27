@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -113,14 +113,14 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
               </div>
               AI 챗봇
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
+            <button
+              type="button"
               onClick={() => setIsOpen(false)}
+              className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
+              style={{ backgroundColor: primaryColor }}
             >
-              <X className="h-4 w-4" />
-            </Button>
+              X
+            </button>
           </CardHeader>
 
           <CardContent className="p-0 flex flex-col h-96">
@@ -236,14 +236,13 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
                   placeholder="질문하세요..."
                   className="text-sm pr-10"
                 />
-                <Button
+                <button
                   type="submit"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md text-white border border-transparent hover:border-black focus:outline-none"
                   style={{ backgroundColor: primaryColor }}
                 >
                   ↵
-                </Button>
+                </button>
               </div>
             </form>
           </CardContent>
