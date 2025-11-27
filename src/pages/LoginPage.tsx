@@ -135,154 +135,157 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex justify-center items-center gap-2">
-            <img
-              src={logo}
-              alt="문서 관리 시스템 로고"
-              className="h-16"
-            />
-            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-              BETA
-            </span>
-          </CardTitle>
-          <CardDescription>
-            <br />
-            우리 회사 문서, AI로 스마트하게 관리하세요.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="admin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger
-                value="admin"
-                className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-              >
-                관리자
-              </TabsTrigger>
-              <TabsTrigger
-                value="team"
-                className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-              >
-                팀원
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="admin">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await handleLogin('admin');
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">이메일</Label>
-                  <Input
-                    id="admin-email"
-                    type="email"
-                    placeholder="admin@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-password">비밀번호</Label>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? '로그인 중...' : '관리자 로그인'}
-                </Button>
-                <p className="text-xs text-center text-slate-500">
-                  계정이 없으신가요?{' '}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-white hover:text-white/80 px-4 h-auto"
-                    onClick={() => {
-                      resetSignupForm();
-                      setSignupRole('admin');
-                      setSignupOpen(true);
-                    }}
-                  >
-                    회원가입
+      <div className="flex flex-col items-center">
+        <Card className="w-full max-w-md mx-auto">
+          <CardHeader className="text-center">
+            <CardTitle className="flex justify-center items-center gap-2">
+              <img
+                src={logo}
+                alt="문서 관리 시스템 로고"
+                className="h-16"
+              />
+              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                BETA
+              </span>
+            </CardTitle>
+            <CardDescription>
+              <br />
+              우리 회사 문서, AI로 스마트하게 관리하세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="admin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger
+                  value="admin"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  관리자
+                </TabsTrigger>
+                <TabsTrigger
+                  value="team"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  팀원
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="admin">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await handleLogin('admin');
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">이메일</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      placeholder="admin@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-password">비밀번호</Label>
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? '로그인 중...' : '관리자 로그인'}
                   </Button>
-                </p>
-              </form>
-            </TabsContent>
-            <TabsContent value="team">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await handleLogin('team');
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="team-email">이메일</Label>
-                  <Input
-                    id="team-email"
-                    type="email"
-                    placeholder="team@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team-password">비밀번호</Label>
-                  <Input
-                    id="team-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? '로그인 중...' : '팀원 로그인'}
-                </Button>
-                <p className="text-xs text-center text-slate-500">
-                  계정이 없으신가요?{' '}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-white hover:text-white/80 px-4 h-auto"
-                    onClick={() => {
-                      resetSignupForm();
-                      setSignupRole('team');
-                      setSignupOpen(true);
-                    }}
-                  >
-                    회원가입
+                  <p className="text-xs text-center text-slate-500">
+                    계정이 없으신가요?{' '}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-white hover:text-white/80 px-4 h-auto"
+                      onClick={() => {
+                        resetSignupForm();
+                        setSignupRole('admin');
+                        setSignupOpen(true);
+                      }}
+                    >
+                      회원가입
+                    </Button>
+                  </p>
+                </form>
+              </TabsContent>
+              <TabsContent value="team">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await handleLogin('team');
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="team-email">이메일</Label>
+                    <Input
+                      id="team-email"
+                      type="email"
+                      placeholder="team@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="team-password">비밀번호</Label>
+                    <Input
+                      id="team-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? '로그인 중...' : '팀원 로그인'}
                   </Button>
-                </p>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <div className="px-6 pb-4 text-center">
-          <p className="text-xs text-slate-400">
+                  <p className="text-xs text-center text-slate-500">
+                    계정이 없으신가요?{' '}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-white hover:text-white/80 px-4 h-auto"
+                      onClick={() => {
+                        resetSignupForm();
+                        setSignupRole('team');
+                        setSignupOpen(true);
+                      }}
+                    >
+                      회원가입
+                    </Button>
+                  </p>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <div className="mt-4 text-center">
+          <p className="text-xs text-black">
             COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
           </p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-black mt-1">
             (주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다.
           </p>
         </div>
-      </Card>
+      </div>
 
       {signupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
