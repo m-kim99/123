@@ -280,9 +280,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-[#f8f9fa]">
       <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r">
         <div className="flex items-center justify-between h-16 px-6 border-b">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="TrayStorage" className="h-10" />
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate(basePath)}
+            className="flex items-center gap-2 bg-white focus:outline-none"
+          >
+            <img
+              src={logo}
+              alt="TrayStorage"
+              className="h-10 w-auto object-contain"
+            />
+          </button>
         </div>
 
         <nav className="p-4 space-y-1">
@@ -329,8 +337,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      <div className="pl-64 w-full">
-        <header className="sticky top-0 z-40 border-b bg-[#1e40af] w-full">
+      <div className="lg:pl-64 w-full min-w-full">
+        <header className="sticky top-0 z-40 border-b bg-[#1e40af] w-screen lg:w-[calc(100vw-16rem)]">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">
@@ -487,8 +495,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-6">
-          {children}
+        <main className="flex-1 overflow-auto w-full">
+          <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
+            {children}
+          </div>
         </main>
       </div>
 

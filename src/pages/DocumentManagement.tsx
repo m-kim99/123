@@ -981,10 +981,25 @@ export function DocumentManagement() {
           }
           className="space-y-4"
         >
-          <TabsList>
-            <TabsTrigger value="categories">카테고리 관리</TabsTrigger>
-            <TabsTrigger value="documents">전체 문서</TabsTrigger>
-            <TabsTrigger value="upload">문서 업로드</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger
+              value="categories"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
+            >
+              카테고리 관리
+            </TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
+            >
+              전체 문서
+            </TabsTrigger>
+            <TabsTrigger
+              value="upload"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
+            >
+              문서 업로드
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories" className="space-y-4">
@@ -1646,7 +1661,7 @@ export function DocumentManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setImageZoom((prev) => Math.max(25, prev - 25))}
+                  onClick={() => setImageZoom(Math.max(25, imageZoom - 25))}
                 >
                   ➖
                 </Button>
@@ -1658,7 +1673,7 @@ export function DocumentManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setImageZoom((prev) => Math.min(200, prev + 25))}
+                  onClick={() => setImageZoom(Math.min(200, imageZoom + 25))}
                 >
                   ➕
                 </Button>
@@ -1668,49 +1683,16 @@ export function DocumentManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setImageZoom(100)}
-                >
-                  100%
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageZoom(50)}
-                  title="화면에 맞추기"
-                >
-                  화면 맞춤
-                </Button>
-
-                <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                  onClick={() => setImageRotation((imageRotation + 90) % 360)}
                   title="90도 회전"
                 >
                   🔄
                 </Button>
 
-                <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const elem = document.querySelector('.image-viewer');
-                    elem?.requestFullscreen?.();
-                  }}
-                  title="전체화면"
-                >
-                  ⛶
-                </Button>
-
-                <div className="w-px h-6 bg-slate-300 mx-2" />
-
                 {previewDoc && (
                   <>
+                    <div className="w-px h-6 bg-slate-300 mx-2" />
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -1726,11 +1708,9 @@ export function DocumentManagement() {
                       onClick={() => {
                         const printWindow = window.open(previewDoc.url);
                         if (printWindow) {
-                          printWindow.onload = () => {
-                            setTimeout(() => {
-                              printWindow.print();
-                            }, 500);
-                          };
+                          setTimeout(() => {
+                            printWindow.print();
+                          }, 500);
                         }
                       }}
                       title="인쇄"
@@ -1764,8 +1744,9 @@ export function DocumentManagement() {
                       style={{
                         transform: `scale(${imageZoom / 100}) rotate(${imageRotation}deg)`,
                         transition: 'transform 0.2s ease',
-                        maxWidth: 'none',
-                        maxHeight: 'none',
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
                       }}
                       className="shadow-lg"
                     />
