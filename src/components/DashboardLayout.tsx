@@ -320,7 +320,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <div className="text-center mb-3">
+          <div className="mb-3 text-left">
             <p className="text-xs text-slate-400 whitespace-nowrap">
               COPYRIGHT © TRAYSTORAGE CONNECT.
             </p>
