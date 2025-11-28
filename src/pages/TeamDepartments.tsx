@@ -30,6 +30,11 @@ export function TeamDepartments() {
   const fetchDepartments = async () => {
     setIsLoading(true);
     try {
+      if (!user?.companyId) {
+        setDepartments([]);
+        return;
+      }
+
       // 권한 있는 부서만 가져오기
       const { data: permissionData, error: permError } = await supabase
         .from('user_permissions')
@@ -52,6 +57,7 @@ export function TeamDepartments() {
         .from('departments')
         .select('*')
         .in('id', departmentIds)
+        .eq('company_id', user.companyId)
         .order('name');
 
       if (deptError) throw deptError;

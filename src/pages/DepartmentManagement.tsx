@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import { toast } from '@/hooks/use-toast';
 export function DepartmentManagement() {
   const { departments, categories, documents, fetchDepartments } = useDocumentStore();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
@@ -75,6 +77,16 @@ export function DepartmentManagement() {
     setIsSaving(true);
 
     try {
+      if (!user?.companyId) {
+        toast({
+          title: '회사 정보 없음',
+          description: '회사 정보를 불러오지 못했습니다. 다시 로그인해주세요.',
+          variant: 'destructive',
+        });
+        setIsSaving(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('departments')
         .insert({
@@ -82,6 +94,7 @@ export function DepartmentManagement() {
           code,
           // description 컬럼이 있다면 함께 저장 (없으면 무시됨)
           description: newDeptDescription || null,
+          company_id: user.companyId,
         });
 
       if (error) {

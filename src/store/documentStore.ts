@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type Department as SupabaseDepartment, type Category as SupabaseCategory, type Document as SupabaseDocument } from '@/lib/supabase';
+import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
 
 export interface Department {
@@ -229,9 +230,17 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   fetchDepartments: async () => {
     set({ isLoading: true, error: null });
     try {
+      const { user } = useAuthStore.getState();
+
+      if (!user?.companyId) {
+        set({ departments: mockDepartments, isLoading: false });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('departments')
         .select('*')
+        .eq('company_id', user.companyId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

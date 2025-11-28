@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useAuthStore } from '@/store/authStore';
 
 interface User {
   id: string;
@@ -44,6 +45,7 @@ export function UserManagement() {
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { user: authUser } = useAuthStore();
 
   useEffect(() => {
     fetchUsers();
@@ -51,9 +53,15 @@ export function UserManagement() {
   }, []);
 
   const fetchUsers = async () => {
+    if (!authUser?.companyId) {
+      setUsers([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
+      .eq('company_id', authUser.companyId)
       .order('name');
 
     if (error) {
@@ -65,9 +73,15 @@ export function UserManagement() {
   };
 
   const fetchDepartments = async () => {
+    if (!authUser?.companyId) {
+      setDepartments([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('departments')
       .select('*')
+      .eq('company_id', authUser.companyId)
       .order('name');
 
     if (error) {
@@ -172,18 +186,18 @@ export function UserManagement() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {users.map((user) => (
-            <Card key={user.id}>
+          {users.map((member) => (
+            <Card key={member.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Users className="h-5 w-5" />
-                      {user.name}
+                      {member.name}
                     </CardTitle>
-                    <CardDescription className="mt-1">{user.email}</CardDescription>
+                    <CardDescription className="mt-1">{member.email}</CardDescription>
                   </div>
-                  {user.role === 'admin' && (
+                  {member.role === 'admin' && (
                     <Badge variant="outline" className="bg-orange-50">
                       <Shield className="h-3 w-3 mr-1" />
                       관리자
@@ -194,20 +208,30 @@ export function UserManagement() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">소속 회사</span>
+                    <span className="font-medium">
+                      {authUser?.companyCode
+                        ? authUser.companyName
+                          ? `${authUser.companyCode} (${authUser.companyName})`
+                          : authUser.companyCode
+                        : '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">소속 부서</span>
-                    <span className="font-medium">{getDepartmentName(user.department_id)}</span>
+                    <span className="font-medium">{getDepartmentName(member.department_id)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">역할</span>
-                    <span className="font-medium">{user.role === 'admin' ? '관리자' : '팀원'}</span>
+                    <span className="font-medium">{member.role === 'admin' ? '관리자' : '팀원'}</span>
                   </div>
                 </div>
 
-                {user.role === 'team' && (
+                {member.role === 'team' && (
                   <Button
                     variant="outline"
                     className="w-full mt-4"
-                    onClick={() => handleEditPermissions(user)}
+                    onClick={() => handleEditPermissions(member)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     권한 편집
