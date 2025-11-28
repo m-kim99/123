@@ -53,6 +53,18 @@ interface DocumentState {
     }
   ) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
+  checkPermission: (
+    userId: string,
+    departmentId: string,
+    action:
+      | 'read'
+      | 'write'
+      | 'upload'
+      | 'delete'
+      | 'download'
+      | 'share'
+      | 'print'
+  ) => Promise<boolean>;
 }
 
 const mockDepartments: Department[] = [
@@ -698,6 +710,26 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         description: '네트워크 오류로 인해 문서를 완전히 삭제하지 못했습니다.',
         variant: 'destructive',
       });
+    }
+  },
+
+  checkPermission: async (userId, departmentId, action) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_permissions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('department_id', departmentId)
+        .single();
+
+      if (error || !data) {
+        return false;
+      }
+
+      return (data as any)[`can_${action}`] || false;
+    } catch (error) {
+      console.error('권한 체크 오류:', error);
+      return false;
     }
   },
 }));

@@ -11,6 +11,7 @@ import { Statistics } from './pages/Statistics';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
+import { UserManagement } from './pages/UserManagement';
 
 function ProtectedRoute({
   children,
@@ -92,6 +93,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <DocumentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <UserManagement />
             </ProtectedRoute>
           }
         />

@@ -7,6 +7,7 @@ import {
   BarChart3,
   LogOut,
   ChevronDown,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -268,6 +269,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [{ name: '부서 관리', href: `${basePath}/departments`, icon: Building2 }]
       : []),
     { name: '문서 관리', href: `${basePath}/documents`, icon: FileText },
+    ...(isAdmin
+      ? [{ name: '팀원 관리', href: `${basePath}/users`, icon: Users }]
+      : []),
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
   ];
 
