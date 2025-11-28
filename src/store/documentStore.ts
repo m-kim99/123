@@ -314,9 +314,32 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   fetchCategories: async () => {
     set({ isLoading: true, error: null });
     try {
+      const { user } = useAuthStore.getState();
+
+      if (!user?.companyId) {
+        set({ categories: mockCategories, isLoading: false });
+        return;
+      }
+
+      // 현재 회사의 부서 ID 목록 조회
+      const { data: deptData, error: deptError } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('company_id', user.companyId);
+
+      if (deptError) throw deptError;
+
+      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+
+      if (deptIds.length === 0) {
+        set({ categories: [], isLoading: false });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .in('department_id', deptIds)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -375,9 +398,32 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   fetchDocuments: async () => {
     set({ isLoading: true, error: null });
     try {
+      const { user } = useAuthStore.getState();
+
+      if (!user?.companyId) {
+        set({ documents: mockDocuments, isLoading: false });
+        return;
+      }
+
+      // 현재 회사의 부서 ID 목록 조회
+      const { data: deptData, error: deptError } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('company_id', user.companyId);
+
+      if (deptError) throw deptError;
+
+      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+
+      if (deptIds.length === 0) {
+        set({ documents: [], isLoading: false });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('documents')
         .select('*')
+        .in('department_id', deptIds)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
