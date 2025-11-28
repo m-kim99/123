@@ -39,7 +39,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, logout } = useAuthStore();
+  const { user, logout, checkSession, clearError } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +53,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [profileCompanyCode, setProfileCompanyCode] = useState('');
+  const [profileCompanyName, setProfileCompanyName] = useState('');
+  const [companyVerified, setCompanyVerified] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -178,6 +181,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const openProfileDialog = () => {
     setProfileName(user?.name || '');
     setProfileEmail(user?.email || '');
+    setProfileCompanyCode(user?.companyCode || '');
+    setProfileCompanyName(user?.companyName || '');
+    setCompanyVerified(true);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -190,61 +196,99 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
 
-    const trimmedName = profileName.trim();
-    if (!trimmedName) {
-      setProfileError('이름을 입력하세요.');
-      return;
-    }
-
+    clearError();
     setIsSavingProfile(true);
-    setProfileError(null);
 
     try {
-      const updates: any = {};
-
-      if (trimmedName !== user.name) {
-        updates.name = trimmedName;
+      // 회사 정보 인증 확인
+      if (!companyVerified) {
+        setProfileError('회사 정보를 인증해주세요.');
+        setIsSavingProfile(false);
+        return;
       }
 
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
-          .from('users')
-          .update(updates)
-          .eq('id', user.id);
-
-        if (error) {
-          throw error;
-        }
+      const trimmedName = profileName.trim();
+      if (!trimmedName) {
+        setProfileError('이름을 입력하세요.');
+        setIsSavingProfile(false);
+        return;
       }
 
-      if (currentPassword || newPassword || confirmPassword) {
-        if (!currentPassword || !newPassword || !confirmPassword) {
-          setProfileError('비밀번호 변경 필드를 모두 입력하세요.');
-          setIsSavingProfile(false);
-          return;
+      // 1. 회사 정보 변경 처리
+      let newCompanyId = user.companyId;
+
+      if (
+        profileCompanyCode !== user.companyCode ||
+        profileCompanyName !== user.companyName
+      ) {
+        const { data: existingCompany, error: checkError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('code', profileCompanyCode)
+          .single();
+
+        let company;
+
+        if (existingCompany) {
+          if (existingCompany.name !== profileCompanyName) {
+            setProfileError(
+              '회사 코드는 존재하지만 회사명이 일치하지 않습니다.'
+            );
+            setIsSavingProfile(false);
+            return;
+          }
+          company = existingCompany;
+        } else if (checkError && (checkError as any).code === 'PGRST116') {
+          const { data: newCompany, error: createError } = await supabase
+            .from('companies')
+            .insert({
+              name: profileCompanyName,
+              code: profileCompanyCode,
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          company = newCompany;
+        } else {
+          throw checkError;
         }
 
+        newCompanyId = company.id;
+      }
+
+      // 2. 사용자 정보 업데이트
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          name: trimmedName,
+          company_id: newCompanyId,
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // 3. 비밀번호 변경 (입력된 경우)
+      if (newPassword) {
         if (newPassword !== confirmPassword) {
           setProfileError('새 비밀번호가 일치하지 않습니다.');
           setIsSavingProfile(false);
           return;
         }
 
-        try {
-          const { error: pwError } = await supabase.auth.updateUser({
-            password: newPassword,
-          });
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
 
-          if (pwError) {
-            throw pwError;
-          }
-        } catch (pwError) {
-          console.error('비밀번호 변경 실패:', pwError);
-          setProfileError('비밀번호 변경 중 오류가 발생했습니다.');
+        if (passwordError) {
+          setProfileError('비밀번호 변경 실패: ' + passwordError.message);
           setIsSavingProfile(false);
           return;
         }
       }
+
+      // 4. 세션 새로고침
+      await checkSession();
 
       toast({
         title: '저장되었습니다',
@@ -473,6 +517,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
+                <Building2 className="h-4 w-4 text-slate-500" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-900">
+                    {user?.companyCode || '회사'}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {user?.companyName || ''}
+                  </span>
+                </div>
+              </div>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -523,6 +579,73 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 onChange={(e) => setProfileName(e.target.value)}
               />
             </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <p className="text-sm font-medium text-slate-700">회사 정보 변경</p>
+
+              <div className="space-y-2">
+                <Label>회사 코드</Label>
+                <Input
+                  placeholder="예: COMPANY001"
+                  value={profileCompanyCode}
+                  onChange={(e) => {
+                    setProfileCompanyCode(e.target.value);
+                    setCompanyVerified(false);
+                  }}
+                  disabled={companyVerified}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>회사명</Label>
+                <Input
+                  placeholder="예: 삼성전자"
+                  value={profileCompanyName}
+                  onChange={(e) => {
+                    setProfileCompanyName(e.target.value);
+                    setCompanyVerified(false);
+                  }}
+                  disabled={companyVerified}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  className={`w-full ${
+                    companyVerified ? 'bg-green-600 hover:bg-green-600' : ''
+                  }`}
+                  onClick={() => {
+                    if (
+                      profileCompanyCode.trim() &&
+                      profileCompanyName.trim()
+                    ) {
+                      setCompanyVerified(true);
+                      toast({
+                        title: '인증 완료',
+                        description: '회사 정보가 인증되었습니다.',
+                      });
+                    } else {
+                      toast({
+                        title: '회사 정보 입력',
+                        description:
+                          '회사 코드와 회사명을 모두 입력해주세요.',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  disabled={
+                    companyVerified ||
+                    !profileCompanyCode.trim() ||
+                    !profileCompanyName.trim()
+                  }
+                  variant={companyVerified ? 'default' : 'outline'}
+                >
+                  {companyVerified ? '✓ 인증됨' : '인증하기'}
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="profile-email">이메일</Label>
               <Input

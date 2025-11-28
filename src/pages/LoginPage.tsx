@@ -20,8 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuthStore } from '@/store/authStore';
-import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 import logo from '@/assets/logo.png';
 
 export function LoginPage() {
@@ -29,25 +29,34 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
+  const [companyCodeVerified, setCompanyCodeVerified] = useState(false);
   const [signupForm, setSignupForm] = useState({
-    name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    name: '',
     departmentId: '',
+    companyCode: '',
+    companyName: '',
   });
   const navigate = useNavigate();
-  const { departments } = useDocumentStore();
+  const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const { login, signup, isLoading, error, clearError } = useAuthStore();
 
   const resetSignupForm = () => {
     setSignupForm({
-      name: '',
       email: '',
       password: '',
       confirmPassword: '',
+      name: '',
       departmentId: '',
+      companyCode: '',
+      companyName: '',
     });
+    setCompanyCodeVerified(false);
+    setAvailableDepartments([]);
+    setIsLoadingDepartments(false);
   };
 
   const handleLogin = async (role: 'admin' | 'team') => {
@@ -114,6 +123,8 @@ export function LoginPage() {
       signupForm.password,
       signupForm.name,
       signupRole,
+      signupForm.companyCode.trim(),
+      signupForm.companyName.trim(),
       signupRole === 'team' ? signupForm.departmentId : undefined
     );
 
@@ -316,6 +327,144 @@ export function LoginPage() {
               </Tabs>
 
               <div className="space-y-2">
+                <Label>회사 코드</Label>
+                <Input
+                  placeholder="예: COMPANY001"
+                  value={signupForm.companyCode}
+                  onChange={(e) => {
+                    setSignupForm((prev) => ({
+                      ...prev,
+                      companyCode: e.target.value,
+                    }));
+                    setCompanyCodeVerified(false);
+                  }}
+                  disabled={companyCodeVerified}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>회사명</Label>
+                <Input
+                  placeholder="예: 삼성전자"
+                  value={signupForm.companyName}
+                  onChange={(e) => {
+                    setSignupForm((prev) => ({
+                      ...prev,
+                      companyName: e.target.value,
+                    }));
+                    setCompanyCodeVerified(false);
+                  }}
+                  disabled={companyCodeVerified}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  className={`w-full ${
+                    companyCodeVerified
+                      ? 'bg-green-600 hover:bg-green-600'
+                      : ''
+                  }`}
+                  onClick={async () => {
+                    if (
+                      signupForm.companyCode.trim() &&
+                      signupForm.companyName.trim()
+                    ) {
+                      setCompanyCodeVerified(true);
+
+                      // 팀원 회원가입인 경우 회사의 부서 목록 불러오기
+                      if (signupRole === 'team') {
+                        setIsLoadingDepartments(true);
+                        try {
+                          const { data: company, error: companyError } =
+                            await supabase
+                              .from('companies')
+                              .select('*')
+                              .eq('code', signupForm.companyCode.trim())
+                              .single();
+
+                          if (company) {
+                            const { data: departments, error: deptError } =
+                              await supabase
+                                .from('departments')
+                                .select('*')
+                                .eq('company_id', company.id)
+                                .order('name');
+
+                            if (!deptError && departments) {
+                              setAvailableDepartments(departments);
+                              toast({
+                                title: '인증 완료',
+                                description: `${departments.length}개 부서를 불러왔습니다.`,
+                              });
+                            } else {
+                              setAvailableDepartments([]);
+                              toast({
+                                title: '인증 완료',
+                                description:
+                                  '해당 회사에 부서가 없습니다. 관리자에게 문의하세요.',
+                                variant: 'destructive',
+                              });
+                            }
+                          } else if (
+                            companyError &&
+                            (companyError as any).code === 'PGRST116'
+                          ) {
+                            // 회사가 없으면 부서 목록 비우기
+                            setAvailableDepartments([]);
+                            toast({
+                              title: '인증 완료',
+                              description:
+                                '새로운 회사입니다. 관리자로 가입 후 부서를 생성하세요.',
+                            });
+                          } else if (companyError) {
+                            throw companyError;
+                          }
+                        } catch (error) {
+                          console.error('부서 로드 실패:', error);
+                          setAvailableDepartments([]);
+                          toast({
+                            title: '오류',
+                            description: '부서를 불러오는 중 오류가 발생했습니다.',
+                            variant: 'destructive',
+                          });
+                        } finally {
+                          setIsLoadingDepartments(false);
+                        }
+                      } else {
+                        // 관리자 회원가입인 경우 단순 인증 완료 메시지
+                        toast({
+                          title: '인증 완료',
+                          description: '회사 정보가 인증되었습니다.',
+                        });
+                      }
+                    } else {
+                      toast({
+                        title: '회사 정보 입력',
+                        description:
+                          '회사 코드와 회사명을 모두 입력해주세요.',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  disabled={
+                    companyCodeVerified ||
+                    !signupForm.companyCode.trim() ||
+                    !signupForm.companyName.trim()
+                  }
+                  variant={companyCodeVerified ? 'default' : 'outline'}
+                >
+                  {companyCodeVerified ? '✓ 인증됨' : '인증하기'}
+                </Button>
+                {!companyCodeVerified && (
+                  <p className="text-xs text-slate-400">
+                    회사 코드와 회사명을 입력하고 인증해주세요
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label>이름</Label>
                 <Input
                   placeholder="홍길동"
@@ -379,18 +528,39 @@ export function LoginPage() {
                         departmentId: value,
                       }))
                     }
+                    disabled={!companyCodeVerified || isLoadingDepartments}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="부서를 선택하세요" />
+                      <SelectValue
+                        placeholder={
+                          !companyCodeVerified
+                            ? '먼저 회사 정보를 인증해주세요'
+                            : isLoadingDepartments
+                            ? '부서를 불러오는 중...'
+                            : availableDepartments.length === 0
+                            ? '사용 가능한 부서가 없습니다'
+                            : '부서 선택'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {departments.map((dept) => (
+                      {availableDepartments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
+                          {dept.name} ({dept.code})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {!companyCodeVerified && (
+                    <p className="text-xs text-slate-400">
+                      회사 인증 후 부서를 선택할 수 있습니다
+                    </p>
+                  )}
+                  {companyCodeVerified && availableDepartments.length === 0 && (
+                    <p className="text-xs text-red-500">
+                      부서가 없습니다. 관리자에게 문의하거나 관리자 계정으로 가입하세요.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -412,7 +582,18 @@ export function LoginPage() {
               >
                 취소
               </Button>
-              <Button onClick={handleSignup} disabled={isLoading}>
+              <Button
+                onClick={handleSignup}
+                className="w-full"
+                disabled={
+                  isLoading ||
+                  !companyCodeVerified ||
+                  !signupForm.email ||
+                  !signupForm.password ||
+                  !signupForm.name ||
+                  (signupRole === 'team' && !signupForm.departmentId)
+                }
+              >
                 {isLoading ? '가입 중...' : '회원가입'}
               </Button>
             </div>
