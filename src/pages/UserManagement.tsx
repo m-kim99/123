@@ -241,11 +241,12 @@ export function UserManagement() {
                       )}
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id={`${dept.id}-read`}
                             checked={perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_read', Boolean(checked))
                             }
@@ -263,6 +264,7 @@ export function UserManagement() {
                             id={`${dept.id}-write`}
                             checked={perm.can_write}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_write', Boolean(checked))
                             }
@@ -280,6 +282,7 @@ export function UserManagement() {
                             id={`${dept.id}-upload`}
                             checked={perm.can_upload}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_upload', Boolean(checked))
                             }
@@ -297,6 +300,7 @@ export function UserManagement() {
                             id={`${dept.id}-delete`}
                             checked={perm.can_delete}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_delete', Boolean(checked))
                             }
@@ -314,6 +318,7 @@ export function UserManagement() {
                             id={`${dept.id}-download`}
                             checked={perm.can_download}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_download', Boolean(checked))
                             }
@@ -331,6 +336,7 @@ export function UserManagement() {
                             id={`${dept.id}-share`}
                             checked={perm.can_share}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_share', Boolean(checked))
                             }
@@ -348,6 +354,7 @@ export function UserManagement() {
                             id={`${dept.id}-print`}
                             checked={perm.can_print}
                             disabled={!perm.can_read}
+                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
                             onCheckedChange={(checked) =>
                               handlePermissionChange(dept.id, 'can_print', Boolean(checked))
                             }
