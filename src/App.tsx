@@ -12,6 +12,8 @@ import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
 import { UserManagement } from './pages/UserManagement';
+import { TeamDepartments } from './pages/TeamDepartments';
+import { TeamDepartmentDetail } from './pages/TeamDepartmentDetail';
 
 function ProtectedRoute({
   children,
@@ -126,6 +128,22 @@ function App() {
           element={
             <ProtectedRoute requiredRole="team">
               <TeamDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/department/:departmentId"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <TeamDepartmentDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/departments"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <TeamDepartments />
             </ProtectedRoute>
           }
         />
