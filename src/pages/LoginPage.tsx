@@ -305,7 +305,7 @@ export function LoginPage() {
               <CardTitle>회원가입</CardTitle>
               <CardDescription>새 계정을 생성합니다</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 max-h-[90vh] overflow-y-auto">
               <Tabs
                 value={signupRole}
                 onValueChange={(v) => setSignupRole(v as 'admin' | 'team')}
@@ -338,7 +338,6 @@ export function LoginPage() {
                     }));
                     setCompanyCodeVerified(false);
                   }}
-                  disabled={companyCodeVerified}
                 />
               </div>
 
@@ -354,7 +353,6 @@ export function LoginPage() {
                     }));
                     setCompanyCodeVerified(false);
                   }}
-                  disabled={companyCodeVerified}
                 />
               </div>
 
@@ -373,16 +371,15 @@ export function LoginPage() {
                     ) {
                       setCompanyCodeVerified(true);
 
-                      // 팀원 회원가입인 경우 회사의 부서 목록 불러오기
+                      // 팀원인 경우 부서 목록 로드
                       if (signupRole === 'team') {
                         setIsLoadingDepartments(true);
                         try {
-                          const { data: company, error: companyError } =
-                            await supabase
-                              .from('companies')
-                              .select('*')
-                              .eq('code', signupForm.companyCode.trim())
-                              .single();
+                          const { data: company } = await supabase
+                            .from('companies')
+                            .select('*')
+                            .eq('code', signupForm.companyCode.trim())
+                            .single();
 
                           if (company) {
                             const { data: departments, error: deptError } =
@@ -402,38 +399,24 @@ export function LoginPage() {
                               setAvailableDepartments([]);
                               toast({
                                 title: '인증 완료',
-                                description:
-                                  '해당 회사에 부서가 없습니다. 관리자에게 문의하세요.',
-                                variant: 'destructive',
+                                description: '해당 회사에 부서가 없습니다.',
                               });
                             }
-                          } else if (
-                            companyError &&
-                            (companyError as any).code === 'PGRST116'
-                          ) {
-                            // 회사가 없으면 부서 목록 비우기
+                          } else {
                             setAvailableDepartments([]);
                             toast({
                               title: '인증 완료',
-                              description:
-                                '새로운 회사입니다. 관리자로 가입 후 부서를 생성하세요.',
+                              description: '새로운 회사입니다.',
                             });
-                          } else if (companyError) {
-                            throw companyError;
                           }
                         } catch (error) {
                           console.error('부서 로드 실패:', error);
                           setAvailableDepartments([]);
-                          toast({
-                            title: '오류',
-                            description: '부서를 불러오는 중 오류가 발생했습니다.',
-                            variant: 'destructive',
-                          });
                         } finally {
                           setIsLoadingDepartments(false);
                         }
                       } else {
-                        // 관리자 회원가입인 경우 단순 인증 완료 메시지
+                        // 관리자인 경우
                         toast({
                           title: '인증 완료',
                           description: '회사 정보가 인증되었습니다.',
@@ -449,17 +432,21 @@ export function LoginPage() {
                     }
                   }}
                   disabled={
-                    companyCodeVerified ||
                     !signupForm.companyCode.trim() ||
                     !signupForm.companyName.trim()
                   }
                   variant={companyCodeVerified ? 'default' : 'outline'}
                 >
-                  {companyCodeVerified ? '✓ 인증됨' : '인증하기'}
+                  {companyCodeVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
                 </Button>
                 {!companyCodeVerified && (
                   <p className="text-xs text-slate-400">
                     회사 코드와 회사명을 입력하고 인증해주세요
+                  </p>
+                )}
+                {companyCodeVerified && (
+                  <p className="text-xs text-green-600">
+                    다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
                   </p>
                 )}
               </div>

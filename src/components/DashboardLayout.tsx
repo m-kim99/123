@@ -565,7 +565,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>프로필 설정</DialogTitle>
             <DialogDescription>사용자 정보를 수정합니다.</DialogDescription>
@@ -592,7 +592,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     setProfileCompanyCode(e.target.value);
                     setCompanyVerified(false);
                   }}
-                  disabled={companyVerified}
                 />
               </div>
 
@@ -605,7 +604,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     setProfileCompanyName(e.target.value);
                     setCompanyVerified(false);
                   }}
-                  disabled={companyVerified}
                 />
               </div>
 
@@ -616,10 +614,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     companyVerified ? 'bg-green-600 hover:bg-green-600' : ''
                   }`}
                   onClick={() => {
-                    if (
-                      profileCompanyCode.trim() &&
-                      profileCompanyName.trim()
-                    ) {
+                    if (profileCompanyCode.trim() && profileCompanyName.trim()) {
                       setCompanyVerified(true);
                       toast({
                         title: '인증 완료',
@@ -628,21 +623,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     } else {
                       toast({
                         title: '회사 정보 입력',
-                        description:
-                          '회사 코드와 회사명을 모두 입력해주세요.',
+                        description: '회사 코드와 회사명을 모두 입력해주세요.',
                         variant: 'destructive',
                       });
                     }
                   }}
                   disabled={
-                    companyVerified ||
-                    !profileCompanyCode.trim() ||
-                    !profileCompanyName.trim()
+                    !profileCompanyCode.trim() || !profileCompanyName.trim()
                   }
                   variant={companyVerified ? 'default' : 'outline'}
                 >
-                  {companyVerified ? '✓ 인증됨' : '인증하기'}
+                  {companyVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
                 </Button>
+                {!companyVerified && (
+                  <p className="text-xs text-slate-400">
+                    회사 코드와 회사명을 입력하고 인증해주세요
+                  </p>
+                )}
+                {companyVerified && (
+                  <p className="text-xs text-green-600">
+                    다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
+                  </p>
+                )}
               </div>
             </div>
 
