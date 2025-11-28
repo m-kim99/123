@@ -174,9 +174,15 @@ export function DocumentManagement() {
     ? categories
     : categories.filter((c) => c.departmentId === user?.departmentId);
 
+  const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+
+  const companyFilteredDocuments = documents.filter((d) =>
+    allowedDepartmentIds.has(d.departmentId)
+  );
+
   const roleFilteredDocuments = isAdmin
-    ? documents
-    : documents.filter((d) => d.departmentId === user?.departmentId);
+    ? companyFilteredDocuments
+    : companyFilteredDocuments.filter((d) => d.departmentId === user?.departmentId);
 
   const filteredDocuments = searchKeyword
     ? roleFilteredDocuments.filter((doc) => {
