@@ -9,7 +9,6 @@ import { useDocumentStore } from '@/store/documentStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
@@ -470,15 +469,42 @@ export function DepartmentDetail() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="new-nfc-registered"
-                  checked={newCategoryNfcRegistered}
-                  onCheckedChange={(checked) =>
-                    setNewCategoryNfcRegistered(Boolean(checked))
-                  }
-                />
-                <Label htmlFor="new-nfc-registered">NFC 등록 여부</Label>
+              <div className="space-y-2">
+                <Label>NFC 등록 여부</Label>
+                <div className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="dept-new-nfc-yes"
+                      name="dept-new-nfc-registered"
+                      checked={newCategoryNfcRegistered === true}
+                      onChange={() => setNewCategoryNfcRegistered(true)}
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="dept-new-nfc-yes"
+                      className="font-normal cursor-pointer"
+                    >
+                      등록됨
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="dept-new-nfc-no"
+                      name="dept-new-nfc-registered"
+                      checked={newCategoryNfcRegistered === false}
+                      onChange={() => setNewCategoryNfcRegistered(false)}
+                      className="h-4 w-4"
+                    />
+                    <Label
+                      htmlFor="dept-new-nfc-no"
+                      className="font-normal cursor-pointer"
+                    >
+                      미등록
+                    </Label>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
