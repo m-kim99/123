@@ -32,6 +32,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
+import { writeNFCUrl, isNFCSupported } from '@/lib/nfc';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -82,7 +83,7 @@ function readFileAsDataURL(file: File): Promise<string> {
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, documents, departments, fetchDocuments, uploadDocument } = useDocumentStore();
+  const { categories, documents, departments, fetchDocuments, uploadDocument, fetchCategories } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
@@ -119,6 +120,10 @@ export function CategoryDetail() {
   >([]);
 
   const [documentTitle, setDocumentTitle] = useState('');
+  const [nfcDialogOpen, setNfcDialogOpen] = useState(false);
+  const [isWritingNfc, setIsWritingNfc] = useState(false);
+  const [nfcStatus, setNfcStatus] = useState<'idle' | 'writing' | 'success' | 'error'>('idle');
+  const [nfcMessage, setNfcMessage] = useState('');
 
   if (!category) {
     return (
@@ -136,6 +141,52 @@ export function CategoryDetail() {
       </DashboardLayout>
     );
   }
+
+  const handleOpenNfcDialog = () => {
+    setNfcStatus('idle');
+    setNfcMessage('');
+    setNfcDialogOpen(true);
+  };
+
+  const handleWriteNfc = async () => {
+    if (!category) {
+      return;
+    }
+
+    if (!isNFCSupported()) {
+      setNfcStatus('error');
+      setNfcMessage('NFC는 Android Chrome에서만 지원됩니다.');
+      return;
+    }
+
+    setIsWritingNfc(true);
+    setNfcStatus('writing');
+    setNfcMessage('NFC 태그를 스마트폰에 가져다 대세요...');
+
+    try {
+      await writeNFCUrl(category.id, category.name);
+
+      await supabase
+        .from('categories')
+        .update({ nfc_tag_id: `NFC_${Date.now()}` })
+        .eq('id', category.id);
+
+      await fetchCategories();
+
+      setNfcStatus('success');
+      setNfcMessage('✅ NFC 태그 등록 완료!');
+
+      toast({
+        title: 'NFC 등록 완료',
+        description: '태그를 서류함에 부착하세요',
+      });
+    } catch (error) {
+      setNfcStatus('error');
+      setNfcMessage(error instanceof Error ? error.message : 'NFC 쓰기 실패');
+    } finally {
+      setIsWritingNfc(false);
+    }
+  };
 
   const handleUploadClick = () => {
     setUploadDialogOpen(true);
@@ -764,12 +815,23 @@ export function CategoryDetail() {
               </h1>
               <p className="text-slate-500 mt-1">{category.description}</p>
             </div>
-            {category.nfcRegistered && (
-              <Badge className="text-sm" style={{ backgroundColor: primaryColor }}>
-                <Smartphone className="h-4 w-4 mr-1" />
-                NFC 등록됨
-              </Badge>
-            )}
+            <div className="flex flex-col items-end gap-2">
+              {category.nfcRegistered && (
+                <Badge className="text-sm" style={{ backgroundColor: primaryColor }}>
+                  <Smartphone className="h-4 w-4 mr-1" />
+                  NFC 등록됨
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleOpenNfcDialog}
+                disabled={isWritingNfc}
+                className="flex items-center gap-2"
+              >
+                <Smartphone className="h-4 w-4" />
+                {category.nfcRegistered ? 'NFC 태그 다시 쓰기' : 'NFC 태그 쓰기'}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -1196,6 +1258,76 @@ export function CategoryDetail() {
               </DialogFooter>
             </DialogContent>
           )}
+        </Dialog>
+
+        <Dialog open={nfcDialogOpen} onOpenChange={setNfcDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>NFC 태그 쓰기</DialogTitle>
+              <DialogDescription>
+                "{category.name}" 카테고리 정보를 NFC 태그에 저장합니다
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {nfcStatus === 'idle' && (
+                <div className="text-center py-6">
+                  <Smartphone className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+                  <p className="text-sm text-slate-600">
+                    준비가 되면 아래 버튼을 눌러주세요
+                  </p>
+                </div>
+              )}
+
+              {nfcStatus === 'writing' && (
+                <div className="text-center py-6">
+                  <Smartphone className="h-16 w-16 mx-auto text-blue-600 mb-4 animate-pulse" />
+                  <p className="text-sm font-medium text-blue-600">{nfcMessage}</p>
+                </div>
+              )}
+
+              {nfcStatus === 'success' && (
+                <div className="text-center py-6">
+                  <div className="h-16 w-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-3xl">✅</span>
+                  </div>
+                  <p className="text-sm font-medium text-green-600">{nfcMessage}</p>
+                </div>
+              )}
+
+              {nfcStatus === 'error' && (
+                <div className="text-center py-6">
+                  <div className="h-16 w-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-3xl">❌</span>
+                  </div>
+                  <p className="text-sm font-medium text-red-600">{nfcMessage}</p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              {nfcStatus === 'idle' && (
+                <>
+                  <Button variant="outline" onClick={() => setNfcDialogOpen(false)}>
+                    취소
+                  </Button>
+                  <Button onClick={handleWriteNfc} disabled={isWritingNfc}>
+                    NFC 태그 쓰기
+                  </Button>
+                </>
+              )}
+              {nfcStatus === 'error' && (
+                <>
+                  <Button variant="outline" onClick={() => setNfcDialogOpen(false)}>
+                    닫기
+                  </Button>
+                  <Button onClick={handleWriteNfc}>
+                    다시 시도
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </div>
     </DashboardLayout>

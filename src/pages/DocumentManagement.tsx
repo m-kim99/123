@@ -162,7 +162,7 @@ export function DocumentManagement() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [imageZoom, setImageZoom] = useState(100); // 확대/축소 %
   const [imageRotation, setImageRotation] = useState(0); // 회전 각도
-
+ 
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
 
   const location = useLocation();
@@ -218,6 +218,36 @@ export function DocumentManagement() {
       setActiveTab('documents');
     }
   }, [searchKeyword]);
+ 
+  useEffect(() => {
+    // URL 파라미터에서 카테고리 정보 읽기
+    const params = new URLSearchParams(location.search);
+    const categoryId = params.get('category');
+    const categoryName = params.get('name');
+
+    if (categoryId && categoryName) {
+      // 카테고리 자동 선택
+      const category = categories.find((c) => c.id === categoryId);
+
+      if (category) {
+        setUploadData({
+          categoryId: category.id,
+          departmentId: category.departmentId,
+        });
+
+        toast({
+          title: '✅ NFC 태그 인식',
+          description: `"${categoryName}" 카테고리가 선택되었습니다`,
+        });
+
+        // 업로드 탭으로 자동 전환
+        setActiveTab('upload');
+
+        // URL 파라미터 제거 (깨끗하게)
+        window.history.replaceState({}, '', location.pathname);
+      }
+    }
+  }, [location.search, categories]);
 
   const handleAddCategory = () => {
     if (newCategory.name && newCategory.departmentId) {
@@ -971,7 +1001,6 @@ export function DocumentManagement() {
       setUploadError('텍스트 복사 중 오류가 발생했습니다.');
     }
   };
-
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
@@ -1308,65 +1337,66 @@ export function DocumentManagement() {
                 return (
                   <Card
                     key={category.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/admin/category/${category.id}`)}
+                    className="hover:shadow-lg transition-shadow h-full"
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{category.name}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {category.description}
-                          </CardDescription>
+                    <div className="flex flex-col h-full" onClick={() => navigate(`/admin/category/${category.id}`)}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg">{category.name}</CardTitle>
+                            <CardDescription className="mt-1">
+                              {category.description}
+                            </CardDescription>
+                          </div>
+                          {category.nfcRegistered && (
+                            <Badge variant="outline" className="ml-2">
+                              <Smartphone className="h-3 w-3 mr-1" />
+                              NFC
+                            </Badge>
+                          )}
                         </div>
-                        {category.nfcRegistered && (
-                          <Badge variant="outline" className="ml-2">
-                            <Smartphone className="h-3 w-3 mr-1" />
-                            NFC
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">부서</span>
-                          <span className="font-medium">{dept?.name}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">
-                            {category.documentCount}개
-                          </span>
-                        </div>
-                        {category.storageLocation && (
+                      </CardHeader>
+                      <CardContent className="flex flex-col justify-between flex-1">
+                        <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">보관 위치</span>
-                            <span className="font-medium text-xs">
-                              {category.storageLocation}
+                            <span className="text-slate-500">부서</span>
+                            <span className="font-medium">{dept?.name}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500">문서 수</span>
+                            <span className="font-medium">
+                              {category.documentCount}개
                             </span>
                           </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleOpenEditDialog(category)}
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          수정
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenDeleteDialog(category)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
+                          {category.storageLocation && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-500">보관 위치</span>
+                              <span className="font-medium text-xs">
+                                {category.storageLocation}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleOpenEditDialog(category)}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            수정
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDeleteDialog(category)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </div>
                   </Card>
                 );
               })}

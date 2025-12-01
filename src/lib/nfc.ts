@@ -110,6 +110,58 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
     throw new Error('NFC 태그 쓰기 중 알 수 없는 오류가 발생했습니다.');
   }
 }
+ 
+/**
+ * NFC 태그에 URL 쓰기 (iOS/Android 호환)
+ * @param categoryId 카테고리 ID
+ * @param categoryName 카테고리 이름
+ * @returns 쓰기 성공 여부
+ */
+export async function writeNFCUrl(
+  categoryId: string,
+  categoryName: string
+): Promise<boolean> {
+  try {
+    if (!isNFCSupported()) {
+      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+    }
+
+    // URL 생성 (실제 배포 URL로 변경 필요)
+    const uploadUrl = `${window.location.origin}/admin/documents?category=${categoryId}&name=${encodeURIComponent(categoryName)}`;
+
+    console.log('NFC URL 쓰기 시작:', uploadUrl);
+
+    // @ts-ignore - NDEFReader
+    const ndef = new NDEFReader();
+
+    // URL 레코드 생성
+    await ndef.write({
+      records: [
+        {
+          recordType: 'url',
+          data: uploadUrl,
+        },
+      ],
+    });
+
+    console.log('NFC URL 쓰기 완료');
+    return true;
+  } catch (error) {
+    console.error('NFC URL 쓰기 오류:', error);
+
+    if (error instanceof Error) {
+      if (error.message.includes('permission') || error.message.includes('권한')) {
+        throw new Error('NFC 권한이 필요합니다.');
+      }
+      if (error.message.includes('No NFC') || error.message.includes('태그')) {
+        throw new Error('NFC 태그를 감지할 수 없습니다.');
+      }
+      throw new Error(`NFC 쓰기 실패: ${error.message}`);
+    }
+
+    throw new Error('NFC 쓰기 중 알 수 없는 오류가 발생했습니다.');
+  }
+}
 
 /**
  * NFC 태그 읽기
