@@ -10,6 +10,8 @@ import {
   Users,
   Menu,
   X,
+  User,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -331,18 +333,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <button
-        type="button"
-        onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
-      >
-        {isMobileMenuOpen ? (
-          <X className="h-6 w-6 text-slate-700" />
-        ) : (
-          <Menu className="h-6 w-6 text-slate-700" />
-        )}
-      </button>
-
       <aside
         className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white border-r transform transition-transform duration-300 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
@@ -407,7 +397,97 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64 w-full min-w-full">
-        <header className="sticky top-0 z-40 border-b bg-[#1e40af] w-screen lg:w-[calc(100vw-16rem)]">
+        <header className="md:hidden sticky top-0 z-40 border-b bg-[#1e40af] w-screen h-16 px-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className="p-2 text-white shrink-0"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+
+          <div className="flex-1 flex items-center gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="문서 검색..."
+                className="w-full pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-md"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+              onClick={handleSearch}
+            >
+              🔍
+            </Button>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 shrink-0">
+                <User className="h-5 w-5 text-white" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <div className="px-4 py-3 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                    <User className="h-6 w-6 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
+                    <p className="text-xs text-slate-500">
+                      {user?.role === 'admin' ? '관리자' : '팀원'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-4 py-3 border-b bg-slate-50">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-600">회사 코드</span>
+                    <span className="font-medium">{user?.companyCode || 'A001'}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 mb-0.5">회사명</p>
+                    <p className="text-sm font-medium break-words">
+                      {user?.companyName || '주식회사파랑_인천지점'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DropdownMenuItem onClick={openProfileDialog}>
+                프로필 설정
+              </DropdownMenuItem>
+              <DropdownMenuItem>알림 설정</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                로그아웃
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+
+        <header className="hidden md:flex sticky top-0 z-40 border-b bg-[#1e40af] w-screen lg:w-[calc(100vw-16rem)]">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">
