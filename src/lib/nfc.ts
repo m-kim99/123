@@ -287,3 +287,40 @@ export async function readNFCTag(): Promise<NFCTagData> {
     throw new Error('NFC 태그 읽기 중 알 수 없는 오류가 발생했습니다.');
   }
 }
+
+/**
+ * NFC 태그의 UID 읽기
+ * @returns 태그 UID
+ */
+export async function readNFCUid(): Promise<string> {
+  try {
+    if (!isNFCSupported()) {
+      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+    }
+
+    // @ts-ignore
+    const ndef = new NDEFReader();
+    await ndef.scan();
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('NFC 태그 읽기 시간 초과'));
+      }, 30000);
+
+      // @ts-ignore
+      ndef.addEventListener('reading', ({ serialNumber }: any) => {
+        clearTimeout(timeout);
+        const uid = serialNumber.replace(/:/g, '');
+        resolve(uid);
+      });
+
+      // @ts-ignore
+      ndef.addEventListener('readingerror', () => {
+        clearTimeout(timeout);
+        reject(new Error('NFC 태그 읽기 실패'));
+      });
+    });
+  } catch (error) {
+    throw new Error('NFC UID 읽기 실패');
+  }
+}
