@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, searchDocuments, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
+import { formatDateTimeSimple } from '@/lib/utils';
 
 interface ChatMessage {
   id: string;
@@ -180,7 +181,7 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
                               </div>
                             )}
                             <div className="text-slate-400 text-[10px]">
-                              업로드: {doc.uploadDate}
+                              업로드: {formatDateTimeSimple(doc.uploadDate)}
                             </div>
                           </div>
                         ))}

@@ -33,6 +33,7 @@ import { supabase } from '@/lib/supabase';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
 import { writeNFCUrl, isNFCSupported } from '@/lib/nfc';
+import { formatDateTimeSimple } from '@/lib/utils';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -913,7 +914,12 @@ export function CategoryDetail() {
                           )}
                         </div>
                         <p className="text-sm text-slate-500">
-                          {doc.uploadDate} · {doc.uploader}
+                          {[
+                            formatDateTimeSimple(doc.uploadDate),
+                            doc.uploader || null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </p>
                       </div>
                     </div>

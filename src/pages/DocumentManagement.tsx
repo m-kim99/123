@@ -56,6 +56,7 @@ import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { formatDateTimeSimple } from '@/lib/utils';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -1563,7 +1564,14 @@ export function DocumentManagement() {
                                 )}
                               </div>
                               <p className="text-sm text-slate-500">
-                                {doc.uploadDate} · {doc.uploader} · {category?.name} · {dept?.name}
+                                {[
+                                  formatDateTimeSimple(doc.uploadDate),
+                                  doc.uploader || null,
+                                  category?.name || null,
+                                  dept?.name || null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' · ')}
                               </p>
                             </div>
                           </div>

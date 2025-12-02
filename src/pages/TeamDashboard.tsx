@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { formatDateTimeSimple } from '@/lib/utils';
 
 export function TeamDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -116,7 +117,7 @@ export function TeamDashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{doc.name}</p>
                       <p className="text-xs text-slate-500">
-                        {doc.uploadDate} · {doc.uploader}
+                        {formatDateTimeSimple(doc.uploadDate)} · {doc.uploader}
                       </p>
                     </div>
                   </div>
