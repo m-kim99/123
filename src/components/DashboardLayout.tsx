@@ -352,6 +352,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
 
+        <div className="md:hidden px-6 pt-4 pb-2">
+          <button
+            type="button"
+            onClick={() => navigate(basePath)}
+            className="flex items-center gap-2 bg-white focus:outline-none"
+          >
+            <img
+              src={logo}
+              alt="TrayStorage"
+              className="h-10 w-auto object-contain"
+            />
+          </button>
+        </div>
+
         <nav className="p-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
