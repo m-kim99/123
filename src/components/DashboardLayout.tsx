@@ -8,6 +8,8 @@ import {
   LogOut,
   ChevronDown,
   Users,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +63,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
@@ -328,7 +331,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r">
+      <button
+        type="button"
+        onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
+      >
+        {isMobileMenuOpen ? (
+          <X className="h-6 w-6 text-slate-700" />
+        ) : (
+          <Menu className="h-6 w-6 text-slate-700" />
+        )}
+      </button>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white border-r transform transition-transform duration-300 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0`}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b">
           <button
             type="button"
@@ -563,6 +582,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
