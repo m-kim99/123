@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
@@ -12,6 +12,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Search,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -162,8 +163,11 @@ export function DocumentManagement() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [imageZoom, setImageZoom] = useState(100); // 확대/축소 %
   const [imageRotation, setImageRotation] = useState(0); // 회전 각도
- 
+
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | '7days' | '1month' | '3months'>('all');
+  const [sortBy, setSortBy] = useState<'latest' | 'oldest' | 'name'>('latest');
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -174,19 +178,20 @@ export function DocumentManagement() {
     ? categories
     : categories.filter((c) => c.departmentId === user?.departmentId);
 
-  const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+  const filteredDocuments = useMemo(() => {
+    const allowedDepartmentIds = new Set(departments.map((d) => d.id));
 
-  const companyFilteredDocuments = documents.filter((d) =>
-    allowedDepartmentIds.has(d.departmentId)
-  );
+    const companyFilteredDocuments = documents.filter((d) =>
+      allowedDepartmentIds.has(d.departmentId)
+    );
 
-  const roleFilteredDocuments = isAdmin
-    ? companyFilteredDocuments
-    : companyFilteredDocuments.filter((d) => d.departmentId === user?.departmentId);
+    let result = isAdmin
+      ? companyFilteredDocuments
+      : companyFilteredDocuments.filter((d) => d.departmentId === user?.departmentId);
 
-  const filteredDocuments = searchKeyword
-    ? roleFilteredDocuments.filter((doc) => {
-        const keyword = searchKeyword;
+    if (searchKeyword) {
+      const keyword = searchKeyword;
+      result = result.filter((doc) => {
         const titleMatch = doc.name.toLowerCase().includes(keyword);
         const category = categories.find((c) => c.id === doc.categoryId);
         const department = departments.find((d) => d.id === doc.departmentId);
@@ -200,8 +205,77 @@ export function DocumentManagement() {
           departmentName.includes(keyword) ||
           ocrMatch
         );
-      })
-    : roleFilteredDocuments;
+      });
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((doc) => {
+        const name = doc.name || '';
+        const uploader = doc.uploader || '';
+        const category = categories.find((c) => c.id === doc.categoryId);
+        const department = departments.find((d) => d.id === doc.departmentId);
+        const categoryName = (category?.name || '').toLowerCase();
+        const departmentName = (department?.name || '').toLowerCase();
+
+        return (
+          name.toLowerCase().includes(query) ||
+          uploader.toLowerCase().includes(query) ||
+          categoryName.includes(query) ||
+          departmentName.includes(query)
+        );
+      });
+    }
+
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      if (dateFilter === '7days') {
+        filterDate.setDate(now.getDate() - 7);
+      } else if (dateFilter === '1month') {
+        filterDate.setMonth(now.getMonth() - 1);
+      } else if (dateFilter === '3months') {
+        filterDate.setMonth(now.getMonth() - 3);
+      }
+
+      result = result.filter((doc) => {
+        const docDate = new Date(doc.uploadDate);
+        if (Number.isNaN(docDate.getTime())) {
+          return false;
+        }
+        return docDate >= filterDate;
+      });
+    }
+
+    const sorted = [...result];
+
+    sorted.sort((a, b) => {
+      if (sortBy === 'latest') {
+        return (
+          new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+        );
+      }
+      if (sortBy === 'oldest') {
+        return (
+          new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime()
+        );
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return sorted;
+  }, [
+    categories,
+    dateFilter,
+    departments,
+    documents,
+    isAdmin,
+    searchKeyword,
+    searchQuery,
+    sortBy,
+    user?.departmentId,
+  ]);
 
   const { pdfFiles: selectedPdfFiles, imageFiles: selectedImageFiles } =
     splitFilesByType(uploadFiles);
@@ -1414,67 +1488,114 @@ export function DocumentManagement() {
                 )}
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {filteredDocuments.map((doc) => {
-                    const category = categories.find((c) => c.id === doc.categoryId);
-                    const dept = departments.find((d) => d.id === doc.departmentId);
-                    return (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div
-                            className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${primaryColor}20` }}
-                          >
-                            <FileText
-                              className="h-5 w-5"
-                              style={{ color: primaryColor }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{doc.name}</p>
-                              {doc.classified && (
-                                <Badge variant="destructive" className="text-xs">
-                                  기밀
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-slate-500">
-                              {doc.uploadDate} · {doc.uploader} · {category?.name} · {dept?.name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenPreviewDocument(doc.id)}
-                          >
-                            문서 보기
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDownloadDocument(doc.id)}
-                          >
-                            ⬇️
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                            onClick={() => handleDeleteDocumentClick(doc.id)}
-                          >
-                            🗑️
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder="파일명, 업로더, 카테고리, 부서로 검색..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as any)}>
+                    <SelectTrigger className="w-full md:w-[150px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 기간</SelectItem>
+                      <SelectItem value="7days">최근 1주일</SelectItem>
+                      <SelectItem value="1month">최근 1개월</SelectItem>
+                      <SelectItem value="3months">최근 3개월</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                    <SelectTrigger className="w-full md:w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="latest">최신순</SelectItem>
+                      <SelectItem value="oldest">오래된순</SelectItem>
+                      <SelectItem value="name">이름순</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div className="text-sm text-slate-500 mb-4">
+                  총 {filteredDocuments.length}개 문서
+                </div>
+
+                {filteredDocuments.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    검색 결과가 없습니다
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredDocuments.map((doc) => {
+                      const category = categories.find((c) => c.id === doc.categoryId);
+                      const dept = departments.find((d) => d.id === doc.departmentId);
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div
+                              className="p-2 rounded-lg"
+                              style={{ backgroundColor: `${primaryColor}20` }}
+                            >
+                              <FileText
+                                className="h-5 w-5"
+                                style={{ color: primaryColor }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium truncate">{doc.name}</p>
+                                {doc.classified && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    기밀
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-500">
+                                {doc.uploadDate} · {doc.uploader} · {category?.name} · {dept?.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenPreviewDocument(doc.id)}
+                            >
+                              문서 보기
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDownloadDocument(doc.id)}
+                            >
+                              ⬇️
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                              onClick={() => handleDeleteDocumentClick(doc.id)}
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
