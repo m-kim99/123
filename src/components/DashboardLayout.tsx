@@ -21,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -38,6 +37,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
 import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
+import { useNotificationStore } from '@/store/notificationStore';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -67,6 +67,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const {
+    notifications,
+    isLoading: isLoadingNotifications,
+    fetchNotifications,
+    dismissNotification,
+  } = useNotificationStore();
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
@@ -145,6 +153,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (isNotificationOpen) {
+      fetchNotifications();
+    }
+  }, [isNotificationOpen, fetchNotifications]);
 
   const handleSearch = async () => {
     const query = searchQuery.trim();
@@ -551,6 +565,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               🔍
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+              onClick={() => setIsNotificationOpen((prev) => !prev)}
+            >
+              🔔
+            </Button>
           </div>
 
           <DropdownMenu>
@@ -727,22 +750,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   🔍
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+                  onClick={() => setIsNotificationOpen((prev) => !prev)}
+                >
+                  🔔
+                </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
-                <Building2 className="h-4 w-4 text-slate-500" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-slate-900">
-                    {user?.companyCode || '회사'}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {user?.companyName || ''}
-                  </span>
-                </div>
-              </div>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -753,9 +773,36 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>내 계정</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="px-4 py-3 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                        <User className="h-6 w-6 text-slate-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
+                        <p className="text-xs text-slate-500">
+                          {user?.role === 'admin' ? '관리자' : '팀원'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-4 py-3 border-b bg-slate-50">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-600">회사 코드</span>
+                        <span className="font-medium">{user?.companyCode || 'A001'}</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 mb-0.5">회사명</p>
+                        <p className="text-sm font-medium break-words">
+                          {user?.companyName || '주식회사파랑_인천지점'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <DropdownMenuItem onClick={openProfileDialog}>
                     프로필 설정
                   </DropdownMenuItem>
@@ -777,6 +824,49 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+
+      {isNotificationOpen && (
+        <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-lg shadow-lg">
+          <div className="flex items-center justify-between px-3 py-2 border-b">
+            <span className="text-sm font-semibold">알림</span>
+            <button
+              type="button"
+              className="text-xs text-slate-500 hover:text-slate-700"
+              onClick={() => setIsNotificationOpen(false)}
+            >
+              닫기
+            </button>
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {isLoadingNotifications ? (
+              <div className="p-3 text-sm text-slate-500">불러오는 중...</div>
+            ) : notifications.length === 0 ? (
+              <div className="p-3 text-sm text-slate-500">알림이 없습니다.</div>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="flex items-start justify-between px-3 py-2 border-b last:border-b-0"
+                >
+                  <div className="text-xs">
+                    <div className="text-slate-900">{n.message}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {new Date(n.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-slate-400 hover:text-slate-700"
+                    onClick={() => dismissNotification(n.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {isMobileMenuOpen && (
         <div

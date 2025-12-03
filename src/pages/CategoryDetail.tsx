@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
+import { createDocumentNotification } from '@/lib/notifications';
 import {
   Dialog,
   DialogContent,
@@ -740,6 +741,8 @@ export function CategoryDetail() {
 
     setIsDeletingDocument(true);
 
+    const targetDoc = categoryDocuments.find((d) => d.id === deletingDocumentId);
+
     try {
       const { data, error } = await supabase
         .from('documents')
@@ -782,6 +785,16 @@ export function CategoryDetail() {
         title: '삭제 완료',
         description: '문서가 삭제되었습니다.',
       });
+
+      if (user?.companyId && targetDoc) {
+        await createDocumentNotification({
+          type: 'document_deleted',
+          documentId: deletingDocumentId,
+          title: targetDoc.name,
+          companyId: user.companyId,
+          departmentId: targetDoc.departmentId,
+        });
+      }
 
       handleCloseDeleteDialog();
     } catch (error) {

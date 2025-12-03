@@ -59,6 +59,7 @@ import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { readNFCUid } from '@/lib/nfc';
 import { registerNFCTag } from '@/lib/nfcApi';
+import { createDocumentNotification } from '@/lib/notifications';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -570,6 +571,8 @@ export function DocumentManagement() {
     const confirmed = window.confirm('정말 삭제하시겠습니까?');
     if (!confirmed) return;
 
+    const targetDoc = documents.find((d) => d.id === documentId);
+
     try {
       const { data, error } = await supabase
         .from('documents')
@@ -612,6 +615,16 @@ export function DocumentManagement() {
         title: '삭제 완료',
         description: '문서가 삭제되었습니다.',
       });
+
+      if (user?.companyId && targetDoc) {
+        await createDocumentNotification({
+          type: 'document_deleted',
+          documentId,
+          title: targetDoc.name,
+          companyId: user.companyId,
+          departmentId: targetDoc.departmentId,
+        });
+      }
     } catch (error) {
       console.error('문서 삭제 실패:', error);
       toast({

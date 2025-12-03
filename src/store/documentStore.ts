@@ -3,6 +3,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase, type Department as SupabaseDepartment, type Category as SupabaseCategory, type Document as SupabaseDocument } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
+import { createDocumentNotification } from '@/lib/notifications';
 
 export interface Department {
   id: string;
@@ -690,6 +691,17 @@ export const useDocumentStore = create<DocumentState>((set) => ({
             ...state.documents,
           ],
         }));
+
+        const { user } = useAuthStore.getState();
+        if (user?.companyId) {
+          await createDocumentNotification({
+            type: 'document_created',
+            documentId: data.id,
+            title: data.title,
+            companyId: user.companyId,
+            departmentId: data.department_id,
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to upload document to Supabase:', err);
