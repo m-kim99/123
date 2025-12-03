@@ -57,6 +57,8 @@ import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
+import { readNFCUid } from '@/lib/nfc';
+import { registerNFCTag } from '@/lib/nfcApi';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -1355,6 +1357,33 @@ export function DocumentManagement() {
                     disabled={isSavingCategory}
                   >
                     취소
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      if (!editingCategoryId) return;
+                      try {
+                        const uid = await readNFCUid();
+                        await registerNFCTag({
+                          tagId: uid,
+                          categoryId: editingCategoryId,
+                        });
+                        toast({
+                          title: '✅ NFC 태그 등록 완료',
+                          description: `태그 ID: ${uid.substring(0, 8)}...`,
+                        });
+                      } catch (error: any) {
+                        toast({
+                          title: '오류',
+                          description:
+                            error?.message || 'NFC 태그 등록 중 오류가 발생했습니다.',
+                          variant: 'destructive',
+                        });
+                      }
+                    }}
+                    disabled={!editingCategoryId || isSavingCategory}
+                  >
+                    📱 NFC 태그 등록
                   </Button>
                   <Button
                     type="button"

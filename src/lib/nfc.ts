@@ -289,8 +289,8 @@ export async function readNFCTag(): Promise<NFCTagData> {
 }
 
 /**
- * NFC 태그의 UID 읽기
- * @returns 태그 UID
+ * NFC 태그의 UID만 읽기 (범용 ID 방식용)
+ * @returns 태그의 고유 ID (UID)
  */
 export async function readNFCUid(): Promise<string> {
   try {
@@ -304,23 +304,27 @@ export async function readNFCUid(): Promise<string> {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('NFC 태그 읽기 시간 초과'));
+        reject(new Error('NFC 태그 읽기 시간 초과 (30초)'));
       }, 30000);
 
       // @ts-ignore
-      ndef.addEventListener('reading', ({ serialNumber }: any) => {
+      ndef.addEventListener("reading", ({ serialNumber }) => {
         clearTimeout(timeout);
-        const uid = serialNumber.replace(/:/g, '');
+        // serialNumber 예: "04:e3:2a:5b:8c:91:80"
+        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+        console.log('NFC UID 읽음:', uid);
         resolve(uid);
       });
 
       // @ts-ignore
-      ndef.addEventListener('readingerror', () => {
+      ndef.addEventListener("readingerror", (error) => {
         clearTimeout(timeout);
+        console.error('NFC 읽기 오류:', error);
         reject(new Error('NFC 태그 읽기 실패'));
       });
     });
   } catch (error) {
-    throw new Error('NFC UID 읽기 실패');
+    console.error('NFC UID 읽기 실패:', error);
+    throw new Error('NFC UID를 읽을 수 없습니다.');
   }
 }

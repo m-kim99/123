@@ -37,6 +37,7 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
+import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -333,6 +334,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
+      {/* NFC 자동 감지 (백그라운드에서 항상 작동) */}
+      <NFCAutoRedirect />
+      
       <aside
         className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white border-r transform transition-transform duration-300 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
