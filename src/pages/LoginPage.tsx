@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import logo from '@/assets/logo.png';
+import googleLogo from '@/assets/google.png';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -43,6 +44,34 @@ export function LoginPage() {
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const { login, signup, isLoading, error, clearError } = useAuthStore();
+
+  const handleGoogleLogin = async () => {
+    try {
+      const redirectTo = `${window.location.origin}`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (error) {
+        console.error('Google 로그인 실패:', error);
+        toast({
+          title: 'Google 로그인 실패',
+          description: error.message || '다시 시도해주세요',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Google 로그인 오류:', error);
+      toast({
+        title: 'Google 로그인 오류',
+        description: error?.message || 'Google 로그인 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const resetSignupForm = () => {
     setSignupForm({
@@ -230,6 +259,17 @@ export function LoginPage() {
                       회원가입
                     </Button>
                   </p>
+                  <div className="mt-2 flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 bg-white"
+                      onClick={handleGoogleLogin}
+                    >
+                      <img src={googleLogo} alt="Google" className="h-5 w-5" />
+                      <span className="text-sm text-slate-700">Google 계정으로 계속하기</span>
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
               <TabsContent value="team">
@@ -282,6 +322,17 @@ export function LoginPage() {
                       회원가입
                     </Button>
                   </p>
+                  <div className="mt-2 flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 bg-white"
+                      onClick={handleGoogleLogin}
+                    >
+                      <img src={googleLogo} alt="Google" className="h-5 w-5" />
+                      <span className="text-sm text-slate-700">Google 계정으로 계속하기</span>
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>
