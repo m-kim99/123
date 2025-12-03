@@ -119,7 +119,7 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
  */
 export async function writeNFCUrl(
   categoryId: string,
-  categoryName: string
+  _categoryName: string
 ): Promise<boolean> {
   try {
     if (!isNFCSupported()) {
@@ -127,7 +127,7 @@ export async function writeNFCUrl(
     }
 
     // URL 생성 (실제 배포 URL로 변경 필요)
-    const uploadUrl = `${window.location.origin}/admin/documents?category=${categoryId}&name=${encodeURIComponent(categoryName)}`;
+    const uploadUrl = `${window.location.origin}/admin/category/${categoryId}`;
 
     console.log('NFC URL 쓰기 시작:', uploadUrl);
 
