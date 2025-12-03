@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isNFCSupported, readNFCUid } from '@/lib/nfc';
+import { isNFCSupported } from '@/lib/nfc';
 import { resolveNFCTag } from '@/lib/nfcApi';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';

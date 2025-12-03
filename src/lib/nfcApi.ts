@@ -65,3 +65,34 @@ export async function unregisterNFCTag(tagId: string): Promise<void> {
 
   if (error) throw error;
 }
+
+/**
+ * 모든 NFC 매핑 조회 (관리자용)
+ * @returns NFC 매핑 목록
+ */
+export async function getAllNFCMappings(): Promise<NFCMapping[]> {
+  const { data, error } = await supabase
+    .from('nfc_mappings')
+    .select(`
+      id,
+      tag_id,
+      category_id,
+      registered_by,
+      registered_at,
+      last_accessed_at,
+      access_count
+    `)
+    .order('registered_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    tagId: item.tag_id,
+    categoryId: item.category_id,
+    registeredBy: item.registered_by,
+    registeredAt: item.registered_at,
+    lastAccessedAt: item.last_accessed_at,
+    accessCount: item.access_count || 0,
+  }));
+}
