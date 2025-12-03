@@ -20,6 +20,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  needsOnboarding: boolean;
   login: (
     email: string,
     password: string,
@@ -36,6 +37,13 @@ interface AuthState {
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
+  completeOnboarding: (
+    name: string,
+    role: UserRole,
+    companyCode: string,
+    companyName: string,
+    departmentId?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
 }
 
@@ -44,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  needsOnboarding: false,
 
   login: async (email: string, password: string, role: UserRole) => {
     set({ isLoading: true, error: null });
@@ -92,6 +101,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        needsOnboarding: false,
       });
 
       return { success: true };
@@ -99,7 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('로그인 실패:', error);
       const errorMsg =
         error instanceof Error ? error.message : '로그인에 실패했습니다';
-      set({ user: null, isAuthenticated: false, isLoading: false, error: errorMsg });
+      set({ user: null, isAuthenticated: false, isLoading: false, error: errorMsg, needsOnboarding: false });
       return { success: false, error: errorMsg };
     }
   },
@@ -192,7 +202,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       console.error('로그아웃 실패:', error);
     } finally {
-      set({ user: null, isAuthenticated: false, error: null });
+      set({ user: null, isAuthenticated: false, error: null, needsOnboarding: false });
     }
   },
 
@@ -205,19 +215,46 @@ export const useAuthStore = create<AuthState>((set) => ({
       } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const { data: userData, error } = await supabase
+        let { data: userData, error } = await supabase
           .from('users')
           .select(
             `id, name, email, role, department_id, company_id,
-             companies:companies!users_company_id_fkey (code, name)`
+             companies!left (code, name)`
           )
           .eq('id', session.user.id)
           .single();
 
-        if (error) throw error;
+        // users 테이블에 없으면 자동 생성 (OAuth 사용자 등)
+        if (error && (error as any).code === 'PGRST116') {
+          const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              name:
+                (session.user.user_metadata as any)?.name ||
+                session.user.email?.split('@')[0] ||
+                'User',
+              role: 'team',
+              department_id: null,
+              company_id: null,
+            })
+            .select(
+              `id, name, email, role, department_id, company_id,
+               companies:companies!users_company_id_fkey (code, name)`
+            )
+            .single();
+
+          if (insertError) throw insertError;
+          userData = newUser;
+        } else if (error) {
+          throw error;
+        }
+
         if (!userData) throw new Error('사용자 정보를 찾을 수 없습니다');
 
         const company = (userData as any).companies;
+        const needsOnboarding = !userData.company_id;
 
         set({
           user: {
@@ -230,15 +267,118 @@ export const useAuthStore = create<AuthState>((set) => ({
             companyCode: company?.code ?? '',
             companyName: company?.name ?? '',
           },
-          isAuthenticated: true,
+          isAuthenticated: !needsOnboarding,
           isLoading: false,
+          needsOnboarding,
         });
       } else {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        set({ user: null, isAuthenticated: false, isLoading: false, needsOnboarding: false });
       }
     } catch (error) {
       console.error('세션 체크 오류:', error);
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isLoading: false, needsOnboarding: false });
+    }
+  },
+
+  completeOnboarding: async (
+    name: string,
+    role: UserRole,
+    companyCode: string,
+    companyName: string,
+    departmentId?: string
+  ) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        throw new Error('세션 정보가 없습니다. 다시 로그인해주세요.');
+      }
+
+      const { data: existingCompany, error: checkError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('code', companyCode)
+        .single();
+
+      let company: any;
+
+      if (existingCompany) {
+        if (existingCompany.name !== companyName) {
+          throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
+        }
+        company = existingCompany;
+      } else if (checkError && (checkError as any).code === 'PGRST116') {
+        const { data: newCompany, error: createError } = await supabase
+          .from('companies')
+          .insert({
+            name: companyName,
+            code: companyCode,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        company = newCompany;
+      } else if (checkError) {
+        throw checkError;
+      } else {
+        throw new Error('회사 정보 확인 중 알 수 없는 오류가 발생했습니다.');
+      }
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          name,
+          role,
+          company_id: company.id,
+          department_id: role === 'team' ? departmentId || null : null,
+        })
+        .eq('id', session.user.id);
+
+      if (updateError) throw updateError;
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select(
+          `id, name, email, role, department_id, company_id,
+           companies!left (code, name)`
+        )
+        .eq('id', session.user.id)
+        .single();
+
+      if (userError) throw userError;
+      if (!userData) throw new Error('사용자 정보를 찾을 수 없습니다');
+
+      const companyInfo = (userData as any).companies;
+
+      set({
+        user: {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role as UserRole,
+          departmentId: userData.department_id,
+          companyId: userData.company_id,
+          companyCode: companyInfo?.code ?? '',
+          companyName: companyInfo?.name ?? '',
+        },
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        needsOnboarding: false,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('온보딩 실패:', error);
+      const errorMsg =
+        error instanceof Error ? error.message : '온보딩에 실패했습니다';
+      set({ isLoading: false, error: errorMsg });
+      return { success: false, error: errorMsg };
     }
   },
 

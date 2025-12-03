@@ -46,25 +46,35 @@ export function LoginPage() {
   const { login, signup, isLoading, error, clearError } = useAuthStore();
 
   const handleGoogleLogin = async () => {
+    console.log('🔵 Google 로그인 시작');
+    console.log('🔵 Supabase 객체:', supabase);
+    console.log('🔵 window.location.origin:', window.location.origin);
+
     try {
       const redirectTo = `${window.location.origin}`;
-      const { error } = await supabase.auth.signInWithOAuth({
+
+      console.log('🔵 signInWithOAuth 호출 전');
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
         },
       });
 
+      console.log('🔵 signInWithOAuth 응답:', { data, error });
+
       if (error) {
-        console.error('Google 로그인 실패:', error);
+        console.error('❌ Google 로그인 실패:', error);
         toast({
           title: 'Google 로그인 실패',
           description: error.message || '다시 시도해주세요',
           variant: 'destructive',
         });
+      } else {
+        console.log('✅ Google 로그인 성공, 리디렉션 시작');
       }
     } catch (error: any) {
-      console.error('Google 로그인 오류:', error);
+      console.error('❌ Google 로그인 예외:', error);
       toast({
         title: 'Google 로그인 오류',
         description: error?.message || 'Google 로그인 중 오류가 발생했습니다.',

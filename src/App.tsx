@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { TeamDashboard } from './pages/TeamDashboard';
 import { DocumentManagement } from './pages/DocumentManagement';
@@ -22,7 +23,11 @@ function ProtectedRoute({
   children: React.ReactNode;
   requiredRole?: 'admin' | 'team';
 }) {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, needsOnboarding } = useAuthStore();
+
+  if (needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -33,6 +38,25 @@ function ProtectedRoute({
   }
 
   return <>{children}</>;
+}
+
+function RootRoute() {
+  const { isAuthenticated, user, needsOnboarding } = useAuthStore();
+
+  if (needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (isAuthenticated && user) {
+    return (
+      <Navigate
+        to={user.role === 'admin' ? '/admin' : '/team'}
+        replace
+      />
+    );
+  }
+
+  return <LoginPage />;
 }
 
 function App() {
@@ -64,7 +88,8 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<RootRoute />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
 
         <Route
           path="/admin"
