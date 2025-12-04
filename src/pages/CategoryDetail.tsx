@@ -85,12 +85,22 @@ function readFileAsDataURL(file: File): Promise<string> {
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, documents, departments, fetchDocuments, uploadDocument, fetchCategories } = useDocumentStore();
+  const {
+    categories,
+    documents,
+    departments,
+    subcategories,
+    fetchDocuments,
+    uploadDocument,
+    fetchCategories,
+  } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
   const category = categories.find((c) => c.id === categoryId);
-  const categoryDocuments = documents.filter((d) => d.categoryId === categoryId);
+  const categoryDocuments = documents.filter(
+    (d) => d.parentCategoryId === categoryId,
+  );
   const department = departments.find((d) => d.id === category?.departmentId);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -341,6 +351,20 @@ export function CategoryDetail() {
       return;
     }
 
+    const targetSubcategory = subcategories.find(
+      (s) => s.parentCategoryId === category.id,
+    );
+
+    if (!targetSubcategory) {
+      setUploadError(
+        '이 카테고리에 연결된 세부 카테고리가 없어 업로드할 수 없습니다.',
+      );
+      return;
+    }
+
+    const parentCategoryId = targetSubcategory.parentCategoryId;
+    const departmentId = targetSubcategory.departmentId;
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadStatus('파일 처리 준비 중...');
@@ -403,7 +427,9 @@ export function CategoryDetail() {
             name: title,
             originalFileName: file.name,
             categoryId: category.id,
-            departmentId: category.departmentId,
+            parentCategoryId,
+            subcategoryId: targetSubcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
@@ -555,7 +581,9 @@ export function CategoryDetail() {
             name: imageTitle,
             originalFileName: pdfFileName,
             categoryId: category.id,
-            departmentId: category.departmentId,
+            parentCategoryId,
+            subcategoryId: targetSubcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file: pdfFile,
@@ -603,7 +631,9 @@ export function CategoryDetail() {
             name: imageTitle,
             originalFileName: file.name,
             categoryId: category.id,
-            departmentId: category.departmentId,
+            parentCategoryId,
+            subcategoryId: targetSubcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
