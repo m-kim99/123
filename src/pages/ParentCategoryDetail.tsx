@@ -6,6 +6,7 @@ import { useDocumentStore } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import {
   Dialog,
   DialogContent,
@@ -129,6 +130,29 @@ export function ParentCategoryDetail() {
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
         <div>
+          <DocumentBreadcrumb
+            items={(() => {
+              const isAdmin = window.location.pathname.startsWith('/admin');
+              const departmentHref =
+                department?.id &&
+                (isAdmin
+                  ? `/admin/departments/${department.id}`
+                  : `/team/department/${department.id}`);
+
+              return [
+                {
+                  label: department?.name || '부서',
+                  href: departmentHref || undefined,
+                },
+                {
+                  label: parentCategory.name,
+                  isCurrentPage: true,
+                },
+              ];
+            })()}
+            className="mb-2"
+          />
+
           <Button
             variant="ghost"
             className="mb-4"

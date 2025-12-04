@@ -60,6 +60,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 import { readNFCUid } from '@/lib/nfc';
 import { registerNFCTag } from '@/lib/nfcApi';
 import { createDocumentNotification } from '@/lib/notifications';
+import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -1191,6 +1192,15 @@ export function DocumentManagement() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
+        <DocumentBreadcrumb
+          items={[
+            {
+              label: '문서 관리',
+              isCurrentPage: true,
+            },
+          ]}
+        />
+
         <div>
           <h1 className="text-3xl font-bold text-slate-900">문서 관리</h1>
           <p className="text-slate-500 mt-1">카테고리와 문서를 관리하세요</p>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Smartphone, Upload } from 'lucide-react';
+import { ArrowLeft, FileText, Smartphone, Upload, Star } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
+import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
+import { useFavoriteStore } from '@/store/favoriteStore';
 
 export function SubcategoryDetail() {
   const { parentCategoryId, subcategoryId } = useParams<{
@@ -21,6 +23,7 @@ export function SubcategoryDetail() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const {
+    departments,
     parentCategories,
     subcategories,
     documents,
@@ -29,6 +32,8 @@ export function SubcategoryDetail() {
     uploadDocument,
     registerNfcTag,
   } = useDocumentStore();
+
+  const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
@@ -53,6 +58,16 @@ export function SubcategoryDetail() {
     [parentCategories, parentCategoryId]
   );
 
+  const isFav = subcategoryId ? isFavorite(subcategoryId) : false;
+
+  useEffect(() => {
+    if (!subcategoryId || !parentCategoryId || !subcategory?.departmentId) {
+      return;
+    }
+
+    recordVisit(subcategoryId, parentCategoryId, subcategory.departmentId);
+  }, [subcategoryId, parentCategoryId, subcategory?.departmentId, recordVisit]);
+
   const subcategoryDocuments = useMemo(
     () =>
       subcategoryId
@@ -68,6 +83,16 @@ export function SubcategoryDetail() {
       setUploadTitle(file.name);
     } else {
       setUploadTitle('');
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!subcategoryId) return;
+
+    if (isFav) {
+      await removeFavorite(subcategoryId);
+    } else {
+      await addFavorite(subcategoryId);
     }
   };
 
@@ -163,6 +188,39 @@ export function SubcategoryDetail() {
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-6">
         <div>
+          <DocumentBreadcrumb
+            items={(() => {
+              const isAdmin = window.location.pathname.startsWith('/admin');
+              const basePath = isAdmin ? '/admin' : '/team';
+
+              const department =
+                subcategory &&
+                departments.find((dept) => dept.id === subcategory.departmentId);
+
+              const departmentHref =
+                department?.id &&
+                (isAdmin
+                  ? `/admin/departments/${department.id}`
+                  : `/team/department/${department.id}`);
+
+              return [
+                {
+                  label: department?.name || '부서',
+                  href: departmentHref || undefined,
+                },
+                {
+                  label: parentCategory?.name || '대분류',
+                  href: `${basePath}/parent-category/${parentCategoryId}`,
+                },
+                {
+                  label: subcategory.name,
+                  isCurrentPage: true,
+                },
+              ];
+            })()}
+            className="mb-2"
+          />
+
           <Button
             variant="ghost"
             className="mb-4"
@@ -187,6 +245,14 @@ export function SubcategoryDetail() {
               )}
             </div>
             <div className="flex flex-col items-end gap-2">
+              <Button
+                variant={isFav ? 'default' : 'outline'}
+                onClick={handleToggleFavorite}
+                className="flex items-center gap-2"
+              >
+                <Star className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
+                {isFav ? '즐겨찾기 해제' : '즐겨찾기'}
+              </Button>
               {subcategory.nfcRegistered && (
                 <Badge className="text-sm">
                   <Smartphone className="h-4 w-4 mr-1" />

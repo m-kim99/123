@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -189,6 +190,20 @@ export function DepartmentDetail() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
+          <DocumentBreadcrumb
+            items={[
+              {
+                label: '부서 관리',
+                href: '/admin/departments',
+              },
+              {
+                label: department.name,
+                isCurrentPage: true,
+              },
+            ]}
+            className="mb-2"
+          />
+
           <Button
             variant="ghost"
             className="mb-4"
