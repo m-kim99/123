@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -167,14 +167,28 @@ export function SubcategoryManagement() {
                           {sub.nfcRegistered ? '등록됨' : '미등록'}
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDelete(sub.id)}
-                        className="ml-3 text-red-600 hover:text-red-700 hover:border-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            navigate(
+                              `/admin/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
+                            )
+                          }
+                          className="h-8 aspect-square rounded-xl text-base"
+                        >
+                          ✏️
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDelete(sub.id)}
+                          className="h-8 aspect-square rounded-xl text-base"
+                        >
+                          🗑️
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}

@@ -1696,7 +1696,7 @@ export function DocumentManagement() {
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+                          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div
@@ -1730,7 +1730,7 @@ export function DocumentManagement() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto">
                             <Button
                               variant="outline"
                               size="sm"
