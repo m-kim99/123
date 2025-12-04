@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 export function AdminDashboard() {
   const departments = useDocumentStore((state) => state.departments);
   const documents = useDocumentStore((state) => state.documents);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const subcategories = useDocumentStore((state) => state.subcategories);
   const navigate = useNavigate();
 
   const stats = [
@@ -24,14 +26,14 @@ export function AdminDashboard() {
       color: '#3B82F6',
     },
     {
-      title: '활성 사용자',
-      value: 20,
+      title: '총 대분류',
+      value: parentCategories.length,
       icon: Users,
       color: '#3b82f6',
     },
     {
-      title: '이번 달 업로드',
-      value: 156,
+      title: '총 세부 카테고리',
+      value: subcategories.length,
       icon: TrendingUp,
       color: '#8B5CF6',
     },

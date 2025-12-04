@@ -1,4 +1,4 @@
-import { FileText, TrendingUp, Search, Download } from 'lucide-react';
+import { FileText, TrendingUp, Search, Download, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,18 @@ export function TeamDashboard() {
   const user = useAuthStore((state) => state.user);
   const departments = useDocumentStore((state) => state.departments);
   const documents = useDocumentStore((state) => state.documents);
-  const categories = useDocumentStore((state) => state.categories);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const subcategories = useDocumentStore((state) => state.subcategories);
   const navigate = useNavigate();
 
   const userDepartment = departments.find((d) => d.id === user?.departmentId);
   const userDocuments = documents.filter((d) => d.departmentId === user?.departmentId);
-  const userCategories = categories.filter((c) => c.departmentId === user?.departmentId);
+  const userParentCategories = parentCategories.filter(
+    (pc) => pc.departmentId === user?.departmentId,
+  );
+  const userSubcategories = subcategories.filter(
+    (sc) => sc.departmentId === user?.departmentId,
+  );
 
   const stats = [
     {
@@ -27,10 +33,16 @@ export function TeamDashboard() {
       color: '#2563eb',
     },
     {
-      title: '카테고리',
-      value: userCategories.length,
-      icon: TrendingUp,
+      title: '내 부서 대분류',
+      value: userParentCategories.length,
+      icon: Building2,
       color: '#3B82F6',
+    },
+    {
+      title: '내 부서 세부 카테고리',
+      value: userSubcategories.length,
+      icon: TrendingUp,
+      color: '#8B5CF6',
     },
   ];
 
@@ -82,7 +94,7 @@ export function TeamDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="search"
-                  placeholder="문서명, 카테고리로 검색..."
+                  placeholder="문서명, 대분류/세부 카테고리로 검색..."
                   className="pl-9"
                 />
               </div>

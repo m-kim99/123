@@ -15,6 +15,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { UserManagement } from './pages/UserManagement';
 import { TeamDepartments } from './pages/TeamDepartments';
 import { TeamDepartmentDetail } from './pages/TeamDepartmentDetail';
+import { ParentCategoryList } from './pages/ParentCategoryList';
+import { ParentCategoryDetail } from './pages/ParentCategoryDetail';
+import { SubcategoryDetail } from './pages/SubcategoryDetail';
+import { SubcategoryManagement } from './pages/SubcategoryManagement';
+import { NfcRedirect } from './pages/NfcRedirect';
 
 function ProtectedRoute({
   children,
@@ -61,7 +66,13 @@ function RootRoute() {
 
 function App() {
   const { isAuthenticated } = useAuthStore();
-  const { fetchDepartments, fetchCategories, fetchDocuments } = useDocumentStore();
+  const {
+    fetchDepartments,
+    fetchCategories,
+    fetchParentCategories,
+    fetchSubcategories,
+    fetchDocuments,
+  } = useDocumentStore();
 
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
@@ -76,13 +87,22 @@ function App() {
         await Promise.all([
           fetchDepartments(),
           fetchCategories(),
+          fetchParentCategories(),
+          fetchSubcategories(),
           fetchDocuments(),
         ]);
       } catch (error) {
         console.error('초기 데이터 로드 실패:', error);
       }
     })();
-  }, [isAuthenticated, fetchDepartments, fetchCategories, fetchDocuments]);
+  }, [
+    isAuthenticated,
+    fetchDepartments,
+    fetchCategories,
+    fetchParentCategories,
+    fetchSubcategories,
+    fetchDocuments,
+  ]);
 
   return (
     <>
@@ -90,6 +110,7 @@ function App() {
         <Routes>
         <Route path="/" element={<RootRoute />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/nfc-redirect" element={<NfcRedirect />} />
 
         <Route
           path="/admin"
@@ -120,6 +141,38 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <DocumentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/parent-categories"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ParentCategoryList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/parent-category/:parentCategoryId"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ParentCategoryDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/parent-category/:parentCategoryId/subcategory/:subcategoryId"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <SubcategoryDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/subcategories"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <SubcategoryManagement />
             </ProtectedRoute>
           }
         />
@@ -177,6 +230,38 @@ function App() {
           element={
             <ProtectedRoute requiredRole="team">
               <DocumentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/parent-categories"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <ParentCategoryList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/parent-category/:parentCategoryId"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <ParentCategoryDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/parent-category/:parentCategoryId/subcategory/:subcategoryId"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <SubcategoryDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team/subcategories"
+          element={
+            <ProtectedRoute requiredRole="team">
+              <SubcategoryManagement />
             </ProtectedRoute>
           }
         />

@@ -330,9 +330,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: '홈', href: basePath, icon: Home },
     {
-      name: isAdmin ? '부서 관리' : '전체 부서 보기',
+      name: isAdmin ? '부서 관리' : '부서 보기',
       href: `${basePath}/departments`,
       icon: Building2,
+    },
+    {
+      name: '대분류',
+      href: `${basePath}/parent-categories`,
+      icon: FileText,
+    },
+    {
+      name: '세부 카테고리',
+      href: `${basePath}/subcategories`,
+      icon: FileText,
     },
     { name: '문서 관리', href: `${basePath}/documents`, icon: FileText },
     ...(isAdmin

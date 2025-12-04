@@ -4,6 +4,7 @@ import { isNFCSupported } from '@/lib/nfc';
 import { resolveNFCTag } from '@/lib/nfcApi';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/lib/supabase';
 
 export function NFCAutoRedirect() {
   const navigate = useNavigate();
@@ -37,7 +38,30 @@ export function NFCAutoRedirect() {
             const uid = serialNumber.replace(/:/g, '').toUpperCase();
             console.log('📱 NFC 태그 감지! UID:', uid);
 
-            // 서버에서 매핑 확인
+            const basePath = user.role === 'admin' ? '/admin' : '/team';
+
+            // 1차: 세부 카테고리(subcategories)에서 UID 기반 매핑
+            const { data: sub, error: subError } = await supabase
+              .from('subcategories')
+              .select('id, parent_category_id')
+              .eq('nfc_uid', uid)
+              .single();
+
+            if (!subError && sub) {
+              toast({
+                title: '✅ NFC 태그 인식',
+                description: '연결된 세부 카테고리로 이동합니다.',
+              });
+
+              navigate(
+                `${basePath}/parent-category/${(sub as any).parent_category_id}/subcategory/${
+                  (sub as any).id
+                }`,
+              );
+              return;
+            }
+
+            // 2차: 기존 nfc_mappings 테이블을 통한 카테고리 매핑 (레거시 호환)
             const result = await resolveNFCTag(uid);
 
             if (result.found && result.category) {
@@ -46,11 +70,8 @@ export function NFCAutoRedirect() {
                 description: `"${result.category.name}" 카테고리로 이동합니다`,
               });
 
-              // 카테고리 페이지로 이동
-              const basePath = user.role === 'admin' ? '/admin' : '/team';
               navigate(`${basePath}/category/${result.category.id}`);
             } else {
-              // 미등록 태그
               toast({
                 title: '❌ 미등록 태그',
                 description: '이 NFC 태그는 등록되지 않았습니다.',

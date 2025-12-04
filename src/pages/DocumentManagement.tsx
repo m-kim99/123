@@ -109,8 +109,17 @@ function readFileAsDataURL(file: File): Promise<string> {
 
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
-  const { departments, categories, documents, addCategory, uploadDocument, fetchDocuments, fetchCategories } =
-    useDocumentStore();
+  const {
+    departments,
+    categories,
+    parentCategories,
+    subcategories,
+    documents,
+    addCategory,
+    uploadDocument,
+    fetchDocuments,
+    fetchCategories,
+  } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
   const primaryColor = '#2563eb';
@@ -139,9 +148,10 @@ export function DocumentManagement() {
   const [isDeletingCategory, setIsDeletingCategory] = useState(false);
 
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [uploadData, setUploadData] = useState({
-    categoryId: '',
+  const [uploadSelection, setUploadSelection] = useState({
     departmentId: '',
+    parentCategoryId: '',
+    subcategoryId: '',
   });
   const [documentTitle, setDocumentTitle] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -197,15 +207,22 @@ export function DocumentManagement() {
       const keyword = searchKeyword;
       result = result.filter((doc) => {
         const titleMatch = doc.name.toLowerCase().includes(keyword);
-        const category = categories.find((c) => c.id === doc.categoryId);
+        const parentCategory = parentCategories.find(
+          (pc) => pc.id === doc.parentCategoryId
+        );
+        const subcategory = subcategories.find(
+          (s) => s.id === doc.subcategoryId
+        );
         const department = departments.find((d) => d.id === doc.departmentId);
-        const categoryName = (category?.name || '').toLowerCase();
+        const parentCategoryName = (parentCategory?.name || '').toLowerCase();
+        const subcategoryName = (subcategory?.name || '').toLowerCase();
         const departmentName = (department?.name || '').toLowerCase();
         const ocrMatch = (doc.ocrText || '').toLowerCase().includes(keyword);
 
         return (
           titleMatch ||
-          categoryName.includes(keyword) ||
+          parentCategoryName.includes(keyword) ||
+          subcategoryName.includes(keyword) ||
           departmentName.includes(keyword) ||
           ocrMatch
         );
@@ -217,15 +234,22 @@ export function DocumentManagement() {
       result = result.filter((doc) => {
         const name = doc.name || '';
         const uploader = doc.uploader || '';
-        const category = categories.find((c) => c.id === doc.categoryId);
+        const parentCategory = parentCategories.find(
+          (pc) => pc.id === doc.parentCategoryId
+        );
+        const subcategory = subcategories.find(
+          (s) => s.id === doc.subcategoryId
+        );
         const department = departments.find((d) => d.id === doc.departmentId);
-        const categoryName = (category?.name || '').toLowerCase();
+        const parentCategoryName = (parentCategory?.name || '').toLowerCase();
+        const subcategoryName = (subcategory?.name || '').toLowerCase();
         const departmentName = (department?.name || '').toLowerCase();
 
         return (
           name.toLowerCase().includes(query) ||
           uploader.toLowerCase().includes(query) ||
-          categoryName.includes(query) ||
+          parentCategoryName.includes(query) ||
+          subcategoryName.includes(query) ||
           departmentName.includes(query)
         );
       });
@@ -270,7 +294,8 @@ export function DocumentManagement() {
 
     return sorted;
   }, [
-    categories,
+    parentCategories,
+    subcategories,
     dateFilter,
     departments,
     documents,
@@ -280,6 +305,44 @@ export function DocumentManagement() {
     sortBy,
     user?.departmentId,
   ]);
+
+  const uploadDepartments = useMemo(
+    () =>
+      isAdmin
+        ? departments
+        : departments.filter((d) => d.id === user?.departmentId),
+    [departments, isAdmin, user?.departmentId]
+  );
+
+  const uploadParentCategories = useMemo(
+    () =>
+      parentCategories.filter((pc) =>
+        uploadSelection.departmentId
+          ? pc.departmentId === uploadSelection.departmentId
+          : true
+      ),
+    [parentCategories, uploadSelection.departmentId]
+  );
+
+  const uploadSubcategories = useMemo(
+    () =>
+      subcategories.filter((sub) => {
+        if (
+          uploadSelection.departmentId &&
+          sub.departmentId !== uploadSelection.departmentId
+        ) {
+          return false;
+        }
+        if (
+          uploadSelection.parentCategoryId &&
+          sub.parentCategoryId !== uploadSelection.parentCategoryId
+        ) {
+          return false;
+        }
+        return true;
+      }),
+    [subcategories, uploadSelection.departmentId, uploadSelection.parentCategoryId]
+  );
 
   const { pdfFiles: selectedPdfFiles, imageFiles: selectedImageFiles } =
     splitFilesByType(uploadFiles);
@@ -298,34 +361,56 @@ export function DocumentManagement() {
   }, [searchKeyword]);
  
   useEffect(() => {
-    // URL 파라미터에서 카테고리 정보 읽기
+    // URL 파라미터에서 카테고리/세부 카테고리 정보 읽기 (레거시 및 호환용)
     const params = new URLSearchParams(location.search);
     const categoryId = params.get('category');
     const categoryName = params.get('name');
+    const subcategoryId = params.get('subcategory');
+
+    if (subcategoryId) {
+      const sub = subcategories.find((s) => s.id === subcategoryId);
+      if (sub) {
+        setUploadSelection({
+          departmentId: sub.departmentId,
+          parentCategoryId: sub.parentCategoryId,
+          subcategoryId: sub.id,
+        });
+
+        if (categoryName) {
+          toast({
+            title: '✅ NFC 태그 인식',
+            description: `"${categoryName}" 세부 카테고리가 선택되었습니다`,
+          });
+        }
+
+        setActiveTab('upload');
+        window.history.replaceState({}, '', location.pathname);
+        return;
+      }
+    }
 
     if (categoryId && categoryName) {
-      // 카테고리 자동 선택
-      const category = categories.find((c) => c.id === categoryId);
+      // 레거시: 카테고리 ID만 전달된 경우, 해당 대분류 및 첫 세부 카테고리를 선택
+      const parent = parentCategories.find((pc) => pc.id === categoryId);
+      const sub = subcategories.find((s) => s.parentCategoryId === categoryId);
 
-      if (category) {
-        setUploadData({
-          categoryId: category.id,
-          departmentId: category.departmentId,
+      if (parent) {
+        setUploadSelection({
+          departmentId: parent.departmentId,
+          parentCategoryId: parent.id,
+          subcategoryId: sub?.id || '',
         });
 
         toast({
           title: '✅ NFC 태그 인식',
-          description: `"${categoryName}" 카테고리가 선택되었습니다`,
+          description: `"${categoryName}" 대분류가 선택되었습니다`,
         });
 
-        // 업로드 탭으로 자동 전환
         setActiveTab('upload');
-
-        // URL 파라미터 제거 (깨끗하게)
         window.history.replaceState({}, '', location.pathname);
       }
     }
-  }, [location.search, categories]);
+  }, [location.search, parentCategories, subcategories]);
 
   const handleAddCategory = () => {
     if (newCategory.name && newCategory.departmentId) {
@@ -670,13 +755,10 @@ export function DocumentManagement() {
 
     // 문서 제목 기본값 설정 (단일 문서인 경우에만 사용)
     if (imageFiles.length > 0 && pdfFiles.length === 0) {
-      // 여러 이미지를 하나의 문서로 업로드
       setDocumentTitle(getBaseNameWithoutExt(imageFiles[0].name));
     } else if (pdfFiles.length === 1 && imageFiles.length === 0) {
-      // 단일 PDF 업로드
       setDocumentTitle(getBaseNameWithoutExt(pdfFiles[0].name));
     } else {
-      // 여러 개의 문서가 생성되는 경우 제목 입력은 비활성화
       setDocumentTitle('');
     }
 
@@ -685,7 +767,7 @@ export function DocumentManagement() {
         name: file.name,
         status: '대기 중',
         error: null,
-      }))
+      })),
     );
 
     if (imageFiles.length > 0 && pdfFiles.length === 0 && imageFiles.length > 1) {
@@ -716,9 +798,20 @@ export function DocumentManagement() {
 
   // 문서 업로드 및 OCR 처리 (PDF 개별 업로드 + 이미지 묶음 업로드)
   const handleUpload = async () => {
-    if (!uploadFiles.length || !uploadData.categoryId || !user) {
+    if (!uploadFiles.length || !uploadSelection.subcategoryId || !user) {
       return;
     }
+
+    const subcategory = subcategories.find(
+      (s) => s.id === uploadSelection.subcategoryId,
+    );
+    if (!subcategory) {
+      setUploadError('세부 카테고리를 찾을 수 없습니다.');
+      return;
+    }
+
+    const parentCategoryId = subcategory.parentCategoryId;
+    const departmentId = subcategory.departmentId;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -728,11 +821,6 @@ export function DocumentManagement() {
     setOcrTextPreview('');
 
     try {
-      const category = categories.find((c) => c.id === uploadData.categoryId);
-      if (!category) {
-        throw new Error('카테고리를 찾을 수 없습니다.');
-      }
-
       const { pdfFiles, imageFiles } = splitFilesByType(uploadFiles);
       const totalFiles = uploadFiles.length;
       let completedCount = 0;
@@ -744,7 +832,7 @@ export function DocumentManagement() {
           name: file.name,
           status: '대기 중',
           error: null,
-        }))
+        })),
       );
 
       const getSingleDocTitle = () => {
@@ -791,8 +879,10 @@ export function DocumentManagement() {
           await uploadDocument({
             name: title,
             originalFileName: file.name,
-            categoryId: uploadData.categoryId,
-            departmentId: category.departmentId,
+            categoryId: parentCategoryId,
+            parentCategoryId,
+            subcategoryId: subcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
@@ -898,7 +988,6 @@ export function DocumentManagement() {
           setOcrTextPreview(allOcrText);
         }
 
-        // 여러 이미지를 하나의 PDF로 변환
         try {
           setUploadStatus('PDF 생성 중...');
 
@@ -925,7 +1014,7 @@ export function DocumentManagement() {
               0,
               0,
               pageWidth,
-              pageHeight
+              pageHeight,
             );
           }
 
@@ -948,8 +1037,10 @@ export function DocumentManagement() {
           await uploadDocument({
             name: imageTitle,
             originalFileName: pdfFileName,
-            categoryId: uploadData.categoryId,
-            departmentId: category.departmentId,
+            categoryId: parentCategoryId,
+            parentCategoryId,
+            subcategoryId: subcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file: pdfFile,
@@ -964,11 +1055,10 @@ export function DocumentManagement() {
           setUploadError(
             groupError instanceof Error
               ? groupError.message
-              : '이미지 문서 업로드 중 오류가 발생했습니다.'
+              : '이미지 문서 업로드 중 오류가 발생했습니다.',
           );
         }
       } else if (imageFiles.length === 1) {
-        // 단일 이미지는 기존 방식대로 개별 문서로 업로드
         const file = imageFiles[0];
         const index = uploadFiles.indexOf(file);
         try {
@@ -1001,8 +1091,10 @@ export function DocumentManagement() {
           await uploadDocument({
             name: imageTitle,
             originalFileName: file.name,
-            categoryId: uploadData.categoryId,
-            departmentId: category.departmentId,
+            categoryId: parentCategoryId,
+            parentCategoryId,
+            subcategoryId: subcategory.id,
+            departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
@@ -1036,9 +1128,6 @@ export function DocumentManagement() {
             }
             return next;
           });
-        } finally {
-          completedCount += 1;
-          setUploadProgress(Math.round((completedCount / totalFiles) * 100));
         }
       }
 
@@ -1050,21 +1139,27 @@ export function DocumentManagement() {
         setUploadError(
           failureCount === totalFiles
             ? '모든 파일 업로드에 실패했습니다.'
-            : `${failureCount}개 파일 업로드에 실패했습니다.`
+            : `${failureCount}개 파일 업로드에 실패했습니다.`,
         );
       }
 
       setUploadStatus('업로드 완료');
 
+      await fetchDocuments();
+
       setTimeout(() => {
         setUploadFiles([]);
-        setUploadData({ categoryId: '', departmentId: '' });
+        setUploadSelection({
+          departmentId: '',
+          parentCategoryId: '',
+          subcategoryId: '',
+        });
         setDocumentTitle('');
         setUploadProgress(0);
         setUploadStatus('');
         setUploadSuccess(false);
         setFileStatuses([]);
-        const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement | null;
         if (fileInput) {
           fileInput.value = '';
         }
@@ -1072,7 +1167,9 @@ export function DocumentManagement() {
     } catch (error) {
       console.error('업로드 오류:', error);
       setUploadError(
-        error instanceof Error ? error.message : '문서 업로드 중 오류가 발생했습니다.'
+        error instanceof Error
+          ? error.message
+          : '문서 업로드 중 오류가 발생했습니다.',
       );
       setUploadStatus('');
       setUploadProgress(0);
@@ -1579,7 +1676,12 @@ export function DocumentManagement() {
                 ) : (
                   <div className="space-y-3">
                     {filteredDocuments.map((doc) => {
-                      const category = categories.find((c) => c.id === doc.categoryId);
+                      const parentCategory = parentCategories.find(
+                        (pc) => pc.id === doc.parentCategoryId,
+                      );
+                      const subcategory = subcategories.find(
+                        (s) => s.id === doc.subcategoryId,
+                      );
                       const dept = departments.find((d) => d.id === doc.departmentId);
                       return (
                         <div
@@ -1609,7 +1711,8 @@ export function DocumentManagement() {
                                 {[
                                   formatDateTimeSimple(doc.uploadDate),
                                   doc.uploader || null,
-                                  category?.name || null,
+                                  parentCategory?.name || null,
+                                  subcategory?.name || null,
                                   dept?.name || null,
                                 ]
                                   .filter(Boolean)
@@ -1659,25 +1762,86 @@ export function DocumentManagement() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>카테고리</Label>
-                  <Select
-                    value={uploadData.categoryId}
-                    onValueChange={(value) =>
-                      setUploadData({ ...uploadData, categoryId: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="카테고리 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredCategories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>부서</Label>
+                    <Select
+                      value={uploadSelection.departmentId}
+                      onValueChange={(value) =>
+                        setUploadSelection({
+                          departmentId: value,
+                          parentCategoryId: '',
+                          subcategoryId: '',
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="부서 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {uploadDepartments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name} ({dept.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>대분류</Label>
+                    <Select
+                      value={uploadSelection.parentCategoryId}
+                      onValueChange={(value) =>
+                        setUploadSelection((prev) => ({
+                          ...prev,
+                          parentCategoryId: value,
+                          subcategoryId: '',
+                        }))
+                      }
+                      disabled={
+                        !uploadSelection.departmentId ||
+                        uploadParentCategories.length === 0
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="대분류 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {uploadParentCategories.map((pc) => (
+                          <SelectItem key={pc.id} value={pc.id}>
+                            {pc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>세부 카테고리</Label>
+                    <Select
+                      value={uploadSelection.subcategoryId}
+                      onValueChange={(value) =>
+                        setUploadSelection((prev) => ({
+                          ...prev,
+                          subcategoryId: value,
+                        }))
+                      }
+                      disabled={
+                        !uploadSelection.parentCategoryId ||
+                        uploadSubcategories.length === 0
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="세부 카테고리 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {uploadSubcategories.map((sub) => (
+                          <SelectItem key={sub.id} value={sub.id}>
+                            {sub.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1832,7 +1996,11 @@ export function DocumentManagement() {
                 <Button
                   className="w-full"
                   style={{ backgroundColor: primaryColor }}
-                  disabled={uploadFiles.length === 0 || !uploadData.categoryId || isUploading}
+                  disabled={
+                    uploadFiles.length === 0 ||
+                    !uploadSelection.subcategoryId ||
+                    isUploading
+                  }
                   onClick={handleUpload}
                 >
                   {isUploading ? (

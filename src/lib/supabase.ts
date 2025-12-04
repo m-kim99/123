@@ -36,7 +36,14 @@ export interface Category {
 
 export interface Document {
   id: string;
-  category_id: string;
+  /**
+   * 기존 카테고리 참조 (마이그레이션 이후에는 parent_category_id/subcategory_id를 사용)
+   */
+  category_id?: string;
+  /** 상위 대분류 카테고리 ID */
+  parent_category_id: string;
+  /** 세부 카테고리 ID */
+  subcategory_id: string;
   department_id: string;
   title: string;
   file_path: string;
@@ -46,6 +53,28 @@ export interface Document {
   uploaded_at: string;
   is_classified: boolean;
 }
+
+// 대분류 카테고리 (기존 categories 테이블을 의미)
+export type ParentCategory = {
+  id: string;
+  name: string;
+  description: string | null;
+  department_id: string;
+  created_at: string;
+};
+
+// 세부 카테고리 (신규 subcategories 테이블)
+export type Subcategory = {
+  id: string;
+  name: string;
+  description: string | null;
+  parent_category_id: string;
+  department_id: string;
+  nfc_uid: string | null;
+  nfc_registered: boolean;
+  storage_location: string | null;
+  created_at: string;
+};
 
 export interface User {
   id: string;

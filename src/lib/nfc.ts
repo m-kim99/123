@@ -127,7 +127,7 @@ export async function writeNFCUrl(
     }
 
     // URL 생성 (실제 배포 URL로 변경 필요)
-    const uploadUrl = `${window.location.origin}/admin/category/${categoryId}`;
+    const uploadUrl = `${window.location.origin}/nfc-redirect?categoryId=${categoryId}`;
 
     console.log('NFC URL 쓰기 시작:', uploadUrl);
 
