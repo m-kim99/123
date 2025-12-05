@@ -1,7 +1,6 @@
 import { useDocumentStore } from '@/store/documentStore';
-import { searchDocumentsByEmbedding } from '@/lib/embedding';
-
-const GEMINI_MODEL = 'gemini-2.5-flash';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/store/authStore';
 
 export interface ChatSearchResult {
   id: string;
@@ -133,23 +132,13 @@ function generateFallbackResponse(message: string): string {
   return ['다음 문서를 찾았습니다:', ...lines].join('\n');
 }
 
-// Google Gemini API를 사용한 응답 생성 (필요 시 폴백)
+// Google Gemini API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
 export async function generateResponse(
   message: string,
   history: ChatHistoryItem[] = []
 ): Promise<string> {
-  console.log('generateResponse 호출됨:', message);
-  console.log('Gemini API 키:', import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 10));
-
   const text = message.trim();
   if (!text) {
-    return generateFallbackResponse(text);
-  }
-
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-
-  // API 키가 없으면 기존 규칙 기반 로직 사용
-  if (!apiKey) {
     return generateFallbackResponse(text);
   }
 
@@ -164,163 +153,37 @@ export async function generateResponse(
     return generateFallbackResponse(text);
   }
 
-  let vectorResults: any[] = [];
   try {
-    console.log('=== 벡터 검색 시작 ===');
-    console.log('질문:', text);
+    const user = useAuthStore.getState().user;
 
-    const embeddingResults = await searchDocumentsByEmbedding(text, 0.3, 5);
-    console.log('벡터 검색 원본 결과:', embeddingResults);
-
-    vectorResults = Array.isArray(embeddingResults) ? embeddingResults : [];
-    console.log('벡터 검색 결과 개수:', vectorResults.length);
-
-    if (vectorResults.length > 0) {
-      console.log(
-        '벡터 검색 문서 제목들:',
-        vectorResults.map((r) => r.title)
-      );
-    }
-  } catch (error) {
-    console.error('벡터 검색 오류:', error);
-    vectorResults = [];
-  }
-
-  const keywordResults = searchDocuments(text).slice(0, 10);
-  console.log('키워드 검색 결과 개수:', keywordResults.length);
-
-  const contextDocuments: any[] =
-    vectorResults.length > 0 ? vectorResults : keywordResults;
-  console.log('최종 사용된 컨텍스트:', contextDocuments.length, '개 문서');
-  console.log(
-    '컨텍스트 소스:',
-    vectorResults.length > 0 ? '벡터 검색' : '키워드 검색'
-  );
-
-  const context = contextDocuments
-    .map((r: any) => {
-      const title = (r.title ?? r.name ?? '').toString();
-      const ocrText = (r.ocr_text ?? '').toString();
-      const snippet = ocrText.slice(0, 500);
-      return `문서: ${title}\n내용: ${snippet}`;
-    })
-    .join('\n\n');
-
-  const contextPayload = {
-    query: text,
-    documents: contextDocuments,
-  };
-
-  const historyContents = history
-    .slice(-10)
-    .map((item) => ({
-      role: item.role === 'assistant' ? 'model' : 'user',
-      parts: [
-        {
-          text: item.content,
-        },
-      ],
-    }));
-
-  const systemPrompt =
-    '당신의 이름은 트로이(Troy)입니다. TrayStorage 문서 관리 시스템의 AI 어시스턴트로서 다음과 같이 행동하세요:\n\n' +
-    '- 친절하고 전문적인 톤으로 답변\n' +
-    '- 한국어로 자연스럽게 대화\n' +
-    '- 문서 위치, 카테고리, 부서 정보를 정확하게 안내\n' +
-    '- 사용자가 문서를 쉽게 찾을 수 있도록 단계별로 설명\n' +
-    '- 이모지를 적절히 사용하여 친근감 있게\n' +
-    '- 간결하면서도 충분한 정보 제공\n' +
-    '- 매번 자기소개하지 말고, 질문에 바로 답변하세요\n\n' +
-    '아래 JSON으로 제공되는 문서 목록을 참고하여 사용자의 질문에 답변하세요. ' +
-    '검색된 문서가 없으면 일반 대화로 자연스럽게 답변하세요. 문서와 관련 없는 질문도 친근하게 대답해주세요. ' +
-    '답변만 간결하게 텍스트로 작성하세요.';
-
-  const userContent = [
-    `문서 컨텍스트 JSON: ${JSON.stringify(contextPayload)}`,
-    `문서 컨텍스트 요약:\n${context || '관련 문서를 찾지 못했습니다.'}`,
-    `사용자 질문: ${text}`,
-  ].join('\n\n');
-
-  try {
-    console.log('Gemini API 호출 시작');
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=` +
-        encodeURIComponent(apiKey),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: '너는 트로이야. 항상 자신을 트로이라고 소개해.',
-                },
-              ],
-            },
-            {
-              role: 'model',
-              parts: [
-                {
-                  text: '알겠습니다. 저는 트로이입니다.',
-                },
-              ],
-            },
-            ...historyContents,
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `${systemPrompt}\n\n${userContent}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2000,
-            topP: 0.9,
-            topK: 40,
-          },
-        }),
-      }
-    );
-
-    console.log('Gemini API 응답:', response);
-
-    if (!response.ok) {
-      console.error('Gemini API 에러:', {
-        status: response.status,
-        body: await response.text(),
-      });
+    if (!user) {
       return generateFallbackResponse(text);
     }
 
-    const data: any = await response.json();
-    const rawText: string =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p?.text ?? '')
-        .join('') ?? '';
+    const { data, error } = await supabase.functions.invoke('ai-chat', {
+      body: {
+        message: text,
+        userId: user.id,
+        history: history.map((h) => ({
+          role: h.role,
+          content: h.content,
+        })),
+      },
+    });
 
-    if (!rawText) {
+    if (error) {
+      console.error('Edge Function error:', error);
       return generateFallbackResponse(text);
     }
 
-    // Gemini 응답에서 마크다운 코드 블록만 제거하고 그대로 반환
-    try {
-      const cleanedText = rawText.replace(/```json\n?|```\n?/g, '').trim();
-      return cleanedText;
-    } catch (err) {
-      console.error('Gemini API 에러:', err);
-      // 최종적으로는 원본 텍스트를 그대로 노출
-      return rawText;
+    const responseText = (data as any)?.response;
+    if (!responseText) {
+      return generateFallbackResponse(text);
     }
+
+    return responseText;
   } catch (error) {
-    console.error('Gemini API 에러:', error);
+    console.error('AI response error:', error);
     return generateFallbackResponse(text);
   }
 }

@@ -1,42 +1,25 @@
 import { supabase } from '@/lib/supabase';
 
-// Google Embedding API 호출 함수
+// Google Embedding API 호출 함수 (Edge Function 경유)
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-embedding', {
+      body: { text },
+    });
 
-  if (!apiKey) {
-    throw new Error('VITE_GEMINI_API_KEY가 설정되어 있지 않습니다.');
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: {
-          parts: [{ text }],
-        },
-      }),
+    if (error) {
+      throw new Error(`Embedding generation failed: ${error.message}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error('임베딩 생성 요청에 실패했습니다.');
+    if (!data?.embedding) {
+      throw new Error('No embedding returned from server');
+    }
+
+    return data.embedding as number[];
+  } catch (error) {
+    console.error('Embedding error:', error);
+    throw error;
   }
-
-  const data = await response.json();
-
-  const values: number[] | undefined =
-    data?.embedding?.values ?? data?.embeddings?.[0]?.values;
-
-  if (!values) {
-    throw new Error('임베딩 결과를 파싱할 수 없습니다.');
-  }
-
-  return values;
 }
 
 // 벡터 검색 함수
