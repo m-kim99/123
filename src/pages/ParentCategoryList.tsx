@@ -34,6 +34,7 @@ export function ParentCategoryList() {
     description: '',
     departmentId: '',
   });
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
 
   useEffect(() => {
     fetchParentCategories();
@@ -43,6 +44,11 @@ export function ParentCategoryList() {
     () => new Map(departments.map((d) => [d.id, d])),
     [departments]
   );
+
+  const filteredParentCategories = useMemo(() => {
+    if (!selectedDepartmentId) return parentCategories;
+    return parentCategories.filter((pc) => pc.departmentId === selectedDepartmentId);
+  }, [parentCategories, selectedDepartmentId]);
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.departmentId) {
@@ -66,18 +72,39 @@ export function ParentCategoryList() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">대분류 관리</h1>
             <p className="text-slate-500 mt-1">
               부서별 문서 대분류(Parent Category)를 관리합니다.
             </p>
           </div>
-          <Button onClick={() => setAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            대분류 추가
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <select
+              value={selectedDepartmentId}
+              onChange={(e) => setSelectedDepartmentId(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm min-w-[150px]"
+            >
+              <option value="">전체 부서</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              대분류 추가
+            </Button>
+          </div>
         </div>
+
+        {selectedDepartmentId && (
+          <p className="text-sm text-slate-500">
+            {departments.find((d) => d.id === selectedDepartmentId)?.name} - 총{' '}
+            {filteredParentCategories.length}개 대분류
+          </p>
+        )}
 
         {isLoading && parentCategories.length === 0 ? (
           <p className="text-slate-500">로딩 중...</p>
@@ -89,7 +116,7 @@ export function ParentCategoryList() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {parentCategories.map((pc) => {
+            {filteredParentCategories.map((pc) => {
               const dept = departmentMap.get(pc.departmentId);
               return (
                 <Card

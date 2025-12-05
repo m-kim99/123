@@ -26,6 +26,7 @@ import logo from '@/assets/logo.png';
 import googleLogo from '@/assets/google.png';
 import appleLogo from '@/assets/apple.png';
 import kakaoLogo from '@/assets/kakao.png';
+import naverLogo from '@/assets/naver.png';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -118,6 +119,44 @@ export function LoginPage() {
       toast({
         title: 'Kakao 로그인 오류',
         description: error?.message || 'Kakao 로그인 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleNaverLogin = async () => {
+    console.log('🟢 Naver 로그인 시작');
+    console.log('🟢 Supabase 객체:', supabase);
+    console.log('🟢 window.location.origin:', window.location.origin);
+
+    try {
+      const redirectTo = `${window.location.origin}`;
+
+      console.log('🟢 signInWithOAuth 호출 전');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'naver',
+        options: {
+          redirectTo,
+        },
+      });
+
+      console.log('🟢 signInWithOAuth 응답:', { data, error });
+
+      if (error) {
+        console.error('❌ Naver 로그인 실패:', error);
+        toast({
+          title: 'Naver 로그인 실패',
+          description: error.message || '다시 시도해주세요',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('✅ Naver 로그인 성공, 리디렉션 시작');
+      }
+    } catch (error: any) {
+      console.error('❌ Naver 로그인 예외:', error);
+      toast({
+        title: 'Naver 로그인 오류',
+        description: error?.message || 'Naver 로그인 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
     }
@@ -380,6 +419,17 @@ export function LoginPage() {
                       <span className="text-sm">Kakao 계정으로 계속하기</span>
                     </Button>
                   </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      onClick={handleNaverLogin}
+                    >
+                      <img src={naverLogo} alt="Naver" className="h-5 w-5" />
+                      <span className="text-sm">Naver 계정으로 계속하기</span>
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
               <TabsContent value="team">
@@ -463,6 +513,17 @@ export function LoginPage() {
                     >
                       <img src={kakaoLogo} alt="Kakao" className="h-5 w-5" />
                       <span className="text-sm">Kakao 계정으로 계속하기</span>
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      onClick={handleNaverLogin}
+                    >
+                      <img src={naverLogo} alt="Naver" className="h-5 w-5" />
+                      <span className="text-sm">Naver 계정으로 계속하기</span>
                     </Button>
                   </div>
                 </form>
