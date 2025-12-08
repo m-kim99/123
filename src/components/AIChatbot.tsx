@@ -77,7 +77,14 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
         const resultsForMessage =
           searchResults.length > 0 ? searchResults : undefined;
 
+        let firstChunkReceived = false;
+
         await generateResponse(trimmed, history, (partial) => {
+          if (!firstChunkReceived) {
+            firstChunkReceived = true;
+            setIsTyping(false);
+          }
+
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
@@ -219,8 +226,8 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="ml-2 px-3 py-1 rounded-lg bg-slate-100 text-xs text-slate-600">
-                    AI가 답변을 작성 중입니다...
+                  <div className="px-3 py-1 rounded-lg bg-transparent text-xs text-slate-600">
+                    생각 중...
                   </div>
                 </div>
               )}
