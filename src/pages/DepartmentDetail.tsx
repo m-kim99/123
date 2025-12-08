@@ -27,7 +27,7 @@ import { toast } from '@/hooks/use-toast';
 export function DepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, parentCategories, documents, addCategory, fetchDepartments } =
+  const { departments, parentCategories, documents, addParentCategory, fetchDepartments } =
     useDocumentStore();
   const { user } = useAuthStore();
   const primaryColor = '#2563eb';
@@ -35,10 +35,8 @@ export function DepartmentDetail() {
   const department = departments.find((d) => d.id === departmentId);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryDescription, setNewCategoryDescription] = useState('');
-  const [newCategoryStorageLocation, setNewCategoryStorageLocation] = useState('');
-  const [newCategoryNfcRegistered, setNewCategoryNfcRegistered] = useState(false);
+  const [newParentCategoryName, setNewParentCategoryName] = useState('');
+  const [newParentCategoryDescription, setNewParentCategoryDescription] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editDeptName, setEditDeptName] = useState(department?.name ?? '');
@@ -102,26 +100,24 @@ export function DepartmentDetail() {
 
   const handleOpenAddDialog = () => {
     setAddDialogOpen(true);
-    setNewCategoryName('');
-    setNewCategoryDescription('');
-    setNewCategoryStorageLocation('');
-    setNewCategoryNfcRegistered(false);
+    setNewParentCategoryName('');
+    setNewParentCategoryDescription('');
   };
 
   const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
+    if (!newParentCategoryName.trim()) {
       return;
     }
 
-    await addCategory({
-      name: newCategoryName.trim(),
-      description: newCategoryDescription,
+    await addParentCategory({
+      name: newParentCategoryName.trim(),
+      description: newParentCategoryDescription,
       departmentId: department.id,
-      nfcRegistered: newCategoryNfcRegistered,
-      storageLocation: newCategoryStorageLocation,
     });
 
     setAddDialogOpen(false);
+    setNewParentCategoryName('');
+    setNewParentCategoryDescription('');
   };
 
   const handleSaveDepartment = async () => {
@@ -319,7 +315,7 @@ export function DepartmentDetail() {
             </div>
             <Button style={{ backgroundColor: primaryColor }} onClick={handleOpenAddDialog}>
               <Plus className="h-4 w-4 mr-2" />
-              카테고리 추가
+              대분류 추가
             </Button>
           </CardHeader>
           <CardContent>
@@ -472,72 +468,27 @@ export function DepartmentDetail() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 카테고리 추가</DialogTitle>
+              <DialogTitle>새 대분류 추가</DialogTitle>
               <DialogDescription>
-                {department.name} 부서에 속한 새로운 카테고리를 생성합니다
+                {department.name} 부서에 속한 새로운 대분류를 생성합니다
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>카테고리 이름</Label>
+                <Label>대분류 이름</Label>
                 <Input
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="예: 계약서"
+                  value={newParentCategoryName}
+                  onChange={(e) => setNewParentCategoryName(e.target.value)}
+                  placeholder="예: 인사 문서"
                 />
               </div>
               <div className="space-y-2">
                 <Label>설명</Label>
                 <Textarea
-                  value={newCategoryDescription}
-                  onChange={(e) => setNewCategoryDescription(e.target.value)}
-                  placeholder="카테고리 설명"
+                  value={newParentCategoryDescription}
+                  onChange={(e) => setNewParentCategoryDescription(e.target.value)}
+                  placeholder="대분류 설명을 입력하세요"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>보관 위치</Label>
-                <Input
-                  value={newCategoryStorageLocation}
-                  onChange={(e) => setNewCategoryStorageLocation(e.target.value)}
-                  placeholder="예: A동 2층 캐비닛 3"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>NFC 등록 여부</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="dept-new-nfc-yes"
-                      name="dept-new-nfc-registered"
-                      checked={newCategoryNfcRegistered === true}
-                      onChange={() => setNewCategoryNfcRegistered(true)}
-                      className="h-4 w-4"
-                    />
-                    <Label
-                      htmlFor="dept-new-nfc-yes"
-                      className="font-normal cursor-pointer"
-                    >
-                      등록됨
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="dept-new-nfc-no"
-                      name="dept-new-nfc-registered"
-                      checked={newCategoryNfcRegistered === false}
-                      onChange={() => setNewCategoryNfcRegistered(false)}
-                      className="h-4 w-4"
-                    />
-                    <Label
-                      htmlFor="dept-new-nfc-no"
-                      className="font-normal cursor-pointer"
-                    >
-                      미등록
-                    </Label>
-                  </div>
-                </div>
               </div>
             </div>
             <DialogFooter>
@@ -552,7 +503,7 @@ export function DepartmentDetail() {
                 type="button"
                 onClick={handleAddCategory}
                 style={{ backgroundColor: primaryColor }}
-                disabled={!newCategoryName.trim()}
+                disabled={!newParentCategoryName.trim()}
               >
                 추가
               </Button>

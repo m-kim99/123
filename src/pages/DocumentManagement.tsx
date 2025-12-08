@@ -117,6 +117,8 @@ export function DocumentManagement() {
     subcategories,
     documents,
     addCategory,
+    addSubcategory,
+    fetchSubcategories,
     uploadDocument,
     fetchDocuments,
     fetchCategories,
@@ -129,6 +131,7 @@ export function DocumentManagement() {
     name: '',
     description: '',
     departmentId: '',
+    parentCategoryId: '',
     nfcRegistered: false,
     storageLocation: '',
   });
@@ -413,17 +416,43 @@ export function DocumentManagement() {
     }
   }, [location.search, parentCategories, subcategories]);
 
+  const newCategoryParentOptions = useMemo(
+    () =>
+      newCategory.departmentId
+        ? parentCategories.filter((pc) => pc.departmentId === newCategory.departmentId)
+        : [],
+    [parentCategories, newCategory.departmentId],
+  );
+
   const handleAddCategory = () => {
-    if (newCategory.name && newCategory.departmentId) {
-      addCategory(newCategory);
-      setNewCategory({
-        name: '',
-        description: '',
-        departmentId: '',
-        nfcRegistered: false,
-        storageLocation: '',
-      });
+    if (
+      !newCategory.name.trim() ||
+      !newCategory.departmentId ||
+      !newCategory.parentCategoryId
+    ) {
+      return;
     }
+
+    addSubcategory({
+      name: newCategory.name.trim(),
+      description: newCategory.description,
+      departmentId: newCategory.departmentId,
+      parentCategoryId: newCategory.parentCategoryId,
+      storageLocation: newCategory.storageLocation,
+      nfcRegistered: newCategory.nfcRegistered,
+      nfcUid: null,
+    }).then(() => {
+      fetchSubcategories();
+    });
+
+    setNewCategory({
+      name: '',
+      description: '',
+      departmentId: '',
+      parentCategoryId: '',
+      nfcRegistered: false,
+      storageLocation: '',
+    });
   };
 
   const handleOpenEditDialog = (category: Category) => {
@@ -1218,7 +1247,7 @@ export function DocumentManagement() {
               value="categories"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              카테고리 관리
+              세부 카테고리 관리
             </TabsTrigger>
             <TabsTrigger
               value="documents"
@@ -1240,25 +1269,25 @@ export function DocumentManagement() {
                 <DialogTrigger asChild>
                   <Button style={{ backgroundColor: primaryColor }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    카테고리 추가
+                    세부 카테고리 추가
                   </Button>
                 </DialogTrigger>
                 <DialogContent closeClassName="text-white data-[state=open]:text-white">
                   <DialogHeader>
-                    <DialogTitle>새 카테고리 추가</DialogTitle>
+                    <DialogTitle>새 세부 카테고리 추가</DialogTitle>
                     <DialogDescription>
-                      새로운 문서 카테고리를 생성합니다
+                      새로운 문서 세부 카테고리를 생성합니다
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>카테고리 이름</Label>
+                      <Label>세부 카테고리 이름</Label>
                       <Input
                         value={newCategory.name}
                         onChange={(e) =>
                           setNewCategory({ ...newCategory, name: e.target.value })
                         }
-                        placeholder="예: 계약서"
+                        placeholder="예: 근로계약서(2024년)"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1271,7 +1300,7 @@ export function DocumentManagement() {
                             description: e.target.value,
                           })
                         }
-                        placeholder="카테고리 설명"
+                        placeholder="세부 카테고리 설명"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1279,7 +1308,11 @@ export function DocumentManagement() {
                       <Select
                         value={newCategory.departmentId}
                         onValueChange={(value) =>
-                          setNewCategory({ ...newCategory, departmentId: value })
+                          setNewCategory({
+                            ...newCategory,
+                            departmentId: value,
+                            parentCategoryId: '',
+                          })
                         }
                       >
                         <SelectTrigger>
@@ -1289,6 +1322,30 @@ export function DocumentManagement() {
                           {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id}>
                               {dept.name} ({dept.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>대분류</Label>
+                      <Select
+                        value={newCategory.parentCategoryId}
+                        onValueChange={(value) =>
+                          setNewCategory({
+                            ...newCategory,
+                            parentCategoryId: value,
+                          })
+                        }
+                        disabled={newCategoryParentOptions.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="대분류 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {newCategoryParentOptions.map((pc) => (
+                            <SelectItem key={pc.id} value={pc.id}>
+                              {pc.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1359,6 +1416,11 @@ export function DocumentManagement() {
                     <Button
                       onClick={handleAddCategory}
                       style={{ backgroundColor: primaryColor }}
+                      disabled={
+                        !newCategory.name.trim() ||
+                        !newCategory.departmentId ||
+                        !newCategory.parentCategoryId
+                      }
                     >
                       추가
                     </Button>
