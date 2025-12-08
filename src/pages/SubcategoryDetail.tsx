@@ -193,21 +193,6 @@ export function SubcategoryDetail() {
     }
   };
 
-  const handleOpenEditDialog = () => {
-    if (!subcategory) {
-      return;
-    }
-
-    setEditForm({
-      name: subcategory.name || '',
-      description: subcategory.description || '',
-      storageLocation: subcategory.storageLocation || '',
-      nfcRegistered: subcategory.nfcRegistered,
-    });
-    setEditNameError('');
-    setEditDialogOpen(true);
-  };
-
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
     setEditNameError('');

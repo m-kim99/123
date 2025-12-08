@@ -2,17 +2,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 
 export function TeamDepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, categories, parentCategories, documents } = useDocumentStore();
+  const { departments, parentCategories, documents } = useDocumentStore();
 
   const department = departments.find((d) => d.id === departmentId);
-  const deptCategories = categories.filter((c) => c.departmentId === departmentId);
   const deptParentCategories = parentCategories.filter(
     (pc) => pc.departmentId === departmentId,
   );
@@ -87,9 +85,6 @@ export function TeamDepartmentDetail() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">{pc.name}</CardTitle>
-                      {pc.nfcRegistered && (
-                        <Badge variant="outline">NFC</Badge>
-                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -99,12 +94,6 @@ export function TeamDepartmentDetail() {
                         <span className="text-slate-500">문서 수</span>
                         <span className="font-medium">{pc.documentCount}개</span>
                       </div>
-                      {pc.storageLocation && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">보관 위치</span>
-                          <span className="font-medium">{pc.storageLocation}</span>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

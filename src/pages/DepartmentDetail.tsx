@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Smartphone, Plus } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
@@ -27,7 +26,7 @@ import { toast } from '@/hooks/use-toast';
 export function DepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, categories, parentCategories, documents, addCategory, fetchDepartments } =
+  const { departments, parentCategories, documents, addCategory, fetchDepartments } =
     useDocumentStore();
   const primaryColor = '#2563eb';
 
@@ -314,12 +313,6 @@ export function DepartmentDetail() {
                             {pc.description || '설명이 없습니다.'}
                           </CardDescription>
                         </div>
-                        {pc.nfcRegistered && (
-                          <Badge variant="outline" className="ml-2">
-                            <Smartphone className="h-3 w-3 mr-1" />
-                            NFC
-                          </Badge>
-                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
