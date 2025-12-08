@@ -173,7 +173,7 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
                           : { backgroundColor: '#f1f5f9' }
                       }
                     >
-                      <p className="text-sm break-words">{message.content}</p>
+                      <p className="text-sm break-words whitespace-pre-line">{message.content}</p>
                       <span className="text-xs opacity-70 mt-1 block">
                         {message.timestamp.toLocaleTimeString('ko-KR', {
                           hour: '2-digit',
