@@ -14,6 +14,7 @@ interface Department {
   description: string;
   created_at: string;
   document_count?: number;
+  member_count?: number;
 }
 
 export function TeamDepartments() {
@@ -62,17 +63,25 @@ export function TeamDepartments() {
 
       if (deptError) throw deptError;
 
-      // 각 부서의 문서 수 계산
+      // 각 부서의 문서 수 및 팀원 수 계산
       const departmentsWithCount = await Promise.all(
         (deptData || []).map(async (dept: any) => {
-          const { count } = await supabase
+          const { count: documentCount } = await supabase
             .from('documents')
             .select('*', { count: 'exact', head: true })
             .eq('department_id', dept.id);
 
+          const { count: memberCount } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('company_id', user.companyId)
+            .eq('department_id', dept.id)
+            .eq('role', 'team');
+
           return {
             ...dept,
-            document_count: count || 0,
+            document_count: documentCount || 0,
+            member_count: memberCount || 0,
           } as Department;
         })
       );
@@ -156,7 +165,7 @@ export function TeamDepartments() {
                             <Users className="h-4 w-4 text-slate-500" />
                             <span className="text-xs text-slate-500">팀원</span>
                           </div>
-                          <p className="text-2xl font-bold">5</p>
+                          <p className="text-2xl font-bold">{dept.member_count ?? 0}</p>
                         </div>
                       </div>
 

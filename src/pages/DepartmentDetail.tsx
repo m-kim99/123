@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ export function DepartmentDetail() {
   const navigate = useNavigate();
   const { departments, parentCategories, documents, addCategory, fetchDepartments } =
     useDocumentStore();
+  const { user } = useAuthStore();
   const primaryColor = '#2563eb';
 
   const department = departments.find((d) => d.id === departmentId);
@@ -48,6 +50,7 @@ export function DepartmentDetail() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [editNameError, setEditNameError] = useState('');
   const [editCodeError, setEditCodeError] = useState('');
+  const [teamMembersCount, setTeamMembersCount] = useState(0);
 
   if (!department) {
     return (
@@ -68,7 +71,34 @@ export function DepartmentDetail() {
   );
   const departmentDocuments = documents.filter((d) => d.departmentId === department.id);
   const nfcCategoryCount = departmentParentCategories.length;
-  const teamMembersCount = 5; // 현재는 고정값, 추후 실제 데이터 연동 가능
+
+  useEffect(() => {
+    const loadTeamMembersCount = async () => {
+      if (!department || !user?.companyId) {
+        setTeamMembersCount(0);
+        return;
+      }
+
+      try {
+        const { count, error } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('company_id', user.companyId)
+          .eq('department_id', department.id)
+          .eq('role', 'team');
+
+        if (error) {
+          throw error;
+        }
+
+        setTeamMembersCount(count || 0);
+      } catch (err) {
+        console.error('팀원 수 로드 실패:', err);
+      }
+    };
+
+    loadTeamMembersCount();
+  }, [department, user?.companyId]);
 
   const handleOpenAddDialog = () => {
     setAddDialogOpen(true);

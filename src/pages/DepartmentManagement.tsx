@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Building2, FileText, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,7 @@ export function DepartmentManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [nameError, setNameError] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
 
   const resetForm = () => {
     setNewDeptName('');
@@ -40,6 +41,42 @@ export function DepartmentManagement() {
     setNameError('');
     setCodeError('');
   };
+
+  useEffect(() => {
+    const loadMemberCounts = async () => {
+      if (!user?.companyId || departments.length === 0) {
+        setMemberCounts({});
+        return;
+      }
+
+      try {
+        const deptIds = departments.map((d) => d.id);
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, department_id, role')
+          .eq('company_id', user.companyId)
+          .eq('role', 'team')
+          .in('department_id', deptIds);
+
+        if (error) {
+          throw error;
+        }
+
+        const counts: Record<string, number> = {};
+        (data || []).forEach((u: any) => {
+          if (!u.department_id) return;
+          counts[u.department_id] = (counts[u.department_id] || 0) + 1;
+        });
+
+        setMemberCounts(counts);
+      } catch (err) {
+        console.error('부서별 팀원 수 로드 실패:', err);
+      }
+    };
+
+    loadMemberCounts();
+  }, [user?.companyId, departments]);
 
   const handleGenerateCode = () => {
     if (!newDeptName.trim()) {
@@ -259,7 +296,7 @@ export function DepartmentManagement() {
                           <Users className="h-4 w-4 text-slate-500" />
                           <span className="text-xs text-slate-500">팀원</span>
                         </div>
-                        <p className="text-2xl font-bold">5</p>
+                        <p className="text-2xl font-bold">{memberCounts[dept.id] ?? 0}</p>
                       </div>
                     </div>
 
