@@ -70,9 +70,10 @@ export type Subcategory = {
   description: string | null;
   parent_category_id: string;
   department_id: string;
-  nfc_uid: string | null;
+  nfc_tag_id: string | null;
   nfc_registered: boolean;
   storage_location: string | null;
+  company_id: string | null;
   created_at: string;
 };
 

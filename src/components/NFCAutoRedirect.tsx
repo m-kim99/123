@@ -44,7 +44,7 @@ export function NFCAutoRedirect() {
             const { data: sub, error: subError } = await supabase
               .from('subcategories')
               .select('id, parent_category_id')
-              .eq('nfc_uid', uid)
+              .eq('nfc_tag_id', uid)
               .single();
 
             if (!subError && sub) {

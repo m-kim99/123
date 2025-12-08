@@ -247,7 +247,6 @@ export function SubcategoryManagement() {
                               `/admin/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
                             )
                           }
-                          className="h-8 aspect-square rounded-xl text-base"
                         >
                           ✏️
                         </Button>
@@ -255,7 +254,7 @@ export function SubcategoryManagement() {
                           variant="outline"
                           size="icon"
                           onClick={() => handleDelete(sub.id)}
-                          className="h-8 aspect-square rounded-xl text-base"
+                          className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         >
                           🗑️
                         </Button>

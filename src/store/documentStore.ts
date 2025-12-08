@@ -630,7 +630,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
                 description: sub.description || '',
                 parentCategoryId: sub.parent_category_id,
                 departmentId: sub.department_id,
-                nfcUid: sub.nfc_uid || null,
+                nfcUid: sub.nfc_tag_id || null,
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
                 documentCount: count || 0,
@@ -642,7 +642,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
                 description: sub.description || '',
                 parentCategoryId: sub.parent_category_id,
                 departmentId: sub.department_id,
-                nfcUid: sub.nfc_uid || null,
+                nfcUid: sub.nfc_tag_id || null,
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
                 documentCount: 0,
@@ -752,7 +752,6 @@ export const useDocumentStore = create<DocumentState>((set) => ({
           department_id: category.departmentId,
           code: code,
           nfc_tag_id: category.nfcRegistered ? `NFC_${Date.now()}` : null, // nfcRegistered가 true면 nfc_tag_id 생성
-          storage_location: category.storageLocation || null,
         })
         .select()
         .single();
@@ -863,7 +862,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
           description: subcategory.description || null,
           parent_category_id: subcategory.parentCategoryId,
           department_id: subcategory.departmentId,
-          nfc_uid: subcategory.nfcUid || null,
+          nfc_tag_id: subcategory.nfcUid || null,
           nfc_registered: subcategory.nfcRegistered,
           storage_location: subcategory.storageLocation || null,
         })
@@ -882,7 +881,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
               description: data.description || '',
               parentCategoryId: data.parent_category_id,
               departmentId: data.department_id,
-              nfcUid: data.nfc_uid || null,
+              nfcUid: data.nfc_tag_id || null,
               nfcRegistered: data.nfc_registered,
               storageLocation: data.storage_location || undefined,
               documentCount: 0,
@@ -924,7 +923,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         updateData.parent_category_id = updates.parentCategoryId;
       if (updates.departmentId !== undefined)
         updateData.department_id = updates.departmentId;
-      if (updates.nfcUid !== undefined) updateData.nfc_uid = updates.nfcUid;
+      if (updates.nfcUid !== undefined) updateData.nfc_tag_id = updates.nfcUid;
       if (updates.nfcRegistered !== undefined)
         updateData.nfc_registered = updates.nfcRegistered;
       if (updates.storageLocation !== undefined)
@@ -991,7 +990,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       const { error } = await supabase
         .from('subcategories')
         .update({
-          nfc_uid: nfcUid,
+          nfc_tag_id: nfcUid,
           nfc_registered: true,
         })
         .eq('id', subcategoryId);
