@@ -30,11 +30,11 @@ serve(async (req) => {
       },
     ];
 
-    const apiVersion = 'v1';
-    const model = 'gemini-1.5-flash-latest';
+    const apiVersion = 'v1beta';
+    const modelPath = 'models/gemini-2.5-flash';
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/${apiVersion}/${modelPath}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
