@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import type { Subcategory } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ export function SubcategoryManagement() {
     fetchSubcategories,
     addSubcategory,
     deleteSubcategory,
+    updateSubcategory,
   } = useDocumentStore();
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
@@ -42,6 +44,18 @@ export function SubcategoryManagement() {
     storageLocation: '',
     nfcRegistered: false,
   });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(
+    null,
+  );
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    storageLocation: '',
+    nfcRegistered: false,
+  });
+  const [editNameError, setEditNameError] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   useEffect(() => {
     fetchParentCategories();
@@ -124,6 +138,49 @@ export function SubcategoryManagement() {
       console.error('세부 카테고리 추가 실패:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleOpenEditDialog = (sub: Subcategory) => {
+    setEditingSubcategory(sub);
+    setEditForm({
+      name: sub.name || '',
+      description: sub.description || '',
+      storageLocation: sub.storageLocation || '',
+      nfcRegistered: sub.nfcRegistered,
+    });
+    setEditNameError('');
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingSubcategory(null);
+    setEditNameError('');
+  };
+
+  const handleSaveEditSubcategory = async () => {
+    if (!editingSubcategory) return;
+
+    const trimmedName = editForm.name.trim();
+    if (!trimmedName) {
+      setEditNameError('이름을 입력하세요');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    setEditNameError('');
+    try {
+      await updateSubcategory(editingSubcategory.id, {
+        name: trimmedName,
+        description: editForm.description,
+        storageLocation: editForm.storageLocation,
+        nfcRegistered: editForm.nfcRegistered,
+      });
+      await fetchSubcategories();
+      setEditDialogOpen(false);
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -242,11 +299,7 @@ export function SubcategoryManagement() {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() =>
-                            navigate(
-                              `/admin/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
-                            )
-                          }
+                          onClick={() => handleOpenEditDialog(sub)}
                         >
                           ✏️
                         </Button>
@@ -415,6 +468,128 @@ export function SubcategoryManagement() {
                 }
               >
                 {isSaving ? '추가 중...' : '추가'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseEditDialog();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>세부 카테고리 수정</DialogTitle>
+              <DialogDescription>
+                선택한 세부 카테고리 정보를 수정합니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>세부 카테고리 이름</Label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder="예: 채용 서류 보관함"
+                />
+                {editNameError && (
+                  <p className="text-xs text-red-500 mt-1">{editNameError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>설명</Label>
+                <Textarea
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder="세부 카테고리 설명"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>보관 위치</Label>
+                <Input
+                  value={editForm.storageLocation}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      storageLocation: e.target.value,
+                    }))
+                  }
+                  placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>NFC 등록 여부</Label>
+                <div className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="sub-mgmt-edit-nfc-yes"
+                      name="sub-mgmt-edit-nfc-registered"
+                      className="h-4 w-4"
+                      checked={editForm.nfcRegistered === true}
+                      onChange={() =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          nfcRegistered: true,
+                        }))
+                      }
+                    />
+                    <Label
+                      htmlFor="sub-mgmt-edit-nfc-yes"
+                      className="font-normal cursor-pointer"
+                    >
+                      등록됨
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="sub-mgmt-edit-nfc-no"
+                      name="sub-mgmt-edit-nfc-registered"
+                      className="h-4 w-4"
+                      checked={editForm.nfcRegistered === false}
+                      onChange={() =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          nfcRegistered: false,
+                        }))
+                      }
+                    />
+                    <Label
+                      htmlFor="sub-mgmt-edit-nfc-no"
+                      className="font-normal cursor-pointer"
+                    >
+                      미등록
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseEditDialog}
+                disabled={isSavingEdit}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveEditSubcategory}
+                disabled={isSavingEdit}
+              >
+                {isSavingEdit ? '수정 중...' : '저장'}
               </Button>
             </DialogFooter>
           </DialogContent>
