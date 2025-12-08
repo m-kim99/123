@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 채팅 로그를 DB(chat_messages)에 저장할지 여부 플래그
+// 요구 사항에 따라 기본값을 false로 두어, 더 이상 기록이 남지 않게 함
+const ENABLE_CHAT_LOGGING = false;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -120,22 +124,24 @@ serve(async (req) => {
 
           console.log('Gemini stream completed, length:', fullText.length);
 
-          // chat_messages 저장은 베스트 에포트: 환경변수나 DB 문제가 있어도 응답은 그대로 반환
-          if (supabaseUrl && supabaseServiceRoleKey && fullText) {
-            try {
-              const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+          if (ENABLE_CHAT_LOGGING) {
+            // chat_messages 저장은 베스트 에포트: 환경변수나 DB 문제가 있어도 응답은 그대로 반환
+            if (supabaseUrl && supabaseServiceRoleKey && fullText) {
+              try {
+                const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-              await supabase.from('chat_messages').insert([
-                { user_id: userId, role: 'user', content: message },
-                { user_id: userId, role: 'bot', content: fullText },
-              ]);
-            } catch (dbError) {
-              console.error('Failed to log chat_messages:', dbError);
+                await supabase.from('chat_messages').insert([
+                  { user_id: userId, role: 'user', content: message },
+                  { user_id: userId, role: 'bot', content: fullText },
+                ]);
+              } catch (dbError) {
+                console.error('Failed to log chat_messages:', dbError);
+              }
+            } else if (!supabaseUrl || !supabaseServiceRoleKey) {
+              console.warn(
+                'chat_messages logging skipped: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set'
+              );
             }
-          } else if (!supabaseUrl || !supabaseServiceRoleKey) {
-            console.warn(
-              'chat_messages logging skipped: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set'
-            );
           }
         } catch (streamError) {
           console.error('Error while streaming from Gemini:', streamError);

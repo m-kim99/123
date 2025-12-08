@@ -68,7 +68,8 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
 
     (async () => {
       try {
-        const history: ChatHistoryItem[] = [...messages, userMessage].map((m) => ({
+        // history에는 기존 메시지만 포함하고, 이번에 보낸 메시지는 message 인자로만 한 번 전달
+        const history: ChatHistoryItem[] = messages.map((m) => ({
           role: m.role,
           content: m.content,
         }));
