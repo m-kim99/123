@@ -30,8 +30,11 @@ serve(async (req) => {
       },
     ];
 
+    const apiVersion = 'v1';
+    const model = 'gemini-1.5-flash-latest';
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,16 +66,23 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      throw new Error('Supabase environment variables are not configured');
+    // chat_messages 저장은 베스트 에포트: 환경변수나 DB 문제가 있어도 응답은 그대로 반환
+    if (supabaseUrl && supabaseServiceRoleKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+        await supabase.from('chat_messages').insert([
+          { user_id: userId, role: 'user', content: message },
+          { user_id: userId, role: 'bot', content: aiResponse },
+        ]);
+      } catch (dbError) {
+        console.error('Failed to log chat_messages:', dbError);
+      }
+    } else {
+      console.warn(
+        'chat_messages logging skipped: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set'
+      );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-    await supabase.from('chat_messages').insert([
-      { user_id: userId, role: 'user', content: message },
-      { user_id: userId, role: 'bot', content: aiResponse },
-    ]);
 
     return new Response(JSON.stringify({ response: aiResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
