@@ -2,6 +2,9 @@ import { useDocumentStore } from '@/store/documentStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 export interface ChatSearchResult {
   id: string;
   name: string;
@@ -135,11 +138,20 @@ function generateFallbackResponse(message: string): string {
 // Google Gemini API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
 export async function generateResponse(
   message: string,
-  history: ChatHistoryItem[] = []
+  history: ChatHistoryItem[] = [],
+  onPartialUpdate?: (partial: string) => void
 ): Promise<string> {
   const text = message.trim();
+  const emitFallback = () => {
+    const fallback = generateFallbackResponse(text);
+    if (onPartialUpdate) {
+      onPartialUpdate(fallback);
+    }
+    return fallback;
+  };
+
   if (!text) {
-    return generateFallbackResponse(text);
+    return emitFallback();
   }
 
   // 빠른 답변이 필요한 질문들 (즉시 fallback 처리)
@@ -150,40 +162,79 @@ export async function generateResponse(
   ];
 
   if (fastReplyQuestions.includes(text)) {
-    return generateFallbackResponse(text);
+    return emitFallback();
   }
 
   try {
     const user = useAuthStore.getState().user;
 
-    if (!user) {
-      return generateFallbackResponse(text);
+    if (!user || !supabaseUrl || !supabaseAnonKey) {
+      return emitFallback();
     }
 
-    const { data, error } = await supabase.functions.invoke('ai-chat', {
-      body: {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: supabaseAnonKey,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
         message: text,
         userId: user.id,
         history: history.map((h) => ({
           role: h.role,
           content: h.content,
         })),
-      },
+      }),
     });
 
-    if (error) {
-      console.error('Edge Function error:', error);
-      return generateFallbackResponse(text);
+    if (!response.body) {
+      console.error('ai-chat response has no body');
+      return emitFallback();
     }
 
-    const responseText = (data as any)?.response;
-    if (!responseText) {
-      return generateFallbackResponse(text);
+    if (!response.ok) {
+      console.error('Edge Function error status:', response.status);
+      return emitFallback();
     }
 
-    return responseText;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      const chunkText = decoder.decode(value, { stream: true });
+      if (!chunkText) continue;
+
+      // 부드러운 타이핑 효과: 청크를 다시 글자 단위로 나누어 순차적으로 적용
+      const chars = Array.from(chunkText);
+      for (const ch of chars) {
+        fullText += ch;
+        if (onPartialUpdate) {
+          onPartialUpdate(fullText);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 15));
+      }
+    }
+
+    if (!fullText) {
+      console.warn('ai-chat streaming returned empty text');
+      return emitFallback();
+    }
+
+    return fullText;
   } catch (error) {
     console.error('AI response error:', error);
-    return generateFallbackResponse(text);
+    return emitFallback();
   }
 }

@@ -52,8 +52,6 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
 
     const assistantId = `${Date.now()}-assistant`;
 
-    // 사용자 메시지와 함께 비어 있는 어시스턴트 메시지를 추가해 두고,
-    // 이후에 내용을 조금씩 채워 넣어 타이핑/스트리밍처럼 보이게 한다.
     setMessages((prev) => [
       ...prev,
       userMessage,
@@ -74,40 +72,24 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
           content: m.content,
         }));
 
-        const [reply, searchResults] = await Promise.all([
-          generateResponse(trimmed, history),
-          Promise.resolve(searchDocuments(trimmed)),
-        ]);
-
+        const searchResults = searchDocuments(trimmed);
         const resultsForMessage =
           searchResults.length > 0 ? searchResults : undefined;
 
-        // 간단한 타이핑 효과: 여러 글자를 조금씩 추가하면서 메시지를 업데이트
-        const chars = Array.from(reply);
-        let current = '';
-        const step = 3; // 3글자 단위로 업데이트
-
-        for (let i = 0; i < chars.length; i++) {
-          current += chars[i];
-
-          if ((i + 1) % step === 0 || i === chars.length - 1) {
-            const partial = current;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId
-                  ? {
-                      ...m,
-                      content: partial,
-                      searchResults: resultsForMessage,
-                      timestamp: new Date(),
-                    }
-                  : m
-              )
-            );
-
-            await new Promise((resolve) => setTimeout(resolve, 20));
-          }
-        }
+        await generateResponse(trimmed, history, (partial) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    content: partial,
+                    searchResults: resultsForMessage,
+                    timestamp: new Date(),
+                  }
+                : m
+            )
+          );
+        });
       } finally {
         setIsTyping(false);
       }
