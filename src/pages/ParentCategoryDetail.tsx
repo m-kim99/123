@@ -15,9 +15,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 
 export function ParentCategoryDetail() {
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
@@ -41,6 +53,14 @@ export function ParentCategoryDetail() {
     storageLocation: '',
     nfcRegistered: false,
   });
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editNameError, setEditNameError] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -105,6 +125,90 @@ export function ParentCategoryDetail() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleOpenEditDialog = () => {
+    if (!parentCategory) return;
+    setEditName(parentCategory.name);
+    setEditDescription(parentCategory.description || '');
+    setEditNameError('');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveParentCategory = async () => {
+    if (!parentCategory) return;
+
+    const name = editName.trim();
+    const description = editDescription.trim();
+
+    if (!name) {
+      setEditNameError('대분류 이름을 입력하세요');
+      return;
+    }
+    setEditNameError('');
+
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          name,
+          description: description || null,
+        })
+        .eq('id', parentCategory.id);
+
+      if (error) throw error;
+
+      await fetchParentCategories();
+
+      toast({
+        title: '수정 완료',
+        description: '대분류 정보가 수정되었습니다.',
+      });
+
+      setIsEditDialogOpen(false);
+    } catch (err) {
+      console.error('대분류 수정 실패:', err);
+      toast({
+        title: '수정 실패',
+        description: '대분류 정보를 수정하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleConfirmDeleteParentCategory = async () => {
+    if (!parentCategory) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', parentCategory.id);
+
+      if (error) throw error;
+
+      await fetchParentCategories();
+
+      toast({
+        title: '삭제 완료',
+        description: '대분류가 삭제되었습니다.',
+      });
+
+      setIsDeleteDialogOpen(false);
+      navigate(-1);
+    } catch (err) {
+      console.error('대분류 삭제 실패:', err);
+      toast({
+        title: '삭제 실패',
+        description: '대분류를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+      setIsDeleting(false);
     }
   };
 
@@ -173,6 +277,24 @@ export function ParentCategoryDetail() {
                   부서: {department.name} ({department.code})
                 </p>
               )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleOpenEditDialog}
+              >
+                ✏️
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-red-500 hover:text-red-600 hover:border-red-500"
+              >
+                🗑️
+              </Button>
             </div>
           </div>
         </div>
@@ -369,6 +491,98 @@ export function ParentCategoryDetail() {
                 disabled={isSaving || !form.name.trim()}
               >
                 {isSaving ? '추가 중...' : '추가'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            setIsDeleteDialogOpen(open);
+            if (!open) {
+              setIsDeleting(false);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>대분류 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                <p>"{parentCategory.name}" 대분류를 정말 삭제하시겠습니까?</p>
+                <p className="mt-1">
+                  이 대분류에 속한 세부 카테고리 및 문서에 영향이 있을 수 있습니다.
+                </p>
+                <p className="mt-3 text-sm font-medium text-red-600">
+                  삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteParentCategory}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeleting}
+              >
+                {isDeleting ? '삭제 중...' : '삭제'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <Dialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setEditNameError('');
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>대분류 정보 수정</DialogTitle>
+              <DialogDescription>
+                대분류 이름과 설명을 수정합니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>대분류 이름</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="예: 채용 문서"
+                />
+                {editNameError && (
+                  <p className="text-xs text-red-500 mt-1">{editNameError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>설명</Label>
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="대분류 설명을 입력하세요"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSavingEdit}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveParentCategory}
+                disabled={isSavingEdit}
+              >
+                {isSavingEdit ? '저장 중...' : '저장'}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -27,7 +27,8 @@ import { toast } from '@/hooks/use-toast';
 export function DepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, categories, documents, addCategory, fetchDepartments } = useDocumentStore();
+  const { departments, categories, parentCategories, documents, addCategory, fetchDepartments } =
+    useDocumentStore();
   const primaryColor = '#2563eb';
 
   const department = departments.find((d) => d.id === departmentId);
@@ -63,9 +64,11 @@ export function DepartmentDetail() {
     );
   }
 
-  const departmentCategories = categories.filter((c) => c.departmentId === department.id);
+  const departmentParentCategories = parentCategories.filter(
+    (pc) => pc.departmentId === department.id,
+  );
   const departmentDocuments = documents.filter((d) => d.departmentId === department.id);
-  const nfcCategoryCount = departmentCategories.filter((c) => c.nfcRegistered).length;
+  const nfcCategoryCount = departmentParentCategories.length;
   const teamMembersCount = 5; // 현재는 고정값, 추후 실제 데이터 연동 가능
 
   const handleOpenAddDialog = () => {
@@ -260,7 +263,7 @@ export function DepartmentDetail() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm font-medium text-slate-500">카테고리 수</p>
-              <p className="text-2xl font-bold mt-2">{departmentCategories.length}</p>
+              <p className="text-2xl font-bold mt-2">{departmentParentCategories.length}</p>
             </CardContent>
           </Card>
           <Card>
@@ -271,8 +274,8 @@ export function DepartmentDetail() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">NFC 등록</p>
-              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}개 카테고리</p>
+              <p className="text-sm font-medium text-slate-500">대분류 수</p>
+              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}개</p>
             </CardContent>
           </Card>
         </div>
@@ -280,9 +283,9 @@ export function DepartmentDetail() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>카테고리 목록</CardTitle>
+              <CardTitle>대분류 목록</CardTitle>
               <CardDescription className="mt-1">
-                {department.name} 부서에 속한 카테고리입니다
+                {department.name} 부서에 속한 대분류입니다
               </CardDescription>
             </div>
             <Button style={{ backgroundColor: primaryColor }} onClick={handleOpenAddDialog}>
@@ -291,27 +294,27 @@ export function DepartmentDetail() {
             </Button>
           </CardHeader>
           <CardContent>
-            {departmentCategories.length === 0 ? (
+            {departmentParentCategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 부서에 등록된 카테고리가 없습니다
+                이 부서에 등록된 대분류가 없습니다
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {departmentCategories.map((category) => (
+                {departmentParentCategories.map((pc) => (
                   <Card
-                    key={category.id}
+                    key={pc.id}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/admin/category/${category.id}`)}
+                    onClick={() => navigate(`/admin/parent-category/${pc.id}`)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{category.name}</CardTitle>
+                          <CardTitle className="text-lg">{pc.name}</CardTitle>
                           <CardDescription className="mt-1">
-                            {category.description}
+                            {pc.description || '설명이 없습니다.'}
                           </CardDescription>
                         </div>
-                        {category.nfcRegistered && (
+                        {pc.nfcRegistered && (
                           <Badge variant="outline" className="ml-2">
                             <Smartphone className="h-3 w-3 mr-1" />
                             NFC
@@ -320,23 +323,15 @@ export function DepartmentDetail() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">부서</span>
-                          <span className="font-medium">{department.name}</span>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">세부 카테고리</span>
+                          <span className="font-medium">{pc.subcategoryCount}개</span>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between">
                           <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">{category.documentCount}개</span>
+                          <span className="font-medium">{pc.documentCount}개</span>
                         </div>
-                        {category.storageLocation && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">보관 위치</span>
-                            <span className="font-medium text-xs">
-                              {category.storageLocation}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -430,7 +425,7 @@ export function DepartmentDetail() {
               <AlertDialogDescription>
                 <p>"{department.name}" 부서를 정말 삭제하시겠습니까?</p>
                 <p className="mt-1">
-                  이 부서의 카테고리 {departmentCategories.length}개와 문서{' '}
+                  이 부서의 대분류 {departmentParentCategories.length}개와 문서{' '}
                   {departmentDocuments.length}개도 함께 삭제됩니다.
                 </p>
                 <p className="mt-3 text-sm font-medium text-red-600">
