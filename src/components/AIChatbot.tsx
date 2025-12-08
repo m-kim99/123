@@ -31,6 +31,7 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -129,17 +130,29 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
               </div>
               AI 챗봇
             </CardTitle>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
-              style={{ backgroundColor: primaryColor }}
-            >
-              X
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsTall((prev) => !prev)}
+                className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
+                style={{ backgroundColor: primaryColor }}
+              >
+                □
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
+                style={{ backgroundColor: primaryColor }}
+              >
+                X
+              </button>
+            </div>
           </CardHeader>
 
-          <CardContent className="p-0 flex flex-col h-96">
+          <CardContent
+            className={`p-0 flex flex-col ${isTall ? 'h-[36rem]' : 'h-96'}`}
+          >
             <ScrollArea className="flex-1 p-4 space-y-4">
               {messages.map((message) => (
                 <div key={message.id} className="space-y-1">
