@@ -5,9 +5,21 @@ export type NotificationEventType = 'document_created' | 'document_deleted';
 interface CreateDocumentNotificationParams {
   type: NotificationEventType;
   documentId: string;
+  /** 문서 제목 */
   title: string;
   companyId: string;
+  /** 부서 ID (팀원 필터링용) */
   departmentId: string | null;
+  /** UI에 보여줄 부서명 (예: 영업팀) */
+  departmentName?: string | null;
+  /** 대분류 카테고리 ID */
+  parentCategoryId?: string | null;
+  /** UI에 보여줄 대분류명 */
+  parentCategoryName?: string | null;
+  /** 세부 카테고리 ID */
+  subcategoryId?: string | null;
+  /** UI에 보여줄 세부 카테고리명 */
+  subcategoryName?: string | null;
 }
 
 export async function createDocumentNotification({
@@ -16,19 +28,49 @@ export async function createDocumentNotification({
   title,
   companyId,
   departmentId,
+  departmentName,
+  parentCategoryId,
+  parentCategoryName,
+  subcategoryId,
+  subcategoryName,
 }: CreateDocumentNotificationParams): Promise<void> {
-  const message =
-    type === 'document_created' ? `문서 등록: ${title}` : `문서 삭제: ${title}`;
+  try {
+    const pathParts: string[] = [];
 
-  const { error } = await supabase.from('notifications').insert({
-    type,
-    document_id: documentId,
-    company_id: companyId,
-    department_id: departmentId,
-    message,
-  });
+    if (departmentName) {
+      pathParts.push(`[${departmentName}]`);
+    }
 
-  if (error) {
-    console.error('알림 생성 실패:', error);
+    const categoryPath = [parentCategoryName, subcategoryName]
+      .filter(Boolean)
+      .join(' > ');
+
+    if (categoryPath) {
+      pathParts.push(categoryPath);
+    }
+
+    const baseMessage = pathParts.length > 0 ? `${pathParts.join(' ')} - ${title}` : title;
+
+    const message =
+      type === 'document_created'
+        ? `문서 등록: ${baseMessage}`
+        : `문서 삭제: ${baseMessage}`;
+
+    const { error } = await supabase.from('notifications').insert({
+      type,
+      document_id: documentId,
+      company_id: companyId,
+      department_id: departmentId,
+      parent_category_id: parentCategoryId ?? null,
+      subcategory_id: subcategoryId ?? null,
+      message,
+      is_read: false,
+    });
+
+    if (error) {
+      console.error('알림 생성 실패:', error);
+    }
+  } catch (err) {
+    console.error('알림 생성 중 예외 발생:', err);
   }
 }

@@ -817,12 +817,21 @@ export function CategoryDetail() {
       });
 
       if (user?.companyId && targetDoc) {
+        const subcategoryForDoc = subcategories.find(
+          (s) => s.id === targetDoc.subcategoryId,
+        );
+
         await createDocumentNotification({
           type: 'document_deleted',
           documentId: deletingDocumentId,
           title: targetDoc.name,
           companyId: user.companyId,
           departmentId: targetDoc.departmentId,
+          departmentName: department?.name ?? null,
+          parentCategoryId: targetDoc.parentCategoryId,
+          parentCategoryName: category.name,
+          subcategoryId: targetDoc.subcategoryId,
+          subcategoryName: subcategoryForDoc?.name ?? null,
         });
       }
 

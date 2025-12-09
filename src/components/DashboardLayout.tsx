@@ -37,7 +37,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
 import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
-import { useNotificationStore } from '@/store/notificationStore';
+import { useNotificationStore, Notification } from '@/store/notificationStore';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -73,12 +73,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     notifications,
     isLoading: isLoadingNotifications,
     fetchNotifications,
+    markAsRead,
     dismissNotification,
   } = useNotificationStore();
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const debounceTimer = useRef<number | null>(null);
 
@@ -159,6 +162,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       fetchNotifications();
     }
   }, [isNotificationOpen, fetchNotifications]);
+
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      if (!notification.isRead) {
+        await markAsRead(notification.id);
+      }
+
+      let targetPath = `${basePath}/documents`;
+
+      if (notification.parentCategoryId && notification.subcategoryId) {
+        targetPath = `${basePath}/parent-category/${notification.parentCategoryId}/subcategory/${notification.subcategoryId}`;
+      } else if (notification.parentCategoryId) {
+        targetPath = `${basePath}/parent-category/${notification.parentCategoryId}`;
+      }
+
+      navigate(targetPath);
+      setIsNotificationOpen(false);
+    } catch (error) {
+      console.error('알림 클릭 처리 실패:', error);
+    }
+  };
 
   const handleSearch = async () => {
     const query = searchQuery.trim();
@@ -579,10 +603,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+              className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
               onClick={() => setIsNotificationOpen((prev) => !prev)}
             >
               🔔
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Button>
           </div>
 
@@ -764,10 +793,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+                  className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
                   onClick={() => setIsNotificationOpen((prev) => !prev)}
                 >
                   🔔
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Button>
               </div>
             </div>
@@ -856,14 +890,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className="flex items-start justify-between px-3 py-2 border-b last:border-b-0"
+                  className={`flex items-start justify-between px-3 py-2 border-b last:border-b-0 ${
+                    n.isRead ? 'bg-white' : 'bg-slate-50'
+                  }`}
                 >
-                  <div className="text-xs">
-                    <div className="text-slate-900">{n.message}</div>
+                  <button
+                    type="button"
+                    className="flex-1 text-left text-xs"
+                    onClick={() => handleNotificationClick(n)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {!n.isRead && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+                      )}
+                      <span className="text-slate-900">{n.message}</span>
+                    </div>
                     <div className="text-[10px] text-slate-400 mt-0.5">
                       {new Date(n.createdAt).toLocaleString()}
                     </div>
-                  </div>
+                  </button>
                   <button
                     type="button"
                     className="ml-2 text-xs text-slate-400 hover:text-slate-700"

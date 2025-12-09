@@ -4,20 +4,25 @@ import { useAuthStore } from '@/store/authStore';
 
 export type NotificationEventType = 'document_created' | 'document_deleted';
 
-export interface NotificationItem {
+export interface Notification {
   id: string;
   type: NotificationEventType;
   message: string;
-  createdAt: string;
-  documentId: string | null;
+  documentId: string;
   departmentId: string | null;
+  parentCategoryId: string | null;
+  subcategoryId: string | null;
+  companyId: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 interface NotificationState {
-  notifications: NotificationItem[];
+  notifications: Notification[];
   isLoading: boolean;
   error: string | null;
   fetchNotifications: () => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
   dismissNotification: (id: string) => Promise<void>;
 }
 
@@ -37,12 +42,13 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 
       let query = supabase
         .from('notifications')
-        .select('id, type, message, created_at, document_id, department_id')
+        .select('*')
         .eq('company_id', user.companyId)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (user.role === 'team' && user.departmentId) {
+      // 관리자: 전체 부서, 팀원: 자신의 부서만
+      if (user.role !== 'admin' && user.departmentId) {
         query = query.eq('department_id', user.departmentId);
       }
 
@@ -50,19 +56,42 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 
       if (error) throw error;
 
-      const items: NotificationItem[] = (data || []).map((n: any) => ({
+      const notifications: Notification[] = (data || []).map((n: any) => ({
         id: n.id,
         type: n.type as NotificationEventType,
         message: n.message,
-        createdAt: n.created_at,
-        documentId: n.document_id ?? null,
+        documentId: n.document_id,
         departmentId: n.department_id ?? null,
+        parentCategoryId: n.parent_category_id ?? null,
+        subcategoryId: n.subcategory_id ?? null,
+        companyId: n.company_id,
+        isRead: n.is_read ?? false,
+        createdAt: n.created_at,
       }));
 
-      set({ notifications: items, isLoading: false, error: null });
+      set({ notifications, isLoading: false, error: null });
     } catch (err) {
       console.error('알림 로드 실패:', err);
-      set({ isLoading: false, error: '알림을 불러오지 못했습니다.' });
+      set({ notifications: [], isLoading: false, error: '알림을 불러오지 못했습니다.' });
+    }
+  },
+
+  markAsRead: async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        notifications: state.notifications.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n,
+        ),
+      }));
+    } catch (err) {
+      console.error('읽음 처리 실패:', err);
     }
   },
 

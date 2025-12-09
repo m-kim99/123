@@ -303,7 +303,7 @@ const sanitizeFileName = (originalName: string) => {
   return `${timestamp}.${ext}`;
 };
 
-export const useDocumentStore = create<DocumentState>((set) => ({
+export const useDocumentStore = create<DocumentState>((set, get) => ({
   departments: mockDepartments,
   categories: mockCategories,
   parentCategories: mockParentCategories,
@@ -1154,6 +1154,28 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       if (error) throw error;
 
       if (data) {
+        const parentCategoryIdFromDbRaw = (data as any)
+          .parent_category_id as string | null;
+        const subcategoryIdFromDbRaw = (data as any)
+          .subcategory_id as string | null;
+
+        const parentCategoryIdFromDb =
+          parentCategoryIdFromDbRaw ?? document.parentCategoryId;
+        const subcategoryIdFromDb =
+          subcategoryIdFromDbRaw ?? document.subcategoryId;
+
+        const { departments, parentCategories, subcategories } = get();
+
+        const department = departments.find(
+          (d) => d.id === data.department_id,
+        );
+        const parentCategory = parentCategories.find(
+          (p) => p.id === parentCategoryIdFromDb,
+        );
+        const subcategory = subcategories.find(
+          (s) => s.id === subcategoryIdFromDb,
+        );
+
         let fileUrl = '#';
 
         try {
@@ -1174,8 +1196,8 @@ export const useDocumentStore = create<DocumentState>((set) => ({
               id: data.id,
               name: data.title, // title을 name으로 매핑
               categoryId: (data as any).category_id || undefined,
-              parentCategoryId: (data as any).parent_category_id,
-              subcategoryId: (data as any).subcategory_id,
+              parentCategoryId: parentCategoryIdFromDb,
+              subcategoryId: subcategoryIdFromDb,
               departmentId: data.department_id,
               uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
               uploader: data.uploaded_by || '', // uploaded_by를 uploader로 매핑
@@ -1195,6 +1217,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
             title: data.title,
             companyId: user.companyId,
             departmentId: data.department_id,
+            departmentName: department?.name ?? null,
+            parentCategoryId: parentCategoryIdFromDb,
+            parentCategoryName: parentCategory?.name ?? null,
+            subcategoryId: subcategoryIdFromDb,
+            subcategoryName: subcategory?.name ?? null,
           });
         }
       }

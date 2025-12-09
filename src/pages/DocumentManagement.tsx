@@ -751,8 +751,6 @@ export function DocumentManagement() {
       }
 
       const filePath = data?.file_path as string | undefined;
-      console.log('삭제할 파일 경로:', filePath);
-      console.log('타입:', typeof filePath);
 
       if (!filePath) {
         console.error('파일 경로가 없습니다');
@@ -783,12 +781,27 @@ export function DocumentManagement() {
       });
 
       if (user?.companyId && targetDoc) {
+        const department = departments.find(
+          (d) => d.id === targetDoc.departmentId,
+        );
+        const parentCategoryForDoc = parentCategories.find(
+          (pc) => pc.id === targetDoc.parentCategoryId,
+        );
+        const subcategoryForDoc = subcategories.find(
+          (s) => s.id === targetDoc.subcategoryId,
+        );
+
         await createDocumentNotification({
           type: 'document_deleted',
           documentId,
           title: targetDoc.name,
           companyId: user.companyId,
           departmentId: targetDoc.departmentId,
+          departmentName: department?.name ?? null,
+          parentCategoryId: targetDoc.parentCategoryId,
+          parentCategoryName: parentCategoryForDoc?.name ?? null,
+          subcategoryId: targetDoc.subcategoryId,
+          subcategoryName: subcategoryForDoc?.name ?? null,
         });
       }
     } catch (error) {
@@ -801,8 +814,6 @@ export function DocumentManagement() {
     }
   };
 
-
-  // react-dropzone 설정 (여러 파일 업로드 지원)
   const handleFileDrop = useCallback((acceptedFiles: File[]) => {
     if (!acceptedFiles || acceptedFiles.length === 0) {
       return;
