@@ -2,13 +2,17 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 
-export type NotificationEventType = 'document_created' | 'document_deleted';
+export type NotificationEventType =
+  | 'document_created'
+  | 'document_deleted'
+  | 'subcategory_created'
+  | 'subcategory_deleted';
 
 export interface Notification {
   id: string;
   type: NotificationEventType;
   message: string;
-  documentId: string;
+  documentId: string | null;
   departmentId: string | null;
   parentCategoryId: string | null;
   subcategoryId: string | null;

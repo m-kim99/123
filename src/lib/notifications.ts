@@ -1,10 +1,14 @@
 import { supabase } from '@/lib/supabase';
 
-export type NotificationEventType = 'document_created' | 'document_deleted';
+export type NotificationEventType =
+  | 'document_created'
+  | 'document_deleted'
+  | 'subcategory_created'
+  | 'subcategory_deleted';
 
 interface CreateDocumentNotificationParams {
   type: NotificationEventType;
-  documentId: string;
+  documentId: string | null;
   /** 문서 제목 */
   title: string;
   companyId: string;
@@ -51,10 +55,26 @@ export async function createDocumentNotification({
 
     const baseMessage = pathParts.length > 0 ? `${pathParts.join(' ')} - ${title}` : title;
 
-    const message =
-      type === 'document_created'
-        ? `문서 등록: ${baseMessage}`
-        : `문서 삭제: ${baseMessage}`;
+    let prefix: string;
+    switch (type) {
+      case 'document_created':
+        prefix = '문서 등록';
+        break;
+      case 'document_deleted':
+        prefix = '문서 삭제';
+        break;
+      case 'subcategory_created':
+        prefix = '세부 카테고리 생성';
+        break;
+      case 'subcategory_deleted':
+        prefix = '세부 카테고리 삭제';
+        break;
+      default:
+        prefix = '알림';
+        break;
+    }
+
+    const message = `${prefix}: ${baseMessage}`;
 
     const { error } = await supabase.from('notifications').insert({
       type,

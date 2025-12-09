@@ -888,6 +888,30 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             },
           ],
         }));
+
+        const { departments, parentCategories } = get();
+        const department = departments.find(
+          (d) => d.id === data.department_id,
+        );
+        const parentCategory = parentCategories.find(
+          (p) => p.id === data.parent_category_id,
+        );
+
+        const { user } = useAuthStore.getState();
+        if (user?.companyId) {
+          await createDocumentNotification({
+            type: 'subcategory_created',
+            documentId: null,
+            title: data.name,
+            companyId: user.companyId,
+            departmentId: data.department_id,
+            departmentName: department?.name ?? null,
+            parentCategoryId: data.parent_category_id,
+            parentCategoryName: parentCategory?.name ?? null,
+            subcategoryId: data.id,
+            subcategoryName: data.name,
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to add subcategory to Supabase:', err);
@@ -959,6 +983,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   deleteSubcategory: async (id) => {
     try {
+      const { subcategories, parentCategories, departments } = get();
+      const targetSub = subcategories.find((sub) => sub.id === id);
+
+      const department = targetSub
+        ? departments.find((d) => d.id === targetSub.departmentId)
+        : undefined;
+      const parentCategory = targetSub
+        ? parentCategories.find((p) => p.id === targetSub.parentCategoryId)
+        : undefined;
+
       const { error } = await supabase
         .from('subcategories')
         .delete()
@@ -970,6 +1004,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         subcategories: state.subcategories.filter((sub) => sub.id !== id),
         documents: state.documents.filter((doc) => doc.subcategoryId !== id),
       }));
+
+      const { user } = useAuthStore.getState();
+      if (user?.companyId && targetSub) {
+        await createDocumentNotification({
+          type: 'subcategory_deleted',
+          documentId: null,
+          title: targetSub.name,
+          companyId: user.companyId,
+          departmentId: targetSub.departmentId,
+          departmentName: department?.name ?? null,
+          parentCategoryId: targetSub.parentCategoryId,
+          parentCategoryName: parentCategory?.name ?? null,
+          subcategoryId: targetSub.id,
+          subcategoryName: targetSub.name,
+        });
+      }
     } catch (err) {
       console.error('Failed to delete subcategory from Supabase:', err);
       set((state) => ({
