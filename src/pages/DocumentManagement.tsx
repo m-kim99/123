@@ -193,6 +193,9 @@ export function DocumentManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
 
+  const [documentsPage, setDocumentsPage] = useState(1);
+  const DOCUMENTS_PER_PAGE = 20;
+
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const rawQuery = (searchParams.get('q') || '').trim();
@@ -368,6 +371,22 @@ export function DocumentManagement() {
     user?.departmentId,
   ]);
 
+  const paginatedDocuments = useMemo(() => {
+    const startIndex = (documentsPage - 1) * DOCUMENTS_PER_PAGE;
+    const endIndex = startIndex + DOCUMENTS_PER_PAGE;
+    return filteredDocuments.slice(startIndex, endIndex);
+  }, [filteredDocuments, documentsPage]);
+
+  const totalDocPages = Math.max(1, Math.ceil(filteredDocuments.length / DOCUMENTS_PER_PAGE));
+  const docStartItem =
+    filteredDocuments.length === 0
+      ? 0
+      : (documentsPage - 1) * DOCUMENTS_PER_PAGE + 1;
+  const docEndItem = Math.min(
+    documentsPage * DOCUMENTS_PER_PAGE,
+    filteredDocuments.length,
+  );
+
   const uploadDepartments = useMemo(
     () =>
       isAdmin
@@ -425,6 +444,10 @@ export function DocumentManagement() {
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryFilter.departmentId, categoryFilter.parentCategoryId]);
+
+  useEffect(() => {
+    setDocumentsPage(1);
+  }, [searchQuery, dateFilter, sortBy]);
  
   useEffect(() => {
     // URL 파라미터에서 카테고리/세부 카테고리 정보 읽기 (레거시 및 호환용)
@@ -1900,8 +1923,73 @@ export function DocumentManagement() {
                   </Select>
                 </div>
 
-                <div className="text-sm text-slate-500 mb-4">
-                  총 {filteredDocuments.length}개 문서
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-sm text-slate-500">
+                    {filteredDocuments.length > 0 ? (
+                      <span>
+                        {docStartItem}-{docEndItem} / 총 {filteredDocuments.length}개 문서
+                      </span>
+                    ) : (
+                      <span>총 0개 문서</span>
+                    )}
+                  </div>
+
+                  {totalDocPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setDocumentsPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={documentsPage === 1}
+                      >
+                        이전
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalDocPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalDocPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (documentsPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (documentsPage >= totalDocPages - 2) {
+                            pageNum = totalDocPages - 4 + i;
+                          } else {
+                            pageNum = documentsPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                documentsPage === pageNum ? 'default' : 'outline'
+                              }
+                              size="sm"
+                              onClick={() => setDocumentsPage(pageNum)}
+                              className="w-10"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setDocumentsPage((prev) =>
+                            Math.min(totalDocPages, prev + 1),
+                          )
+                        }
+                        disabled={documentsPage === totalDocPages}
+                      >
+                        다음
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {filteredDocuments.length === 0 ? (
@@ -1909,80 +1997,153 @@ export function DocumentManagement() {
                     검색 결과가 없습니다
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {filteredDocuments.map((doc) => {
-                      const parentCategory = parentCategories.find(
-                        (pc) => pc.id === doc.parentCategoryId,
-                      );
-                      const subcategory = subcategories.find(
-                        (s) => s.id === doc.subcategoryId,
-                      );
-                      const dept = departments.find((d) => d.id === doc.departmentId);
-                      return (
-                        <div
-                          key={doc.id}
-                          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div
-                              className="p-2 rounded-lg"
-                              style={{ backgroundColor: `${primaryColor}20` }}
-                            >
-                              <FileText
-                                className="h-5 w-5"
-                                style={{ color: primaryColor }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium truncate">{doc.name}</p>
-                                {doc.classified && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    기밀
-                                  </Badge>
-                                )}
+                  <>
+                    <div className="space-y-3">
+                      {paginatedDocuments.map((doc) => {
+                        const parentCategory = parentCategories.find(
+                          (pc) => pc.id === doc.parentCategoryId,
+                        );
+                        const subcategory = subcategories.find(
+                          (s) => s.id === doc.subcategoryId,
+                        );
+                        const department = departments.find(
+                          (d) => d.id === doc.departmentId,
+                        );
+
+                        return (
+                          <div
+                            key={doc.id}
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg border border-slate-200 bg-white shadow-sm"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div
+                                className="p-2 rounded-lg"
+                                style={{ backgroundColor: `${primaryColor}20` }}
+                              >
+                                <FileText
+                                  className="h-5 w-5"
+                                  style={{ color: primaryColor }}
+                                />
                               </div>
-                              <p className="text-sm text-slate-500">
-                                {[
-                                  formatDateTimeSimple(doc.uploadDate),
-                                  doc.uploader || null,
-                                  parentCategory?.name || null,
-                                  subcategory?.name || null,
-                                  dept?.name || null,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ')}
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium truncate">{doc.name}</p>
+                                  {doc.classified && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      기밀
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-slate-500">
+                                  {[
+                                    formatDateTimeSimple(doc.uploadDate),
+                                    doc.uploader || null,
+                                    parentCategory?.name || null,
+                                    subcategory?.name || null,
+                                    department?.name || null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenPreviewDocument(doc.id)}
+                              >
+                                문서 보기
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleDownloadDocument(doc.id)}
+                              >
+                                ⬇️
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                                onClick={() => handleDeleteDocumentClick(doc.id)}
+                              >
+                                🗑️
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenPreviewDocument(doc.id)}
-                            >
-                              문서 보기
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleDownloadDocument(doc.id)}
-                            >
-                              ⬇️
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                              onClick={() => handleDeleteDocumentClick(doc.id)}
-                            >
-                              🗑️
-                            </Button>
-                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {totalDocPages > 1 && filteredDocuments.length > 0 && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                        <div className="text-sm text-slate-500">
+                          {docStartItem}-{docEndItem} / 총 {filteredDocuments.length}개
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setDocumentsPage((prev) => Math.max(1, prev - 1))
+                            }
+                            disabled={documentsPage === 1}
+                          >
+                            이전
+                          </Button>
+
+                          <div className="flex items-center gap-1">
+                            {Array.from(
+                              { length: Math.min(5, totalDocPages) },
+                              (_, i) => {
+                                let pageNum;
+                                if (totalDocPages <= 5) {
+                                  pageNum = i + 1;
+                                } else if (documentsPage <= 3) {
+                                  pageNum = i + 1;
+                                } else if (documentsPage >= totalDocPages - 2) {
+                                  pageNum = totalDocPages - 4 + i;
+                                } else {
+                                  pageNum = documentsPage - 2 + i;
+                                }
+
+                                return (
+                                  <Button
+                                    key={pageNum}
+                                    variant={
+                                      documentsPage === pageNum
+                                        ? 'default'
+                                        : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() => setDocumentsPage(pageNum)}
+                                    className="w-10"
+                                  >
+                                    {pageNum}
+                                  </Button>
+                                );
+                              },
+                            )}
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setDocumentsPage((prev) =>
+                                Math.min(totalDocPages, prev + 1),
+                              )
+                            }
+                            disabled={documentsPage === totalDocPages}
+                          >
+                            다음
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

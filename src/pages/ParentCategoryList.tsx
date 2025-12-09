@@ -36,6 +36,9 @@ export function ParentCategoryList() {
   });
   const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
   useEffect(() => {
     fetchParentCategories();
   }, [fetchParentCategories]);
@@ -49,6 +52,20 @@ export function ParentCategoryList() {
     if (!selectedDepartmentId) return parentCategories;
     return parentCategories.filter((pc) => pc.departmentId === selectedDepartmentId);
   }, [parentCategories, selectedDepartmentId]);
+
+  const paginatedParentCategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredParentCategories.slice(startIndex, endIndex);
+  }, [filteredParentCategories, currentPage]);
+
+  const totalPages = Math.ceil(filteredParentCategories.length / ITEMS_PER_PAGE);
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filteredParentCategories.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDepartmentId]);
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.departmentId) {
@@ -99,59 +116,120 @@ export function ParentCategoryList() {
           </div>
         </div>
 
-        {selectedDepartmentId && (
+        {selectedDepartmentId && filteredParentCategories.length > 0 && (
           <p className="text-sm text-slate-500">
-            {departments.find((d) => d.id === selectedDepartmentId)?.name} - 총{' '}
-            {filteredParentCategories.length}개 대분류
+            {departments.find((d) => d.id === selectedDepartmentId)?.name} -
+            {filteredParentCategories.length > ITEMS_PER_PAGE
+              ? ` ${startItem}-${endItem} / 총 ${filteredParentCategories.length}개 대분류`
+              : ` 총 ${filteredParentCategories.length}개 대분류`}
           </p>
         )}
 
         {isLoading && parentCategories.length === 0 ? (
           <p className="text-slate-500">로딩 중...</p>
-        ) : parentCategories.length === 0 ? (
+        ) : filteredParentCategories.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-slate-500">
               등록된 대분류가 없습니다.
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredParentCategories.map((pc) => {
-              const dept = departmentMap.get(pc.departmentId);
-              return (
-                <Card
-                  key={pc.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/admin/parent-category/${pc.id}`)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-lg">{pc.name}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {pc.description || '설명이 없습니다.'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">부서</span>
-                        <span className="font-medium">
-                          {dept?.name ?? pc.departmentId}
-                        </span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginatedParentCategories.map((pc) => {
+                const dept = departmentMap.get(pc.departmentId);
+                return (
+                  <Card
+                    key={pc.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/admin/parent-category/${pc.id}`)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-lg">{pc.name}</CardTitle>
+                      <CardDescription className="mt-1">
+                        {pc.description || '설명이 없습니다.'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">부서</span>
+                          <span className="font-medium">
+                            {dept?.name ?? pc.departmentId}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">세부 카테고리</span>
+                          <span className="font-medium">{pc.subcategoryCount}개</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">문서 수</span>
+                          <span className="font-medium">{pc.documentCount}개</span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">세부 카테고리</span>
-                        <span className="font-medium">{pc.subcategoryCount}개</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">문서 수</span>
-                        <span className="font-medium">{pc.documentCount}개</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {filteredParentCategories.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-slate-500">
+                  {startItem}-{endItem} / 총 {filteredParentCategories.length}개
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    이전
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    다음
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
