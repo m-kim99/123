@@ -871,17 +871,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {isNotificationOpen && (
         <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
-            <span className="text-sm font-semibold">알림</span>
+          <div className="flex items-center justify-between px-3 py-2 border-b bg-white">
+            <span className="text-sm font-semibold text-slate-900">알림</span>
             <button
               type="button"
-              className="text-xs text-slate-500 hover:text-slate-700"
+              className="text-xs text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded px-2 py-1"
               onClick={() => setIsNotificationOpen(false)}
             >
               닫기
             </button>
           </div>
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto bg-white">
             {isLoadingNotifications ? (
               <div className="p-3 text-sm text-slate-500">불러오는 중...</div>
             ) : notifications.length === 0 ? (
@@ -890,13 +890,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start justify-between px-3 py-2 border-b last:border-b-0 ${
-                    n.isRead ? 'bg-white' : 'bg-slate-50'
+                  className={`flex items-start justify-between px-3 py-2 border-b last:border-b-0 bg-white ${
+                    n.isRead ? '' : 'bg-white'
                   }`}
                 >
                   <button
                     type="button"
-                    className="flex-1 text-left text-xs"
+                    className="flex-1 text-left text-xs bg-white"
                     onClick={() => handleNotificationClick(n)}
                   >
                     <div className="flex items-center gap-2">
@@ -911,7 +911,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </button>
                   <button
                     type="button"
-                    className="ml-2 text-xs text-slate-400 hover:text-slate-700"
+                    className="ml-2 text-xs text-slate-500 hover:text-slate-900 bg-white border border-slate-200 rounded-full w-6 h-6 flex items-center justify-center"
                     onClick={() => dismissNotification(n.id)}
                   >
                     ✕

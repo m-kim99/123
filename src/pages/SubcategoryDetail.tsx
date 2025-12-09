@@ -366,6 +366,51 @@ export function SubcategoryDetail() {
       }
 
       await fetchDocuments();
+
+      toast({
+        title: '삭제 완료',
+        description: '문서가 삭제되었습니다.',
+      });
+
+      if (user?.companyId && targetDoc) {
+        const department = departments.find(
+          (d) => d.id === targetDoc.departmentId,
+        );
+        const parentCategoryForDoc = parentCategories.find(
+          (pc) => pc.id === targetDoc.parentCategoryId,
+        );
+        const subcategoryForDoc = subcategories.find(
+          (s) => s.id === targetDoc.subcategoryId,
+        );
+
+        await createDocumentNotification({
+          type: 'document_deleted',
+          documentId,
+          title: targetDoc.name,
+          companyId: user.companyId,
+          departmentId: targetDoc.departmentId,
+          departmentName: department?.name ?? null,
+          parentCategoryId: targetDoc.parentCategoryId,
+          parentCategoryName: parentCategoryForDoc?.name ?? null,
+          subcategoryId: targetDoc.subcategoryId,
+          subcategoryName: subcategoryForDoc?.name ?? null,
+        });
+      }
+    } catch (error) {
+      console.error('문서 삭제 실패:', error);
+      toast({
+        title: '삭제 실패',
+        description: '문서를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (!subcategoryId) {
+    return null;
+  }
+
+  if (!subcategory) {
     return (
       <DashboardLayout>
         <div className="space-y-4">
