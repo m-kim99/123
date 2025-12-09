@@ -51,14 +51,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
-import type { Category } from '@/store/documentStore';
+import type { Subcategory } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { readNFCUid } from '@/lib/nfc';
-import { registerNFCTag } from '@/lib/nfcApi';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 
@@ -112,7 +111,6 @@ export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
   const {
     departments,
-    categories,
     parentCategories,
     subcategories,
     documents,
@@ -120,7 +118,9 @@ export function DocumentManagement() {
     fetchSubcategories,
     uploadDocument,
     fetchDocuments,
-    fetchCategories,
+    updateSubcategory,
+    deleteSubcategory,
+    registerNfcTag,
   } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -185,15 +185,52 @@ export function DocumentManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | '7days' | '1month' | '3months'>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'oldest' | 'name'>('latest');
+  const [categoryFilter, setCategoryFilter] = useState({
+    departmentId: '',
+    parentCategoryId: '',
+  });
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const rawQuery = (searchParams.get('q') || '').trim();
   const searchKeyword = rawQuery.toLowerCase();
 
-  const filteredCategories = isAdmin
-    ? categories
-    : categories.filter((c) => c.departmentId === user?.departmentId);
+  const filteredParentCategoriesForFilter = useMemo(
+    () =>
+      parentCategories.filter((pc) => {
+        if (!isAdmin && user?.departmentId && pc.departmentId !== user.departmentId) {
+          return false;
+        }
+        if (categoryFilter.departmentId !== 'all' && pc.departmentId !== categoryFilter.departmentId) {
+          return false;
+        }
+        return true;
+      }),
+    [parentCategories, isAdmin, user?.departmentId, categoryFilter.departmentId],
+  );
+
+  const filteredSubcategoriesForCategoriesTab = useMemo(
+    () =>
+      subcategories.filter((sub) => {
+        if (!isAdmin && user?.departmentId && sub.departmentId !== user.departmentId) {
+          return false;
+        }
+        if (categoryFilter.departmentId !== 'all' && sub.departmentId !== categoryFilter.departmentId) {
+          return false;
+        }
+        if (categoryFilter.parentCategoryId !== 'all' && sub.parentCategoryId !== categoryFilter.parentCategoryId) {
+          return false;
+        }
+        return true;
+      }),
+    [
+      subcategories,
+      isAdmin,
+      user?.departmentId,
+      categoryFilter.departmentId,
+      categoryFilter.parentCategoryId,
+    ],
+  );
 
   const filteredDocuments = useMemo(() => {
     const allowedDepartmentIds = new Set(departments.map((d) => d.id));
@@ -352,10 +389,10 @@ export function DocumentManagement() {
   const canEditTitle =
     selectedPdfFiles.length + (selectedImageFiles.length > 0 ? 1 : 0) === 1;
 
-  const deletingCategory = deletingCategoryId
-    ? categories.find((c) => c.id === deletingCategoryId)
+  const deletingSubcategory = deletingCategoryId
+    ? subcategories.find((s) => s.id === deletingCategoryId)
     : null;
-  const deletingCategoryDocCount = deletingCategory?.documentCount ?? 0;
+  const deletingCategoryDocCount = deletingSubcategory?.documentCount ?? 0;
 
   useEffect(() => {
     if (searchKeyword) {
@@ -454,13 +491,13 @@ export function DocumentManagement() {
     });
   };
 
-  const handleOpenEditDialog = (category: Category) => {
-    setEditingCategoryId(category.id);
+  const handleOpenEditDialog = (subcategory: Subcategory) => {
+    setEditingCategoryId(subcategory.id);
     setEditCategoryForm({
-      name: category.name || '',
-      description: category.description || '',
-      storageLocation: category.storageLocation || '',
-      nfcRegistered: category.nfcRegistered,
+      name: subcategory.name || '',
+      description: subcategory.description || '',
+      storageLocation: subcategory.storageLocation || '',
+      nfcRegistered: subcategory.nfcRegistered,
     });
     setEditCategoryNameError('');
     setEditDialogOpen(true);
@@ -477,7 +514,8 @@ export function DocumentManagement() {
       return;
     }
 
-    if (!editCategoryForm.name.trim()) {
+    const trimmedName = editCategoryForm.name.trim();
+    if (!trimmedName) {
       setEditCategoryNameError('이름을 입력하세요');
       return;
     }
@@ -486,52 +524,26 @@ export function DocumentManagement() {
     setEditCategoryNameError('');
 
     try {
-      const updates: any = {
-        name: editCategoryForm.name.trim(),
-        description: editCategoryForm.description || null,
-        storage_location: editCategoryForm.storageLocation || null,
-      };
+      await updateSubcategory(editingCategoryId, {
+        name: trimmedName,
+        description: editCategoryForm.description,
+        storageLocation: editCategoryForm.storageLocation,
+        nfcRegistered: editCategoryForm.nfcRegistered,
+      });
 
-      if (editCategoryForm.nfcRegistered) {
-        try {
-          const { data: currentCategory } = await supabase
-            .from('categories')
-            .select('nfc_tag_id')
-            .eq('id', editingCategoryId)
-            .single();
-
-          if (!currentCategory?.nfc_tag_id) {
-            updates.nfc_tag_id = `NFC_${Date.now()}`;
-          }
-        } catch {
-          updates.nfc_tag_id = `NFC_${Date.now()}`;
-        }
-      } else {
-        updates.nfc_tag_id = null;
-      }
-
-      const { error } = await supabase
-        .from('categories')
-        .update(updates)
-        .eq('id', editingCategoryId);
-
-      if (error) {
-        throw error;
-      }
-
-      await fetchCategories();
+      await fetchSubcategories();
 
       toast({
         title: '수정 완료',
-        description: '카테고리가 성공적으로 수정되었습니다.',
+        description: '세부 카테고리가 성공적으로 수정되었습니다.',
       });
 
       handleCloseEditDialog();
     } catch (error) {
-      console.error('카테고리 수정 실패:', error);
+      console.error('세부 카테고리 수정 실패:', error);
       toast({
         title: '수정 실패',
-        description: '카테고리를 수정하는 중 오류가 발생했습니다.',
+        description: '세부 카테고리를 수정하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
     } finally {
@@ -539,8 +551,8 @@ export function DocumentManagement() {
     }
   };
 
-  const handleOpenDeleteDialog = (category: Category) => {
-    setDeletingCategoryId(category.id);
+  const handleOpenDeleteDialog = (subcategory: Subcategory) => {
+    setDeletingCategoryId(subcategory.id);
     setDeleteDialogOpen(true);
   };
 
@@ -558,28 +570,19 @@ export function DocumentManagement() {
     setIsDeletingCategory(true);
 
     try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', deletingCategoryId);
-
-      if (error) {
-        throw error;
-      }
-
-      await fetchCategories();
+      await deleteSubcategory(deletingCategoryId);
 
       toast({
         title: '삭제 완료',
-        description: '카테고리가 삭제되었습니다.',
+        description: '세부 카테고리가 삭제되었습니다.',
       });
 
       handleCloseDeleteDialog();
     } catch (error) {
-      console.error('카테고리 삭제 실패:', error);
+      console.error('세부 카테고리 삭제 실패:', error);
       toast({
         title: '삭제 실패',
-        description: '카테고리를 삭제하는 중 오류가 발생했습니다.',
+        description: '세부 카테고리를 삭제하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setIsDeletingCategory(false);
@@ -1263,7 +1266,59 @@ export function DocumentManagement() {
           </TabsList>
 
           <TabsContent value="categories" className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-slate-600">부서</Label>
+                  <Select
+                    value={categoryFilter.departmentId}
+                    onValueChange={(value) =>
+                      setCategoryFilter({
+                        departmentId: value,
+                        parentCategoryId: 'all',
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name} ({dept.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-slate-600">대분류</Label>
+                  <Select
+                    value={categoryFilter.parentCategoryId}
+                    onValueChange={(value) =>
+                      setCategoryFilter((prev) => ({
+                        ...prev,
+                        parentCategoryId: value,
+                      }))
+                    }
+                    disabled={filteredParentCategoriesForFilter.length === 0}
+                  >
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      {filteredParentCategoriesForFilter.map((pc) => (
+                        <SelectItem key={pc.id} value={pc.id}>
+                          {pc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <Dialog>
                 <DialogTrigger asChild>
                   <Button style={{ backgroundColor: primaryColor }}>
@@ -1545,10 +1600,11 @@ export function DocumentManagement() {
                       if (!editingCategoryId) return;
                       try {
                         const uid = await readNFCUid();
-                        await registerNFCTag({
-                          tagId: uid,
-                          categoryId: editingCategoryId,
-                        });
+                        await registerNfcTag(editingCategoryId, uid);
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          nfcRegistered: true,
+                        }));
                         toast({
                           title: '✅ NFC 태그 등록 완료',
                           description: `태그 ID: ${uid.substring(0, 8)}...`,
@@ -1591,7 +1647,7 @@ export function DocumentManagement() {
                   <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
                   <AlertDialogDescription>
                     <p>
-                      "{deletingCategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
+                      "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
                     </p>
                     <p className="mt-1">
                       이 카테고리에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
@@ -1617,23 +1673,33 @@ export function DocumentManagement() {
             </AlertDialog>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCategories.map((category) => {
-                const dept = departments.find((d) => d.id === category.departmentId);
+              {filteredSubcategoriesForCategoriesTab.map((subcategory) => {
+                const dept = departments.find((d) => d.id === subcategory.departmentId);
+                const parent = parentCategories.find(
+                  (pc) => pc.id === subcategory.parentCategoryId,
+                );
                 return (
                   <Card
-                    key={category.id}
+                    key={subcategory.id}
                     className="hover:shadow-lg transition-shadow h-full"
                   >
-                    <div className="flex flex-col h-full" onClick={() => navigate(`/admin/category/${category.id}`)}>
+                    <div
+                      className="flex flex-col h-full"
+                      onClick={() =>
+                        navigate(
+                          `/admin/parent-category/${subcategory.parentCategoryId}/subcategory/${subcategory.id}`,
+                        )
+                      }
+                    >
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg">{category.name}</CardTitle>
+                            <CardTitle className="text-lg">{subcategory.name}</CardTitle>
                             <CardDescription className="mt-1">
-                              {category.description}
+                              {subcategory.description}
                             </CardDescription>
                           </div>
-                          {category.nfcRegistered && (
+                          {subcategory.nfcRegistered && (
                             <Badge variant="outline" className="ml-2">
                               <Smartphone className="h-3 w-3 mr-1" />
                               NFC
@@ -1648,26 +1714,33 @@ export function DocumentManagement() {
                             <span className="font-medium">{dept?.name}</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500">대분류</span>
+                            <span className="font-medium">{parent?.name}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-500">문서 수</span>
                             <span className="font-medium">
-                              {category.documentCount}개
+                              {subcategory.documentCount}개
                             </span>
                           </div>
-                          {category.storageLocation && (
+                          {subcategory.storageLocation && (
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-slate-500">보관 위치</span>
                               <span className="font-medium text-xs">
-                                {category.storageLocation}
+                                {subcategory.storageLocation}
                               </span>
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex gap-2 mt-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Button
                             variant="outline"
                             size="sm"
                             className="flex-1"
-                            onClick={() => handleOpenEditDialog(category)}
+                            onClick={() => handleOpenEditDialog(subcategory)}
                           >
                             <Edit className="h-3 w-3 mr-1" />
                             수정
@@ -1675,7 +1748,7 @@ export function DocumentManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenDeleteDialog(category)}
+                            onClick={() => handleOpenDeleteDialog(subcategory)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
