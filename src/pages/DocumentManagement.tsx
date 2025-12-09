@@ -116,7 +116,6 @@ export function DocumentManagement() {
     parentCategories,
     subcategories,
     documents,
-    addCategory,
     addSubcategory,
     fetchSubcategories,
     uploadDocument,
