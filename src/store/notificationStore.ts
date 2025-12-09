@@ -6,7 +6,9 @@ export type NotificationEventType =
   | 'document_created'
   | 'document_deleted'
   | 'subcategory_created'
-  | 'subcategory_deleted';
+  | 'subcategory_deleted'
+  | 'parent_category_created'
+  | 'parent_category_deleted';
 
 export interface Notification {
   id: string;

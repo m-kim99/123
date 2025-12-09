@@ -829,6 +829,27 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         set((state) => ({
           parentCategories: [...state.parentCategories, newParent],
         }));
+
+        const { departments } = get();
+        const department = departments.find(
+          (d) => d.id === data.department_id,
+        );
+
+        const { user } = useAuthStore.getState();
+        if (user?.companyId) {
+          await createDocumentNotification({
+            type: 'parent_category_created',
+            documentId: null,
+            title: data.name,
+            companyId: user.companyId,
+            departmentId: data.department_id,
+            departmentName: department?.name ?? null,
+            parentCategoryId: data.id,
+            parentCategoryName: data.name,
+            subcategoryId: null,
+            subcategoryName: null,
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to add parent category to Supabase:', err);
@@ -1126,6 +1147,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   deleteCategory: async (id) => {
     try {
+      const { categories, departments } = get();
+      const targetCategory = categories.find((cat) => cat.id === id);
+
+      const department = targetCategory
+        ? departments.find((d) => d.id === targetCategory.departmentId)
+        : undefined;
+
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -1138,6 +1166,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         categories: state.categories.filter((cat) => cat.id !== id),
         documents: state.documents.filter((doc) => doc.categoryId !== id),
       }));
+
+      const { user } = useAuthStore.getState();
+      if (user?.companyId && targetCategory) {
+        await createDocumentNotification({
+          type: 'parent_category_deleted',
+          documentId: null,
+          title: targetCategory.name,
+          companyId: user.companyId,
+          departmentId: targetCategory.departmentId,
+          departmentName: department?.name ?? null,
+          parentCategoryId: targetCategory.id,
+          parentCategoryName: targetCategory.name,
+          subcategoryId: null,
+          subcategoryName: null,
+        });
+      }
     } catch (err) {
       console.error('Failed to delete category from Supabase:', err);
       // Supabase 실패 시에도 로컬 상태에서는 제거 (사용자 경험 개선)

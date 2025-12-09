@@ -4,7 +4,9 @@ export type NotificationEventType =
   | 'document_created'
   | 'document_deleted'
   | 'subcategory_created'
-  | 'subcategory_deleted';
+  | 'subcategory_deleted'
+  | 'parent_category_created'
+  | 'parent_category_deleted';
 
 interface CreateDocumentNotificationParams {
   type: NotificationEventType;
@@ -68,6 +70,12 @@ export async function createDocumentNotification({
         break;
       case 'subcategory_deleted':
         prefix = '세부 카테고리 삭제';
+        break;
+      case 'parent_category_created':
+        prefix = '대분류 카테고리 생성';
+        break;
+      case 'parent_category_deleted':
+        prefix = '대분류 카테고리 삭제';
         break;
       default:
         prefix = '알림';
