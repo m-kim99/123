@@ -157,6 +157,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     };
   }, [searchQuery]);
 
+  // 레이아웃 마운트 시에도 알림을 한 번 불러와서 배지 카운트가 초기 진입부터 보이도록 처리
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   useEffect(() => {
     if (isNotificationOpen) {
       fetchNotifications();
