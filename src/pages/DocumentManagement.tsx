@@ -186,9 +186,12 @@ export function DocumentManagement() {
   const [dateFilter, setDateFilter] = useState<'all' | '7days' | '1month' | '3months'>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'oldest' | 'name'>('latest');
   const [categoryFilter, setCategoryFilter] = useState({
-    departmentId: '',
-    parentCategoryId: '',
+    departmentId: 'all',
+    parentCategoryId: 'all',
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -230,6 +233,25 @@ export function DocumentManagement() {
       categoryFilter.departmentId,
       categoryFilter.parentCategoryId,
     ],
+  );
+
+  const paginatedSubcategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredSubcategoriesForCategoriesTab.slice(startIndex, endIndex);
+  }, [filteredSubcategoriesForCategoriesTab, currentPage]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredSubcategoriesForCategoriesTab.length / ITEMS_PER_PAGE),
+  );
+  const startItem =
+    filteredSubcategoriesForCategoriesTab.length === 0
+      ? 0
+      : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(
+    currentPage * ITEMS_PER_PAGE,
+    filteredSubcategoriesForCategoriesTab.length,
   );
 
   const filteredDocuments = useMemo(() => {
@@ -399,6 +421,10 @@ export function DocumentManagement() {
       setActiveTab('documents');
     }
   }, [searchKeyword]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter.departmentId, categoryFilter.parentCategoryId]);
  
   useEffect(() => {
     // URL 파라미터에서 카테고리/세부 카테고리 정보 읽기 (레거시 및 호환용)
@@ -1672,93 +1698,158 @@ export function DocumentManagement() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSubcategoriesForCategoriesTab.map((subcategory) => {
-                const dept = departments.find((d) => d.id === subcategory.departmentId);
-                const parent = parentCategories.find(
-                  (pc) => pc.id === subcategory.parentCategoryId,
-                );
-                return (
-                  <Card
-                    key={subcategory.id}
-                    className="hover:shadow-lg transition-shadow h-full"
-                  >
-                    <div
-                      className="flex flex-col h-full"
-                      onClick={() =>
-                        navigate(
-                          `/admin/parent-category/${subcategory.parentCategoryId}/subcategory/${subcategory.id}`,
-                        )
-                      }
-                    >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg">{subcategory.name}</CardTitle>
-                            <CardDescription className="mt-1">
-                              {subcategory.description}
-                            </CardDescription>
-                          </div>
-                          {subcategory.nfcRegistered && (
-                            <Badge variant="outline" className="ml-2">
-                              <Smartphone className="h-3 w-3 mr-1" />
-                              NFC
-                            </Badge>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col justify-between flex-1">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">부서</span>
-                            <span className="font-medium">{dept?.name}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">대분류</span>
-                            <span className="font-medium">{parent?.name}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">문서 수</span>
-                            <span className="font-medium">
-                              {subcategory.documentCount}개
-                            </span>
-                          </div>
-                          {subcategory.storageLocation && (
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-slate-500">보관 위치</span>
-                              <span className="font-medium text-xs">
-                                {subcategory.storageLocation}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+            {paginatedSubcategories.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                조건에 해당하는 세부 카테고리가 없습니다.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginatedSubcategories.map((subcategory) => {
+                    const dept = departments.find((d) => d.id === subcategory.departmentId);
+                    const parent = parentCategories.find(
+                      (pc) => pc.id === subcategory.parentCategoryId,
+                    );
+                    return (
+                      <Card
+                        key={subcategory.id}
+                        className="hover:shadow-lg transition-shadow h-full"
+                      >
                         <div
-                          className="flex gap-2 mt-4"
-                          onClick={(e) => e.stopPropagation()}
+                          className="flex flex-col h-full"
+                          onClick={() =>
+                            navigate(
+                              `/admin/parent-category/${subcategory.parentCategoryId}/subcategory/${subcategory.id}`,
+                            )
+                          }
                         >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleOpenEditDialog(subcategory)}
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            수정
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenDeleteDialog(subcategory)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <CardTitle className="text-lg">{subcategory.name}</CardTitle>
+                                <CardDescription className="mt-1">
+                                  {subcategory.description}
+                                </CardDescription>
+                              </div>
+                              {subcategory.nfcRegistered && (
+                                <Badge variant="outline" className="ml-2">
+                                  <Smartphone className="h-3 w-3 mr-1" />
+                                  NFC
+                                </Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex flex-col justify-between flex-1">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-500">부서</span>
+                                <span className="font-medium">{dept?.name}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-500">대분류</span>
+                                <span className="font-medium">{parent?.name}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-500">문서 수</span>
+                                <span className="font-medium">
+                                  {subcategory.documentCount}개
+                                </span>
+                              </div>
+                              {subcategory.storageLocation && (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-slate-500">보관 위치</span>
+                                  <span className="font-medium text-xs">
+                                    {subcategory.storageLocation}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div
+                              className="flex gap-2 mt-4"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleOpenEditDialog(subcategory)}
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                수정
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenDeleteDialog(subcategory)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
                         </div>
-                      </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {filteredSubcategoriesForCategoriesTab.length > 0 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="text-sm text-slate-500">
+                      {startItem}-{endItem} / 총 {filteredSubcategoriesForCategoriesTab.length}개
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        이전
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="w-10"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        다음
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
