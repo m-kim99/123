@@ -34,11 +34,81 @@ export function NFCAutoRedirect() {
         // 이벤트 핸들러 정의
         const handleReading = async (event: any) => {
           try {
-            const { serialNumber } = event;
+            const { serialNumber, message } = event;
             const uid = serialNumber.replace(/:/g, '').toUpperCase();
             console.log('📱 NFC 태그 감지! UID:', uid);
 
             const basePath = user.role === 'admin' ? '/admin' : '/team';
+
+            // 0차: 태그 안에 저장된 URL을 우선 활용 (새로운 URL 기반 플로우)
+            if (message && Array.isArray(message.records) && message.records.length > 0) {
+              for (const record of message.records) {
+                try {
+                  if (record.recordType !== 'url') continue;
+
+                  let urlString = '';
+
+                  if (typeof record.data === 'string') {
+                    urlString = record.data;
+                  } else if (record.data) {
+                    try {
+                      const decoder = new TextDecoder();
+                      urlString = decoder.decode(record.data);
+                    } catch (e) {
+                      console.error('NFC URL 디코딩 오류:', e);
+                    }
+                  }
+
+                  if (!urlString) {
+                    continue;
+                  }
+
+                  console.log('NFC 태그 내 URL 레코드:', urlString);
+
+                  let url: URL;
+                  try {
+                    // 절대/상대 URL 모두 처리
+                    url = new URL(urlString, window.location.origin);
+                  } catch (e) {
+                    console.error('NFC URL 파싱 오류:', e);
+                    continue;
+                  }
+
+                  const params = url.searchParams;
+                  const subcategoryId = params.get('subcategoryId');
+                  let parentCategoryId = params.get('parentCategoryId');
+
+                  if (subcategoryId) {
+                    // parentCategoryId가 URL에 없으면 Supabase에서 조회
+                    if (!parentCategoryId) {
+                      const { data, error } = await supabase
+                        .from('subcategories')
+                        .select('parent_category_id')
+                        .eq('id', subcategoryId)
+                        .single();
+
+                      if (!error && data) {
+                        parentCategoryId = (data as any).parent_category_id;
+                      }
+                    }
+
+                    if (parentCategoryId) {
+                      toast({
+                        title: '✅ NFC 태그 인식',
+                        description: '연결된 세부 카테고리로 이동합니다.',
+                      });
+
+                      navigate(
+                        `${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`,
+                      );
+                      return;
+                    }
+                  }
+                } catch (recordError) {
+                  console.error('NFC URL 레코드 처리 오류:', recordError);
+                }
+              }
+            }
 
             // 1차: 세부 카테고리(subcategories)에서 UID 기반 매핑
             const { data: sub, error: subError } = await supabase
