@@ -28,8 +28,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 
 export function SubcategoryManagement() {
@@ -242,23 +240,6 @@ export function SubcategoryManagement() {
 
       // 세부 카테고리 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategoryId, uid);
-
-      // nfc_mappings 테이블에 UID ↔ 세부 카테고리 매핑 저장/갱신
-      const { user } = useAuthStore.getState();
-      const { error: mappingError } = await supabase
-        .from('nfc_mappings')
-        .upsert(
-          {
-            tag_id: uid,
-            subcategory_id: subcategoryId,
-            registered_by: user?.id ?? null,
-          },
-          { onConflict: 'tag_id' },
-        );
-
-      if (mappingError) {
-        throw mappingError;
-      }
 
       toast({
         title: 'NFC 등록 완료',

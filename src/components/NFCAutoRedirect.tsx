@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isNFCSupported } from '@/lib/nfc';
-import { resolveNFCTag } from '@/lib/nfcApi';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
@@ -129,23 +128,12 @@ export function NFCAutoRedirect() {
               return;
             }
 
-            // 2차: 기존 nfc_mappings 테이블을 통한 카테고리 매핑 (레거시 호환)
-            const result = await resolveNFCTag(uid);
-
-            if (result.found && result.category) {
-              toast({
-                title: '✅ NFC 태그 인식',
-                description: `"${result.category.name}" 카테고리로 이동합니다`,
-              });
-
-              navigate(`${basePath}/category/${result.category.id}`);
-            } else {
-              toast({
-                title: '❌ 미등록 태그',
-                description: '이 NFC 태그는 등록되지 않았습니다.',
-                variant: 'destructive',
-              });
-            }
+            // 등록되지 않은 태그
+            toast({
+              title: '❌ 미등록 태그',
+              description: '이 NFC 태그는 등록되지 않았습니다.',
+              variant: 'destructive',
+            });
           } catch (error) {
             console.error('NFC 처리 오류:', error);
             toast({
