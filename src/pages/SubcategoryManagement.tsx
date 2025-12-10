@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Smartphone } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import type { Subcategory } from '@/store/documentStore';
@@ -17,6 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/hooks/use-toast';
 
 export function SubcategoryManagement() {
   const navigate = useNavigate();
@@ -30,6 +34,7 @@ export function SubcategoryManagement() {
     addSubcategory,
     deleteSubcategory,
     updateSubcategory,
+    registerNfcTag,
   } = useDocumentStore();
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
@@ -42,7 +47,6 @@ export function SubcategoryManagement() {
     departmentId: '',
     parentCategoryId: '',
     storageLocation: '',
-    nfcRegistered: false,
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(
@@ -52,7 +56,6 @@ export function SubcategoryManagement() {
     name: '',
     description: '',
     storageLocation: '',
-    nfcRegistered: false,
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -119,7 +122,7 @@ export function SubcategoryManagement() {
         departmentId: form.departmentId,
         parentCategoryId: form.parentCategoryId,
         storageLocation: form.storageLocation,
-        nfcRegistered: form.nfcRegistered,
+        nfcRegistered: false,
         nfcUid: null,
       });
 
@@ -130,12 +133,87 @@ export function SubcategoryManagement() {
         departmentId: '',
         parentCategoryId: '',
         storageLocation: '',
-        nfcRegistered: false,
       });
 
       await fetchSubcategories();
     } catch (error) {
       console.error('세부 카테고리 추가 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmitWithNfc = async () => {
+    if (!form.name.trim() || !form.departmentId || !form.parentCategoryId) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const created = await addSubcategory({
+        name: form.name.trim(),
+        description: form.description,
+        departmentId: form.departmentId,
+        parentCategoryId: form.parentCategoryId,
+        storageLocation: form.storageLocation,
+        nfcRegistered: true,
+        nfcUid: null,
+      });
+
+      if (!created) {
+        toast({
+          title: '세부 카테고리 생성 실패',
+          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const uid = await readNFCUid();
+
+      await writeNFCUrl(created.id, created.name);
+
+      await registerNfcTag(created.id, uid);
+
+      const { user } = useAuthStore.getState();
+      const { error: mappingError } = await supabase
+        .from('nfc_mappings')
+        .upsert(
+          {
+            tag_id: uid,
+            subcategory_id: created.id,
+            registered_by: user?.id ?? null,
+          },
+          { onConflict: 'tag_id' },
+        );
+
+      if (mappingError) {
+        throw mappingError;
+      }
+
+      toast({
+        title: 'NFC 등록 완료',
+        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+      });
+
+      await fetchSubcategories();
+
+      setAddDialogOpen(false);
+      setForm({
+        name: '',
+        description: '',
+        departmentId: '',
+        parentCategoryId: '',
+        storageLocation: '',
+      });
+    } catch (error: any) {
+      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      toast({
+        title: 'NFC 등록 실패',
+        description:
+          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -147,7 +225,6 @@ export function SubcategoryManagement() {
       name: sub.name || '',
       description: sub.description || '',
       storageLocation: sub.storageLocation || '',
-      nfcRegistered: sub.nfcRegistered,
     });
     setEditNameError('');
     setEditDialogOpen(true);
@@ -175,7 +252,6 @@ export function SubcategoryManagement() {
         name: trimmedName,
         description: editForm.description,
         storageLocation: editForm.storageLocation,
-        nfcRegistered: editForm.nfcRegistered,
       });
       await fetchSubcategories();
       setEditDialogOpen(false);
@@ -406,47 +482,8 @@ export function SubcategoryManagement() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>NFC 등록 여부</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-mgmt-nfc-yes"
-                      name="sub-mgmt-nfc-registered"
-                      className="h-4 w-4"
-                      checked={form.nfcRegistered === true}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, nfcRegistered: true }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-mgmt-nfc-yes"
-                      className="font-normal cursor-pointer"
-                    >
-                      등록됨
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-mgmt-nfc-no"
-                      name="sub-mgmt-nfc-registered"
-                      className="h-4 w-4"
-                      checked={form.nfcRegistered === false}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, nfcRegistered: false }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-mgmt-nfc-no"
-                      className="font-normal cursor-pointer"
-                    >
-                      미등록
-                    </Label>
-                  </div>
-                </div>
-              </div>
+              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
+                  추가 다이얼로그에서는 직접 입력받지 않는다. */}
             </div>
             <DialogFooter>
               <Button
@@ -460,6 +497,7 @@ export function SubcategoryManagement() {
               <Button
                 type="button"
                 onClick={handleSubmit}
+                variant="outline"
                 disabled={
                   isSaving ||
                   !form.name.trim() ||
@@ -467,7 +505,21 @@ export function SubcategoryManagement() {
                   !form.parentCategoryId
                 }
               >
-                {isSaving ? '추가 중...' : '추가'}
+                세부 카테고리만 추가
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmitWithNfc}
+                disabled={
+                  isSaving ||
+                  !form.name.trim() ||
+                  !form.departmentId ||
+                  !form.parentCategoryId
+                }
+                className="flex items-center gap-2"
+              >
+                <Smartphone className="h-4 w-4" />
+                NFC 등록하며 추가
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -527,53 +579,8 @@ export function SubcategoryManagement() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>NFC 등록 여부</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-mgmt-edit-nfc-yes"
-                      name="sub-mgmt-edit-nfc-registered"
-                      className="h-4 w-4"
-                      checked={editForm.nfcRegistered === true}
-                      onChange={() =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: true,
-                        }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-mgmt-edit-nfc-yes"
-                      className="font-normal cursor-pointer"
-                    >
-                      등록됨
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-mgmt-edit-nfc-no"
-                      name="sub-mgmt-edit-nfc-registered"
-                      className="h-4 w-4"
-                      checked={editForm.nfcRegistered === false}
-                      onChange={() =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: false,
-                        }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-mgmt-edit-nfc-no"
-                      className="font-normal cursor-pointer"
-                    >
-                      미등록
-                    </Label>
-                  </div>
-                </div>
-              </div>
+              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
+                  수정 다이얼로그에서는 직접 수정하지 않는다. */}
             </div>
             <DialogFooter>
               <Button

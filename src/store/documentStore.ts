@@ -86,7 +86,7 @@ interface DocumentState {
   ) => Promise<void>;
   addSubcategory: (
     subcategory: Omit<Subcategory, 'id' | 'documentCount'>
-  ) => Promise<void>;
+  ) => Promise<Subcategory | null>;
   updateSubcategory: (id: string, updates: Partial<Subcategory>) => Promise<void>;
   deleteSubcategory: (id: string) => Promise<void>;
   registerNfcTag: (subcategoryId: string, nfcUid: string) => Promise<void>;
@@ -892,48 +892,49 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (error) throw error;
 
-      if (data) {
-        set((state) => ({
-          subcategories: [
-            ...state.subcategories,
-            {
-              id: data.id,
-              name: data.name,
-              description: data.description || '',
-              parentCategoryId: data.parent_category_id,
-              departmentId: data.department_id,
-              nfcUid: data.nfc_tag_id || null,
-              nfcRegistered: data.nfc_registered,
-              storageLocation: data.storage_location || undefined,
-              documentCount: 0,
-            },
-          ],
-        }));
-
-        const { departments, parentCategories } = get();
-        const department = departments.find(
-          (d) => d.id === data.department_id,
-        );
-        const parentCategory = parentCategories.find(
-          (p) => p.id === data.parent_category_id,
-        );
-
-        const { user } = useAuthStore.getState();
-        if (user?.companyId) {
-          await createDocumentNotification({
-            type: 'subcategory_created',
-            documentId: null,
-            title: data.name,
-            companyId: user.companyId,
-            departmentId: data.department_id,
-            departmentName: department?.name ?? null,
-            parentCategoryId: data.parent_category_id,
-            parentCategoryName: parentCategory?.name ?? null,
-            subcategoryId: data.id,
-            subcategoryName: data.name,
-          });
-        }
+      if (!data) {
+        return null;
       }
+
+      const created: Subcategory = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        parentCategoryId: data.parent_category_id,
+        departmentId: data.department_id,
+        nfcUid: data.nfc_tag_id || null,
+        nfcRegistered: data.nfc_registered,
+        storageLocation: data.storage_location || undefined,
+        documentCount: 0,
+      };
+
+      set((state) => ({
+        subcategories: [...state.subcategories, created],
+      }));
+
+      const { departments, parentCategories } = get();
+      const department = departments.find((d) => d.id === data.department_id);
+      const parentCategory = parentCategories.find(
+        (p) => p.id === data.parent_category_id,
+      );
+
+      const { user } = useAuthStore.getState();
+      if (user?.companyId) {
+        await createDocumentNotification({
+          type: 'subcategory_created',
+          documentId: null,
+          title: data.name,
+          companyId: user.companyId,
+          departmentId: data.department_id,
+          departmentName: department?.name ?? null,
+          parentCategoryId: data.parent_category_id,
+          parentCategoryName: parentCategory?.name ?? null,
+          subcategoryId: data.id,
+          subcategoryName: data.name,
+        });
+      }
+
+      return created;
     } catch (err) {
       console.error('Failed to add subcategory to Supabase:', err);
       const newSub: Subcategory = {
@@ -956,6 +957,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         description: '네트워크 오류로 인해 세부 카테고리를 로컬에만 추가했습니다.',
         variant: 'destructive',
       });
+
+      return null;
     }
   },
 

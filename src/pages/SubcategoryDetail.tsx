@@ -49,7 +49,6 @@ export function SubcategoryDetail() {
     name: '',
     description: '',
     storageLocation: '',
-    nfcRegistered: false,
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -199,7 +198,7 @@ export function SubcategoryDetail() {
 
       toast({
         title: 'NFC 등록 완료',
-        description: '세부 카테고리 URL이 NFC 태그에 저장되었습니다.',
+        description: 'NFC에 세부 카테고리가 등록되었습니다.',
       });
     } catch (error) {
       console.error('NFC 등록 실패:', error);
@@ -244,7 +243,6 @@ export function SubcategoryDetail() {
         name: trimmedName,
         description: editForm.description,
         storageLocation: editForm.storageLocation,
-        nfcRegistered: editForm.nfcRegistered,
       });
 
       toast({
@@ -727,53 +725,8 @@ export function SubcategoryDetail() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>NFC 등록 여부</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-detail-nfc-yes"
-                      name="sub-detail-nfc-registered"
-                      className="h-4 w-4"
-                      checked={editForm.nfcRegistered === true}
-                      onChange={() =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: true,
-                        }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-detail-nfc-yes"
-                      className="font-normal cursor-pointer"
-                    >
-                      등록됨
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-detail-nfc-no"
-                      name="sub-detail-nfc-registered"
-                      className="h-4 w-4"
-                      checked={editForm.nfcRegistered === false}
-                      onChange={() =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: false,
-                        }))
-                      }
-                    />
-                    <Label
-                      htmlFor="sub-detail-nfc-no"
-                      className="font-normal cursor-pointer"
-                    >
-                      미등록
-                    </Label>
-                  </div>
-                </div>
-              </div>
+              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
+                  수정 다이얼로그에서는 직접 수정하지 않는다. */}
             </div>
             <DialogFooter>
               <Button

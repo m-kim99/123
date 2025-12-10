@@ -57,7 +57,7 @@ import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { readNFCUid } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 
@@ -131,7 +131,6 @@ export function DocumentManagement() {
     description: '',
     departmentId: '',
     parentCategoryId: '',
-    nfcRegistered: false,
     storageLocation: '',
   });
 
@@ -141,7 +140,6 @@ export function DocumentManagement() {
     name: '',
     description: '',
     storageLocation: '',
-    nfcRegistered: false,
   });
   const [editCategoryNameError, setEditCategoryNameError] = useState('');
   const [isSavingCategory, setIsSavingCategory] = useState(false);
@@ -524,7 +522,7 @@ export function DocumentManagement() {
       departmentId: newCategory.departmentId,
       parentCategoryId: newCategory.parentCategoryId,
       storageLocation: newCategory.storageLocation,
-      nfcRegistered: newCategory.nfcRegistered,
+      nfcRegistered: false,
       nfcUid: null,
     }).then(() => {
       fetchSubcategories();
@@ -535,9 +533,84 @@ export function DocumentManagement() {
       description: '',
       departmentId: '',
       parentCategoryId: '',
-      nfcRegistered: false,
       storageLocation: '',
     });
+  };
+
+  const handleAddCategoryWithNfc = async () => {
+    if (
+      !newCategory.name.trim() ||
+      !newCategory.departmentId ||
+      !newCategory.parentCategoryId
+    ) {
+      return;
+    }
+
+    try {
+      const created = await addSubcategory({
+        name: newCategory.name.trim(),
+        description: newCategory.description,
+        departmentId: newCategory.departmentId,
+        parentCategoryId: newCategory.parentCategoryId,
+        storageLocation: newCategory.storageLocation,
+        nfcRegistered: true,
+        nfcUid: null,
+      });
+
+      if (!created) {
+        toast({
+          title: '세부 카테고리 생성 실패',
+          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const uid = await readNFCUid();
+
+      await writeNFCUrl(created.id, created.name);
+
+      await registerNfcTag(created.id, uid);
+
+      const { user } = useAuthStore.getState();
+      const { error: mappingError } = await supabase
+        .from('nfc_mappings')
+        .upsert(
+          {
+            tag_id: uid,
+            subcategory_id: created.id,
+            registered_by: user?.id ?? null,
+          },
+          { onConflict: 'tag_id' },
+        );
+
+      if (mappingError) {
+        throw mappingError;
+      }
+
+      toast({
+        title: 'NFC 등록 완료',
+        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+      });
+
+      await fetchSubcategories();
+
+      setNewCategory({
+        name: '',
+        description: '',
+        departmentId: '',
+        parentCategoryId: '',
+        storageLocation: '',
+      });
+    } catch (error: any) {
+      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      toast({
+        title: 'NFC 등록 실패',
+        description:
+          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleOpenEditDialog = (subcategory: Subcategory) => {
@@ -546,7 +619,6 @@ export function DocumentManagement() {
       name: subcategory.name || '',
       description: subcategory.description || '',
       storageLocation: subcategory.storageLocation || '',
-      nfcRegistered: subcategory.nfcRegistered,
     });
     setEditCategoryNameError('');
     setEditDialogOpen(true);
@@ -577,7 +649,6 @@ export function DocumentManagement() {
         name: trimmedName,
         description: editCategoryForm.description,
         storageLocation: editCategoryForm.storageLocation,
-        nfcRegistered: editCategoryForm.nfcRegistered,
       });
 
       await fetchSubcategories();
@@ -1478,65 +1549,31 @@ export function DocumentManagement() {
                         placeholder="예: A동 2층 캐비닛 3"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>NFC 등록 여부</Label>
-                      <div className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="new-nfc-yes"
-                            name="new-nfc-registered"
-                            checked={newCategory.nfcRegistered === true}
-                            onChange={() =>
-                              setNewCategory({
-                                ...newCategory,
-                                nfcRegistered: true,
-                              })
-                            }
-                            className="h-4 w-4"
-                          />
-                          <Label
-                            htmlFor="new-nfc-yes"
-                            className="font-normal cursor-pointer"
-                          >
-                            등록됨
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="new-nfc-no"
-                            name="new-nfc-registered"
-                            checked={newCategory.nfcRegistered === false}
-                            onChange={() =>
-                              setNewCategory({
-                                ...newCategory,
-                                nfcRegistered: false,
-                              })
-                            }
-                            className="h-4 w-4"
-                          />
-                          <Label
-                            htmlFor="new-nfc-no"
-                            className="font-normal cursor-pointer"
-                          >
-                            미등록
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                   <DialogFooter>
                     <Button
                       onClick={handleAddCategory}
-                      style={{ backgroundColor: primaryColor }}
+                      variant="outline"
                       disabled={
                         !newCategory.name.trim() ||
                         !newCategory.departmentId ||
                         !newCategory.parentCategoryId
                       }
                     >
-                      추가
+                      세부 카테고리만 추가
+                    </Button>
+                    <Button
+                      onClick={handleAddCategoryWithNfc}
+                      style={{ backgroundColor: primaryColor }}
+                      disabled={
+                        !newCategory.name.trim() ||
+                        !newCategory.departmentId ||
+                        !newCategory.parentCategoryId
+                      }
+                      className="flex items-center gap-2"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      NFC 등록하며 추가
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -1603,47 +1640,8 @@ export function DocumentManagement() {
                       placeholder="예: A동 2층 캐비닛 3"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>NFC 등록 여부</Label>
-                    <div className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="nfc-yes"
-                          name="nfc-registered"
-                          checked={editCategoryForm.nfcRegistered === true}
-                          onChange={() =>
-                            setEditCategoryForm((prev) => ({
-                              ...prev,
-                              nfcRegistered: true,
-                            }))
-                          }
-                          className="h-4 w-4"
-                        />
-                        <Label htmlFor="nfc-yes" className="font-normal cursor-pointer">
-                          등록됨
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="nfc-no"
-                          name="nfc-registered"
-                          checked={editCategoryForm.nfcRegistered === false}
-                          onChange={() =>
-                            setEditCategoryForm((prev) => ({
-                              ...prev,
-                              nfcRegistered: false,
-                            }))
-                          }
-                          className="h-4 w-4"
-                        />
-                        <Label htmlFor="nfc-no" className="font-normal cursor-pointer">
-                          미등록
-                        </Label>
-                      </div>
-                    </div>
-                  </div>
+                  {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
+                      수정 다이얼로그에서는 직접 수정하지 않는다. */}
                 </div>
                 <DialogFooter>
                   <Button
@@ -1661,10 +1659,6 @@ export function DocumentManagement() {
                       try {
                         const uid = await readNFCUid();
                         await registerNfcTag(editingCategoryId, uid);
-                        setEditCategoryForm((prev) => ({
-                          ...prev,
-                          nfcRegistered: true,
-                        }));
                         toast({
                           title: '✅ NFC 태그 등록 완료',
                           description: `태그 ID: ${uid.substring(0, 8)}...`,

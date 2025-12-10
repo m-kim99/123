@@ -30,6 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { useAuthStore } from '@/store/authStore';
 
 export function ParentCategoryDetail() {
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
@@ -43,6 +45,7 @@ export function ParentCategoryDetail() {
     fetchSubcategories,
     fetchDocuments,
     addSubcategory,
+    registerNfcTag,
   } = useDocumentStore();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -51,7 +54,6 @@ export function ParentCategoryDetail() {
     name: '',
     description: '',
     storageLocation: '',
-    nfcRegistered: false,
   });
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -113,7 +115,7 @@ export function ParentCategoryDetail() {
         parentCategoryId: parentCategory.id,
         departmentId: parentCategory.departmentId,
         nfcUid: null,
-        nfcRegistered: form.nfcRegistered,
+        nfcRegistered: false,
         storageLocation: form.storageLocation,
       });
       setAddDialogOpen(false);
@@ -121,7 +123,78 @@ export function ParentCategoryDetail() {
         name: '',
         description: '',
         storageLocation: '',
-        nfcRegistered: false,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddSubcategoryWithNfc = async () => {
+    if (!parentCategory || !form.name.trim()) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const created = await addSubcategory({
+        name: form.name.trim(),
+        description: form.description,
+        parentCategoryId: parentCategory.id,
+        departmentId: parentCategory.departmentId,
+        nfcUid: null,
+        nfcRegistered: true,
+        storageLocation: form.storageLocation,
+      });
+
+      if (!created) {
+        toast({
+          title: '세부 카테고리 생성 실패',
+          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const uid = await readNFCUid();
+
+      await writeNFCUrl(created.id, created.name);
+
+      await registerNfcTag(created.id, uid);
+
+      const { user } = useAuthStore.getState();
+      const { error: mappingError } = await supabase
+        .from('nfc_mappings')
+        .upsert(
+          {
+            tag_id: uid,
+            subcategory_id: created.id,
+            registered_by: user?.id ?? null,
+          },
+          { onConflict: 'tag_id' },
+        );
+
+      if (mappingError) {
+        throw mappingError;
+      }
+
+      toast({
+        title: 'NFC 등록 완료',
+        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+      });
+
+      setAddDialogOpen(false);
+      setForm({
+        name: '',
+        description: '',
+        storageLocation: '',
+      });
+    } catch (error: any) {
+      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      toast({
+        title: 'NFC 등록 실패',
+        description:
+          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -440,41 +513,8 @@ export function ParentCategoryDetail() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>NFC 등록 여부</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-nfc-yes"
-                      name="sub-nfc-registered"
-                      className="h-4 w-4"
-                      checked={form.nfcRegistered === true}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, nfcRegistered: true }))
-                      }
-                    />
-                    <Label htmlFor="sub-nfc-yes" className="font-normal cursor-pointer">
-                      등록됨
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="sub-nfc-no"
-                      name="sub-nfc-registered"
-                      className="h-4 w-4"
-                      checked={form.nfcRegistered === false}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, nfcRegistered: false }))
-                      }
-                    />
-                    <Label htmlFor="sub-nfc-no" className="font-normal cursor-pointer">
-                      미등록
-                    </Label>
-                  </div>
-                </div>
-              </div>
+              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
+                  추가 다이얼로그에서는 직접 입력받지 않는다. */}
             </div>
             <DialogFooter>
               <Button
@@ -488,9 +528,19 @@ export function ParentCategoryDetail() {
               <Button
                 type="button"
                 onClick={handleAddSubcategory}
+                variant="outline"
                 disabled={isSaving || !form.name.trim()}
               >
-                {isSaving ? '추가 중...' : '추가'}
+                세부 카테고리만 추가
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAddSubcategoryWithNfc}
+                disabled={isSaving || !form.name.trim()}
+                className="flex items-center gap-2"
+              >
+                <Smartphone className="h-4 w-4" />
+                NFC 등록하며 추가
               </Button>
             </DialogFooter>
           </DialogContent>
