@@ -40,7 +40,21 @@ export function NfcRedirect() {
         const basePath = user.role === 'admin' ? '/admin' : '/team';
 
         if (subcategoryId) {
-          const parentCategoryId = params.get('parentCategoryId');
+          // parentCategoryId가 URL에 없으면 Supabase에서 조회해온다.
+          let parentCategoryId = params.get('parentCategoryId');
+
+          if (!parentCategoryId) {
+            const { data, error } = await supabase
+              .from('subcategories')
+              .select('parent_category_id')
+              .eq('id', subcategoryId)
+              .single();
+
+            if (!error && data) {
+              parentCategoryId = (data as any).parent_category_id;
+            }
+          }
+
           if (parentCategoryId) {
             navigate(
               `${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`,
@@ -49,6 +63,7 @@ export function NfcRedirect() {
           } else {
             navigate(`${basePath}/subcategories`, { replace: true });
           }
+
           setStatus('done');
           return;
         }

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { readNFCUid } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { useFavoriteStore } from '@/store/favoriteStore';
@@ -165,18 +165,41 @@ export function SubcategoryDetail() {
   };
 
   const handleRegisterNfc = async () => {
-    if (!subcategory) {
+    if (!subcategory || !subcategoryId) {
       return;
     }
 
     setIsRegisteringNfc(true);
     try {
+      // 1) 태그의 UID를 읽어온다 (DB 매핑 및 서브카테고리 테이블용)
       const uid = await readNFCUid();
+
+      // 2) NFC 태그에 세부 카테고리용 URL을 쓴다
+      await writeNFCUrl(subcategory.id, subcategory.name);
+
+      // 3) 세부 카테고리 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategory.id, uid);
+
+      // 4) nfc_mappings 테이블에 UID ↔ 세부 카테고리 매핑 저장/갱신
+      const { user } = useAuthStore.getState();
+      const { error: mappingError } = await supabase
+        .from('nfc_mappings')
+        .upsert(
+          {
+            tag_id: uid,
+            subcategory_id: subcategory.id,
+            registered_by: user?.id ?? null,
+          },
+          { onConflict: 'tag_id' },
+        );
+
+      if (mappingError) {
+        throw mappingError;
+      }
 
       toast({
         title: 'NFC 등록 완료',
-        description: '세부 카테고리에 NFC UID가 등록되었습니다.',
+        description: '세부 카테고리 URL이 NFC 태그에 저장되었습니다.',
       });
     } catch (error) {
       console.error('NFC 등록 실패:', error);
