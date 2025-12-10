@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isNFCSupported } from '@/lib/nfc';
 import { resolveNFCTag } from '@/lib/nfcApi';
@@ -9,32 +9,32 @@ import { supabase } from '@/lib/supabase';
 export function NFCAutoRedirect() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [isScanning, setIsScanning] = useState(false);
+  const ndefReaderRef = useRef<any>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    // NFC 지원 여부 확인
-    if (!isNFCSupported() || !user) {
-      return;
-    }
-
-    // 이미 스캔 중이면 중복 실행 방지
-    if (isScanning) {
+    // NFC 지원 여부 및 사용자 확인
+    if (!isNFCSupported() || !user || isInitializedRef.current) {
       return;
     }
 
     const startNFCScanning = async () => {
-      setIsScanning(true);
       console.log('🔵 NFC 자동 스캔 시작');
 
       try {
-        // @ts-ignore
+        // @ts-ignore - NDEFReader
         const ndef = new NDEFReader();
-        await ndef.scan();
+        ndefReaderRef.current = ndef;
+        isInitializedRef.current = true;
 
-        // @ts-ignore
-        ndef.addEventListener("reading", async ({ serialNumber }) => {
+        // NFC 스캔 시작
+        await ndef.scan();
+        console.log('✅ NFC 스캔 활성화 완료');
+
+        // 이벤트 핸들러 정의
+        const handleReading = async (event: any) => {
           try {
-            // UID 정규화
+            const { serialNumber } = event;
             const uid = serialNumber.replace(/:/g, '').toUpperCase();
             console.log('📱 NFC 태그 감지! UID:', uid);
 
@@ -54,9 +54,7 @@ export function NFCAutoRedirect() {
               });
 
               navigate(
-                `${basePath}/parent-category/${(sub as any).parent_category_id}/subcategory/${
-                  (sub as any).id
-                }`,
+                `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}` 
               );
               return;
             }
@@ -86,21 +84,49 @@ export function NFCAutoRedirect() {
               variant: 'destructive',
             });
           }
-        });
+        };
+
+        const handleReadingError = (error: any) => {
+          console.error('NFC 읽기 오류:', error);
+        };
+
+        // 이벤트 리스너 등록
+        ndef.addEventListener('reading', handleReading);
+        ndef.addEventListener('readingerror', handleReadingError);
+
+        // cleanup 함수를 위해 핸들러 저장
+        (ndefReaderRef.current as any).handleReading = handleReading;
+        (ndefReaderRef.current as any).handleReadingError = handleReadingError;
 
       } catch (error) {
-        console.error('NFC 스캔 시작 실패:', error);
+        console.error('❌ NFC 스캔 시작 실패:', error);
+        isInitializedRef.current = false;
       }
     };
 
     startNFCScanning();
 
-    // cleanup
+    // Cleanup: 이벤트 리스너 제거
     return () => {
-      setIsScanning(false);
+      if (ndefReaderRef.current) {
+        try {
+          const ndef = ndefReaderRef.current as any;
+          if (ndef.handleReading) {
+            ndef.removeEventListener('reading', ndef.handleReading);
+          }
+          if (ndef.handleReadingError) {
+            ndef.removeEventListener('readingerror', ndef.handleReadingError);
+          }
+          console.log('🧹 NFC 이벤트 리스너 정리 완료');
+        } catch (error) {
+          console.error('NFC cleanup 오류:', error);
+        }
+        ndefReaderRef.current = null;
+        isInitializedRef.current = false;
+      }
     };
-  }, [user, navigate, isScanning]);
+  }, [user, navigate]); // isScanning 제거 - 무한 루프 방지
 
-  // 이 컴포넌트는 UI를 렌더링하지 않음
+  // UI를 렌더링하지 않음
   return null;
 }
