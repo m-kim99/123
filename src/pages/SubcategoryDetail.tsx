@@ -203,12 +203,17 @@ export function SubcategoryDetail() {
       });
     } catch (error) {
       console.error('NFC 등록 실패:', error);
+
+      let description = 'NFC 태그를 등록하는 중 오류가 발생했습니다.';
+      if (error instanceof Error) {
+        description = error.message;
+      } else if (error && typeof error === 'object' && 'message' in (error as any)) {
+        description = String((error as any).message ?? description);
+      }
+
       toast({
         title: 'NFC 등록 실패',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'NFC 태그를 등록하는 중 오류가 발생했습니다.',
+        description,
         variant: 'destructive',
       });
     } finally {
