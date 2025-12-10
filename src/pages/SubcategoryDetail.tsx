@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
@@ -36,6 +37,8 @@ export function SubcategoryDetail() {
     uploadDocument,
     registerNfcTag,
     updateSubcategory,
+    findSubcategoryByNfcUid,
+    clearNfcFromSubcategory,
   } = useDocumentStore();
 
   const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
@@ -44,6 +47,9 @@ export function SubcategoryDetail() {
   const [uploadTitle, setUploadTitle] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isRegisteringNfc, setIsRegisteringNfc] = useState(false);
+  const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
+  const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
+  const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -170,16 +176,60 @@ export function SubcategoryDetail() {
 
     setIsRegisteringNfc(true);
     try {
-      // 1) 태그의 UID를 읽어온다 (DB 매핑 및 서브카테고리 테이블용)
+      // 1) 태그의 UID를 읽어온다
       const uid = await readNFCUid();
 
-      // 2) NFC 태그에 세부 카테고리용 URL을 쓴다
+      // 2) 이 UID가 이미 등록된 태그인지 확인
+      const existingSub = await findSubcategoryByNfcUid(uid);
+
+      if (existingSub) {
+        // 이미 등록된 태그 → 확인 다이얼로그 띄우기
+        setPendingNfcUid(uid);
+        setExistingNfcSubcategory({ id: existingSub.id, name: existingSub.name });
+        setNfcConfirmDialogOpen(true);
+        setIsRegisteringNfc(false);
+        return;
+      }
+
+      // 등록된 적 없는 태그 → 바로 등록 진행
+      await proceedNfcRegistration(uid);
+    } catch (error) {
+      console.error('NFC 등록 실패:', error);
+
+      let description = 'NFC 태그를 등록하는 중 오류가 발생했습니다.';
+      if (error instanceof Error) {
+        description = error.message;
+      } else if (error && typeof error === 'object' && 'message' in (error as any)) {
+        description = String((error as any).message ?? description);
+      }
+
+      toast({
+        title: 'NFC 등록 실패',
+        description,
+        variant: 'destructive',
+      });
+      setIsRegisteringNfc(false);
+    }
+  };
+
+  const proceedNfcRegistration = async (uid: string) => {
+    if (!subcategory) return;
+
+    setIsRegisteringNfc(true);
+    try {
+      // 기존에 이 UID를 쓰던 세부 카테고리가 있으면 NFC 정보 해제
+      const existingSub = await findSubcategoryByNfcUid(uid);
+      if (existingSub && existingSub.id !== subcategory.id) {
+        await clearNfcFromSubcategory(existingSub.id);
+      }
+
+      // NFC 태그에 세부 카테고리용 URL을 쓴다
       await writeNFCUrl(subcategory.id, subcategory.name);
 
-      // 3) 세부 카테고리 테이블에 UID 및 등록 여부 반영
+      // 세부 카테고리 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategory.id, uid);
 
-      // 4) nfc_mappings 테이블에 UID ↔ 세부 카테고리 매핑 저장/갱신
+      // nfc_mappings 테이블에 UID ↔ 세부 카테고리 매핑 저장/갱신
       const { user } = useAuthStore.getState();
       const { error: mappingError } = await supabase
         .from('nfc_mappings')
@@ -200,6 +250,11 @@ export function SubcategoryDetail() {
         title: 'NFC 등록 완료',
         description: 'NFC에 세부 카테고리가 등록되었습니다.',
       });
+
+      // 상태 초기화
+      setPendingNfcUid(null);
+      setExistingNfcSubcategory(null);
+      setNfcConfirmDialogOpen(false);
     } catch (error) {
       console.error('NFC 등록 실패:', error);
 
@@ -218,6 +273,17 @@ export function SubcategoryDetail() {
     } finally {
       setIsRegisteringNfc(false);
     }
+  };
+
+  const handleNfcConfirmYes = async () => {
+    if (!pendingNfcUid) return;
+    await proceedNfcRegistration(pendingNfcUid);
+  };
+
+  const handleNfcConfirmNo = () => {
+    setPendingNfcUid(null);
+    setExistingNfcSubcategory(null);
+    setNfcConfirmDialogOpen(false);
   };
 
   const handleCloseEditDialog = () => {
@@ -917,6 +983,32 @@ export function SubcategoryDetail() {
             </DialogContent>
           )}
         </Dialog>
+
+        {/* NFC 재등록 확인 다이얼로그 */}
+        <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>NFC 태그 재등록</AlertDialogTitle>
+              <AlertDialogDescription>
+                이미 URL이 등록된 태그입니다.
+                {existingNfcSubcategory && (
+                  <span className="block mt-2 font-medium">
+                    현재 연결: {existingNfcSubcategory.name}
+                  </span>
+                )}
+                <span className="block mt-2">계속 하시겠습니까?</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleNfcConfirmNo}>
+                아니오
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleNfcConfirmYes}>
+                예
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

@@ -90,6 +90,8 @@ interface DocumentState {
   updateSubcategory: (id: string, updates: Partial<Subcategory>) => Promise<void>;
   deleteSubcategory: (id: string) => Promise<void>;
   registerNfcTag: (subcategoryId: string, nfcUid: string) => Promise<void>;
+  findSubcategoryByNfcUid: (nfcUid: string) => Promise<Subcategory | null>;
+  clearNfcFromSubcategory: (subcategoryId: string) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   uploadDocument: (
@@ -1085,6 +1087,64 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         description: '세부 카테고리의 NFC 정보를 업데이트하지 못했습니다.',
         variant: 'destructive',
       });
+    }
+  },
+
+  findSubcategoryByNfcUid: async (nfcUid) => {
+    try {
+      const { data, error } = await supabase
+        .from('subcategories')
+        .select('*')
+        .eq('nfc_tag_id', nfcUid)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Failed to find subcategory by NFC UID:', error);
+        return null;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        parentCategoryId: data.parent_category_id,
+        departmentId: data.department_id,
+        nfcUid: data.nfc_tag_id || null,
+        nfcRegistered: data.nfc_registered,
+        storageLocation: data.storage_location || undefined,
+        documentCount: 0,
+      };
+    } catch (err) {
+      console.error('Failed to find subcategory by NFC UID:', err);
+      return null;
+    }
+  },
+
+  clearNfcFromSubcategory: async (subcategoryId) => {
+    try {
+      const { error } = await supabase
+        .from('subcategories')
+        .update({
+          nfc_tag_id: null,
+          nfc_registered: false,
+        })
+        .eq('id', subcategoryId);
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.map((sub) =>
+          sub.id === subcategoryId
+            ? { ...sub, nfcUid: null, nfcRegistered: false }
+            : sub
+        ),
+      }));
+    } catch (err) {
+      console.error('Failed to clear NFC from subcategory:', err);
     }
   },
 
