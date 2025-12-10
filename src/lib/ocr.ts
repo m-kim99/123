@@ -1,8 +1,23 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import { createWorker } from 'tesseract.js';
+// Dynamic Import로 필요할 때만 로드
+let pdfjsLib: any = null;
+let createWorker: any = null;
 
-// PDF.js worker 설정
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+async function loadPDFLib() {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+    // PDF.js worker 설정
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+  return pdfjsLib;
+}
+
+async function loadTesseract() {
+  if (!createWorker) {
+    const module = await import('tesseract.js');
+    createWorker = module.createWorker;
+  }
+  return createWorker;
+}
 
 /**
  * PDF 파일을 이미지로 변환
@@ -17,8 +32,9 @@ async function convertPDFPageToImage(
   scale: number = 2.0
 ): Promise<HTMLCanvasElement> {
   try {
+    const pdfLib = await loadPDFLib();
     const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const loadingTask = pdfLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
 
     if (pageNum < 1 || pageNum > pdf.numPages) {
@@ -77,6 +93,10 @@ export async function extractTextFromPDF(
   let tesseractWorker: any = null;
 
   try {
+    // Dynamic imports
+    const pdfLib = await loadPDFLib();
+    const workerFactory = await loadTesseract();
+
     // 파일 타입 확인
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       throw new Error('PDF 파일만 처리할 수 있습니다.');
@@ -86,7 +106,7 @@ export async function extractTextFromPDF(
 
     // PDF 파일 로드하여 페이지 수 확인
     const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const loadingTask = pdfLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
     const totalPages = pdf.numPages;
 
@@ -96,7 +116,7 @@ export async function extractTextFromPDF(
     console.log('Tesseract.js Worker 초기화 중...');
     onProgress?.({ page: 0, totalPages, percent: 0, status: 'Tesseract.js 초기화 중...' });
 
-    tesseractWorker = await createWorker('kor+eng', 1, {
+    tesseractWorker = await workerFactory('kor+eng', 1, {
       logger: (m: any) => {
         if (m.status === 'recognizing text') {
           const percent = Math.round(m.progress * 100);
@@ -203,7 +223,10 @@ export async function extractTextFromPDF(
   }
 }
 
-export async function extractTextFromImage(file: File): Promise<string> {
+export async function extractTextFromImage(
+  file: File,
+  onProgress?: (progress: { percent: number; status: string }) => void
+): Promise<string> {
   let tesseractWorker: any = null;
   try {
     const mimeType = file.type;
@@ -218,7 +241,18 @@ export async function extractTextFromImage(file: File): Promise<string> {
       throw new Error('JPG, PNG 이미지 파일만 처리할 수 있습니다.');
     }
 
-    tesseractWorker = await createWorker('kor+eng', 1, {});
+    const workerFactory = await loadTesseract();
+
+    onProgress?.({ percent: 0, status: 'Tesseract.js 초기화 중...' });
+
+    tesseractWorker = await workerFactory('kor+eng', 1, {
+      logger: (m: any) => {
+        if (m.status === 'recognizing text') {
+          const percent = Math.round(m.progress * 100);
+          onProgress?.({ percent, status: '텍스트 인식 중...' });
+        }
+      },
+    });
 
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -287,7 +321,9 @@ export async function extractText(
 
   if (isImage) {
     onProgress?.({ percent: 0, status: '이미지 처리 중...', type: 'image' });
-    const text = await extractTextFromImage(file);
+    const text = await extractTextFromImage(file, ({ percent, status }) => {
+      onProgress?.({ percent, status, type: 'image' });
+    });
     onProgress?.({ percent: 100, status: '이미지 처리 완료', type: 'image' });
     return text;
   }
