@@ -68,6 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
 
   const {
     notifications,
@@ -80,6 +81,38 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
+
+  // 사용자 부서명 가져오기
+  useEffect(() => {
+    const fetchUserDepartment = async () => {
+      if (!user?.departmentId) {
+        setUserDepartmentName(null);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('departments')
+          .select('name')
+          .eq('id', user.departmentId)
+          .single();
+        if (!error && data) {
+          setUserDepartmentName(data.name);
+        }
+      } catch (err) {
+        console.error('부서 정보 조회 실패:', err);
+      }
+    };
+    fetchUserDepartment();
+  }, [user?.departmentId]);
+
+  // 역할 + 부서명 표시 헬퍼
+  const getRoleDisplay = () => {
+    const roleText = isAdmin ? '관리자' : '팀원';
+    if (userDepartmentName) {
+      return `${roleText} | ${userDepartmentName}`;
+    }
+    return roleText;
+  };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -456,7 +489,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div>
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-slate-500">
-                  {isAdmin ? '관리자' : '팀원'}
+                  {getRoleDisplay()}
                 </p>
               </div>
             </div>
@@ -640,7 +673,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div>
                     <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
                     <p className="text-xs text-slate-500">
-                      {user?.role === 'admin' ? '관리자' : '팀원'}
+                      {getRoleDisplay()}
                     </p>
                   </div>
                 </div>
@@ -836,7 +869,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <div>
                         <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
                         <p className="text-xs text-slate-500">
-                          {user?.role === 'admin' ? '관리자' : '팀원'}
+                          {getRoleDisplay()}
                         </p>
                       </div>
                     </div>
@@ -1042,7 +1075,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="space-y-2">
               <Label>역할</Label>
               <Input
-                value={user?.role === 'admin' ? '관리자' : '팀원'}
+                value={getRoleDisplay()}
                 disabled
               />
             </div>
