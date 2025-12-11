@@ -39,7 +39,10 @@ export function TeamDepartments() {
         return;
       }
 
-      // 권한 있는 부서만 가져오기
+      // 1. 자신이 속한 부서는 자동으로 접근 가능
+      const ownDepartmentId = user?.departmentId;
+
+      // 2. 추가로 권한이 부여된 부서 가져오기
       const { data: permissionData, error: permError } = await supabase
         .from('user_permissions')
         .select('department_id')
@@ -48,7 +51,13 @@ export function TeamDepartments() {
 
       if (permError) throw permError;
 
-      const departmentIds = permissionData?.map((p: any) => p.department_id) || [];
+      // 3. 자신의 부서 + 권한 부여된 부서 합치기 (중복 제거)
+      const permissionDeptIds = permissionData?.map((p: any) => p.department_id) || [];
+      const allDepartmentIds = new Set<string>([
+        ...(ownDepartmentId ? [ownDepartmentId] : []),
+        ...permissionDeptIds,
+      ]);
+      const departmentIds = Array.from(allDepartmentIds);
 
       if (departmentIds.length === 0) {
         setDepartments([]);
