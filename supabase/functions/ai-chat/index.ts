@@ -35,7 +35,7 @@ serve(async (req) => {
       try {
         const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-        // 1-1. 부서, 대분류, 세부카테고리 전체 조회 (병렬) - 벡터 검색 결과가 없을 때 폴백용
+        // 1-1. 부서, 대분류, 세부카테고리 전체 조회 (병렬)
         const [
           { data: departments },
           { data: parentCategories },
@@ -83,7 +83,6 @@ serve(async (req) => {
                 title: d.title ?? '제목 없음',
                 departmentName: d.department_name ?? '',
                 categoryName: d.category_name ?? '',
-                subcategoryName: d.subcategory_name ?? '',
                 storageLocation: d.storage_location ?? null,
                 uploadDate: d.uploaded_at ?? '',
               }));
@@ -92,6 +91,8 @@ serve(async (req) => {
         }
 
         // 1-3. 컨텍스트 구성
+        const deptList = departments?.map((d: any) => d.name).join(', ') || '없음';
+        const catList = parentCategories?.map((c: any) => c.name).join(', ') || '없음';
         const subList =
           subcategories
             ?.map(
@@ -99,34 +100,33 @@ serve(async (req) => {
                 `${s.name}(위치: ${s.storage_location || '미지정'})`,
             )
             .join(', ') || '없음';
-        
         const docList =
           matchedDocs.length > 0
             ? matchedDocs
-                .map((d: any) => {
-                  const ocrPreview = (d.ocr_text ?? '').toString().length > 150
-                    ? (d.ocr_text ?? '').toString().slice(0, 150) + '...'
-                    : (d.ocr_text ?? '').toString();
-                  
-                  return `- 제목: ${d.title ?? '제목 없음'}
-  부서: ${d.department_name ?? '미지정'}
-  대분류: ${d.category_name ?? '미지정'}
-  보관위치: ${d.storage_location ?? '미지정'}
-  내용: ${ocrPreview}`;
-                })
-                .join('\n\n')
-            : '관련 문서를 찾지 못했습니다.';
+                .map(
+                  (d: any) =>
+                    `- ${d.title ?? '제목 없음'}: ${
+                      (d.ocr_text ?? '').toString().length > 200
+                        ? (d.ocr_text ?? '').toString().slice(0, 200) + '...'
+                        : (d.ocr_text ?? '').toString()
+                    }`,
+                )
+                .join('\n')
+            : '관련 문서 없음';
 
         systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
+
+[부서 목록]
+${deptList}
+
+[대분류 목록]
+${catList}
 
 [세부카테고리 목록 (저장 위치 포함)]
 ${subList}
 
 [관련 문서]
-${docList}
-
-위 정보를 바탕으로 사용자의 질문에 정확하고 친절하게 답변해주세요. 
-문서의 위치 정보를 포함하여 안내해주세요.`;
+${docList}`;
       } catch (searchError) {
         console.error('DB 조회 중 오류:', searchError);
       }
