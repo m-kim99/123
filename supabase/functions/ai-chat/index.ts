@@ -35,7 +35,18 @@ serve(async (req) => {
       try {
         const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-        // 1-1. 임베딩 생성 및 벡터 검색 (departments, categories, subcategories 전체 조회 제거 - match_documents RPC가 이미 조인된 데이터 반환)
+        // 1-1. 부서, 대분류, 세부카테고리 전체 조회 (병렬) - 벡터 검색 결과가 없을 때 폴백용
+        const [
+          { data: departments },
+          { data: parentCategories },
+          { data: subcategories },
+        ] = await Promise.all([
+          supabase.from('departments').select('id, name'),
+          supabase.from('categories').select('id, name, department_id'),
+          supabase.from('subcategories').select('id, name, parent_category_id, storage_location'),
+        ]);
+
+        // 1-2. 임베딩 생성 및 벡터 검색
         let matchedDocs: any[] = [];
         const embeddingRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
@@ -80,7 +91,15 @@ serve(async (req) => {
           }
         }
 
-        // 1-2. 컨텍스트 구성 (간소화 - 벡터 검색 결과만 사용)
+        // 1-3. 컨텍스트 구성
+        const subList =
+          subcategories
+            ?.map(
+              (s: any) =>
+                `${s.name}(위치: ${s.storage_location || '미지정'})`,
+            )
+            .join(', ') || '없음';
+        
         const docList =
           matchedDocs.length > 0
             ? matchedDocs
@@ -98,12 +117,12 @@ serve(async (req) => {
                 .join('\n\n')
             : '관련 문서를 찾지 못했습니다.';
 
-        systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다.
+        systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
 
-사용자 질문: "${message}"
+[세부카테고리 목록 (저장 위치 포함)]
+${subList}
 
-아래는 질문과 관련된 문서 정보입니다:
-
+[관련 문서]
 ${docList}
 
 위 정보를 바탕으로 사용자의 질문에 정확하고 친절하게 답변해주세요. 
