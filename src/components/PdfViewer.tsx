@@ -50,25 +50,51 @@ export function PdfViewer({ url, onDownload }: PdfViewerProps) {
     setRotation((prev) => (prev + 90) % 360);
   };
 
-  const handlePrint = () => {
-    const printWindow = window.open(url);
-    if (printWindow) {
-      printWindow.onload = () => {
+  const handlePrint = async () => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
         setTimeout(() => {
-          printWindow.print();
-        }, 500);
+          iframe.contentWindow?.print();
+        }, 100);
       };
+    } catch (error) {
+      console.error('인쇄 실패:', error);
+      window.open(url)?.print();
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (onDownload) {
       onDownload();
     } else {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'document.pdf';
-      link.click();
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = 'document.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error('다운로드 실패:', error);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'document.pdf';
+        link.click();
+      }
     }
   };
 
