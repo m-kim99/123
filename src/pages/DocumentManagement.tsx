@@ -59,6 +59,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
+import { PdfViewer } from '@/components/PdfViewer';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -2579,13 +2580,7 @@ export function DocumentManagement() {
                     <p className="text-slate-500">문서를 불러오는 중입니다...</p>
                   </div>
                 ) : (
-                  previewDoc && (
-                    <iframe
-                      src={previewDoc.url}
-                      className="w-full h-full border-0"
-                      title={previewDoc.title}
-                    />
-                  )
+                  previewDoc && <PdfViewer url={previewDoc.url} />
                 )}
               </div>
 

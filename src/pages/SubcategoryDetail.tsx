@@ -19,6 +19,7 @@ import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
 import { createDocumentNotification } from '@/lib/notifications';
+import { PdfViewer } from '@/components/PdfViewer';
 
 export function SubcategoryDetail() {
   const { parentCategoryId, subcategoryId } = useParams<{
@@ -821,13 +822,7 @@ export function SubcategoryDetail() {
                     <p className="text-slate-500">문서를 불러오는 중입니다...</p>
                   </div>
                 ) : (
-                  previewDoc && (
-                    <iframe
-                      src={previewDoc.url}
-                      className="w-full h-full border-0"
-                      title={previewDoc.title}
-                    />
-                  )
+                  previewDoc && <PdfViewer url={previewDoc.url} />
                 )}
               </div>
 
