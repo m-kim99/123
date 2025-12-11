@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ interface PdfViewerProps {
   onDownload?: () => void;
 }
 
-export function PdfViewer({ url, onDownload }: PdfViewerProps) {
+export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
@@ -381,4 +381,4 @@ export function PdfViewer({ url, onDownload }: PdfViewerProps) {
       </div>
     </div>
   );
-}
+});

@@ -450,10 +450,11 @@ export function DocumentManagement() {
   // 페이지 진입 시 전체 세부 카테고리 재조회 (상세 페이지에서 필터링된 상태 복구)
   useEffect(() => {
     setIsLoadingSubcategories(true);
-    fetchSubcategories().finally(() => {
+    // Zustand actions는 안정적이므로 getState()로 직접 호출
+    useDocumentStore.getState().fetchSubcategories().finally(() => {
       setIsLoadingSubcategories(false);
     });
-  }, [fetchSubcategories]);
+  }, []);
 
   useEffect(() => {
     if (searchKeyword) {

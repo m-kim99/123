@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import {
@@ -20,7 +21,7 @@ interface DocumentBreadcrumbProps {
   className?: string;
 }
 
-export function DocumentBreadcrumb({ items, className }: DocumentBreadcrumbProps) {
+export const DocumentBreadcrumb = React.memo(function DocumentBreadcrumb({ items, className }: DocumentBreadcrumbProps) {
   const basePath = window.location.pathname.startsWith('/admin') ? '/admin' : '/team';
 
   // 모바일: 마지막 2개만 표시
@@ -80,4 +81,4 @@ export function DocumentBreadcrumb({ items, className }: DocumentBreadcrumbProps
       </BreadcrumbList>
     </Breadcrumb>
   );
-}
+});

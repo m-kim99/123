@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ interface AIChatbotProps {
   primaryColor: string;
 }
 
-export function AIChatbot({ primaryColor }: AIChatbotProps) {
+export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -283,4 +283,4 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
       )}
     </>
   );
-}
+});

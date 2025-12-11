@@ -40,7 +40,6 @@ export function SubcategoryManagement() {
   const isLoading = useDocumentStore((state) => state.isLoading);
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
-    fetchParentCategories,
     fetchSubcategories,
     addSubcategory,
     deleteSubcategory,
@@ -80,9 +79,10 @@ export function SubcategoryManagement() {
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
-    fetchParentCategories();
-    fetchSubcategories();
-  }, [fetchParentCategories, fetchSubcategories]);
+    // Zustand actions는 안정적이므로 getState()로 직접 호출
+    useDocumentStore.getState().fetchParentCategories();
+    useDocumentStore.getState().fetchSubcategories();
+  }, []);
 
   const filteredParentCategories = useMemo(
     () =>
