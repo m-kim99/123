@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Smartphone } from 'lucide-react';
+import { Plus, Smartphone } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import type { Subcategory } from '@/store/documentStore';
@@ -117,7 +117,8 @@ export function SubcategoryManagement() {
     [subcategories, selectedDepartmentId, selectedParentCategoryId]
   );
 
-  const handleDelete = async (id: string) => {
+  // useCallback으로 최적화
+  const handleDelete = useCallback(async (id: string) => {
     const confirmed = window.confirm('정말 이 세부 카테고리를 삭제하시겠습니까? 관련 문서도 함께 제거될 수 있습니다.');
     if (!confirmed) return;
 
@@ -126,9 +127,10 @@ export function SubcategoryManagement() {
     } catch (error) {
       console.error('세부 카테고리 삭제 실패:', error);
     }
-  };
+  }, [deleteSubcategory]);
 
-  const handleSubmit = async () => {
+  // useCallback으로 최적화
+  const handleSubmit = useCallback(async () => {
     if (!form.name.trim() || !form.departmentId || !form.parentCategoryId) {
       return;
     }
@@ -160,7 +162,7 @@ export function SubcategoryManagement() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [form, addSubcategory, fetchSubcategories]);
 
   const handleSubmitWithNfc = async () => {
     if (!form.name.trim() || !form.departmentId || !form.parentCategoryId) {
@@ -280,12 +282,13 @@ export function SubcategoryManagement() {
     });
   };
 
-  const handleNfcConfirmNo = () => {
+  // useCallback으로 최적화
+  const handleNfcConfirmNo = useCallback(() => {
     setPendingNfcUid(null);
     setPendingNfcSubcategoryId(null);
     setExistingNfcSubcategory(null);
     setNfcConfirmDialogOpen(false);
-  };
+  }, []);
 
   const handleOpenEditDialog = (sub: Subcategory) => {
     setEditingSubcategory(sub);
@@ -332,17 +335,11 @@ export function SubcategoryManagement() {
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              돌아가기
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">세부 카테고리 관리</h1>
-              <p className="text-slate-500 mt-1">
-                부서와 대분류별로 세부 카테고리를 조회하고 관리합니다.
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold">세부 카테고리 관리</h1>
+            <p className="text-slate-500 mt-1">
+              부서와 대분류별로 세부 카테고리를 조회하고 관리합니다.
+            </p>
           </div>
           <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />

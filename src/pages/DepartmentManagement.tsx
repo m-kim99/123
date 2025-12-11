@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Building2, FileText, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,13 +39,14 @@ export function DepartmentManagement() {
   const [codeError, setCodeError] = useState('');
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
 
-  const resetForm = () => {
+  // useCallback으로 최적화
+  const resetForm = useCallback(() => {
     setNewDeptName('');
     setNewDeptCode('');
     setNewDeptDescription('');
     setNameError('');
     setCodeError('');
-  };
+  }, []);
 
   useEffect(() => {
     const loadMemberCounts = async () => {
@@ -83,7 +84,8 @@ export function DepartmentManagement() {
     loadMemberCounts();
   }, [user?.companyId, departments]);
 
-  const handleGenerateCode = () => {
+  // useCallback으로 최적화
+  const handleGenerateCode = useCallback(() => {
     if (!newDeptName.trim()) {
       setCodeError('먼저 부서 이름을 입력하세요');
       return;
@@ -93,7 +95,7 @@ export function DepartmentManagement() {
     const code = base.slice(0, 10);
     setNewDeptCode(code);
     setCodeError('');
-  };
+  }, [newDeptName]);
 
   const handleSaveDepartment = async () => {
     const name = newDeptName.trim();

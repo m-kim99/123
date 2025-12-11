@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef } from 'react';
+import { ReactNode, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FileText,
@@ -104,20 +104,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     fetchUserDepartment();
   }, [user?.departmentId]);
 
-  // 역할 + 부서명 표시 헬퍼
-  const getRoleDisplay = () => {
+  // 역할 + 부서명 표시 헬퍼 (useCallback으로 최적화)
+  const getRoleDisplay = useCallback(() => {
     const roleText = isAdmin ? '관리자' : '팀원';
     if (userDepartmentName) {
       return `${roleText} | ${userDepartmentName}`;
     }
     return roleText;
-  };
+  }, [isAdmin, userDepartmentName]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  // useMemo로 계산 최적화
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  );
 
   const debounceTimer = useRef<number | null>(null);
 
-  const fetchSuggestions = async (query: string) => {
+  // useCallback으로 최적화: user?.id가 변경될 때만 재생성
+  const fetchSuggestions = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchSuggestions({ recent: [], popular: [], related: [] });
       return;
@@ -160,7 +165,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     } finally {
       setIsLoadingSuggestions(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (debounceTimer.current) {
@@ -187,7 +192,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         window.clearTimeout(debounceTimer.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, fetchSuggestions]);
 
   // 레이아웃 마운트 시에도 알림을 한 번 불러와서 배지 카운트가 초기 진입부터 보이도록 처리
   useEffect(() => {
@@ -200,7 +205,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [isNotificationOpen, fetchNotifications]);
 
-  const handleNotificationClick = async (notification: Notification) => {
+  // useCallback으로 최적화
+  const handleNotificationClick = useCallback(async (notification: Notification) => {
     try {
       if (!notification.isRead) {
         await markAsRead(notification.id);
@@ -219,9 +225,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     } catch (error) {
       console.error('알림 클릭 처리 실패:', error);
     }
-  };
+  }, [markAsRead, basePath, navigate]);
 
-  const handleSearch = async () => {
+  // useCallback으로 최적화
+  const handleSearch = useCallback(async () => {
     const query = searchQuery.trim();
     if (!query) return;
 
@@ -257,7 +264,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     navigate(`${targetPath}?q=${encodeURIComponent(query)}`);
     setShowSuggestions(false);
-  };
+  }, [searchQuery, user?.id, isAdmin, navigate]);
 
   const openProfileDialog = () => {
     setProfileName(user?.name || '');
@@ -396,12 +403,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Building2,
     },
     {
-      name: '대분류',
+      name: '대분류 관리',
       href: `${basePath}/parent-categories`,
       icon: FileText,
     },
     {
-      name: '세부 카테고리',
+      name: '세부 카테고리 관리',
       href: `${basePath}/subcategories`,
       icon: FileText,
     },

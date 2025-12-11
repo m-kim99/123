@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -67,7 +67,8 @@ export function ParentCategoryList() {
     setCurrentPage(1);
   }, [selectedDepartmentId]);
 
-  const handleSubmit = async () => {
+  // useCallback으로 최적화
+  const handleSubmit = useCallback(async () => {
     if (!form.name.trim() || !form.departmentId) {
       return;
     }
@@ -84,7 +85,7 @@ export function ParentCategoryList() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [form, addParentCategory]);
 
   return (
     <DashboardLayout>
