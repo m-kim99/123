@@ -449,20 +449,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <div className="mb-3 text-left">
+        <div className="absolute bottom-0 left-0 right-0">
+          {/* 프로필: 가로바 위 */}
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">{user?.name}</p>
+                <p className="text-xs text-slate-500">
+                  {isAdmin ? '관리자' : '팀원'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 가로바 + 저작권: 프로필 아래 */}
+          <div className="border-t px-4 py-3 text-left">
             <p className="text-xs text-slate-400 whitespace-nowrap">
               COPYRIGHT © TRAYSTORAGE CONNECT.
             </p>
             <p className="text-xs text-slate-400">ALL RIGHTS RESERVED.</p>
-          </div>
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div>
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-slate-500">
-                {isAdmin ? '관리자' : '팀원'}
-              </p>
-            </div>
           </div>
         </div>
       </aside>

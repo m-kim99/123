@@ -23,11 +23,132 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
+    // Supabase 환경 변수 (문서 검색 및 선택적 채팅 로그용)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    // 1. DB에서 전체 구조 + 문서 검색 (벡터 검색)
+    let systemPrompt = '관련 정보를 찾지 못했습니다.';
+    let matchedDocsForResponse: any[] = []; // 프론트엔드에 전달할 문서 메타데이터
+
+    if (supabaseUrl && supabaseServiceRoleKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+        // 1-1. 부서, 대분류, 세부카테고리 전체 조회 (병렬)
+        const [
+          { data: departments },
+          { data: parentCategories },
+          { data: subcategories },
+        ] = await Promise.all([
+          supabase.from('departments').select('id, name'),
+          supabase.from('categories').select('id, name, department_id'),
+          supabase.from('subcategories').select('id, name, parent_category_id, storage_location'),
+        ]);
+
+        // 1-2. 임베딩 생성 및 벡터 검색
+        let matchedDocs: any[] = [];
+        const embeddingRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: { parts: [{ text: message }] },
+            }),
+          },
+        );
+
+        if (!embeddingRes.ok) {
+          const text = await embeddingRes.text();
+          console.error('Embedding API error:', text);
+        } else {
+          const embeddingJson = await embeddingRes.json();
+          const embedding = embeddingJson.embedding?.values;
+
+          if (embedding && Array.isArray(embedding)) {
+            const { data: docs, error } = await supabase.rpc('match_documents', {
+              query_embedding: embedding,
+              match_threshold: 0.3,
+              match_count: 5,
+            });
+
+            if (error) {
+              console.error('match_documents RPC error:', error);
+            } else if (docs && docs.length > 0) {
+              matchedDocs = docs;
+              // 프론트엔드에 전달할 문서 메타데이터 저장 (필요한 필드만)
+              matchedDocsForResponse = docs.map((d: any) => ({
+                id: d.id,
+                title: d.title ?? '제목 없음',
+                departmentName: d.department_name ?? '',
+                categoryName: d.category_name ?? '',
+                storageLocation: d.storage_location ?? null,
+                uploadDate: d.uploaded_at ?? '',
+              }));
+            }
+          }
+        }
+
+        // 1-3. 컨텍스트 구성
+        const deptList = departments?.map((d: any) => d.name).join(', ') || '없음';
+        const catList = parentCategories?.map((c: any) => c.name).join(', ') || '없음';
+        const subList =
+          subcategories
+            ?.map(
+              (s: any) =>
+                `${s.name}(위치: ${s.storage_location || '미지정'})`,
+            )
+            .join(', ') || '없음';
+        const docList =
+          matchedDocs.length > 0
+            ? matchedDocs
+                .map(
+                  (d: any) =>
+                    `- ${d.title ?? '제목 없음'}: ${
+                      (d.ocr_text ?? '').toString().length > 200
+                        ? (d.ocr_text ?? '').toString().slice(0, 200) + '...'
+                        : (d.ocr_text ?? '').toString()
+                    }`,
+                )
+                .join('\n')
+            : '관련 문서 없음';
+
+        systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
+
+[부서 목록]
+${deptList}
+
+[대분류 목록]
+${catList}
+
+[세부카테고리 목록 (저장 위치 포함)]
+${subList}
+
+[관련 문서]
+${docList}`;
+      } catch (searchError) {
+        console.error('DB 조회 중 오류:', searchError);
+      }
+    } else {
+      console.warn(
+        'DB 조회를 건너뜀: SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다.',
+      );
+    }
+
+    // 2. 이전 대화 히스토리 변환
+    const historyContents = history.map((h: any) => ({
+      role: h.role === 'user' ? 'user' : 'model',
+      parts: [{ text: h.content }],
+    }));
+
+    // 3. 시스템 프롬프트(검색 결과) + 히스토리 + 현재 질문을 하나의 contents로 구성
     const contents = [
-      ...history.map((h: any) => ({
-        role: h.role === 'user' ? 'user' : 'model',
-        parts: [{ text: h.content }],
-      })),
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }],
+      },
+      ...historyContents,
       {
         role: 'user',
         parts: [{ text: message }],
@@ -61,9 +182,6 @@ serve(async (req) => {
         }
       );
     }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
@@ -123,6 +241,12 @@ serve(async (req) => {
           }
 
           console.log('Gemini stream completed, length:', fullText.length);
+
+          // 스트림 끝에 검색된 문서 메타데이터 추가 (프론트엔드에서 파싱할 수 있도록)
+          if (matchedDocsForResponse.length > 0) {
+            const docsJson = JSON.stringify(matchedDocsForResponse);
+            controller.enqueue(encoder.encode(`\n---DOCS---\n${docsJson}`));
+          }
 
           if (ENABLE_CHAT_LOGGING) {
             // chat_messages 저장은 베스트 에포트: 환경변수나 DB 문제가 있어도 응답은 그대로 반환

@@ -135,19 +135,24 @@ function generateFallbackResponse(message: string): string {
   return ['다음 문서를 찾았습니다:', ...lines].join('\n');
 }
 
+export interface StreamedDocsResult {
+  text: string;
+  docs: ChatSearchResult[];
+}
+
 // Google Gemini API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
 export async function generateResponse(
   message: string,
   history: ChatHistoryItem[] = [],
-  onPartialUpdate?: (partial: string) => void
-): Promise<string> {
+  onPartialUpdate?: (partial: string, docs?: ChatSearchResult[]) => void
+): Promise<StreamedDocsResult> {
   const text = message.trim();
-  const emitFallback = () => {
+  const emitFallback = (): StreamedDocsResult => {
     const fallback = generateFallbackResponse(text);
     if (onPartialUpdate) {
-      onPartialUpdate(fallback);
+      onPartialUpdate(fallback, []);
     }
-    return fallback;
+    return { text: fallback, docs: [] };
   };
 
   if (!text) {
@@ -221,7 +226,9 @@ export async function generateResponse(
       for (const ch of chars) {
         fullText += ch;
         if (onPartialUpdate) {
-          onPartialUpdate(fullText);
+          // ---DOCS--- 구분자 전까지만 표시
+          const displayText = fullText.split('\n---DOCS---\n')[0];
+          onPartialUpdate(displayText, []);
         }
         await new Promise((resolve) => setTimeout(resolve, 15));
       }
@@ -232,7 +239,36 @@ export async function generateResponse(
       return emitFallback();
     }
 
-    return fullText;
+    // ---DOCS--- 구분자로 텍스트와 문서 메타데이터 분리
+    let responseText = fullText;
+    let parsedDocs: ChatSearchResult[] = [];
+
+    const docsSeparator = '\n---DOCS---\n';
+    const separatorIndex = fullText.indexOf(docsSeparator);
+    if (separatorIndex !== -1) {
+      responseText = fullText.slice(0, separatorIndex);
+      const docsJsonStr = fullText.slice(separatorIndex + docsSeparator.length);
+      try {
+        const rawDocs = JSON.parse(docsJsonStr);
+        parsedDocs = rawDocs.map((d: any) => ({
+          id: d.id ?? '',
+          name: d.title ?? '제목 없음',
+          categoryName: d.categoryName ?? '',
+          departmentName: d.departmentName ?? '',
+          storageLocation: d.storageLocation ?? null,
+          uploadDate: d.uploadDate ?? '',
+        }));
+      } catch (parseErr) {
+        console.error('Failed to parse docs JSON from stream:', parseErr);
+      }
+    }
+
+    // 최종 콜백으로 문서 정보 전달
+    if (onPartialUpdate) {
+      onPartialUpdate(responseText, parsedDocs);
+    }
+
+    return { text: responseText, docs: parsedDocs };
   } catch (error) {
     console.error('AI response error:', error);
     return emitFallback();

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { generateResponse, searchDocuments, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
+import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
 
 interface ChatMessage {
@@ -74,13 +74,9 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
           content: m.content,
         }));
 
-        const searchResults = searchDocuments(trimmed);
-        const resultsForMessage =
-          searchResults.length > 0 ? searchResults : undefined;
-
         let firstChunkReceived = false;
 
-        await generateResponse(trimmed, history, (partial) => {
+        await generateResponse(trimmed, history, (partial, docs) => {
           if (!firstChunkReceived) {
             firstChunkReceived = true;
             setIsTyping(false);
@@ -92,7 +88,7 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
                 ? {
                     ...m,
                     content: partial,
-                    searchResults: resultsForMessage,
+                    searchResults: docs && docs.length > 0 ? docs : undefined,
                     timestamp: new Date(),
                   }
                 : m
@@ -161,9 +157,9 @@ export function AIChatbot({ primaryColor }: AIChatbotProps) {
           <CardContent
             className={`p-0 flex flex-col ${isTall ? 'h-[36rem]' : 'h-96'}`}
           >
-            <ScrollArea className="flex-1 p-4 space-y-4">
+            <ScrollArea className="flex-1 p-4">
               {messages.map((message) => (
-                <div key={message.id} className="space-y-1">
+                <div key={message.id} className="space-y-1 mb-3">
                   <div
                     className={`flex ${
                       message.role === 'user' ? 'justify-end' : 'justify-start'
