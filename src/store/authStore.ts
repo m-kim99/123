@@ -21,6 +21,8 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   needsOnboarding: boolean;
+  redirectAfterLogin: string | null;
+  setRedirectAfterLogin: (path: string | null) => void;
   login: (
     email: string,
     password: string,
@@ -53,6 +55,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
   needsOnboarding: false,
+  redirectAfterLogin: null,
+
+  setRedirectAfterLogin: (path) => set({ redirectAfterLogin: path }),
 
   login: async (email: string, password: string, role: UserRole) => {
     set({ isLoading: true, error: null });
@@ -202,7 +207,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       console.error('로그아웃 실패:', error);
     } finally {
-      set({ user: null, isAuthenticated: false, error: null, needsOnboarding: false });
+      set({
+        user: null,
+        isAuthenticated: false,
+        error: null,
+        needsOnboarding: false,
+        redirectAfterLogin: null,
+      });
     }
   },
 
@@ -272,11 +283,23 @@ export const useAuthStore = create<AuthState>((set) => ({
           needsOnboarding,
         });
       } else {
-        set({ user: null, isAuthenticated: false, isLoading: false, needsOnboarding: false });
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          needsOnboarding: false,
+          redirectAfterLogin: null,
+        });
       }
     } catch (error) {
       console.error('세션 체크 오류:', error);
-      set({ user: null, isAuthenticated: false, isLoading: false, needsOnboarding: false });
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        needsOnboarding: false,
+        redirectAfterLogin: null,
+      });
     }
   },
 

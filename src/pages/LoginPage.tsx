@@ -46,7 +46,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
-  const { login, signup, isLoading, error, clearError } = useAuthStore();
+  const { login, signup, isLoading, error, clearError, redirectAfterLogin, setRedirectAfterLogin } =
+    useAuthStore();
 
   const handleGoogleLogin = async () => {
     console.log('🔵 Google 로그인 시작');
@@ -225,7 +226,16 @@ export function LoginPage() {
         title: '로그인 성공',
         description: '환영합니다.',
       });
-      navigate(role === 'admin' ? '/admin' : '/team');
+
+      const basePath = role === 'admin' ? '/admin' : '/team';
+
+      // NFC 등에서 저장된 리다이렉트 경로가 있으면 우선 이동
+      if (redirectAfterLogin) {
+        navigate(`${basePath}${redirectAfterLogin}`, { replace: true });
+        setRedirectAfterLogin(null);
+      } else {
+        navigate(basePath);
+      }
     } else {
       toast({
         title: '로그인 실패',
