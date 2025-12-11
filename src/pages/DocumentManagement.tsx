@@ -114,6 +114,9 @@ export function DocumentManagement() {
   const parentCategories = useDocumentStore((state) => state.parentCategories);
   const subcategories = useDocumentStore((state) => state.subcategories);
   const documents = useDocumentStore((state) => state.documents);
+  
+  // 세부 카테고리 로딩 상태 (페이지 진입 시 전체 데이터 재조회 중)
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(true);
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
     addSubcategory,
@@ -442,6 +445,14 @@ export function DocumentManagement() {
     ? subcategories.find((s) => s.id === deletingCategoryId)
     : null;
   const deletingCategoryDocCount = deletingSubcategory?.documentCount ?? 0;
+
+  // 페이지 진입 시 전체 세부 카테고리 재조회 (상세 페이지에서 필터링된 상태 복구)
+  useEffect(() => {
+    setIsLoadingSubcategories(true);
+    fetchSubcategories().finally(() => {
+      setIsLoadingSubcategories(false);
+    });
+  }, [fetchSubcategories]);
 
   useEffect(() => {
     if (searchKeyword) {
@@ -1832,7 +1843,25 @@ export function DocumentManagement() {
               </AlertDialogContent>
             </AlertDialog>
 
-            {paginatedSubcategories.length === 0 ? (
+            {isLoadingSubcategories ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-5 bg-slate-200 rounded w-3/4 mb-2" />
+                      <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="h-4 bg-slate-200 rounded" />
+                        <div className="h-4 bg-slate-200 rounded" />
+                        <div className="h-4 bg-slate-200 rounded w-2/3" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : paginatedSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 조건에 해당하는 세부 카테고리가 없습니다.
               </div>
