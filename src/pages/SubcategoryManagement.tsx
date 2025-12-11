@@ -32,11 +32,14 @@ import { toast } from '@/hooks/use-toast';
 
 export function SubcategoryManagement() {
   const navigate = useNavigate();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const subcategories = useDocumentStore((state) => state.subcategories);
+  const isLoading = useDocumentStore((state) => state.isLoading);
+  // 함수는 한 번에 가져오기 (참조 안정적)
   const {
-    departments,
-    parentCategories,
-    subcategories,
-    isLoading,
     fetchParentCategories,
     fetchSubcategories,
     addSubcategory,

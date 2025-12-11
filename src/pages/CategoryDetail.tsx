@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, MapPin, Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { jsPDF } from 'jspdf';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,14 +83,14 @@ function readFileAsDataURL(file: File): Promise<string> {
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const {
-    categories,
-    documents,
-    departments,
-    subcategories,
-    fetchDocuments,
-    uploadDocument,
-  } = useDocumentStore();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const categories = useDocumentStore((state) => state.categories);
+  const documents = useDocumentStore((state) => state.documents);
+  const departments = useDocumentStore((state) => state.departments);
+  const subcategories = useDocumentStore((state) => state.subcategories);
+  // 함수는 한 번에 가져오기 (참조 안정적)
+  const { fetchDocuments, uploadDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
@@ -482,6 +481,7 @@ export function CategoryDetail() {
         try {
           setUploadStatus('PDF 생성 중...');
 
+          const { jsPDF } = await import('jspdf');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();

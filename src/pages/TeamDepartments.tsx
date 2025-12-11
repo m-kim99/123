@@ -19,8 +19,11 @@ interface Department {
 
 export function TeamDepartments() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { categories, documents } = useDocumentStore();
+  const user = useAuthStore((state) => state.user);
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const categories = useDocumentStore((state) => state.categories);
+  const documents = useDocumentStore((state) => state.documents);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { jsPDF } from 'jspdf';
 import {
   FileText,
   Plus,
@@ -109,11 +108,14 @@ function readFileAsDataURL(file: File): Promise<string> {
 
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const subcategories = useDocumentStore((state) => state.subcategories);
+  const documents = useDocumentStore((state) => state.documents);
+  // 함수는 한 번에 가져오기 (참조 안정적)
   const {
-    departments,
-    parentCategories,
-    subcategories,
-    documents,
     addSubcategory,
     fetchSubcategories,
     uploadDocument,
@@ -1220,6 +1222,7 @@ export function DocumentManagement() {
         try {
           setUploadStatus('PDF 생성 중...');
 
+          const { jsPDF } = await import('jspdf');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();

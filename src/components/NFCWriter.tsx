@@ -13,6 +13,7 @@ interface NFCWriterProps {
 }
 
 export function NFCWriter({ category, categoryCode }: NFCWriterProps) {
+  // Selector 최적화: 함수만 가져오기 (참조 안정적)
   const { updateCategory } = useDocumentStore();
   const [isWriting, setIsWriting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'writing' | 'success' | 'error'>('idle');

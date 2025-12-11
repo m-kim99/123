@@ -20,14 +20,12 @@ export function TeamDashboard() {
   const subcategories = useDocumentStore((state) => state.subcategories);
   const navigate = useNavigate();
 
-  const {
-    favorites,
-    recentVisits,
-    departmentStats,
-    fetchFavorites,
-    fetchRecentVisits,
-    fetchDepartmentStats,
-  } = useFavoriteStore();
+  // Selector 최적화: 상태값은 개별 selector로
+  const favorites = useFavoriteStore((state) => state.favorites);
+  const recentVisits = useFavoriteStore((state) => state.recentVisits);
+  const departmentStats = useFavoriteStore((state) => state.departmentStats);
+  // 함수는 한 번에 가져오기 (참조 안정적)
+  const { fetchFavorites, fetchRecentVisits, fetchDepartmentStats } = useFavoriteStore();
 
   useEffect(() => {
     fetchFavorites();

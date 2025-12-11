@@ -35,11 +35,14 @@ import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
 export function ParentCategoryDetail() {
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
   const navigate = useNavigate();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const subcategories = useDocumentStore((state) => state.subcategories);
+  const documents = useDocumentStore((state) => state.documents);
+  // 함수는 한 번에 가져오기 (참조 안정적)
   const {
-    departments,
-    parentCategories,
-    subcategories,
-    documents,
     fetchParentCategories,
     fetchSubcategories,
     fetchDocuments,

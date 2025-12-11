@@ -21,9 +21,14 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
 export function DepartmentManagement() {
-  const { departments, categories, documents, fetchDepartments } = useDocumentStore();
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const categories = useDocumentStore((state) => state.categories);
+  const documents = useDocumentStore((state) => state.documents);
+  // 함수는 한 번에 가져오기 (참조 안정적)
+  const { fetchDepartments } = useDocumentStore();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');

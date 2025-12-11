@@ -44,7 +44,9 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, logout, checkSession, clearError } = useAuthStore();
+  // Selector 최적화: 상태값은 개별 selector로, 함수는 한 번에
+  const user = useAuthStore((state) => state.user);
+  const { logout, checkSession, clearError } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,13 +72,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
 
-  const {
-    notifications,
-    isLoading: isLoadingNotifications,
-    fetchNotifications,
-    markAsRead,
-    dismissNotification,
-  } = useNotificationStore();
+  // Selector 최적화: notifications만 변경 시 리렌더링
+  const notifications = useNotificationStore((state) => state.notifications);
+  const isLoadingNotifications = useNotificationStore((state) => state.isLoading);
+  const { fetchNotifications, markAsRead, dismissNotification } = useNotificationStore();
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';

@@ -19,13 +19,13 @@ import { Label } from '@/components/ui/label';
 
 export function ParentCategoryList() {
   const navigate = useNavigate();
-  const {
-    departments,
-    parentCategories,
-    isLoading,
-    fetchParentCategories,
-    addParentCategory,
-  } = useDocumentStore();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const isLoading = useDocumentStore((state) => state.isLoading);
+  // 함수는 한 번에 가져오기 (참조 안정적)
+  const { fetchParentCategories, addParentCategory } = useDocumentStore();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

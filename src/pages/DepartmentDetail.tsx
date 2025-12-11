@@ -27,9 +27,14 @@ import { toast } from '@/hooks/use-toast';
 export function DepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, parentCategories, documents, addParentCategory, fetchDepartments } =
-    useDocumentStore();
-  const { user } = useAuthStore();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const documents = useDocumentStore((state) => state.documents);
+  // 함수는 한 번에 가져오기 (참조 안정적)
+  const { addParentCategory, fetchDepartments } = useDocumentStore();
+  const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
   const department = departments.find((d) => d.id === departmentId);

@@ -8,7 +8,11 @@ import { useDocumentStore } from '@/store/documentStore';
 export function TeamDepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
-  const { departments, parentCategories, documents } = useDocumentStore();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
+  const documents = useDocumentStore((state) => state.documents);
 
   const department = departments.find((d) => d.id === departmentId);
   const deptParentCategories = parentCategories.filter(

@@ -15,7 +15,11 @@ import { useAuthStore } from '@/store/authStore';
 
 export function Statistics() {
   const user = useAuthStore((state) => state.user);
-  const { departments, documents, categories } = useDocumentStore();
+  
+  // Selector 최적화: 상태값은 개별 selector로
+  const departments = useDocumentStore((state) => state.departments);
+  const documents = useDocumentStore((state) => state.documents);
+  const categories = useDocumentStore((state) => state.categories);
   const isAdmin = user?.role === 'admin';
   const primaryColor = '#2563eb';
 
