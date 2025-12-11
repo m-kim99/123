@@ -221,16 +221,22 @@ export async function generateResponse(
       const chunkText = decoder.decode(value, { stream: true });
       if (!chunkText) continue;
 
-      // 부드러운 타이핑 효과: 청크를 다시 글자 단위로 나누어 순차적으로 적용
+      // 청크를 다시 문자 배열로 나눈 뒤, 일정 길이(예: 5글자)씩 묶어서 업데이트
       const chars = Array.from(chunkText);
-      for (const ch of chars) {
-        fullText += ch;
+      const CHUNK_SIZE = 5;
+
+      for (let i = 0; i < chars.length; i += CHUNK_SIZE) {
+        const chunk = chars.slice(i, i + CHUNK_SIZE).join('');
+        fullText += chunk;
+
         if (onPartialUpdate) {
           // ---DOCS--- 구분자 전까지만 표시
           const displayText = fullText.split('\n---DOCS---\n')[0];
           onPartialUpdate(displayText, []);
         }
-        await new Promise((resolve) => setTimeout(resolve, 15));
+
+        // 글자 단위보다 큰 청크 단위로 약간 더 긴 딜레이를 주어 전체 시간을 단축
+        await new Promise((resolve) => setTimeout(resolve, 30));
       }
     }
 
