@@ -1078,9 +1078,10 @@ export function DocumentManagement() {
         return '문서';
       };
 
-      // PDF 파일 개별 처리
-      for (const file of pdfFiles) {
+      // PDF 파일 병렬 처리 (Promise.allSettled 사용)
+      const pdfUploadPromises = pdfFiles.map(async (file) => {
         const index = uploadFiles.indexOf(file);
+
         try {
           setFileStatuses((prev) => {
             const next = [...prev];
@@ -1120,8 +1121,6 @@ export function DocumentManagement() {
             ocrText,
           });
 
-          successCount += 1;
-
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
@@ -1129,9 +1128,10 @@ export function DocumentManagement() {
             }
             return next;
           });
+
+          return { success: true, fileName: file.name };
         } catch (fileError) {
           console.error('업로드 오류:', file.name, fileError);
-          failureCount += 1;
 
           setFileStatuses((prev) => {
             const next = [...prev];
@@ -1147,30 +1147,43 @@ export function DocumentManagement() {
             }
             return next;
           });
-        } finally {
-          completedCount += 1;
-          setUploadStatus(`파일 ${completedCount}/${totalFiles} 업로드 중...`);
-          setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+
+          return { success: false, fileName: file.name, error: fileError };
         }
-      }
+      });
 
-      // 이미지 파일들을 하나의 문서로 묶어서 처리
+      // 모든 PDF 파일 동시 업로드
+      const pdfResults = await Promise.allSettled(pdfUploadPromises);
+
+      // 결과 집계
+      pdfResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value.success) {
+          successCount += 1;
+        } else {
+          failureCount += 1;
+        }
+        completedCount += 1;
+        setUploadProgress(Math.round((completedCount / totalFiles) * 100));
+      });
+
+      setUploadStatus(`PDF 파일 ${pdfFiles.length}개 업로드 완료`);
+
+      // 이미지 파일들을 하나의 문서로 묶어서 처리 (OCR 병렬 처리)
       if (imageFiles.length > 1) {
-        const ocrParts: string[] = [];
+        setUploadStatus(`${imageFiles.length}개 이미지 OCR 병렬 처리 중...`);
 
-        for (let i = 0; i < imageFiles.length; i++) {
-          const file = imageFiles[i];
+        // 병렬 OCR 처리 (Promise.all 사용)
+        const ocrPromises = imageFiles.map(async (file, i) => {
           const index = uploadFiles.indexOf(file);
+
           try {
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
-                next[index] = { ...next[index], status: '처리 중...' };
+                next[index] = { ...next[index], status: 'OCR 처리 중...' };
               }
               return next;
             });
-
-            setUploadStatus(`이미지 ${i + 1}/${imageFiles.length} OCR 처리 중...`);
 
             let ocrText = '';
             try {
@@ -1179,19 +1192,23 @@ export function DocumentManagement() {
               console.error('OCR 처리 오류:', file.name, ocrError);
             }
 
-            if (ocrText && ocrText.trim()) {
-              ocrParts.push(`--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`);
-            }
-
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
-                next[index] = { ...next[index], status: '완료', error: null };
+                next[index] = { ...next[index], status: 'OCR 완료' };
               }
               return next;
             });
+
+            // 인덱스와 함께 반환하여 순서 보장
+            return {
+              index: i,
+              text: ocrText && ocrText.trim()
+                ? `--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`
+                : '',
+            };
           } catch (fileError) {
-            console.error('업로드 오류:', file.name, fileError);
+            console.error('이미지 OCR 오류:', file.name, fileError);
             failureCount += 1;
 
             setFileStatuses((prev) => {
@@ -1200,19 +1217,29 @@ export function DocumentManagement() {
                 next[index] = {
                   ...next[index],
                   status: '실패',
-                  error:
-                    fileError instanceof Error
-                      ? fileError.message
-                      : '문서 업로드 중 오류가 발생했습니다.',
+                  error: fileError instanceof Error
+                    ? fileError.message
+                    : 'OCR 처리 실패',
                 };
               }
               return next;
             });
+
+            return { index: i, text: '' };
           } finally {
             completedCount += 1;
             setUploadProgress(Math.round((completedCount / totalFiles) * 100));
           }
-        }
+        });
+
+        // 모든 OCR 작업 완료 대기
+        const ocrResults = await Promise.all(ocrPromises);
+
+        // 원래 순서대로 정렬하여 텍스트 결합
+        const ocrParts = ocrResults
+          .sort((a, b) => a.index - b.index)
+          .map(result => result.text)
+          .filter(text => text.length > 0);
 
         const allOcrText = ocrParts.join('\n');
         if (allOcrText) {

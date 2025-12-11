@@ -1277,17 +1277,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       let embedding: number[] | null = null;
 
       try {
+        // 재시도 로직이 포함된 generateEmbedding 호출
         embedding = await generateEmbedding(
-          `${document.name} ${document.ocrText || ''}`
+          `${document.name} ${document.ocrText || ''}`,
+          3,    // 최대 3번 재시도
+          1000  // 첫 재시도 1초 대기
         );
       } catch (embeddingError) {
-        console.error('Failed to generate embedding for document:', embeddingError);
+        console.error('Failed to generate embedding after retries:', embeddingError);
+        
+        // 재시도해도 실패한 경우 사용자에게 알림
         toast({
           title: '임베딩 생성 실패',
-          description:
-            '문서 검색 품질이 저하될 수 있습니다. 그래도 업로드는 계속 진행됩니다.',
+          description: `문서 "${document.name}"의 AI 검색 인덱스 생성에 실패했습니다. 키워드 검색은 가능하지만 AI 검색 품질이 저하될 수 있습니다.`,
           variant: 'destructive',
         });
+        
         embedding = null;
       }
 
