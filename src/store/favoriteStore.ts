@@ -37,10 +37,19 @@ export interface DepartmentUsageStats {
   lastVisitedAt: string;
 }
 
+export interface ParentCategoryUsageStats {
+  parentCategoryId: string;
+  parentCategoryName: string;
+  departmentName: string;
+  visitCount: number;
+  lastVisitedAt: string;
+}
+
 interface FavoriteState {
   favorites: FavoriteSubcategory[];
   recentVisits: RecentVisit[];
   departmentStats: DepartmentUsageStats[];
+  parentCategoryStats: ParentCategoryUsageStats[];
   isLoading: boolean;
 
   // 즐겨찾기
@@ -59,12 +68,16 @@ interface FavoriteState {
 
   // 부서 통계
   fetchDepartmentStats: () => Promise<void>;
+
+  // 대분류 통계 (팀원용)
+  fetchParentCategoryStats: () => Promise<void>;
 }
 
 export const useFavoriteStore = create<FavoriteState>((set, get) => ({
   favorites: [],
   recentVisits: [],
   departmentStats: [],
+  parentCategoryStats: [],
   isLoading: false,
 
   // 즐겨찾기 조회
@@ -342,6 +355,54 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       set({ departmentStats });
     } catch (error) {
       console.error('부서 통계 조회 실패:', error);
+    }
+  },
+
+  // 대분류별 사용 통계 (팀원용)
+  fetchParentCategoryStats: async () => {
+    const { user } = useAuthStore.getState();
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_recent_visits')
+        .select('parent_category_id, visited_at, categories(name), departments(name)')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // 대분류별로 그룹화하여 통계 계산
+      const statsMap = new Map<string, ParentCategoryUsageStats>();
+
+      data?.forEach((visit: any) => {
+        const catId = visit.parent_category_id as string;
+        if (!catId) return;
+
+        const existing = statsMap.get(catId);
+
+        if (existing) {
+          existing.visitCount += 1;
+          if (new Date(visit.visited_at) > new Date(existing.lastVisitedAt)) {
+            existing.lastVisitedAt = visit.visited_at;
+          }
+        } else {
+          statsMap.set(catId, {
+            parentCategoryId: catId,
+            parentCategoryName: visit.categories?.name || '알 수 없음',
+            departmentName: visit.departments?.name || '',
+            visitCount: 1,
+            lastVisitedAt: visit.visited_at,
+          });
+        }
+      });
+
+      const parentCategoryStats = Array.from(statsMap.values()).sort(
+        (a, b) => b.visitCount - a.visitCount,
+      );
+
+      set({ parentCategoryStats });
+    } catch (error) {
+      console.error('대분류 통계 조회 실패:', error);
     }
   },
 }));
