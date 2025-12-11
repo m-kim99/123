@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isNFCSupported } from '@/lib/nfc';
+import { isNFCSupported, getNfcMode } from '@/lib/nfc';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
@@ -33,6 +33,12 @@ export function NFCAutoRedirect() {
         // 이벤트 핸들러 정의
         const handleReading = async (event: any) => {
           try {
+            // NFC 쓰기 모드일 때는 자동 리다이렉트 비활성화
+            if (getNfcMode() === 'writing') {
+              console.log('NFC 쓰기 모드 활성화 중: 자동 리다이렉트 건너뜀');
+              return;
+            }
+
             const { serialNumber, message } = event;
             const uid = serialNumber.replace(/:/g, '').toUpperCase();
             console.log('📱 NFC 태그 감지! UID:', uid);

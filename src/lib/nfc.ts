@@ -8,6 +8,19 @@ export interface NFCTagData {
   documentCount: number;
 }
 
+// NFC 동작 모드: 일반(idle) / 쓰기(writing)
+export type NfcMode = 'idle' | 'writing';
+
+let currentNfcMode: NfcMode = 'idle';
+
+export function setNfcMode(mode: NfcMode) {
+  currentNfcMode = mode;
+}
+
+export function getNfcMode(): NfcMode {
+  return currentNfcMode;
+}
+
 /**
  * Web NFC API 지원 여부 확인
  * @returns NFC 지원 여부
@@ -123,6 +136,7 @@ export async function writeNFCUrl(
   subcategoryId: string,
   _subcategoryName: string
 ): Promise<boolean> {
+  setNfcMode('writing');
   try {
     if (!isNFCSupported()) {
       throw new Error('NFC가 지원되지 않는 브라우저입니다.');
@@ -162,6 +176,8 @@ export async function writeNFCUrl(
     }
 
     throw new Error('NFC 쓰기 중 알 수 없는 오류가 발생했습니다.');
+  } finally {
+    setNfcMode('idle');
   }
 }
 
@@ -295,6 +311,7 @@ export async function readNFCTag(): Promise<NFCTagData> {
  * @returns 태그의 고유 ID (UID)
  */
 export async function readNFCUid(): Promise<string> {
+  setNfcMode('writing');
   try {
     if (!isNFCSupported()) {
       throw new Error('NFC가 지원되지 않는 브라우저입니다.');
@@ -328,5 +345,7 @@ export async function readNFCUid(): Promise<string> {
   } catch (error) {
     console.error('NFC UID 읽기 실패:', error);
     throw new Error('NFC UID를 읽을 수 없습니다.');
+  } finally {
+    setNfcMode('idle');
   }
 }
