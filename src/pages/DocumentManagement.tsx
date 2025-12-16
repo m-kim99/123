@@ -741,8 +741,6 @@ export function DocumentManagement() {
         defaultExpiryDays: editCategoryForm.defaultExpiryDays,
       });
 
-      await fetchSubcategories();
-
       toast({
         title: '수정 완료',
         description: '세부 카테고리가 성공적으로 수정되었습니다.',
