@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Smartphone } from 'lucide-react';
+import { ArrowLeft, Plus, Smartphone, CalendarIcon } from 'lucide-react';
+import { format, addDays } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -31,6 +33,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 export function ParentCategoryDetail() {
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
@@ -58,6 +63,7 @@ export function ParentCategoryDetail() {
     name: '',
     description: '',
     storageLocation: '',
+    defaultExpiryDays: null as number | null,
   });
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -127,12 +133,14 @@ export function ParentCategoryDetail() {
         nfcUid: null,
         nfcRegistered: false,
         storageLocation: form.storageLocation,
+        defaultExpiryDays: form.defaultExpiryDays,
       });
       setAddDialogOpen(false);
       setForm({
         name: '',
         description: '',
         storageLocation: '',
+        defaultExpiryDays: null,
       });
     } finally {
       setIsSaving(false);
@@ -154,6 +162,7 @@ export function ParentCategoryDetail() {
         nfcUid: null,
         nfcRegistered: false,
         storageLocation: form.storageLocation,
+        defaultExpiryDays: form.defaultExpiryDays,
       });
 
       if (!created) {
@@ -188,6 +197,7 @@ export function ParentCategoryDetail() {
         name: '',
         description: '',
         storageLocation: '',
+        defaultExpiryDays: null,
       });
     } catch (error: any) {
       console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
@@ -248,6 +258,7 @@ export function ParentCategoryDetail() {
       name: '',
       description: '',
       storageLocation: '',
+      defaultExpiryDays: null,
     });
   };
 
@@ -516,6 +527,14 @@ export function ParentCategoryDetail() {
                             {sub.storageLocation || '미지정'}
                           </span>
                         </div>
+                        {sub.defaultExpiryDays && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">기본 만료일</span>
+                            <span className="font-medium">
+                              {Math.round(sub.defaultExpiryDays / 365)}년 ({sub.defaultExpiryDays}일)
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -570,8 +589,106 @@ export function ParentCategoryDetail() {
                   placeholder="예: A동 2층 캐비닛 3"
                 />
               </div>
-              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
-                  추가 다이얼로그에서는 직접 입력받지 않는다. */}
+              <div className="space-y-2">
+                <Label>기본 만료일 (선택)</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 90 }))}
+                  >
+                    3개월
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 365 }))}
+                  >
+                    1년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 1095 }))}
+                  >
+                    3년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 1825 }))}
+                  >
+                    5년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 2555 }))}
+                  >
+                    7년
+                  </Button>
+                  {form.defaultExpiryDays && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: null }))}
+                      className="bg-white text-slate-600 hover:bg-slate-100"
+                    >
+                      초기화
+                    </Button>
+                  )}
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !form.defaultExpiryDays && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.defaultExpiryDays
+                        ? format(addDays(new Date(), form.defaultExpiryDays), 'PPP', { locale: ko })
+                        : '달력에서 만료일 선택'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      captionLayout="dropdown"
+                      fromYear={2020}
+                      toYear={2040}
+                      selected={form.defaultExpiryDays ? addDays(new Date(), form.defaultExpiryDays) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffTime = date.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                          }));
+                        }
+                      }}
+                      initialFocus
+                      className="bg-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-slate-500">
+                  만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                  {form.defaultExpiryDays && ` (약 ${Math.round(form.defaultExpiryDays / 365)}년, ${form.defaultExpiryDays}일)`}
+                </p>
+              </div>
             </div>
             <DialogFooter>
               <Button

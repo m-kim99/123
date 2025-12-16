@@ -1,6 +1,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 import * as React from 'react';
 import { DayPicker } from 'react-day-picker';
+import { ko } from 'date-fns/locale';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,12 +17,22 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={ko}
+      formatters={{
+        formatMonthCaption: (date) => `${date.getMonth() + 1}월`,
+        formatYearCaption: (date) => `${date.getFullYear()}년`,
+      }}
       className={cn('p-3', className)}
       classNames={{
         months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
         month: 'space-y-4',
-        caption: 'flex justify-center pt-1 relative items-center',
-        caption_label: 'text-sm font-medium',
+        caption: 'flex justify-center pt-1 relative items-center gap-1',
+        caption_label: 'text-sm font-medium hidden',
+        caption_dropdowns: 'flex flex-row-reverse gap-1 items-center',
+        dropdown: 'appearance-none bg-transparent border border-slate-200 rounded px-2 py-1 text-sm font-medium cursor-pointer hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary',
+        dropdown_month: 'order-1',
+        dropdown_year: 'order-2',
+        vhidden: 'sr-only',
         nav: 'space-x-1 flex items-center',
         nav_button: cn(
           buttonVariants({ variant: 'outline' }),
@@ -42,7 +53,7 @@ function Calendar({
         ),
         day: cn(
           buttonVariants({ variant: 'ghost' }),
-          'h-8 w-8 p-0 font-normal aria-selected:opacity-100'
+          'h-8 w-8 p-0 font-normal aria-selected:opacity-100 bg-white hover:bg-slate-100'
         ),
         day_range_start: 'day-range-start',
         day_range_end: 'day-range-end',
