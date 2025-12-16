@@ -126,7 +126,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       )}
 
       {isOpen && (
-        <Card className="fixed bottom-4 right-4 w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300">
+        <Card className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
             <CardTitle className="flex items-center gap-2">
               <div className="p-1 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
