@@ -529,9 +529,9 @@ export function ParentCategoryDetail() {
                         </div>
                         {sub.defaultExpiryDays && (
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500">기본 만료일</span>
+                            <span className="text-slate-500">만료일</span>
                             <span className="font-medium">
-                              {Math.round(sub.defaultExpiryDays / 365)}년 ({sub.defaultExpiryDays}일)
+                              {format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}
                             </span>
                           </div>
                         )}

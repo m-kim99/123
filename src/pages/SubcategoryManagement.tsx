@@ -448,7 +448,7 @@ export function SubcategoryManagement() {
                         <p className="text-xs text-slate-500 mt-1">
                           문서 {sub.documentCount}개 · NFC{' '}
                           {sub.nfcRegistered ? '등록됨' : '미등록'}
-                          {sub.defaultExpiryDays && ` · 만료 ${Math.round(sub.defaultExpiryDays / 365)}년`}
+                          {sub.defaultExpiryDays && ` · 만료일 ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
