@@ -505,7 +505,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64 w-full min-w-full">
-        <header className="md:hidden sticky top-0 z-40 border-b bg-[#1e40af] w-screen h-16 px-4 flex items-center gap-3">
+        <header className="md:hidden sticky top-0 z-40 border-b bg-[#1e40af] w-full h-16 px-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -706,7 +706,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </DropdownMenu>
         </header>
 
-        <header className="hidden md:flex sticky top-0 z-40 border-b bg-[#1e40af] w-screen lg:w-[calc(100vw-16rem)]">
+        <header className="hidden md:flex sticky top-0 z-40 border-b bg-[#1e40af] w-full">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">

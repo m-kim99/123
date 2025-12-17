@@ -15,6 +15,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* 브라우저의 자동 텍스트 확대 방지 */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 a {
@@ -28,14 +33,13 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 2rem; /* em 대신 rem 사용 */
   line-height: 1.1;
 }
 
