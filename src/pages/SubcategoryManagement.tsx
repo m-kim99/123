@@ -5,6 +5,8 @@ import { format, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/lib/supabase';
 import type { Subcategory } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,8 @@ import { cn } from '@/lib/utils';
 
 export function SubcategoryManagement() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
   
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
@@ -84,12 +88,45 @@ export function SubcategoryManagement() {
   const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
   const [pendingNfcSubcategoryId, setPendingNfcSubcategoryId] = useState<string | null>(null);
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
+  // 팀원용: 권한 있는 부서 ID 목록
+  const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
 
   useEffect(() => {
     // Zustand actions는 안정적이므로 getState()로 직접 호출
     useDocumentStore.getState().fetchParentCategories();
     useDocumentStore.getState().fetchSubcategories();
   }, []);
+
+  // 팀원용: 권한 있는 부서 목록 조회
+  useEffect(() => {
+    const fetchAccessibleDepartments = async () => {
+      if (isAdmin || !user?.id) {
+        // 관리자는 모든 부서 접근 가능
+        setAccessibleDepartmentIds(departments.map((d) => d.id));
+        return;
+      }
+
+      // 1. 소속 부서는 자동 접근 가능
+      const ownDeptId = user.departmentId;
+
+      // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
+      const { data: permissionData } = await supabase
+        .from('user_permissions')
+        .select('department_id')
+        .eq('user_id', user.id)
+        .neq('role', 'none');
+
+      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
+      const allIds = new Set<string>([
+        ...(ownDeptId ? [ownDeptId] : []),
+        ...permDeptIds,
+      ]);
+
+      setAccessibleDepartmentIds(Array.from(allIds));
+    };
+
+    fetchAccessibleDepartments();
+  }, [isAdmin, user?.id, user?.departmentId, departments]);
 
   const filteredParentCategories = useMemo(
     () =>
@@ -382,11 +419,13 @@ export function SubcategoryManagement() {
                   }}
                 >
                   <option value="">전체</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
+                  {departments
+                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                    .map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -499,11 +538,13 @@ export function SubcategoryManagement() {
                   }
                 >
                   <option value="">부서를 선택하세요</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
+                  {departments
+                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                    .map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="space-y-2">

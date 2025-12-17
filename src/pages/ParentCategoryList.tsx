@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/lib/supabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +21,8 @@ import { Label } from '@/components/ui/label';
 
 export function ParentCategoryList() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
   
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
@@ -38,10 +42,43 @@ export function ParentCategoryList() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
+  // 팀원용: 권한 있는 부서 ID 목록
+  const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchParentCategories();
   }, [fetchParentCategories]);
+
+  // 팀원용: 권한 있는 부서 목록 조회
+  useEffect(() => {
+    const fetchAccessibleDepartments = async () => {
+      if (isAdmin || !user?.id) {
+        // 관리자는 모든 부서 접근 가능
+        setAccessibleDepartmentIds(departments.map((d) => d.id));
+        return;
+      }
+
+      // 1. 소속 부서는 자동 접근 가능
+      const ownDeptId = user.departmentId;
+
+      // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
+      const { data: permissionData } = await supabase
+        .from('user_permissions')
+        .select('department_id')
+        .eq('user_id', user.id)
+        .neq('role', 'none');
+
+      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
+      const allIds = new Set<string>([
+        ...(ownDeptId ? [ownDeptId] : []),
+        ...permDeptIds,
+      ]);
+
+      setAccessibleDepartmentIds(Array.from(allIds));
+    };
+
+    fetchAccessibleDepartments();
+  }, [isAdmin, user?.id, user?.departmentId, departments]);
 
   const departmentMap = useMemo(
     () => new Map(departments.map((d) => [d.id, d])),
@@ -104,11 +141,13 @@ export function ParentCategoryList() {
               className="border rounded-md px-3 py-2 text-sm min-w-[150px]"
             >
               <option value="">전체 부서</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name}
-                </option>
-              ))}
+              {departments
+                .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                .map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
             </select>
             <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -265,11 +304,13 @@ export function ParentCategoryList() {
                   }
                 >
                   <option value="">부서를 선택하세요</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
+                  {departments
+                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                    .map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="space-y-2">

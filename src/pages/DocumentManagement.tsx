@@ -124,6 +124,8 @@ export function DocumentManagement() {
   
   // 세부 카테고리 로딩 상태 (페이지 진입 시 전체 데이터 재조회 중)
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(true);
+  // 팀원용: 권한 있는 부서 ID 목록
+  const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
     addSubcategory,
@@ -407,11 +409,8 @@ export function DocumentManagement() {
   );
 
   const uploadDepartments = useMemo(
-    () =>
-      isAdmin
-        ? departments
-        : departments.filter((d) => d.id === user?.departmentId),
-    [departments, isAdmin, user?.departmentId]
+    () => departments.filter((d) => accessibleDepartmentIds.includes(d.id)),
+    [departments, accessibleDepartmentIds]
   );
 
   const uploadParentCategories = useMemo(
@@ -462,6 +461,37 @@ export function DocumentManagement() {
       setIsLoadingSubcategories(false);
     });
   }, []);
+
+  // 팀원용: 권한 있는 부서 목록 조회
+  useEffect(() => {
+    const fetchAccessibleDepartments = async () => {
+      if (isAdmin || !user?.id) {
+        // 관리자는 모든 부서 접근 가능
+        setAccessibleDepartmentIds(departments.map((d) => d.id));
+        return;
+      }
+
+      // 1. 소속 부서는 자동 접근 가능
+      const ownDeptId = user.departmentId;
+
+      // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
+      const { data: permissionData } = await supabase
+        .from('user_permissions')
+        .select('department_id')
+        .eq('user_id', user.id)
+        .neq('role', 'none');
+
+      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
+      const allIds = new Set<string>([
+        ...(ownDeptId ? [ownDeptId] : []),
+        ...permDeptIds,
+      ]);
+
+      setAccessibleDepartmentIds(Array.from(allIds));
+    };
+
+    fetchAccessibleDepartments();
+  }, [isAdmin, user?.id, user?.departmentId, departments]);
 
   useEffect(() => {
     if (searchKeyword) {
@@ -1532,11 +1562,13 @@ export function DocumentManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체</SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name} ({dept.code})
-                        </SelectItem>
-                      ))}
+                      {departments
+                        .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                        .map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name} ({dept.code})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1621,11 +1653,13 @@ export function DocumentManagement() {
                           <SelectValue placeholder="부서 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                          {departments.map((dept) => (
-                            <SelectItem key={dept.id} value={dept.id}>
-                              {dept.name} ({dept.code})
-                            </SelectItem>
-                          ))}
+                          {departments
+                            .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                            .map((dept) => (
+                              <SelectItem key={dept.id} value={dept.id}>
+                                {dept.name} ({dept.code})
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
