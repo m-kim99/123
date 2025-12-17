@@ -1074,7 +1074,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="space-y-2">
               <Label>부서</Label>
               <Input
-                value={user?.departmentId || ''}
+                value={userDepartmentName || '부서 없음'}
                 disabled
               />
             </div>

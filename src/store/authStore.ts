@@ -179,15 +179,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (authError) throw authError;
       if (!authData.user) throw new Error('계정 생성에 실패했습니다');
 
-      // 4. users 테이블에 추가
-      const { error: insertError } = await supabase.from('users').insert({
+      // 4. users 테이블에 추가 (upsert로 중복 방지)
+      const { error: insertError } = await supabase.from('users').upsert({
         id: authData.user.id,
         name,
         email,
         role,
         company_id: company.id,
         department_id: departmentId || null,
-      });
+      }, { onConflict: 'id' });
 
       if (insertError) throw insertError;
 
