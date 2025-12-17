@@ -161,21 +161,21 @@ export function TeamDepartments() {
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <FileText className="h-4 w-4 text-slate-500" />
-                            <span className="text-xs text-slate-500">문서</span>
+                            <span className="text-xs text-slate-500 whitespace-nowrap">문서</span>
                           </div>
                           <p className="text-2xl font-bold">{deptDocuments.length}</p>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <FileText className="h-4 w-4 text-slate-500" />
-                            <span className="text-xs text-slate-500">카테고리</span>
+                            <span className="text-xs text-slate-500 whitespace-nowrap">카테고리</span>
                           </div>
                           <p className="text-2xl font-bold">{deptCategories.length}</p>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Users className="h-4 w-4 text-slate-500" />
-                            <span className="text-xs text-slate-500">팀원</span>
+                            <span className="text-xs text-slate-500 whitespace-nowrap">팀원</span>
                           </div>
                           <p className="text-2xl font-bold">{dept.member_count ?? 0}</p>
                         </div>

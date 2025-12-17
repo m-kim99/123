@@ -110,25 +110,25 @@ export function TeamDepartmentDetail() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">문서 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">문서 수</p>
               <p className="text-2xl font-bold mt-2">{deptDocuments.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">카테고리 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">카테고리 수</p>
               <p className="text-2xl font-bold mt-2">{deptParentCategories.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">팀원 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">팀원 수</p>
               <p className="text-2xl font-bold mt-2">{teamMembersCount}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">대분류 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
               <p className="text-2xl font-bold mt-2">{nfcCategoryCount}개</p>
             </CardContent>
           </Card>
