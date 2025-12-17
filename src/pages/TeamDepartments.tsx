@@ -42,12 +42,12 @@ export function TeamDepartments() {
       // 1. 자신이 속한 부서는 자동으로 접근 가능
       const ownDepartmentId = user?.departmentId;
 
-      // 2. 추가로 권한이 부여된 부서 가져오기
+      // 2. 추가로 권한이 부여된 부서 가져오기 (role이 none이 아닌 경우)
       const { data: permissionData, error: permError } = await supabase
         .from('user_permissions')
-        .select('department_id')
+        .select('department_id, role')
         .eq('user_id', user?.id)
-        .eq('can_read', true);
+        .neq('role', 'none');
 
       if (permError) throw permError;
 

@@ -1508,9 +1508,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   checkPermission: async (userId, departmentId, action) => {
     try {
+      // 0. 사용자 정보 조회하여 소속 부서 확인
+      const { user } = useAuthStore.getState();
+      const userDepartmentId = user?.departmentId || null;
+
+      // 1. 소속 부서는 자동 manager 권한
+      if (userDepartmentId === departmentId) {
+        const managerPermissions = ['read', 'download', 'print', 'write', 'upload', 'delete', 'share'];
+        return managerPermissions.includes(action);
+      }
+
+      // 2. 다른 부서는 DB 조회
       const { data, error } = await supabase
         .from('user_permissions')
-        .select('*')
+        .select('role')
         .eq('user_id', userId)
         .eq('department_id', departmentId)
         .single();
@@ -1519,7 +1530,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         return false;
       }
 
-      return (data as any)[`can_${action}`] || false;
+      const role = data.role as 'none' | 'viewer' | 'editor' | 'manager';
+
+      // 3. 역할별 권한 매핑
+      const permissions: Record<string, string[]> = {
+        none: [],
+        viewer: ['read', 'download', 'print'],
+        editor: ['read', 'download', 'print', 'write', 'upload'],
+        manager: ['read', 'download', 'print', 'write', 'upload', 'delete', 'share'],
+      };
+
+      return permissions[role].includes(action);
     } catch (error) {
       console.error('권한 체크 오류:', error);
       return false;

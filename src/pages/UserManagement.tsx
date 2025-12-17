@@ -3,8 +3,14 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit } from 'lucide-react';
@@ -29,13 +35,10 @@ interface UserPermission {
   id?: string;
   user_id: string;
   department_id: string;
-  can_read: boolean;
-  can_write: boolean;
-  can_upload: boolean;
-  can_delete: boolean;
-  can_download: boolean;
-  can_share: boolean;
-  can_print: boolean;
+  role: 'none' | 'viewer' | 'editor' | 'manager';
+  company_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export function UserManagement() {
@@ -105,17 +108,15 @@ export function UserManagement() {
         (p: UserPermission) => p.department_id === dept.id
       );
 
+      // 기본값: 소속 부서는 viewer, 나머지는 none
+      const defaultRole = dept.id === user.department_id ? 'viewer' : 'none';
+
       return (
         existing || {
           user_id: user.id,
           department_id: dept.id,
-          can_read: dept.id === user.department_id,
-          can_write: dept.id === user.department_id,
-          can_upload: dept.id === user.department_id,
-          can_delete: false,
-          can_download: true,
-          can_share: false,
-          can_print: true,
+          role: defaultRole,
+          company_id: authUser?.companyId || null,
         }
       );
     });
@@ -124,9 +125,13 @@ export function UserManagement() {
     setEditDialogOpen(true);
   };
 
-  const handlePermissionChange = (departmentId: string, permission: string, value: boolean) => {
+  const handleRoleChange = (departmentId: string, newRole: string) => {
     setPermissions((prev) =>
-      prev.map((p) => (p.department_id === departmentId ? { ...p, [permission]: value } : p))
+      prev.map((p) =>
+        p.department_id === departmentId
+          ? { ...p, role: newRole as 'none' | 'viewer' | 'editor' | 'manager' }
+          : p
+      )
     );
   };
 
@@ -136,14 +141,16 @@ export function UserManagement() {
     setIsSaving(true);
 
     try {
+      // 1. 기존 권한 삭제
       await supabase
         .from('user_permissions')
         .delete()
         .eq('user_id', selectedUser.id);
 
+      // 2. none이 아닌 권한만 삽입
       const permissionsToInsert = permissions
-        .filter((p) => p.can_read)
-        .map(({ id, ...rest }) => rest);
+        .filter((p) => p.role !== 'none')
+        .map(({ id, created_at, updated_at, ...rest }) => rest);
 
       if (permissionsToInsert.length > 0) {
         const { error } = await supabase
@@ -256,139 +263,60 @@ export function UserManagement() {
 
                 return (
                   <Card key={dept.id}>
-                    <CardHeader>
-                      <CardTitle className="text-base">{dept.name}</CardTitle>
-                      {dept.id === selectedUser?.department_id && (
-                        <Badge variant="outline" className="w-fit">
-                          소속 부서
-                        </Badge>
-                      )}
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">{dept.name}</CardTitle>
+                        {dept.id === selectedUser?.department_id && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            소속 부서
+                          </Badge>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-read`}
-                            checked={perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_read', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-read`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            읽기
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-write`}
-                            checked={perm.can_write}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_write', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-write`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            쓰기
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-upload`}
-                            checked={perm.can_upload}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_upload', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-upload`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            업로드
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-delete`}
-                            checked={perm.can_delete}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_delete', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-delete`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            삭제
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-download`}
-                            checked={perm.can_download}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_download', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-download`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            다운로드
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-share`}
-                            checked={perm.can_share}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_share', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-share`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            공유
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${dept.id}-print`}
-                            checked={perm.can_print}
-                            disabled={!perm.can_read}
-                            className="border-2 border-black bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=checked]:text-black"
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(dept.id, 'can_print', Boolean(checked))
-                            }
-                          />
-                          <Label
-                            htmlFor={`${dept.id}-print`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            인쇄
-                          </Label>
+                      <div className="flex items-center gap-4">
+                        <Label className="text-sm text-slate-600 min-w-[60px]">
+                          접근 권한
+                        </Label>
+                        <Select
+                          value={perm.role}
+                          onValueChange={(value) => handleRoleChange(dept.id, value)}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              <div className="flex items-center gap-2">
+                                <span className="text-red-600">●</span>
+                                <span>접근 불가</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="viewer">
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-600">●</span>
+                                <span>뷰어</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="editor">
+                              <div className="flex items-center gap-2">
+                                <span className="text-green-600">●</span>
+                                <span>편집자</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="manager">
+                              <div className="flex items-center gap-2">
+                                <span className="text-orange-600">●</span>
+                                <span>관리자</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="text-xs text-slate-500">
+                          {perm.role === 'none' && '• 접근 불가'}
+                          {perm.role === 'viewer' && '• 읽기, 다운로드, 출력'}
+                          {perm.role === 'editor' && '• 뷰어 + 업로드, 수정'}
+                          {perm.role === 'manager' && '• 편집자 + 삭제, 공유, NFC'}
                         </div>
                       </div>
                     </CardContent>
