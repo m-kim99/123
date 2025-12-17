@@ -20,6 +20,7 @@ export interface Notification {
   subcategoryId: string | null;
   companyId: string;
   isRead: boolean;
+  isDismissed: boolean;
   createdAt: string;
 }
 
@@ -41,11 +42,12 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const { user } = useAuthStore.getState();
-      if (!user?.companyId) {
+      if (!user?.companyId || !user?.id) {
         set({ notifications: [], isLoading: false });
         return;
       }
 
+      // 1. 알림 목록 조회
       let query = supabase
         .from('notifications')
         .select('*')
@@ -58,22 +60,46 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         query = query.eq('department_id', user.departmentId);
       }
 
-      const { data, error } = await query;
+      const { data: notificationsData, error: notificationsError } = await query;
 
-      if (error) throw error;
+      if (notificationsError) throw notificationsError;
 
-      const notifications: Notification[] = (data || []).map((n: any) => ({
-        id: n.id,
-        type: n.type as NotificationEventType,
-        message: n.message,
-        documentId: n.document_id,
-        departmentId: n.department_id ?? null,
-        parentCategoryId: n.parent_category_id ?? null,
-        subcategoryId: n.subcategory_id ?? null,
-        companyId: n.company_id,
-        isRead: n.is_read ?? false,
-        createdAt: n.created_at,
-      }));
+      // 2. 사용자별 알림 상태 조회
+      const { data: statusData, error: statusError } = await supabase
+        .from('user_notification_status')
+        .select('notification_id, is_read, is_dismissed')
+        .eq('user_id', user.id);
+
+      if (statusError) throw statusError;
+
+      // 상태 맵 생성
+      const statusMap = new Map<string, { isRead: boolean; isDismissed: boolean }>();
+      (statusData || []).forEach((s: any) => {
+        statusMap.set(s.notification_id, {
+          isRead: s.is_read ?? false,
+          isDismissed: s.is_dismissed ?? false,
+        });
+      });
+
+      // 3. 알림 목록에 사용자별 상태 병합 (dismissed된 알림 제외)
+      const notifications: Notification[] = (notificationsData || [])
+        .map((n: any) => {
+          const status = statusMap.get(n.id);
+          return {
+            id: n.id,
+            type: n.type as NotificationEventType,
+            message: n.message,
+            documentId: n.document_id,
+            departmentId: n.department_id ?? null,
+            parentCategoryId: n.parent_category_id ?? null,
+            subcategoryId: n.subcategory_id ?? null,
+            companyId: n.company_id,
+            isRead: status?.isRead ?? false,
+            isDismissed: status?.isDismissed ?? false,
+            createdAt: n.created_at,
+          };
+        })
+        .filter((n: Notification) => !n.isDismissed); // dismissed된 알림 제외
 
       set({ notifications, isLoading: false, error: null });
     } catch (err) {
@@ -84,10 +110,18 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 
   markAsRead: async (id: string) => {
     try {
+      const { user } = useAuthStore.getState();
+      if (!user?.id) return;
+
+      // upsert로 사용자별 상태 저장
       const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
+        .from('user_notification_status')
+        .upsert({
+          user_id: user.id,
+          notification_id: id,
+          is_read: true,
+          is_dismissed: false,
+        }, { onConflict: 'user_id,notification_id' });
 
       if (error) throw error;
 
@@ -103,18 +137,27 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 
   dismissNotification: async (id: string) => {
     try {
+      const { user } = useAuthStore.getState();
+      if (!user?.id) return;
+
+      // upsert로 사용자별 dismissed 상태 저장 (알림 자체는 삭제하지 않음)
       const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
+        .from('user_notification_status')
+        .upsert({
+          user_id: user.id,
+          notification_id: id,
+          is_read: true,
+          is_dismissed: true,
+        }, { onConflict: 'user_id,notification_id' });
 
       if (error) throw error;
 
+      // UI에서 해당 알림 제거
       set((state) => ({
         notifications: state.notifications.filter((n) => n.id !== id),
       }));
     } catch (err) {
-      console.error('알림 삭제 실패:', err);
+      console.error('알림 닫기 실패:', err);
     }
   },
 }));
