@@ -86,9 +86,14 @@ export function ParentCategoryList() {
   );
 
   const filteredParentCategories = useMemo(() => {
-    if (!selectedDepartmentId) return parentCategories;
-    return parentCategories.filter((pc) => pc.departmentId === selectedDepartmentId);
-  }, [parentCategories, selectedDepartmentId]);
+    // 먼저 권한 있는 부서의 대분류만 필터링
+    const accessibleCategories = parentCategories.filter((pc) =>
+      accessibleDepartmentIds.includes(pc.departmentId)
+    );
+    // 그 다음 선택된 부서 필터 적용
+    if (!selectedDepartmentId) return accessibleCategories;
+    return accessibleCategories.filter((pc) => pc.departmentId === selectedDepartmentId);
+  }, [parentCategories, selectedDepartmentId, accessibleDepartmentIds]);
 
   const paginatedParentCategories = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

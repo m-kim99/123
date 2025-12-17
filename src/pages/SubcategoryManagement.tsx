@@ -129,11 +129,17 @@ export function SubcategoryManagement() {
   }, [isAdmin, user?.id, user?.departmentId, departments]);
 
   const filteredParentCategories = useMemo(
-    () =>
-      selectedDepartmentId
-        ? parentCategories.filter((pc) => pc.departmentId === selectedDepartmentId)
-        : parentCategories,
-    [parentCategories, selectedDepartmentId]
+    () => {
+      // 먼저 권한 있는 부서의 대분류만 필터링
+      const accessibleCategories = parentCategories.filter((pc) =>
+        accessibleDepartmentIds.includes(pc.departmentId)
+      );
+      // 그 다음 선택된 부서 필터 적용
+      return selectedDepartmentId
+        ? accessibleCategories.filter((pc) => pc.departmentId === selectedDepartmentId)
+        : accessibleCategories;
+    },
+    [parentCategories, selectedDepartmentId, accessibleDepartmentIds]
   );
 
   const filteredParentCategoriesForForm = useMemo(
@@ -147,6 +153,10 @@ export function SubcategoryManagement() {
   const filteredSubcategories = useMemo(
     () =>
       subcategories.filter((sub) => {
+        // 먼저 권한 있는 부서의 세부 카테고리만 필터링
+        if (!accessibleDepartmentIds.includes(sub.departmentId)) {
+          return false;
+        }
         if (selectedDepartmentId && sub.departmentId !== selectedDepartmentId) {
           return false;
         }
@@ -158,7 +168,7 @@ export function SubcategoryManagement() {
         }
         return true;
       }),
-    [subcategories, selectedDepartmentId, selectedParentCategoryId]
+    [subcategories, selectedDepartmentId, selectedParentCategoryId, accessibleDepartmentIds]
   );
 
   // useCallback으로 최적화
