@@ -183,11 +183,13 @@ export function ParentCategoryList() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedParentCategories.map((pc) => {
                 const dept = departmentMap.get(pc.departmentId);
+                const isAdminPath = window.location.pathname.startsWith('/admin');
+                const basePath = isAdminPath ? '/admin' : '/team';
                 return (
                   <Card
                     key={pc.id}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/admin/parent-category/${pc.id}`)}
+                    onClick={() => navigate(`${basePath}/parent-category/${pc.id}`)}
                   >
                     <CardHeader>
                       <CardTitle className="text-lg">{pc.name}</CardTitle>
