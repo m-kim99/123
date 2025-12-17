@@ -92,7 +92,6 @@ export async function createDocumentNotification({
       parent_category_id: parentCategoryId ?? null,
       subcategory_id: subcategoryId ?? null,
       message,
-      is_read: false,
     });
 
     if (error) {
