@@ -543,7 +543,7 @@ export function SubcategoryDetail() {
 
           <Button
             variant="ghost"
-            className="mb-4"
+            className="mb-4 bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -567,28 +567,26 @@ export function SubcategoryDetail() {
             <div className="flex flex-col items-end gap-2">
               <Button
                 variant={isFav ? 'default' : 'outline'}
+                size="sm"
                 onClick={handleToggleFavorite}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-28 justify-center"
               >
                 <Star className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
                 {isFav ? '즐겨찾기 해제' : '즐겨찾기'}
               </Button>
-              {subcategory.nfcRegistered && (
-                <Badge className="text-sm">
-                  <Smartphone className="h-4 w-4 mr-1" />
-                  NFC 등록됨
-                </Badge>
-              )}
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleRegisterNfc}
                 disabled={isRegisteringNfc}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 w-28 justify-center ${
+                  subcategory.nfcRegistered 
+                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border-[#2563eb]' 
+                    : ''
+                }`}
               >
                 <Smartphone className="h-4 w-4" />
-                {subcategory.nfcRegistered
-                  ? 'NFC 다시 등록'
-                  : 'NFC UID 등록'}
+                {subcategory.nfcRegistered ? 'NFC 재등록' : 'NFC 등록'}
               </Button>
             </div>
           </div>
