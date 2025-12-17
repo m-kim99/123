@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* rem 단위 기준 고정 - 모든 기기에서 동일한 폰트 크기 보장 */
+html {
+  font-size: 16px;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
