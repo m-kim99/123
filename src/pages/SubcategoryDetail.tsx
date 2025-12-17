@@ -42,7 +42,7 @@ export function SubcategoryDetail() {
     registerNfcTag,
     updateSubcategory,
     findSubcategoryByNfcUid,
-    clearNfcFromSubcategory,
+    clearNfcByUid,
   } = useDocumentStore();
 
   const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
@@ -222,11 +222,8 @@ export function SubcategoryDetail() {
 
     setIsRegisteringNfc(true);
     try {
-      // 기존에 이 UID를 쓰던 세부 카테고리가 있으면 NFC 정보 해제
-      const existingSub = await findSubcategoryByNfcUid(uid);
-      if (existingSub && existingSub.id !== subcategory.id) {
-        await clearNfcFromSubcategory(existingSub.id);
-      }
+      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      await clearNfcByUid(uid, subcategory.id);
 
       // NFC 태그에 세부 카테고리용 URL을 쓴다
       await writeNFCUrl(subcategory.id, subcategory.name);

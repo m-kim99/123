@@ -134,7 +134,7 @@ export function DocumentManagement() {
     deleteSubcategory,
     registerNfcTag,
     findSubcategoryByNfcUid,
-    clearNfcFromSubcategory,
+    clearNfcByUid,
   } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -647,11 +647,8 @@ export function DocumentManagement() {
         }
       }
 
-      // 기존에 이 UID를 쓰던 세부 카테고리가 있으면 NFC 정보 해제
-      const existingSub = await findSubcategoryByNfcUid(uid);
-      if (existingSub && existingSub.id !== subcategoryId) {
-        await clearNfcFromSubcategory(existingSub.id);
-      }
+      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      await clearNfcByUid(uid, subcategoryId);
 
       // NFC 태그에 세부 카테고리용 URL을 쓴다
       const subName = targetSub?.name || subcategoryId;

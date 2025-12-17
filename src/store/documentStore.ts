@@ -93,6 +93,7 @@ interface DocumentState {
   registerNfcTag: (subcategoryId: string, nfcUid: string) => Promise<void>;
   findSubcategoryByNfcUid: (nfcUid: string) => Promise<Subcategory | null>;
   clearNfcFromSubcategory: (subcategoryId: string) => Promise<void>;
+  clearNfcByUid: (nfcUid: string, excludeSubcategoryId?: string) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   uploadDocument: (
@@ -1152,6 +1153,38 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }));
     } catch (err) {
       console.error('Failed to clear NFC from subcategory:', err);
+    }
+  },
+
+  // 특정 NFC UID를 가진 모든 서브카테고리에서 NFC 정보 해제
+  clearNfcByUid: async (nfcUid, excludeSubcategoryId) => {
+    try {
+      // excludeSubcategoryId를 제외한 모든 서브카테고리에서 해당 NFC UID 정보 삭제
+      let query = supabase
+        .from('subcategories')
+        .update({
+          nfc_tag_id: null,
+          nfc_registered: false,
+        })
+        .eq('nfc_tag_id', nfcUid);
+
+      if (excludeSubcategoryId) {
+        query = query.neq('id', excludeSubcategoryId);
+      }
+
+      const { error } = await query;
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.map((sub) =>
+          sub.nfcUid === nfcUid && sub.id !== excludeSubcategoryId
+            ? { ...sub, nfcUid: null, nfcRegistered: false }
+            : sub
+        ),
+      }));
+    } catch (err) {
+      console.error('Failed to clear NFC by UID:', err);
     }
   },
 

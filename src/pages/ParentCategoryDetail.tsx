@@ -54,7 +54,7 @@ export function ParentCategoryDetail() {
     addSubcategory,
     registerNfcTag,
     findSubcategoryByNfcUid,
-    clearNfcFromSubcategory,
+    clearNfcByUid,
   } = useDocumentStore();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -217,11 +217,8 @@ export function ParentCategoryDetail() {
     try {
       const targetSub = subcategories.find((s) => s.id === subcategoryId);
 
-      // 기존에 이 UID를 쓰던 세부 카테고리가 있으면 NFC 정보 해제
-      const existingSub = await findSubcategoryByNfcUid(uid);
-      if (existingSub && existingSub.id !== subcategoryId) {
-        await clearNfcFromSubcategory(existingSub.id);
-      }
+      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      await clearNfcByUid(uid, subcategoryId);
 
       // NFC 태그에 세부 카테고리용 URL을 쓴다
       const subName = targetSub?.name || subcategoryId;
