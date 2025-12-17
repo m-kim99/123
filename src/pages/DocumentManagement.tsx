@@ -1792,7 +1792,7 @@ export function DocumentManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>기본 만료일 (선택)</Label>
+                    <Label>기본 보관 만료일 (선택)</Label>
                     <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
@@ -1859,7 +1859,7 @@ export function DocumentManagement() {
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {editCategoryForm.defaultExpiryDays
                             ? format(addDays(new Date(), editCategoryForm.defaultExpiryDays), 'PPP', { locale: ko })
-                            : '달력에서 만료일 선택'}
+                            : '달력에서 보관 만료일 선택'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -1887,7 +1887,7 @@ export function DocumentManagement() {
                       </PopoverContent>
                     </Popover>
                     <p className="text-xs text-slate-500">
-                      만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                      보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
                       {editCategoryForm.defaultExpiryDays && ` (약 ${Math.round(editCategoryForm.defaultExpiryDays / 365)}년, ${editCategoryForm.defaultExpiryDays}일)`}
                     </p>
                   </div>
@@ -2071,7 +2071,7 @@ export function DocumentManagement() {
                               )}
                               {subcategory.defaultExpiryDays && (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">만료일</span>
+                                  <span className="text-slate-500">보관 만료일</span>
                                   <span className="font-medium">
                                     {format(addDays(new Date(), subcategory.defaultExpiryDays), 'yyyy.MM.dd')}
                                   </span>

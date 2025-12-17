@@ -488,7 +488,7 @@ export function SubcategoryManagement() {
                         <p className="text-xs text-slate-500 mt-1">
                           문서 {sub.documentCount}개 · NFC{' '}
                           {sub.nfcRegistered ? '등록됨' : '미등록'}
-                          {sub.defaultExpiryDays && ` · 만료일 ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`}
+                          {sub.defaultExpiryDays && ` · 보관 만료일 ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
@@ -605,7 +605,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>기본 만료일 (선택)</Label>
+                <Label>기본 보관 만료일 (선택)</Label>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -672,7 +672,7 @@ export function SubcategoryManagement() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {form.defaultExpiryDays
                         ? format(addDays(new Date(), form.defaultExpiryDays), 'PPP', { locale: ko })
-                        : '달력에서 만료일 선택'}
+                        : '달력에서 보관 만료일 선택'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -700,7 +700,7 @@ export function SubcategoryManagement() {
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-slate-500">
-                  만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                  보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
                   {form.defaultExpiryDays && ` (약 ${Math.round(form.defaultExpiryDays / 365)}년, ${form.defaultExpiryDays}일)`}
                 </p>
               </div>
@@ -800,7 +800,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>기본 만료일 (선택)</Label>
+                <Label>기본 보관 만료일 (선택)</Label>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -867,7 +867,7 @@ export function SubcategoryManagement() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {editForm.defaultExpiryDays
                         ? format(addDays(new Date(), editForm.defaultExpiryDays), 'PPP', { locale: ko })
-                        : '달력에서 만료일 선택'}
+                        : '달력에서 보관 만료일 선택'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -895,7 +895,7 @@ export function SubcategoryManagement() {
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-slate-500">
-                  만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                  보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
                   {editForm.defaultExpiryDays && ` (약 ${Math.round(editForm.defaultExpiryDays / 365)}년, ${editForm.defaultExpiryDays}일)`}
                 </p>
               </div>
