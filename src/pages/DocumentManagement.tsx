@@ -2023,11 +2023,13 @@ export function DocumentManagement() {
                       >
                         <div
                           className="flex flex-col h-full"
-                          onClick={() =>
+                          onClick={() => {
+                            const isAdminPath = window.location.pathname.startsWith('/admin');
+                            const basePath = isAdminPath ? '/admin' : '/team';
                             navigate(
-                              `/admin/parent-category/${subcategory.parentCategoryId}/subcategory/${subcategory.id}`,
-                            )
-                          }
+                              `${basePath}/parent-category/${subcategory.parentCategoryId}/subcategory/${subcategory.id}`,
+                            );
+                          }}
                         >
                           <CardHeader>
                             <div className="flex items-start justify-between">

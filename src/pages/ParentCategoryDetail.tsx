@@ -484,13 +484,16 @@ export function ParentCategoryDetail() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {childSubcategories.map((sub) => (
+                {childSubcategories.map((sub) => {
+                  const isAdmin = window.location.pathname.startsWith('/admin');
+                  const basePath = isAdmin ? '/admin' : '/team';
+                  return (
                   <Card
                     key={sub.id}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() =>
                       navigate(
-                        `/admin/parent-category/${parentCategory.id}/subcategory/${sub.id}`
+                        `${basePath}/parent-category/${parentCategory.id}/subcategory/${sub.id}`
                       )
                     }
                   >
@@ -539,7 +542,8 @@ export function ParentCategoryDetail() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

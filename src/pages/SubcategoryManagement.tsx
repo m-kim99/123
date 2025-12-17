@@ -477,6 +477,8 @@ export function SubcategoryManagement() {
                 {filteredSubcategories.map((sub) => {
                   const dept = departments.find((d) => d.id === sub.departmentId);
                   const parent = parentCategories.find((pc) => pc.id === sub.parentCategoryId);
+                  const isAdminPath = window.location.pathname.startsWith('/admin');
+                  const basePath = isAdminPath ? '/admin' : '/team';
                   return (
                     <div
                       key={sub.id}
@@ -486,7 +488,7 @@ export function SubcategoryManagement() {
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() =>
                           navigate(
-                            `/admin/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
+                            `${basePath}/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
                           )
                         }
                       >
