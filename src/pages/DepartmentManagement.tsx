@@ -169,16 +169,29 @@ export function DepartmentManagement() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between md:mb-6">
           <div>
             <h1 className="text-3xl font-bold">부서 관리</h1>
             <p className="text-slate-500 mt-1">전체 부서 현황을 관리합니다</p>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          {/* 데스크톱: 헤더 옆에 표시 */}
+          <Button 
+            className="hidden md:flex"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             부서 추가
           </Button>
         </div>
+
+        {/* 모바일: 전체 너비 버튼 */}
+        <Button 
+          className="md:hidden w-full"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          부서 추가
+        </Button>
 
         <Dialog
           open={isAddDialogOpen}
