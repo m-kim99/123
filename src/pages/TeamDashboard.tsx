@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { FileText, TrendingUp, Building2, Star, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { FileText, TrendingUp, Building2, Star, Clock, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { supabase } from '@/lib/supabase';
 
 export function TeamDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -40,6 +41,20 @@ export function TeamDashboard() {
     (sc) => sc.departmentId === user?.departmentId,
   );
 
+  const [memberCount, setMemberCount] = useState(0);
+
+  useEffect(() => {
+    const fetchMemberCount = async () => {
+      if (!user?.departmentId) return;
+      const { count } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('department_id', user.departmentId);
+      setMemberCount(count ?? 0);
+    };
+    fetchMemberCount();
+  }, [user?.departmentId]);
+
   const stats = [
     {
       title: '내 부서 문서',
@@ -59,6 +74,12 @@ export function TeamDashboard() {
       icon: TrendingUp,
       color: '#8B5CF6',
     },
+    {
+      title: '내 부서 팀원',
+      value: memberCount,
+      icon: Users,
+      color: '#10B981',
+    },
   ];
 
   return (
@@ -73,7 +94,7 @@ export function TeamDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
