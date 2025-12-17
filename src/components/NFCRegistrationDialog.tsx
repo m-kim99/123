@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { readNFCUid } from '@/lib/nfc';
+import { readNFCUid, setNfcMode } from '@/lib/nfc';
 import { registerNFCTag } from '@/lib/nfcApi';
 import { toast } from '@/hooks/use-toast';
 
@@ -31,6 +31,7 @@ export function NFCRegistrationDialog({
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
       setError(null);
+      setNfcMode('idle'); // 닫기 시 모드 초기화
     }
     onOpenChange(nextOpen);
   };
@@ -51,6 +52,7 @@ export function NFCRegistrationDialog({
         description: '태그와 카테고리가 성공적으로 연결되었습니다.',
       });
 
+      setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
       onOpenChange(false);
     } catch (err) {
       console.error('NFC 태그 등록 실패:', err);
@@ -59,6 +61,7 @@ export function NFCRegistrationDialog({
       } else {
         setError('NFC 태그 등록 중 오류가 발생했습니다.');
       }
+      setNfcMode('idle'); // 에러 시 모드 초기화
     } finally {
       setIsRegistering(false);
     }

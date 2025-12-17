@@ -11,14 +11,43 @@ export interface NFCTagData {
 // NFC 동작 모드: 일반(idle) / 쓰기(writing)
 export type NfcMode = 'idle' | 'writing';
 
-let currentNfcMode: NfcMode = 'idle';
+const NFC_MODE_KEY = 'nfc_mode';
+const NFC_MODE_TIMESTAMP_KEY = 'nfc_mode_timestamp';
+const NFC_MODE_TIMEOUT_MS = 60000; // 60초 후 자동으로 idle로 복귀
 
 export function setNfcMode(mode: NfcMode) {
-  currentNfcMode = mode;
+  try {
+    if (mode === 'writing') {
+      localStorage.setItem(NFC_MODE_KEY, mode);
+      localStorage.setItem(NFC_MODE_TIMESTAMP_KEY, Date.now().toString());
+    } else {
+      localStorage.removeItem(NFC_MODE_KEY);
+      localStorage.removeItem(NFC_MODE_TIMESTAMP_KEY);
+    }
+  } catch (e) {
+    console.warn('localStorage 접근 실패:', e);
+  }
 }
 
 export function getNfcMode(): NfcMode {
-  return currentNfcMode;
+  try {
+    const mode = localStorage.getItem(NFC_MODE_KEY);
+    const timestamp = localStorage.getItem(NFC_MODE_TIMESTAMP_KEY);
+    
+    if (mode === 'writing' && timestamp) {
+      const elapsed = Date.now() - parseInt(timestamp, 10);
+      // 타임아웃 초과 시 자동으로 idle로 복귀
+      if (elapsed < NFC_MODE_TIMEOUT_MS) {
+        return 'writing';
+      }
+      // 타임아웃 초과 - 정리
+      localStorage.removeItem(NFC_MODE_KEY);
+      localStorage.removeItem(NFC_MODE_TIMESTAMP_KEY);
+    }
+  } catch (e) {
+    console.warn('localStorage 접근 실패:', e);
+  }
+  return 'idle';
 }
 
 /**
@@ -344,8 +373,10 @@ export async function readNFCUid(): Promise<string> {
     });
   } catch (error) {
     console.error('NFC UID 읽기 실패:', error);
-    throw new Error('NFC UID를 읽을 수 없습니다.');
-  } finally {
+    // 에러 시에만 모드를 idle로 복귀 (성공 시에는 호출자가 관리)
     setNfcMode('idle');
+    throw new Error('NFC UID를 읽을 수 없습니다.');
   }
+  // 주의: 성공 시에는 setNfcMode('idle')을 호출하지 않음
+  // 호출자가 전체 NFC 등록 프로세스 완료 후 setNfcMode('idle')을 호출해야 함
 }

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { useFavoriteStore } from '@/store/favoriteStore';
@@ -212,6 +212,7 @@ export function SubcategoryDetail() {
         description,
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
       setIsRegisteringNfc(false);
     }
   };
@@ -242,6 +243,7 @@ export function SubcategoryDetail() {
       setPendingNfcUid(null);
       setExistingNfcSubcategory(null);
       setNfcConfirmDialogOpen(false);
+      setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
     } catch (error) {
       console.error('NFC 등록 실패:', error);
 
@@ -257,6 +259,7 @@ export function SubcategoryDetail() {
         description,
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
     } finally {
       setIsRegisteringNfc(false);
     }
@@ -271,6 +274,7 @@ export function SubcategoryDetail() {
     setPendingNfcUid(null);
     setExistingNfcSubcategory(null);
     setNfcConfirmDialogOpen(false);
+    setNfcMode('idle'); // 취소 시 모드 초기화
   };
 
   const handleCloseEditDialog = () => {

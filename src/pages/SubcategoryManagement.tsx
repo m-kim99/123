@@ -29,7 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { toast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -235,6 +235,7 @@ export function SubcategoryManagement() {
           error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
     } finally {
       setIsSaving(false);
     }
@@ -269,6 +270,7 @@ export function SubcategoryManagement() {
       setPendingNfcSubcategoryId(null);
       setExistingNfcSubcategory(null);
       setNfcConfirmDialogOpen(false);
+      setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
     } catch (error: any) {
       console.error('NFC 등록 실패:', error);
       toast({
@@ -277,6 +279,7 @@ export function SubcategoryManagement() {
           error?.message || 'NFC 태그를 등록하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
     }
   };
 
@@ -300,6 +303,7 @@ export function SubcategoryManagement() {
     setPendingNfcSubcategoryId(null);
     setExistingNfcSubcategory(null);
     setNfcConfirmDialogOpen(false);
+    setNfcMode('idle'); // 취소 시 모드 초기화
   }, []);
 
   const handleOpenEditDialog = (sub: Subcategory) => {

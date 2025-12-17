@@ -59,7 +59,7 @@ import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { readNFCUid, writeNFCUrl } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { PdfViewer } from '@/components/PdfViewer';
@@ -628,6 +628,7 @@ export function DocumentManagement() {
           error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
     }
   };
 
@@ -671,6 +672,7 @@ export function DocumentManagement() {
       setPendingNfcSubcategoryId(null);
       setExistingNfcSubcategory(null);
       setNfcConfirmDialogOpen(false);
+      setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
     } catch (error: any) {
       console.error('NFC 등록 실패:', error);
       toast({
@@ -679,6 +681,7 @@ export function DocumentManagement() {
           error?.message || 'NFC 태그를 등록하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+      setNfcMode('idle'); // 에러 시 모드 초기화
     }
   };
 
@@ -699,6 +702,7 @@ export function DocumentManagement() {
     setPendingNfcSubcategoryId(null);
     setExistingNfcSubcategory(null);
     setNfcConfirmDialogOpen(false);
+    setNfcMode('idle'); // 취소 시 모드 초기화
   };
 
   const handleOpenEditDialog = (subcategory: Subcategory) => {
@@ -1894,6 +1898,7 @@ export function DocumentManagement() {
                             error?.message || 'NFC 태그 등록 중 오류가 발생했습니다.',
                           variant: 'destructive',
                         });
+                        setNfcMode('idle'); // 에러 시 모드 초기화
                       }
                     }}
                     disabled={!editingCategoryId || isSavingCategory}
