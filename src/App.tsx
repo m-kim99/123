@@ -117,61 +117,37 @@ function App() {
 
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
-
-    // OAuth 콜백 디버깅 - URL 파라미터 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    console.log('🔍 URL search params:', Object.fromEntries(urlParams));
-    console.log('🔍 URL hash params:', Object.fromEntries(hashParams));
-    console.log('🔍 Full URL:', window.location.href);
-
-    // OAuth 에러 확인
-    const error = urlParams.get('error');
-    const errorDescription = urlParams.get('error_description');
-    const errorCode = urlParams.get('error_code');
-    if (error) {
-      console.error('❌ OAuth 에러:', error);
-      console.error('❌ OAuth 에러 설명:', errorDescription);
-      console.error('❌ OAuth 에러 코드:', errorCode);
-      // URL에서 에러 파라미터 제거
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-
-    // PKCE flow: code 파라미터가 있으면 세션 교환 시도
-    const code = urlParams.get('code');
-    if (code) {
-      console.log('🔑 OAuth code 발견, 세션 교환 시도...');
-      supabase.auth.exchangeCodeForSession(code).then(({ data, error: exchangeError }: { data: any; error: any }) => {
-        if (exchangeError) {
-          console.error('❌ 세션 교환 실패:', exchangeError);
-        } else {
-          console.log('✅ 세션 교환 성공:', data);
-          // URL에서 code 파라미터 제거
-          window.history.replaceState({}, '', window.location.pathname);
-          checkSession();
-        }
-      });
-    }
+    let isProcessing = false;
 
     // OAuth 콜백 리스너 - 모든 인증 상태 변경 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       console.log('🔐 Auth 상태 변경:', event, session);
       
-      if (event === 'INITIAL_SESSION') {
-        // 앱 시작 시 또는 OAuth 콜백 후 세션 확인
-        await checkSession();
-      } else if (event === 'SIGNED_IN' && session) {
-        await checkSession();
+      // 중복 처리 방지
+      if (isProcessing) return;
+      
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session) {
+          isProcessing = true;
+          console.log('✅ 세션 발견, checkSession 호출');
+          await checkSession();
+          // URL 정리 (OAuth 파라미터 제거)
+          if (window.location.search || window.location.hash) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+          isProcessing = false;
+        } else if (event === 'INITIAL_SESSION') {
+          // 세션 없이 앱 시작 - 로딩 상태 해제
+          useAuthStore.setState({ isLoading: false });
+        }
       } else if (event === 'SIGNED_OUT') {
         useAuthStore.setState({
           user: null,
           isAuthenticated: false,
           needsOnboarding: false,
           redirectAfterLogin: null,
+          isLoading: false,
         });
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        // 토큰 갱신 시에도 세션 유지
-        await checkSession();
       }
     });
 
