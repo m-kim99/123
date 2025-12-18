@@ -12,13 +12,7 @@ const isSupabaseConfigured =
 
 // Supabase 클라이언트 초기화 (환경변수가 없거나 placeholder면 null로 동작)
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    })
+  ? createClient(supabaseUrl, supabaseAnonKey)
   : (null as any);
 
 // TypeScript 타입 정의

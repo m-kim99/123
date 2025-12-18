@@ -52,7 +52,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   error: null,
   needsOnboarding: false,
   redirectAfterLogin: null,
@@ -278,7 +278,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             companyCode: company?.code ?? '',
             companyName: company?.name ?? '',
           },
-          isAuthenticated: true,
+          isAuthenticated: !needsOnboarding,
           isLoading: false,
           needsOnboarding,
         });

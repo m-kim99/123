@@ -2,8 +2,6 @@ import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
-import { supabase } from './lib/supabase';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Toaster } from '@/components/ui/toaster';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -117,58 +115,7 @@ function App() {
 
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
-    let isProcessing = false;
-    let initialSessionReceived = false;
-
-    // 타임아웃: 3초 후에도 INITIAL_SESSION이 없으면 로딩 해제
-    const timeout = setTimeout(() => {
-      if (!initialSessionReceived) {
-        console.log('⏱️ 타임아웃: INITIAL_SESSION 미수신, 로딩 해제');
-        useAuthStore.setState({ isLoading: false });
-      }
-    }, 3000);
-
-    // OAuth 콜백 리스너 - 모든 인증 상태 변경 처리
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      console.log('🔐 Auth 상태 변경:', event, session);
-      
-      if (event === 'INITIAL_SESSION') {
-        initialSessionReceived = true;
-        clearTimeout(timeout);
-      }
-      
-      // 중복 처리 방지
-      if (isProcessing) return;
-      
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session) {
-          isProcessing = true;
-          console.log('✅ 세션 발견, checkSession 호출');
-          await checkSession();
-          // URL 정리 (OAuth 파라미터 제거)
-          if (window.location.search || window.location.hash) {
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-          isProcessing = false;
-        } else if (event === 'INITIAL_SESSION') {
-          // 세션 없이 앱 시작 - 로딩 상태 해제
-          useAuthStore.setState({ isLoading: false });
-        }
-      } else if (event === 'SIGNED_OUT') {
-        useAuthStore.setState({
-          user: null,
-          isAuthenticated: false,
-          needsOnboarding: false,
-          redirectAfterLogin: null,
-          isLoading: false,
-        });
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+    checkSession();
   }, []);
 
   useEffect(() => {
