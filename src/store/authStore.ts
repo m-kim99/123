@@ -278,7 +278,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             companyCode: company?.code ?? '',
             companyName: company?.name ?? '',
           },
-          isAuthenticated: !needsOnboarding,
+          isAuthenticated: true,
           isLoading: false,
           needsOnboarding,
         });

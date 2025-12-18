@@ -2,6 +2,8 @@ import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
+import { supabase } from './lib/supabase';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Toaster } from '@/components/ui/toaster';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -116,6 +118,26 @@ function App() {
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
     checkSession();
+
+    // OAuth 콜백 리스너 추가
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      console.log('🔐 Auth 상태 변경:', event, session);
+      
+      if (event === 'SIGNED_IN' && session) {
+        await checkSession();
+      } else if (event === 'SIGNED_OUT') {
+        useAuthStore.setState({
+          user: null,
+          isAuthenticated: false,
+          needsOnboarding: false,
+          redirectAfterLogin: null,
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

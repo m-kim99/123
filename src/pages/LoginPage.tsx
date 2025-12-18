@@ -321,7 +321,7 @@ export function LoginPage() {
                 alt="문서 관리 시스템 로고"
                 className="h-16"
               />
-              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded self-end mb-3">
                 BETA
               </span>
             </CardTitle>

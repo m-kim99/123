@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { MessageSquare } from 'lucide-react';
+import expandIcon from '@/assets/expand.png';
+import closeIcon from '@/assets/close.png';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -138,18 +140,18 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               <button
                 type="button"
                 onClick={() => setIsTall((prev) => !prev)}
-                className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
+                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                □
+                <img src={expandIcon} alt="확장" className="h-4 w-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="h-6 w-6 flex items-center justify-center rounded-full text-white focus:outline-none border border-transparent hover:border-black"
+                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                X
+                <img src={closeIcon} alt="닫기" className="h-4 w-4" />
               </button>
             </div>
           </CardHeader>
