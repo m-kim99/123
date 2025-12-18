@@ -168,7 +168,7 @@ export function TeamDepartments() {
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <FileText className="h-4 w-4 text-slate-500" />
-                            <span className="text-xs text-slate-500 whitespace-nowrap">카테고리</span>
+                            <span className="text-xs text-slate-500"><span className="md:hidden">카테<br/>고리</span><span className="hidden md:inline">카테고리</span></span>
                           </div>
                           <p className="text-2xl font-bold">{deptCategories.length}</p>
                         </div>
