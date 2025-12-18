@@ -125,13 +125,25 @@ function App() {
     console.log('🔍 URL hash params:', Object.fromEntries(hashParams));
     console.log('🔍 Full URL:', window.location.href);
 
+    // OAuth 에러 확인
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    const errorCode = urlParams.get('error_code');
+    if (error) {
+      console.error('❌ OAuth 에러:', error);
+      console.error('❌ OAuth 에러 설명:', errorDescription);
+      console.error('❌ OAuth 에러 코드:', errorCode);
+      // URL에서 에러 파라미터 제거
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     // PKCE flow: code 파라미터가 있으면 세션 교환 시도
     const code = urlParams.get('code');
     if (code) {
       console.log('🔑 OAuth code 발견, 세션 교환 시도...');
-      supabase.auth.exchangeCodeForSession(code).then(({ data, error }: { data: any; error: any }) => {
-        if (error) {
-          console.error('❌ 세션 교환 실패:', error);
+      supabase.auth.exchangeCodeForSession(code).then(({ data, error: exchangeError }: { data: any; error: any }) => {
+        if (exchangeError) {
+          console.error('❌ 세션 교환 실패:', exchangeError);
         } else {
           console.log('✅ 세션 교환 성공:', data);
           // URL에서 code 파라미터 제거
