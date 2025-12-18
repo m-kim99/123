@@ -118,10 +118,24 @@ function App() {
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
     let isProcessing = false;
+    let initialSessionReceived = false;
+
+    // 타임아웃: 3초 후에도 INITIAL_SESSION이 없으면 로딩 해제
+    const timeout = setTimeout(() => {
+      if (!initialSessionReceived) {
+        console.log('⏱️ 타임아웃: INITIAL_SESSION 미수신, 로딩 해제');
+        useAuthStore.setState({ isLoading: false });
+      }
+    }, 3000);
 
     // OAuth 콜백 리스너 - 모든 인증 상태 변경 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       console.log('🔐 Auth 상태 변경:', event, session);
+      
+      if (event === 'INITIAL_SESSION') {
+        initialSessionReceived = true;
+        clearTimeout(timeout);
+      }
       
       // 중복 처리 방지
       if (isProcessing) return;
@@ -152,6 +166,7 @@ function App() {
     });
 
     return () => {
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
