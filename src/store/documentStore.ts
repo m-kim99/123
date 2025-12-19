@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
 import { createDocumentNotification } from '@/lib/notifications';
+import { SharedDocument } from '@/types/document';
 
 export interface Department {
   id: string;
@@ -74,6 +75,7 @@ interface DocumentState {
   parentCategories: ParentCategory[];
   subcategories: Subcategory[];
   documents: Document[];
+  sharedDocuments: SharedDocument[];
   isLoading: boolean;
   error: string | null;
   fetchDepartments: () => Promise<void>;
@@ -81,6 +83,14 @@ interface DocumentState {
   fetchParentCategories: () => Promise<void>;
   fetchSubcategories: (parentCategoryId?: string) => Promise<void>;
   fetchDocuments: () => Promise<void>;
+  fetchSharedDocuments: () => Promise<void>;
+  shareDocument: (
+    documentId: string,
+    sharedToUserId: string,
+    permission: 'view' | 'download',
+    message?: string
+  ) => Promise<void>;
+  unshareDocument: (shareId: string) => Promise<void>;
   addCategory: (category: Omit<Category, 'id' | 'documentCount'>) => Promise<void>;
   addParentCategory: (
     category: Omit<ParentCategory, 'id' | 'subcategoryCount' | 'documentCount'>
@@ -313,6 +323,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   parentCategories: mockParentCategories,
   subcategories: mockSubcategories,
   documents: mockDocuments,
+  sharedDocuments: [],
   isLoading: false,
   error: null,
 
@@ -1544,6 +1555,156 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     } catch (error) {
       console.error('권한 체크 오류:', error);
       return false;
+    }
+  },
+
+  fetchSharedDocuments: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = useAuthStore.getState();
+      
+      if (!user?.id) {
+        set({ sharedDocuments: [], isLoading: false });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('shared_documents')
+        .select(`
+          *,
+          documents!shared_documents_document_id_fkey(
+            id,
+            title,
+            department_id,
+            parent_category_id
+          ),
+          sharedByUser:users!shared_documents_shared_by_user_id_fkey(
+            id,
+            name
+          )
+        `)
+        .eq('shared_to_user_id', user.id)
+        .eq('is_active', true)
+        .order('shared_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const { departments, parentCategories } = get();
+        
+        const sharedDocuments: SharedDocument[] = data.map((share: any) => {
+          const doc = share.documents;
+          const department = departments.find(d => d.id === doc?.department_id);
+          const category = parentCategories.find(c => c.id === doc?.parent_category_id);
+          
+          return {
+            id: share.id,
+            documentId: share.document_id,
+            sharedByUserId: share.shared_by_user_id,
+            sharedToUserId: share.shared_to_user_id,
+            permission: share.permission,
+            message: share.message || undefined,
+            sharedAt: share.shared_at,
+            isActive: share.is_active,
+            documentName: doc?.title || '알 수 없는 문서',
+            sharedByUserName: share.sharedByUser?.name || '알 수 없음',
+            departmentName: department?.name || '',
+            categoryName: category?.name || '',
+          };
+        });
+        
+        set({ sharedDocuments });
+      } else {
+        set({ sharedDocuments: [] });
+      }
+    } catch (err) {
+      console.error('Failed to fetch shared documents:', err);
+      toast({
+        title: '공유 문서를 불러오지 못했습니다.',
+        description: '나중에 다시 시도해 주세요.',
+        variant: 'destructive',
+      });
+      set({ sharedDocuments: [], error: null });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  shareDocument: async (documentId, sharedToUserId, permission, message) => {
+    try {
+      const { user } = useAuthStore.getState();
+      
+      if (!user?.id) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      const { data: existing } = await supabase
+        .from('shared_documents')
+        .select('id')
+        .eq('document_id', documentId)
+        .eq('shared_by_user_id', user.id)
+        .eq('shared_to_user_id', sharedToUserId)
+        .eq('is_active', true)
+        .single();
+
+      if (existing) {
+        toast({
+          title: '이미 공유된 문서입니다.',
+          description: '해당 사용자에게 이미 이 문서를 공유했습니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('shared_documents')
+        .insert({
+          document_id: documentId,
+          shared_by_user_id: user.id,
+          shared_to_user_id: sharedToUserId,
+          permission,
+          message,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: '문서가 공유되었습니다.',
+        description: '상대방이 공유받은 문서함에서 확인할 수 있습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to share document:', err);
+      toast({
+        title: '문서 공유 실패',
+        description: '문서를 공유하지 못했습니다.',
+        variant: 'destructive',
+      });
+    }
+  },
+
+  unshareDocument: async (shareId) => {
+    try {
+      const { error } = await supabase
+        .from('shared_documents')
+        .update({ is_active: false })
+        .eq('id', shareId);
+
+      if (error) throw error;
+
+      set((state) => ({
+        sharedDocuments: state.sharedDocuments.filter(s => s.id !== shareId),
+      }));
+
+      toast({
+        title: '공유가 취소되었습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to unshare document:', err);
+      toast({
+        title: '공유 취소 실패',
+        description: '나중에 다시 시도해 주세요.',
+        variant: 'destructive',
+      });
     }
   },
 }));

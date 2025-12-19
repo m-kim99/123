@@ -12,6 +12,7 @@ import {
   X,
   User,
   Search,
+  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -415,6 +416,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: '문서 관리', href: `${basePath}/documents`, icon: FileText },
     ...(isAdmin
       ? [{ name: '팀원 관리', href: `${basePath}/users`, icon: Users }]
+      : []),
+    ...(!isAdmin
+      ? [{ name: '공유받은 문서함', href: `${basePath}/shared`, icon: Share2 }]
       : []),
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
   ];

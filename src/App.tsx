@@ -51,6 +51,9 @@ const SubcategoryManagement = lazy(() =>
 const NfcRedirect = lazy(() =>
   import('./pages/NfcRedirect').then((m) => ({ default: m.NfcRedirect })),
 );
+const SharedDocuments = lazy(() =>
+  import('./pages/SharedDocuments').then((m) => ({ default: m.SharedDocuments })),
+);
 
 function ProtectedRoute({
   children,
@@ -302,6 +305,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="team">
                   <SubcategoryManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team/shared"
+              element={
+                <ProtectedRoute requiredRole="team">
+                  <SharedDocuments />
                 </ProtectedRoute>
               }
             />
