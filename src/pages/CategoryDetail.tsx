@@ -832,7 +832,7 @@ export function CategoryDetail() {
         <div>
           <Button
             variant="ghost"
-            className="mb-4"
+            className="mb-4 text-white"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
