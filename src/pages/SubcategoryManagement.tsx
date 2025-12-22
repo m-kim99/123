@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
@@ -572,7 +572,11 @@ export function SubcategoryManagement() {
                         <p className="text-xs text-slate-500 mt-1">
                           문서 {sub.documentCount}개 · NFC{' '}
                           {sub.nfcRegistered ? '등록됨' : '미등록'}
-                          {sub.defaultExpiryDays && ` · 보관 만료일 ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`}
+                          {sub.expiryDate
+                            ? ` · 보관 만료일 ${format(new Date(sub.expiryDate), 'yyyy.MM.dd')}`
+                            : sub.defaultExpiryDays
+                              ? ` · 보관 만료일 ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`
+                              : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
@@ -695,13 +699,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addMonths(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 90,
-                        expiryDate: addDays(new Date(), 90).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     3개월
                   </Button>
@@ -709,13 +720,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 1);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 365,
-                        expiryDate: addDays(new Date(), 365).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     1년
                   </Button>
@@ -723,13 +741,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 1095,
-                        expiryDate: addDays(new Date(), 1095).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     3년
                   </Button>
@@ -737,13 +762,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 5);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 1825,
-                        expiryDate: addDays(new Date(), 1825).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     5년
                   </Button>
@@ -751,13 +783,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 7);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 2555,
-                        expiryDate: addDays(new Date(), 2555).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     7년
                   </Button>
@@ -804,8 +843,15 @@ export function SubcategoryManagement() {
                       selected={form.expiryDate ? new Date(form.expiryDate) : undefined}
                       onSelect={(date) => {
                         if (date) {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const selected = new Date(date);
+                          selected.setHours(0, 0, 0, 0);
+                          const diffTime = selected.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setForm((prev) => ({
                             ...prev,
+                            defaultExpiryDays: diffDays,
                             expiryDate: date.toISOString(),
                           }));
                         }
@@ -922,13 +968,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addMonths(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 90,
-                        expiryDate: addDays(new Date(), 90).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     3개월
                   </Button>
@@ -936,13 +989,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 1);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 365,
-                        expiryDate: addDays(new Date(), 365).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     1년
                   </Button>
@@ -950,13 +1010,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 1095,
-                        expiryDate: addDays(new Date(), 1095).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     3년
                   </Button>
@@ -964,13 +1031,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 5);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 1825,
-                        expiryDate: addDays(new Date(), 1825).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     5년
                   </Button>
@@ -978,13 +1052,20 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const target = addYears(new Date(), 7);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                       setEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: 2555,
-                        expiryDate: addDays(new Date(), 2555).toISOString(),
-                      }))
-                    }
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
                   >
                     7년
                   </Button>
@@ -1031,8 +1112,15 @@ export function SubcategoryManagement() {
                       selected={editForm.expiryDate ? new Date(editForm.expiryDate) : undefined}
                       onSelect={(date) => {
                         if (date) {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const selected = new Date(date);
+                          selected.setHours(0, 0, 0, 0);
+                          const diffTime = selected.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setEditForm((prev) => ({
                             ...prev,
+                            defaultExpiryDays: diffDays,
                             expiryDate: date.toISOString(),
                           }));
                         }

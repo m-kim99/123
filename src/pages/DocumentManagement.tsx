@@ -14,7 +14,7 @@ import {
   Search,
   CalendarIcon,
 } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,6 +113,31 @@ function readFileAsDataURL(file: File): Promise<string> {
   });
 }
 
+function getExpiryStatus(expiryDate: string | null): {
+  status: 'normal' | 'warning_30' | 'warning_7' | 'expired';
+  daysLeft: number | null;
+  label: string | null;
+} {
+  if (!expiryDate) {
+    return { status: 'normal', daysLeft: null, label: null };
+  }
+
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { status: 'expired', daysLeft: diffDays, label: '만료됨 🔒' };
+  } else if (diffDays <= 7) {
+    return { status: 'warning_7', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else if (diffDays <= 30) {
+    return { status: 'warning_30', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else {
+    return { status: 'normal', daysLeft: diffDays, label: null };
+  }
+}
+
 export function DocumentManagement() {
   const user = useAuthStore((state) => state.user);
   
@@ -157,6 +182,7 @@ export function DocumentManagement() {
     description: '',
     storageLocation: '',
     defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
   });
   const [editCategoryNameError, setEditCategoryNameError] = useState('');
   const [isSavingCategory, setIsSavingCategory] = useState(false);
@@ -739,6 +765,7 @@ export function DocumentManagement() {
       description: subcategory.description || '',
       storageLocation: subcategory.storageLocation || '',
       defaultExpiryDays: subcategory.defaultExpiryDays || null,
+      expiryDate: subcategory.expiryDate || null,
     });
     setEditCategoryNameError('');
     setEditDialogOpen(true);
@@ -770,6 +797,7 @@ export function DocumentManagement() {
         description: editCategoryForm.description,
         storageLocation: editCategoryForm.storageLocation,
         defaultExpiryDays: editCategoryForm.defaultExpiryDays,
+        expiryDate: editCategoryForm.expiryDate,
       });
 
       toast({
@@ -1798,7 +1826,20 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: 90 }))}
+                        onClick={() => {
+                          const target = addMonths(new Date(), 3);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
                       >
                         3개월
                       </Button>
@@ -1806,7 +1847,20 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: 365 }))}
+                        onClick={() => {
+                          const target = addYears(new Date(), 1);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
                       >
                         1년
                       </Button>
@@ -1814,7 +1868,20 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: 1095 }))}
+                        onClick={() => {
+                          const target = addYears(new Date(), 3);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
                       >
                         3년
                       </Button>
@@ -1822,7 +1889,20 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: 1825 }))}
+                        onClick={() => {
+                          const target = addYears(new Date(), 5);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
                       >
                         5년
                       </Button>
@@ -1830,7 +1910,20 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: 2555 }))}
+                        onClick={() => {
+                          const target = addYears(new Date(), 7);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
                       >
                         7년
                       </Button>
@@ -1839,7 +1932,13 @@ export function DocumentManagement() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setEditCategoryForm((prev) => ({ ...prev, defaultExpiryDays: null }))}
+                          onClick={() =>
+                            setEditCategoryForm((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: null,
+                              expiryDate: null,
+                            }))
+                          }
                           className="bg-white text-slate-600 hover:bg-slate-100"
                         >
                           초기화
@@ -1853,12 +1952,12 @@ export function DocumentManagement() {
                           variant="outline"
                           className={cn(
                             'w-full justify-start text-left font-normal',
-                            !editCategoryForm.defaultExpiryDays && 'text-muted-foreground'
+                            !editCategoryForm.expiryDate && 'text-muted-foreground'
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {editCategoryForm.defaultExpiryDays
-                            ? format(addDays(new Date(), editCategoryForm.defaultExpiryDays), 'PPP', { locale: ko })
+                          {editCategoryForm.expiryDate
+                            ? format(new Date(editCategoryForm.expiryDate), 'PPP', { locale: ko })
                             : '달력에서 보관 만료일 선택'}
                         </Button>
                       </PopoverTrigger>
@@ -1868,7 +1967,7 @@ export function DocumentManagement() {
                           captionLayout="dropdown"
                           fromYear={2020}
                           toYear={2040}
-                          selected={editCategoryForm.defaultExpiryDays ? addDays(new Date(), editCategoryForm.defaultExpiryDays) : undefined}
+                          selected={editCategoryForm.expiryDate ? new Date(editCategoryForm.expiryDate) : undefined}
                           onSelect={(date) => {
                             if (date) {
                               const today = new Date();
@@ -1878,6 +1977,7 @@ export function DocumentManagement() {
                               setEditCategoryForm((prev) => ({
                                 ...prev,
                                 defaultExpiryDays: diffDays,
+                                expiryDate: date.toISOString(),
                               }));
                             }
                           }}
@@ -1888,7 +1988,7 @@ export function DocumentManagement() {
                     </Popover>
                     <p className="text-xs text-slate-500">
                       보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                      {editCategoryForm.defaultExpiryDays && ` (약 ${Math.round(editCategoryForm.defaultExpiryDays / 365)}년, ${editCategoryForm.defaultExpiryDays}일)`}
+                      {editCategoryForm.expiryDate && ` (${format(new Date(editCategoryForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                     </p>
                   </div>
                 </div>
@@ -2016,14 +2116,31 @@ export function DocumentManagement() {
                     const parent = parentCategories.find(
                       (pc) => pc.id === subcategory.parentCategoryId,
                     );
+
+                    const expiryStatus = getExpiryStatus(subcategory.expiryDate || null);
+                    const isExpired = expiryStatus.status === 'expired';
+
                     return (
                       <Card
                         key={subcategory.id}
-                        className="hover:shadow-lg transition-shadow h-full"
+                        className={cn(
+                          'hover:shadow-lg transition-shadow h-full',
+                          expiryStatus.status === 'expired' && 'opacity-50 bg-gray-100 border-gray-300',
+                          expiryStatus.status === 'warning_7' && 'border-orange-300 bg-orange-50',
+                          expiryStatus.status === 'warning_30' && 'border-yellow-300 bg-yellow-50'
+                        )}
                       >
                         <div
                           className="flex flex-col h-full"
                           onClick={() => {
+                            if (isExpired) {
+                              toast({
+                                title: '만료된 카테고리',
+                                description: '이 카테고리는 만료되어 상세 페이지로 이동할 수 없습니다.',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
                             const isAdminPath = window.location.pathname.startsWith('/admin');
                             const basePath = isAdminPath ? '/admin' : '/team';
                             navigate(
@@ -2039,12 +2156,31 @@ export function DocumentManagement() {
                                   {subcategory.description}
                                 </CardDescription>
                               </div>
-                              {subcategory.nfcRegistered && (
-                                <Badge variant="outline" className="ml-2">
-                                  <Smartphone className="h-3 w-3 mr-1" />
-                                  NFC
-                                </Badge>
-                              )}
+                              <div className="flex flex-col gap-1 items-end">
+                                {subcategory.nfcRegistered && (
+                                  <Badge variant="outline" className="ml-2">
+                                    <Smartphone className="h-3 w-3 mr-1" />
+                                    NFC
+                                  </Badge>
+                                )}
+                                {expiryStatus.label && (
+                                  <Badge
+                                    variant={
+                                      expiryStatus.status === 'expired'
+                                        ? 'destructive'
+                                        : expiryStatus.status === 'warning_7'
+                                          ? 'default'
+                                          : 'secondary'
+                                    }
+                                    className={cn(
+                                      expiryStatus.status === 'warning_7' && 'bg-orange-500 text-white',
+                                      expiryStatus.status === 'warning_30' && 'bg-yellow-500 text-white'
+                                    )}
+                                  >
+                                    {expiryStatus.label}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </CardHeader>
                           <CardContent className="flex flex-col justify-between flex-1">
@@ -2071,14 +2207,21 @@ export function DocumentManagement() {
                                   </span>
                                 </div>
                               )}
-                              {subcategory.defaultExpiryDays && (
+                              {subcategory.expiryDate ? (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-slate-500">보관 만료일</span>
+                                  <span className="font-medium">
+                                    {format(new Date(subcategory.expiryDate), 'yyyy.MM.dd')}
+                                  </span>
+                                </div>
+                              ) : subcategory.defaultExpiryDays ? (
                                 <div className="flex items-center justify-between text-sm">
                                   <span className="text-slate-500">보관 만료일</span>
                                   <span className="font-medium">
                                     {format(addDays(new Date(), subcategory.defaultExpiryDays), 'yyyy.MM.dd')}
                                   </span>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                             <div
                               className="flex gap-2 mt-4"
