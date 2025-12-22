@@ -36,6 +36,33 @@ import { toast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+// 만료 상태 계산
+function getExpiryStatus(expiryDate: string | null): {
+  status: 'normal' | 'warning_30' | 'warning_7' | 'expired';
+  daysLeft: number | null;
+  label: string | null;
+} {
+  if (!expiryDate) {
+    return { status: 'normal', daysLeft: null, label: null };
+  }
+
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { status: 'expired', daysLeft: diffDays, label: '만료됨 🔒' };
+  } else if (diffDays <= 7) {
+    return { status: 'warning_7', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else if (diffDays <= 30) {
+    return { status: 'warning_30', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else {
+    return { status: 'normal', daysLeft: diffDays, label: null };
+  }
+}
 
 export function SubcategoryManagement() {
   const navigate = useNavigate();
@@ -90,6 +117,10 @@ export function SubcategoryManagement() {
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
   // 팀원용: 권한 있는 부서 ID 목록
   const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
+
+  // 만료된 카테고리 안내 다이얼로그 상태
+  const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
+  const [expiredSubcategory, setExpiredSubcategory] = useState<Subcategory | null>(null);
 
   useEffect(() => {
     // Zustand actions는 안정적이므로 getState()로 직접 호출
@@ -479,20 +510,52 @@ export function SubcategoryManagement() {
                   const parent = parentCategories.find((pc) => pc.id === sub.parentCategoryId);
                   const isAdminPath = window.location.pathname.startsWith('/admin');
                   const basePath = isAdminPath ? '/admin' : '/team';
+                  const expiryStatus = getExpiryStatus(sub.expiryDate || null);
+                  const isExpired = expiryStatus.status === 'expired';
+
+                  const handleClick = () => {
+                    if (isExpired) {
+                      setExpiredDialogOpen(true);
+                      setExpiredSubcategory(sub);
+                    } else {
+                      navigate(
+                        `${basePath}/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
+                      );
+                    }
+                  };
+
                   return (
                     <div
                       key={sub.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className={cn(
+                        "flex items-center justify-between p-4 border rounded-lg transition-colors",
+                        !isExpired && "hover:bg-slate-50 cursor-pointer",
+                        expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300 cursor-not-allowed",
+                        expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
+                        expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
+                      )}
                     >
                       <div
-                        className="flex-1 min-w-0 cursor-pointer"
-                        onClick={() =>
-                          navigate(
-                            `${basePath}/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
-                          )
-                        }
+                        className="flex-1 min-w-0"
+                        onClick={handleClick}
                       >
-                        <p className="font-medium truncate">{sub.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{sub.name}</p>
+                          {expiryStatus.label && (
+                            <Badge
+                              variant={
+                                expiryStatus.status === 'expired' ? 'destructive' :
+                                expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
+                              }
+                              className={cn(
+                                expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
+                                expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                              )}
+                            >
+                              {expiryStatus.label}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-500 truncate">
                           {parent ? `${parent.name} · ` : ''}
                           {dept ? dept.name : sub.departmentId}
@@ -953,6 +1016,35 @@ export function SubcategoryManagement() {
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleNfcConfirmYes}>
                 예
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 만료된 카테고리 안내 다이얼로그 */}
+        <AlertDialog open={expiredDialogOpen} onOpenChange={setExpiredDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>만료된 카테고리</AlertDialogTitle>
+              <AlertDialogDescription>
+                {expiredSubcategory && (
+                  <>
+                    <p className="mb-2">
+                      "{expiredSubcategory.name}" 카테고리는{' '}
+                      {expiredSubcategory.expiryDate && 
+                        format(new Date(expiredSubcategory.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                      에 만료되었습니다.
+                    </p>
+                    <p>
+                      내부 문서 ({expiredSubcategory.documentCount}개)에 더 이상 접근할 수 없습니다.
+                    </p>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
+                확인
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

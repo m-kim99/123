@@ -66,6 +66,7 @@ export interface Subcategory {
   nfcRegistered: boolean;
   storageLocation?: string;
   defaultExpiryDays?: number | null;
+  expiryDate?: string | null;
   documentCount: number;
 }
 
@@ -649,6 +650,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
+                expiryDate: (sub as any).expiry_date || null,
                 documentCount: count || 0,
               };
             } catch {
@@ -662,6 +664,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
+                expiryDate: (sub as any).expiry_date || null,
                 documentCount: 0,
               };
             }
@@ -904,6 +907,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           nfc_registered: subcategory.nfcRegistered,
           storage_location: subcategory.storageLocation || null,
           default_expiry_days: subcategory.defaultExpiryDays || null,
+          expiry_date: subcategory.expiryDate || null,
         })
         .select()
         .single();
@@ -924,6 +928,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         nfcRegistered: data.nfc_registered,
         storageLocation: data.storage_location || undefined,
         defaultExpiryDays: data.default_expiry_days || null,
+        expiryDate: data.expiry_date || null,
         documentCount: 0,
       };
 
@@ -997,6 +1002,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         updateData.storage_location = updates.storageLocation;
       if (updates.defaultExpiryDays !== undefined)
         updateData.default_expiry_days = updates.defaultExpiryDays;
+      if (updates.expiryDate !== undefined)
+        updateData.expiry_date = updates.expiryDate;
 
       const { error } = await supabase
         .from('subcategories')

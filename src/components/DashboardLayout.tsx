@@ -228,6 +228,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [markAsRead, basePath, navigate]);
 
+  // 알림 메시지를 파싱하여 액션 부분과 나머지를 분리
+  const parseNotificationMessage = useCallback((message: string) => {
+    const actionPatterns = [
+      '문서 등록',
+      '문서 삭제',
+      '세부 카테고리 생성',
+      '세부 카테고리 삭제',
+      '대분류 카테고리 생성',
+      '대분류 카테고리 삭제',
+      '⚠️ 문서 만료 임박 (7일 이내)',
+      '⏰ 문서 만료 임박 (30일 이내)',
+    ];
+
+    for (const pattern of actionPatterns) {
+      if (message.startsWith(pattern)) {
+        const rest = message.substring(pattern.length).trim();
+        return { action: pattern, rest };
+      }
+    }
+
+    return { action: '', rest: message };
+  }, []);
+
   // useCallback으로 최적화
   const handleSearch = useCallback(async () => {
     const query = searchQuery.trim();
@@ -949,7 +972,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {!n.isRead && (
                         <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
                       )}
-                      <span className="text-slate-900">{n.message}</span>
+                      <span className="text-slate-900">
+                        {(() => {
+                          const { action, rest } = parseNotificationMessage(n.message);
+                          return (
+                            <>
+                              {action && <strong>{action}</strong>}
+                              {rest && <> {rest}</>}
+                            </>
+                          );
+                        })()}
+                      </span>
                     </div>
                     <div className="text-[10px] text-slate-400 mt-0.5">
                       {new Date(n.createdAt).toLocaleString()}

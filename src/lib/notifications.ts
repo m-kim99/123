@@ -6,7 +6,10 @@ export type NotificationEventType =
   | 'subcategory_created'
   | 'subcategory_deleted'
   | 'parent_category_created'
-  | 'parent_category_deleted';
+  | 'parent_category_deleted'
+  | 'subcategory_expiring_soon'
+  | 'subcategory_expiring_very_soon'
+  | 'subcategory_expired';
 
 interface CreateDocumentNotificationParams {
   type: NotificationEventType;
@@ -77,12 +80,21 @@ export async function createDocumentNotification({
       case 'parent_category_deleted':
         prefix = '대분류 카테고리 삭제';
         break;
+      case 'subcategory_expiring_soon':
+        prefix = '⚠️ 카테고리 만료 임박 (7일 이내)';
+        break;
+      case 'subcategory_expiring_very_soon':
+        prefix = '⏰ 카테고리 만료 예정 (30일 이내)';
+        break;
+      case 'subcategory_expired':
+        prefix = '🔒 카테고리 만료됨';
+        break;
       default:
         prefix = '알림';
         break;
     }
 
-    const message = `${prefix}: ${baseMessage}`;
+    const message = `${prefix} ${baseMessage}`;
 
     const { error } = await supabase.from('notifications').insert({
       type,

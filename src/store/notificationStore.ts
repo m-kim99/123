@@ -8,7 +8,10 @@ export type NotificationEventType =
   | 'subcategory_created'
   | 'subcategory_deleted'
   | 'parent_category_created'
-  | 'parent_category_deleted';
+  | 'parent_category_deleted'
+  | 'subcategory_expiring_soon'
+  | 'subcategory_expiring_very_soon'
+  | 'subcategory_expired';
 
 export interface Notification {
   id: string;

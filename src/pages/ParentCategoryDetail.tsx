@@ -36,6 +36,33 @@ import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+// 만료 상태 계산
+function getExpiryStatus(expiryDate: string | null): {
+  status: 'normal' | 'warning_30' | 'warning_7' | 'expired';
+  daysLeft: number | null;
+  label: string | null;
+} {
+  if (!expiryDate) {
+    return { status: 'normal', daysLeft: null, label: null };
+  }
+
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { status: 'expired', daysLeft: diffDays, label: '만료됨 🔒' };
+  } else if (diffDays <= 7) {
+    return { status: 'warning_7', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else if (diffDays <= 30) {
+    return { status: 'warning_30', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+  } else {
+    return { status: 'normal', daysLeft: diffDays, label: null };
+  }
+}
 
 export function ParentCategoryDetail() {
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
@@ -79,6 +106,10 @@ export function ParentCategoryDetail() {
   const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
   const [pendingNfcSubcategoryId, setPendingNfcSubcategoryId] = useState<string | null>(null);
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
+
+  // 만료된 카테고리 안내 다이얼로그 상태
+  const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
+  const [expiredSubcategory, setExpiredSubcategory] = useState<any>(null);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -487,15 +518,30 @@ export function ParentCategoryDetail() {
                 {childSubcategories.map((sub) => {
                   const isAdmin = window.location.pathname.startsWith('/admin');
                   const basePath = isAdmin ? '/admin' : '/team';
+                  const expiryStatus = getExpiryStatus(sub.expiryDate || null);
+                  const isExpired = expiryStatus.status === 'expired';
+
+                  const handleClick = () => {
+                    if (isExpired) {
+                      setExpiredDialogOpen(true);
+                      setExpiredSubcategory(sub);
+                    } else {
+                      navigate(
+                        `${basePath}/parent-category/${parentCategory.id}/subcategory/${sub.id}`
+                      );
+                    }
+                  };
+
                   return (
                   <Card
                     key={sub.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() =>
-                      navigate(
-                        `${basePath}/parent-category/${parentCategory.id}/subcategory/${sub.id}`
-                      )
-                    }
+                    className={cn(
+                      "hover:shadow-lg transition-shadow cursor-pointer",
+                      expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300",
+                      expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
+                      expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
+                    )}
+                    onClick={handleClick}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -505,12 +551,28 @@ export function ParentCategoryDetail() {
                             {sub.description || '설명이 없습니다.'}
                           </CardDescription>
                         </div>
-                        {sub.nfcRegistered && (
-                          <Badge variant="outline" className="ml-2">
-                            <Smartphone className="h-3 w-3 mr-1" />
-                            NFC
-                          </Badge>
-                        )}
+                        <div className="flex flex-col gap-1 items-end">
+                          {sub.nfcRegistered && (
+                            <Badge variant="outline" className="ml-2">
+                              <Smartphone className="h-3 w-3 mr-1" />
+                              NFC
+                            </Badge>
+                          )}
+                          {expiryStatus.label && (
+                            <Badge
+                              variant={
+                                expiryStatus.status === 'expired' ? 'destructive' :
+                                expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
+                              }
+                              className={cn(
+                                expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
+                                expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                              )}
+                            >
+                              {expiryStatus.label}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -838,6 +900,35 @@ export function ParentCategoryDetail() {
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleNfcConfirmYes}>
                 예
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 만료된 카테고리 안내 다이얼로그 */}
+        <AlertDialog open={expiredDialogOpen} onOpenChange={setExpiredDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>만료된 카테고리</AlertDialogTitle>
+              <AlertDialogDescription>
+                {expiredSubcategory && (
+                  <>
+                    <p className="mb-2">
+                      "{expiredSubcategory.name}" 카테고리는{' '}
+                      {expiredSubcategory.expiryDate && 
+                        format(new Date(expiredSubcategory.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                      에 만료되었습니다.
+                    </p>
+                    <p>
+                      내부 문서 ({expiredSubcategory.documentCount}개)에 더 이상 접근할 수 없습니다.
+                    </p>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
+                확인
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
