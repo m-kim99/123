@@ -36,7 +36,6 @@ import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
