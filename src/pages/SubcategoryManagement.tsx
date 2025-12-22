@@ -695,7 +695,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 90 }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 90,
+                        expiryDate: addDays(new Date(), 90).toISOString(),
+                      }))
+                    }
                   >
                     3개월
                   </Button>
@@ -703,7 +709,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 365 }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 365,
+                        expiryDate: addDays(new Date(), 365).toISOString(),
+                      }))
+                    }
                   >
                     1년
                   </Button>
@@ -711,7 +723,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 1095 }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 1095,
+                        expiryDate: addDays(new Date(), 1095).toISOString(),
+                      }))
+                    }
                   >
                     3년
                   </Button>
@@ -719,7 +737,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 1825 }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 1825,
+                        expiryDate: addDays(new Date(), 1825).toISOString(),
+                      }))
+                    }
                   >
                     5년
                   </Button>
@@ -727,7 +751,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: 2555 }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 2555,
+                        expiryDate: addDays(new Date(), 2555).toISOString(),
+                      }))
+                    }
                   >
                     7년
                   </Button>
@@ -736,7 +766,13 @@ export function SubcategoryManagement() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setForm((prev) => ({ ...prev, defaultExpiryDays: null }))}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          defaultExpiryDays: null,
+                          expiryDate: null,
+                        }))
+                      }
                       className="bg-white text-slate-600 hover:bg-slate-100"
                     >
                       초기화
@@ -886,7 +922,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: 90 }))}
+                    onClick={() =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 90,
+                        expiryDate: addDays(new Date(), 90).toISOString(),
+                      }))
+                    }
                   >
                     3개월
                   </Button>
@@ -894,7 +936,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: 365 }))}
+                    onClick={() =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 365,
+                        expiryDate: addDays(new Date(), 365).toISOString(),
+                      }))
+                    }
                   >
                     1년
                   </Button>
@@ -902,7 +950,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: 1095 }))}
+                    onClick={() =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 1095,
+                        expiryDate: addDays(new Date(), 1095).toISOString(),
+                      }))
+                    }
                   >
                     3년
                   </Button>
@@ -910,7 +964,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: 1825 }))}
+                    onClick={() =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 1825,
+                        expiryDate: addDays(new Date(), 1825).toISOString(),
+                      }))
+                    }
                   >
                     5년
                   </Button>
@@ -918,7 +978,13 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: 2555 }))}
+                    onClick={() =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: 2555,
+                        expiryDate: addDays(new Date(), 2555).toISOString(),
+                      }))
+                    }
                   >
                     7년
                   </Button>
@@ -927,7 +993,13 @@ export function SubcategoryManagement() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditForm((prev) => ({ ...prev, defaultExpiryDays: null }))}
+                      onClick={() =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          defaultExpiryDays: null,
+                          expiryDate: null,
+                        }))
+                      }
                       className="bg-white text-slate-600 hover:bg-slate-100"
                     >
                       초기화

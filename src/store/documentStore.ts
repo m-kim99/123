@@ -8,6 +8,7 @@ import {
   type ParentCategory as SupabaseParentCategory,
   type Subcategory as SupabaseSubcategory,
 } from '@/lib/supabase';
+import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
 import { createDocumentNotification } from '@/lib/notifications';
@@ -896,6 +897,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   // 세부 카테고리 추가 (subcategories 테이블에 삽입)
   addSubcategory: async (subcategory) => {
     try {
+      const computedExpiryDate =
+        subcategory.expiryDate ??
+        (subcategory.defaultExpiryDays != null
+          ? addDays(new Date(), subcategory.defaultExpiryDays).toISOString()
+          : null);
+
       const { data, error } = await supabase
         .from('subcategories')
         .insert({
@@ -907,7 +914,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           nfc_registered: subcategory.nfcRegistered,
           storage_location: subcategory.storageLocation || null,
           default_expiry_days: subcategory.defaultExpiryDays || null,
-          expiry_date: subcategory.expiryDate || null,
+          expiry_date: computedExpiryDate,
         })
         .select()
         .single();
@@ -970,6 +977,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         nfcUid: subcategory.nfcUid || null,
         nfcRegistered: subcategory.nfcRegistered,
         storageLocation: subcategory.storageLocation,
+        defaultExpiryDays: subcategory.defaultExpiryDays ?? null,
+        expiryDate:
+          subcategory.expiryDate ??
+          (subcategory.defaultExpiryDays != null
+            ? addDays(new Date(), subcategory.defaultExpiryDays).toISOString()
+            : null),
         documentCount: 0,
       };
       set((state) => ({
@@ -988,22 +1001,35 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   updateSubcategory: async (id, updates) => {
     try {
+      const normalizedUpdates: any = { ...updates };
+      if (
+        normalizedUpdates.expiryDate === undefined &&
+        normalizedUpdates.defaultExpiryDays != null
+      ) {
+        normalizedUpdates.expiryDate = addDays(
+          new Date(),
+          normalizedUpdates.defaultExpiryDays
+        ).toISOString();
+      }
+
       const updateData: any = {};
-      if (updates.name !== undefined) updateData.name = updates.name;
-      if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.parentCategoryId !== undefined)
-        updateData.parent_category_id = updates.parentCategoryId;
-      if (updates.departmentId !== undefined)
-        updateData.department_id = updates.departmentId;
-      if (updates.nfcUid !== undefined) updateData.nfc_tag_id = updates.nfcUid;
-      if (updates.nfcRegistered !== undefined)
-        updateData.nfc_registered = updates.nfcRegistered;
-      if (updates.storageLocation !== undefined)
-        updateData.storage_location = updates.storageLocation;
-      if (updates.defaultExpiryDays !== undefined)
-        updateData.default_expiry_days = updates.defaultExpiryDays;
-      if (updates.expiryDate !== undefined)
-        updateData.expiry_date = updates.expiryDate;
+      if (normalizedUpdates.name !== undefined) updateData.name = normalizedUpdates.name;
+      if (normalizedUpdates.description !== undefined)
+        updateData.description = normalizedUpdates.description;
+      if (normalizedUpdates.parentCategoryId !== undefined)
+        updateData.parent_category_id = normalizedUpdates.parentCategoryId;
+      if (normalizedUpdates.departmentId !== undefined)
+        updateData.department_id = normalizedUpdates.departmentId;
+      if (normalizedUpdates.nfcUid !== undefined)
+        updateData.nfc_tag_id = normalizedUpdates.nfcUid;
+      if (normalizedUpdates.nfcRegistered !== undefined)
+        updateData.nfc_registered = normalizedUpdates.nfcRegistered;
+      if (normalizedUpdates.storageLocation !== undefined)
+        updateData.storage_location = normalizedUpdates.storageLocation;
+      if (normalizedUpdates.defaultExpiryDays !== undefined)
+        updateData.default_expiry_days = normalizedUpdates.defaultExpiryDays;
+      if (normalizedUpdates.expiryDate !== undefined)
+        updateData.expiry_date = normalizedUpdates.expiryDate;
 
       const { error } = await supabase
         .from('subcategories')
@@ -1014,7 +1040,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       set((state) => ({
         subcategories: state.subcategories.map((sub) =>
-          sub.id === id ? { ...sub, ...updates } : sub
+          sub.id === id ? { ...sub, ...normalizedUpdates } : sub
         ),
       }));
     } catch (err) {
