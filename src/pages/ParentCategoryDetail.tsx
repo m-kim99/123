@@ -517,7 +517,13 @@ export function ParentCategoryDetail() {
                 {childSubcategories.map((sub) => {
                   const isAdmin = window.location.pathname.startsWith('/admin');
                   const basePath = isAdmin ? '/admin' : '/team';
+                  
+                  // 디버깅: expiryDate 값 확인
+                  console.log('Subcategory:', sub.name, 'expiryDate:', sub.expiryDate);
+                  
                   const expiryStatus = getExpiryStatus(sub.expiryDate || null);
+                  console.log('Expiry Status:', expiryStatus);
+                  
                   const isExpired = expiryStatus.status === 'expired';
 
                   const handleClick = () => {

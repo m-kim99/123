@@ -640,6 +640,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 .select('*', { count: 'exact', head: true })
                 .eq('subcategory_id', sub.id);
 
+              // 디버깅: DB에서 가져온 expiry_date 확인
+              console.log('DB Subcategory:', sub.name, 'expiry_date:', (sub as any).expiry_date);
+              
               return {
                 id: sub.id,
                 name: sub.name,
