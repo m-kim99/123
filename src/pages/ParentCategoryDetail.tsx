@@ -90,6 +90,7 @@ export function ParentCategoryDetail() {
     description: '',
     storageLocation: '',
     defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
   });
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -164,6 +165,7 @@ export function ParentCategoryDetail() {
         nfcRegistered: false,
         storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
+        expiryDate: form.expiryDate,
       });
       setAddDialogOpen(false);
       setForm({
@@ -171,6 +173,7 @@ export function ParentCategoryDetail() {
         description: '',
         storageLocation: '',
         defaultExpiryDays: null,
+        expiryDate: null,
       });
     } finally {
       setIsSaving(false);
@@ -193,6 +196,7 @@ export function ParentCategoryDetail() {
         nfcRegistered: false,
         storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
+        expiryDate: form.expiryDate,
       });
 
       if (!created) {
@@ -228,6 +232,7 @@ export function ParentCategoryDetail() {
         description: '',
         storageLocation: '',
         defaultExpiryDays: null,
+        expiryDate: null,
       });
     } catch (error: any) {
       console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
@@ -289,6 +294,7 @@ export function ParentCategoryDetail() {
       description: '',
       storageLocation: '',
       defaultExpiryDays: null,
+      expiryDate: null,
     });
   };
 
@@ -517,13 +523,7 @@ export function ParentCategoryDetail() {
                 {childSubcategories.map((sub) => {
                   const isAdmin = window.location.pathname.startsWith('/admin');
                   const basePath = isAdmin ? '/admin' : '/team';
-                  
-                  // 디버깅: expiryDate 값 확인
-                  console.log('Subcategory:', sub.name, 'expiryDate:', sub.expiryDate);
-                  
                   const expiryStatus = getExpiryStatus(sub.expiryDate || null);
-                  console.log('Expiry Status:', expiryStatus);
-                  
                   const isExpired = expiryStatus.status === 'expired';
 
                   const handleClick = () => {
@@ -723,12 +723,12 @@ export function ParentCategoryDetail() {
                       variant="outline"
                       className={cn(
                         'w-full justify-start text-left font-normal',
-                        !form.defaultExpiryDays && 'text-muted-foreground'
+                        !form.expiryDate && 'text-muted-foreground'
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.defaultExpiryDays
-                        ? format(addDays(new Date(), form.defaultExpiryDays), 'PPP', { locale: ko })
+                      {form.expiryDate
+                        ? format(new Date(form.expiryDate), 'PPP', { locale: ko })
                         : '달력에서 보관 만료일 선택'}
                     </Button>
                   </PopoverTrigger>
@@ -738,16 +738,12 @@ export function ParentCategoryDetail() {
                       captionLayout="dropdown"
                       fromYear={2020}
                       toYear={2040}
-                      selected={form.defaultExpiryDays ? addDays(new Date(), form.defaultExpiryDays) : undefined}
+                      selected={form.expiryDate ? new Date(form.expiryDate) : undefined}
                       onSelect={(date) => {
                         if (date) {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const diffTime = date.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setForm((prev) => ({
                             ...prev,
-                            defaultExpiryDays: diffDays,
+                            expiryDate: date.toISOString(),
                           }));
                         }
                       }}
@@ -758,7 +754,7 @@ export function ParentCategoryDetail() {
                 </Popover>
                 <p className="text-xs text-slate-500">
                   보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                  {form.defaultExpiryDays && ` (약 ${Math.round(form.defaultExpiryDays / 365)}년, ${form.defaultExpiryDays}일)`}
+                  {form.expiryDate && ` (${format(new Date(form.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                 </p>
               </div>
             </div>

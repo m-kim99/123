@@ -96,6 +96,7 @@ export function SubcategoryManagement() {
     parentCategoryId: '',
     storageLocation: '',
     defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(
@@ -106,6 +107,7 @@ export function SubcategoryManagement() {
     description: '',
     storageLocation: '',
     defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -231,6 +233,7 @@ export function SubcategoryManagement() {
         nfcRegistered: false,
         nfcUid: null,
         defaultExpiryDays: form.defaultExpiryDays,
+        expiryDate: form.expiryDate,
       });
 
       setAddDialogOpen(false);
@@ -241,6 +244,7 @@ export function SubcategoryManagement() {
         parentCategoryId: '',
         storageLocation: '',
         defaultExpiryDays: null,
+        expiryDate: null,
       });
 
       await fetchSubcategories();
@@ -267,6 +271,7 @@ export function SubcategoryManagement() {
         nfcRegistered: false,
         nfcUid: null,
         defaultExpiryDays: form.defaultExpiryDays,
+        expiryDate: form.expiryDate,
       });
 
       if (!created) {
@@ -304,6 +309,7 @@ export function SubcategoryManagement() {
         parentCategoryId: '',
         storageLocation: '',
         defaultExpiryDays: null,
+        expiryDate: null,
       });
     } catch (error: any) {
       console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
@@ -369,6 +375,7 @@ export function SubcategoryManagement() {
       parentCategoryId: '',
       storageLocation: '',
       defaultExpiryDays: null,
+      expiryDate: null,
     });
   };
 
@@ -388,6 +395,7 @@ export function SubcategoryManagement() {
       description: sub.description || '',
       storageLocation: sub.storageLocation || '',
       defaultExpiryDays: sub.defaultExpiryDays || null,
+      expiryDate: sub.expiryDate || null,
     });
     setEditNameError('');
     setEditDialogOpen(true);
@@ -416,6 +424,7 @@ export function SubcategoryManagement() {
         description: editForm.description,
         storageLocation: editForm.storageLocation,
         defaultExpiryDays: editForm.defaultExpiryDays,
+        expiryDate: editForm.expiryDate,
       });
       await fetchSubcategories();
       setEditDialogOpen(false);
@@ -741,12 +750,12 @@ export function SubcategoryManagement() {
                       variant="outline"
                       className={cn(
                         'w-full justify-start text-left font-normal',
-                        !form.defaultExpiryDays && 'text-muted-foreground'
+                        !form.expiryDate && 'text-muted-foreground'
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.defaultExpiryDays
-                        ? format(addDays(new Date(), form.defaultExpiryDays), 'PPP', { locale: ko })
+                      {form.expiryDate
+                        ? format(new Date(form.expiryDate), 'PPP', { locale: ko })
                         : '달력에서 보관 만료일 선택'}
                     </Button>
                   </PopoverTrigger>
@@ -756,16 +765,12 @@ export function SubcategoryManagement() {
                       captionLayout="dropdown"
                       fromYear={2020}
                       toYear={2040}
-                      selected={form.defaultExpiryDays ? addDays(new Date(), form.defaultExpiryDays) : undefined}
+                      selected={form.expiryDate ? new Date(form.expiryDate) : undefined}
                       onSelect={(date) => {
                         if (date) {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const diffTime = date.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setForm((prev) => ({
                             ...prev,
-                            defaultExpiryDays: diffDays,
+                            expiryDate: date.toISOString(),
                           }));
                         }
                       }}
@@ -776,7 +781,7 @@ export function SubcategoryManagement() {
                 </Popover>
                 <p className="text-xs text-slate-500">
                   보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                  {form.defaultExpiryDays && ` (약 ${Math.round(form.defaultExpiryDays / 365)}년, ${form.defaultExpiryDays}일)`}
+                  {form.expiryDate && ` (${format(new Date(form.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                 </p>
               </div>
             </div>
@@ -936,12 +941,12 @@ export function SubcategoryManagement() {
                       variant="outline"
                       className={cn(
                         'w-full justify-start text-left font-normal',
-                        !editForm.defaultExpiryDays && 'text-muted-foreground'
+                        !editForm.expiryDate && 'text-muted-foreground'
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editForm.defaultExpiryDays
-                        ? format(addDays(new Date(), editForm.defaultExpiryDays), 'PPP', { locale: ko })
+                      {editForm.expiryDate
+                        ? format(new Date(editForm.expiryDate), 'PPP', { locale: ko })
                         : '달력에서 보관 만료일 선택'}
                     </Button>
                   </PopoverTrigger>
@@ -951,16 +956,12 @@ export function SubcategoryManagement() {
                       captionLayout="dropdown"
                       fromYear={2020}
                       toYear={2040}
-                      selected={editForm.defaultExpiryDays ? addDays(new Date(), editForm.defaultExpiryDays) : undefined}
+                      selected={editForm.expiryDate ? new Date(editForm.expiryDate) : undefined}
                       onSelect={(date) => {
                         if (date) {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const diffTime = date.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setEditForm((prev) => ({
                             ...prev,
-                            defaultExpiryDays: diffDays,
+                            expiryDate: date.toISOString(),
                           }));
                         }
                       }}
@@ -971,7 +972,7 @@ export function SubcategoryManagement() {
                 </Popover>
                 <p className="text-xs text-slate-500">
                   보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                  {editForm.defaultExpiryDays && ` (약 ${Math.round(editForm.defaultExpiryDays / 365)}년, ${editForm.defaultExpiryDays}일)`}
+                  {editForm.expiryDate && ` (${format(new Date(editForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                 </p>
               </div>
             </div>
