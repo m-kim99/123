@@ -20,6 +20,8 @@ export interface Department {
   id: string;
   code: string;
   name: string;
+  company_id?: string | null;
+  description?: string | null;
   created_at: string;
 }
 

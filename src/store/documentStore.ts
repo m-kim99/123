@@ -130,14 +130,14 @@ interface DocumentState {
   ) => Promise<boolean>;
 }
 
-const mockDepartments: Department[] = [
+export const mockDepartments: Department[] = [
   { id: 'HR001', name: '인사팀', code: 'HR001', documentCount: 245 },
   { id: 'DEV001', name: '개발팀', code: 'DEV001', documentCount: 432 },
   { id: 'MKT001', name: '마케팅팀', code: 'MKT001', documentCount: 189 },
   { id: 'FIN001', name: '회계팀', code: 'FIN001', documentCount: 134 },
 ];
 
-const mockCategories: Category[] = [
+export const mockCategories: Category[] = [
   {
     id: '1',
     name: '채용 문서',
@@ -193,7 +193,7 @@ const mockCategories: Category[] = [
   },
 ];
 
-const mockParentCategories: ParentCategory[] = mockCategories.map((cat) => ({
+export const mockParentCategories: ParentCategory[] = mockCategories.map((cat) => ({
   id: cat.id,
   name: cat.name,
   description: cat.description,
@@ -202,7 +202,7 @@ const mockParentCategories: ParentCategory[] = mockCategories.map((cat) => ({
   documentCount: cat.documentCount,
 }));
 
-const mockSubcategories: Subcategory[] = mockCategories.map((cat) => ({
+export const mockSubcategories: Subcategory[] = mockCategories.map((cat) => ({
   id: `${cat.id}-sub1`,
   name: `${cat.name} 세부`,
   description: cat.description,
@@ -214,7 +214,7 @@ const mockSubcategories: Subcategory[] = mockCategories.map((cat) => ({
   documentCount: cat.documentCount,
 }));
 
-const mockDocuments: Document[] = [
+export const mockDocuments: Document[] = [
   {
     id: '1',
     name: '2024년 1분기 신입사원 채용공고.pdf',
@@ -320,11 +320,11 @@ const sanitizeFileName = (originalName: string) => {
 };
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
-  departments: mockDepartments,
-  categories: mockCategories,
-  parentCategories: mockParentCategories,
-  subcategories: mockSubcategories,
-  documents: mockDocuments,
+  departments: [],
+  categories: [],
+  parentCategories: [],
+  subcategories: [],
+  documents: [],
   sharedDocuments: [],
   isLoading: false,
   error: null,
@@ -335,7 +335,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ departments: mockDepartments, isLoading: false });
+        set({ departments: [], isLoading: false });
         return;
       }
 
@@ -396,18 +396,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         );
         set({ departments });
       } else {
-        // 데이터가 없을 경우 mock 데이터 사용
-        set({ departments: mockDepartments });
+        set({ departments: [] });
       }
     } catch (err) {
-      console.error('Failed to fetch departments from Supabase, using mock data:', err);
-      // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      console.error('Failed to fetch departments from Supabase:', err);
       toast({
         title: '부서 데이터를 불러오지 못했습니다.',
-        description: '임시 데이터로 계속 표시합니다.',
+        description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
-      set({ departments: mockDepartments, error: null });
+      set({ departments: [], error: null });
     } finally {
       set({ isLoading: false });
     }
@@ -419,7 +417,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ categories: mockCategories, isLoading: false });
+        set({ categories: [], isLoading: false });
         return;
       }
 
@@ -480,18 +478,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         );
         set({ categories });
       } else {
-        // 데이터가 없을 경우 mock 데이터 사용
-        set({ categories: mockCategories });
+        set({ categories: [] });
       }
     } catch (err) {
-      console.error('Failed to fetch categories from Supabase, using mock data:', err);
-      // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      console.error('Failed to fetch categories from Supabase:', err);
       toast({
         title: '카테고리 데이터를 불러오지 못했습니다.',
-        description: '임시 데이터로 계속 표시합니다.',
+        description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
-      set({ categories: mockCategories, error: null });
+      set({ categories: [], error: null });
     } finally {
       set({ isLoading: false });
     }
@@ -504,7 +500,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ parentCategories: mockParentCategories, isLoading: false });
+        set({ parentCategories: [], isLoading: false });
         return;
       }
 
@@ -571,13 +567,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       set({ parentCategories });
     } catch (err) {
-      console.error('Failed to fetch parent categories from Supabase, using mock data:', err);
+      console.error('Failed to fetch parent categories from Supabase:', err);
       toast({
         title: '대분류 카테고리를 불러오지 못했습니다.',
-        description: '임시 데이터로 계속 표시합니다.',
+        description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
-      set({ parentCategories: mockParentCategories, error: null });
+      set({ parentCategories: [], error: null });
     } finally {
       set({ isLoading: false });
     }
@@ -590,10 +586,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        const filtered = parentCategoryId
-          ? mockSubcategories.filter((s) => s.parentCategoryId === parentCategoryId)
-          : mockSubcategories;
-        set({ subcategories: filtered, isLoading: false });
+        set({ subcategories: [], isLoading: false });
         return;
       }
 
@@ -678,10 +671,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       console.error('Failed to fetch subcategories from Supabase:', err);
       toast({
         title: '세부 카테고리를 불러오지 못했습니다.',
-        description: '임시 데이터로 계속 표시합니다.',
+        description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
-      set({ subcategories: mockSubcategories, error: null });
+      set({ subcategories: [], error: null });
     } finally {
       set({ isLoading: false });
     }
@@ -693,7 +686,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ documents: mockDocuments, isLoading: false });
+        set({ documents: [], isLoading: false });
         return;
       }
 
@@ -743,18 +736,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         });
         set({ documents });
       } else {
-        // 데이터가 없을 경우 mock 데이터 사용
-        set({ documents: mockDocuments });
+        set({ documents: [] });
       }
     } catch (err) {
-      console.error('Failed to fetch documents from Supabase, using mock data:', err);
-      // Supabase 연결 실패 시 mock 데이터를 fallback으로 사용
+      console.error('Failed to fetch documents from Supabase:', err);
       toast({
         title: '문서 데이터를 불러오지 못했습니다.',
-        description: '임시 데이터로 계속 표시합니다.',
+        description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
-      set({ documents: mockDocuments, error: null });
+      set({ documents: [], error: null });
     } finally {
       set({ isLoading: false });
     }
