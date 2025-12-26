@@ -179,9 +179,15 @@ export function SubcategoryDetail() {
     }
 
     setIsRegisteringNfc(true);
+    const scanToast = toast({
+      title: 'NFC 태그 인식 대기',
+      description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+      duration: 1000000,
+    });
     try {
       // 1) 태그의 UID를 읽어온다
       const uid = await readNFCUid();
+      scanToast.dismiss();
 
       // 2) 이 UID가 이미 등록된 태그인지 확인
       const existingSub = await findSubcategoryByNfcUid(uid);
@@ -198,6 +204,7 @@ export function SubcategoryDetail() {
       // 등록된 적 없는 태그 → 바로 등록 진행
       await proceedNfcRegistration(uid);
     } catch (error) {
+      scanToast.dismiss();
       console.error('NFC 등록 실패:', error);
 
       let description = 'NFC 태그를 등록하는 중 오류가 발생했습니다.';

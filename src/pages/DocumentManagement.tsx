@@ -632,6 +632,7 @@ export function DocumentManagement() {
       return;
     }
 
+    let scanToast: ReturnType<typeof toast> | null = null;
     try {
       const created = await addSubcategory({
         name: newCategory.name.trim(),
@@ -652,7 +653,13 @@ export function DocumentManagement() {
         return;
       }
 
+      scanToast = toast({
+        title: 'NFC 태그 인식 대기',
+        description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+        duration: 1000000,
+      });
       const uid = await readNFCUid();
+      scanToast.dismiss();
 
       // 이 UID가 이미 등록된 태그인지 확인
       const existingSub = await findSubcategoryByNfcUid(uid);
@@ -677,6 +684,7 @@ export function DocumentManagement() {
         storageLocation: '',
       });
     } catch (error: any) {
+      scanToast?.dismiss();
       console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
       toast({
         title: 'NFC 등록 실패',
@@ -2026,8 +2034,15 @@ export function DocumentManagement() {
                     type="button"
                     onClick={async () => {
                       if (!editingCategoryId) return;
+                      let scanToast: ReturnType<typeof toast> | null = null;
                       try {
+                        scanToast = toast({
+                          title: 'NFC 태그 인식 대기',
+                          description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+                          duration: 1000000,
+                        });
                         const uid = await readNFCUid();
+                        scanToast.dismiss();
 
                         // 이 UID가 이미 등록된 태그인지 확인
                         const existingSub = await findSubcategoryByNfcUid(uid);
@@ -2044,6 +2059,7 @@ export function DocumentManagement() {
                         // 등록된 적 없는 태그 → 바로 등록 진행
                         await proceedNfcRegistration(uid, editingCategoryId);
                       } catch (error: any) {
+                        scanToast?.dismiss();
                         toast({
                           title: '오류',
                           description:

@@ -261,6 +261,11 @@ export function SubcategoryManagement() {
     }
 
     setIsSaving(true);
+    const scanToast = toast({
+      title: 'NFC 태그 인식 대기',
+      description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+      duration: 1000000,
+    });
     try {
       const created = await addSubcategory({
         name: form.name.trim(),
@@ -284,6 +289,7 @@ export function SubcategoryManagement() {
       }
 
       const uid = await readNFCUid();
+      scanToast.dismiss();
 
       // 이 UID가 이미 등록된 태그인지 확인
       const existingSub = await findSubcategoryByNfcUid(uid);
@@ -312,6 +318,7 @@ export function SubcategoryManagement() {
         expiryDate: null,
       });
     } catch (error: any) {
+      scanToast.dismiss();
       console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
       toast({
         title: 'NFC 등록 실패',
