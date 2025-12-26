@@ -461,7 +461,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0`}
       >
-        <div className="flex items-center justify-center h-16 px-4 border-b">
+        <div className="flex items-center justify-center h-16 px-4 border-b overflow-hidden">
           <button
             type="button"
             onClick={() => navigate(basePath)}
@@ -470,7 +470,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-12 w-full max-w-[200px] object-contain"
+              className="h-12 w-auto max-w-[200px] object-contain"
             />
           </button>
         </div>
