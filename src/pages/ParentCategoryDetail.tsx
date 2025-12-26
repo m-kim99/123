@@ -771,6 +771,27 @@ export function ParentCategoryDetail() {
                   >
                     7년
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const target = addYears(new Date(), 10);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    10년
+                  </Button>
                   {form.defaultExpiryDays && (
                     <Button
                       type="button"

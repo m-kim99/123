@@ -1555,7 +1555,7 @@ export function DocumentManagement() {
               value="categories"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              세부 카테고리 관리
+              세부 카테고리
             </TabsTrigger>
             <TabsTrigger
               value="documents"
@@ -1926,6 +1926,27 @@ export function DocumentManagement() {
                         }}
                       >
                         7년
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const target = addYears(new Date(), 10);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setEditCategoryForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: target.toISOString(),
+                          }));
+                        }}
+                      >
+                        10년
                       </Button>
                       {editCategoryForm.defaultExpiryDays && (
                         <Button

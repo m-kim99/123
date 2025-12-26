@@ -581,7 +581,7 @@ export function SubcategoryDetail() {
                 disabled={isRegisteringNfc}
                 className={`flex items-center gap-2 w-28 justify-center ${
                   subcategory.nfcRegistered 
-                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border-[#2563eb]' 
+                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#2563eb]' 
                     : ''
                 }`}
               >

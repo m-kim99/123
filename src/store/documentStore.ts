@@ -425,7 +425,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .from('subcategories')
         .select('*')
         .in('department_id', deptIds)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true });
 
       if (parentCategoryId) {
         query = query.eq('parent_category_id', parentCategoryId);
