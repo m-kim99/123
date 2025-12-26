@@ -131,16 +131,9 @@ export function DepartmentManagement() {
         return;
       }
 
-      const companyPrefix = (user.companyCode || user.companyId)
-        .toUpperCase()
-        .replace(/[^A-Z0-9_\-]/g, '_');
-      const deptCode = code.toUpperCase().replace(/[^A-Z0-9_\-]/g, '_');
-      const departmentId = `${companyPrefix}_${deptCode}`;
-
       const { error } = await supabase
         .from('departments')
         .insert({
-          id: departmentId,
           name,
           code,
           // description 컬럼이 있다면 함께 저장 (없으면 무시됨)
