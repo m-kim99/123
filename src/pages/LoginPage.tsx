@@ -315,13 +315,13 @@ export function LoginPage() {
       <div className="flex flex-col items-center">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="text-center">
-            <CardTitle className="flex justify-center items-center gap-2">
+            <CardTitle className="flex flex-row justify-center items-center gap-2 max-w-full overflow-hidden">
               <img
                 src={logo}
                 alt="문서 관리 시스템 로고"
-                className="h-16"
+                className="h-14 sm:h-16 w-auto max-w-[calc(100%-4rem)] object-contain"
               />
-              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded self-end mb-3">
+              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shrink-0 whitespace-nowrap translate-y-[0.35rem] sm:translate-y-[0.4rem]">
                 BETA
               </span>
             </CardTitle>
