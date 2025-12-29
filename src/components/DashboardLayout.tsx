@@ -5,6 +5,7 @@ import {
   Home,
   Building2,
   BarChart3,
+  MessageSquare,
   LogOut,
   ChevronDown,
   Users,
@@ -444,6 +445,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [{ name: '공유받은 문서함', href: `${basePath}/shared`, icon: Share2 }]
       : []),
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
+    { name: '공지사항', href: `${basePath}/announcements`, icon: MessageSquare },
   ];
 
   const handleLogout = async () => {

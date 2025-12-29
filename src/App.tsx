@@ -55,6 +55,13 @@ const SharedDocuments = lazy(() =>
   import('./pages/SharedDocuments').then((m) => ({ default: m.SharedDocuments })),
 );
 
+const AdminAnnouncements = lazy(() =>
+  import('./pages/AdminAnnouncements').then((m) => ({ default: m.AdminAnnouncements })),
+);
+const TeamAnnouncements = lazy(() =>
+  import('./pages/TeamAnnouncements').then((m) => ({ default: m.TeamAnnouncements })),
+);
+
 function ProtectedRoute({
   children,
   requiredRole,
@@ -236,6 +243,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/announcements"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminAnnouncements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/category/:categoryId"
               element={
                 <ProtectedRoute requiredRole="admin">
@@ -321,6 +336,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="team">
                   <Statistics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team/announcements"
+              element={
+                <ProtectedRoute requiredRole="team">
+                  <TeamAnnouncements />
                 </ProtectedRoute>
               }
             />
