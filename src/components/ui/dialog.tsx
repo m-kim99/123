@@ -53,7 +53,7 @@ const DialogContent = React.forwardRef<
           closeClassName
         )}
       >
-        <Cross2Icon className="h-4 w-4" />
+        <Cross2Icon className="h-4 w-4 text-white" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -67,7 +67,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'flex flex-col space-y-1.5 text-center sm:text-left',
+      'flex flex-col space-y-1.5 text-center sm:text-left pr-8',
       className
     )}
     {...props}
