@@ -19,7 +19,7 @@ export function Statistics() {
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
   const documents = useDocumentStore((state) => state.documents);
-  const categories = useDocumentStore((state) => state.categories);
+  const parentCategories = useDocumentStore((state) => state.parentCategories);
   const isAdmin = user?.role === 'admin';
   const primaryColor = '#2563eb';
 
@@ -80,10 +80,10 @@ export function Statistics() {
 
   const monthlyData = getMonthlyData();
 
-  const categoryStats = categories
+  const parentCategoryStats = parentCategories
     .map((cat) => ({
       name: cat.name,
-      count: documents.filter((doc) => doc.categoryId === cat.id).length,
+      count: documents.filter((doc) => doc.parentCategoryId === cat.id).length,
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
@@ -148,14 +148,14 @@ export function Statistics() {
 
           <Card>
             <CardHeader>
-              <CardTitle>카테고리별 문서 수</CardTitle>
+              <CardTitle>대분류별 문서 수</CardTitle>
             </CardHeader>
             <CardContent>
-              {categories.length === 0 ? (
-                <p className="text-sm text-slate-500">카테고리를 추가하세요.</p>
+              {parentCategories.length === 0 ? (
+                <p className="text-sm text-slate-500">대분류를 추가하세요.</p>
               ) : (
                 <div className="space-y-4">
-                  {categoryStats.map((cat, index) => (
+                  {parentCategoryStats.map((cat, index) => (
                     <div
                       key={cat.name}
                       className="flex items-center justify-between"
