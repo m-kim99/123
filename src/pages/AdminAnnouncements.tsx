@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -282,10 +282,11 @@ export function AdminAnnouncements() {
                   />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Switch
+                  <Checkbox
                     id="allow-comments"
                     checked={newAllowComments}
-                    onCheckedChange={setNewAllowComments}
+                    onCheckedChange={(checked) => setNewAllowComments(checked === true)}
+                    className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
                   />
                   <Label htmlFor="allow-comments">댓글 허용</Label>
                 </div>
@@ -379,10 +380,11 @@ export function AdminAnnouncements() {
                 />
               </div>
               <div className="flex items-center space-x-2">
-                <Switch
+                <Checkbox
                   id="edit-allow-comments"
                   checked={editAllowComments}
-                  onCheckedChange={setEditAllowComments}
+                  onCheckedChange={(checked) => setEditAllowComments(checked === true)}
+                  className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
                 />
                 <Label htmlFor="edit-allow-comments">댓글 허용</Label>
               </div>
