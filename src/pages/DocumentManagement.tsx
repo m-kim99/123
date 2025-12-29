@@ -1559,7 +1559,7 @@ export function DocumentManagement() {
           }
           className="space-y-4"
         >
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6 gap-1">
             <TabsTrigger
               value="categories"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
