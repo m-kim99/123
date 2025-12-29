@@ -331,10 +331,20 @@ export function AdminAnnouncements() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(announcement)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white hover:bg-slate-50"
+                        onClick={() => openEditDialog(announcement)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(announcement.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white hover:bg-slate-50"
+                        onClick={() => openDeleteDialog(announcement.id)}
+                      >
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>
