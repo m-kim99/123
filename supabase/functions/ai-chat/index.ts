@@ -35,86 +35,126 @@ serve(async (req) => {
       try {
         const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-        // 1-1. 부서, 대분류, 세부카테고리 전체 조회 (병렬)
-        const [
-          { data: departments },
-          { data: parentCategories },
-          { data: subcategories },
-        ] = await Promise.all([
-          supabase.from('departments').select('id, name'),
-          supabase.from('categories').select('id, name, department_id'),
-          supabase.from('subcategories').select('id, name, parent_category_id, storage_location'),
-        ]);
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('company_id')
+          .eq('id', userId)
+          .single();
 
-        // 1-2. 임베딩 생성 및 벡터 검색
-        let matchedDocs: any[] = [];
-        const embeddingRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content: { parts: [{ text: message }] },
-            }),
-          },
-        );
-
-        if (!embeddingRes.ok) {
-          const text = await embeddingRes.text();
-          console.error('Embedding API error:', text);
+        if (userError || !userData?.company_id) {
+          console.error('Failed to fetch user company_id:', userError);
+          systemPrompt = '사용자의 회사 정보를 찾을 수 없습니다.';
         } else {
-          const embeddingJson = await embeddingRes.json();
-          const embedding = embeddingJson.embedding?.values;
+          const userCompanyId = userData.company_id;
 
-          if (embedding && Array.isArray(embedding)) {
-            const { data: docs, error } = await supabase.rpc('match_documents', {
-              query_embedding: embedding,
-              match_threshold: 0.3,
-              match_count: 5,
-            });
+          // 1-1. 회사 범위의 부서/대분류/세부카테고리 조회
+          const { data: departments, error: deptError } = await supabase
+            .from('departments')
+            .select('id, name')
+            .eq('company_id', userCompanyId);
 
-            if (error) {
-              console.error('match_documents RPC error:', error);
-            } else if (docs && docs.length > 0) {
-              matchedDocs = docs;
-              // 프론트엔드에 전달할 문서 메타데이터 저장 (필요한 필드만)
-              matchedDocsForResponse = docs.map((d: any) => ({
-                id: d.id,
-                title: d.title ?? '제목 없음',
-                departmentName: d.department_name ?? '',
-                categoryName: d.category_name ?? '',
-                storageLocation: d.storage_location ?? null,
-                uploadDate: d.uploaded_at ?? '',
-              }));
+          if (deptError) {
+            console.error('Failed to fetch departments:', deptError);
+          }
+
+          const departmentIds = (departments ?? []).map((d: any) => d.id);
+
+          const { data: parentCategories, error: parentCatError } =
+            departmentIds.length > 0
+              ? await supabase
+                  .from('categories')
+                  .select('id, name, department_id')
+                  .in('department_id', departmentIds)
+              : { data: [], error: null };
+
+          if (parentCatError) {
+            console.error('Failed to fetch categories:', parentCatError);
+          }
+
+          const parentCategoryIds = (parentCategories ?? []).map((c: any) => c.id);
+
+          const { data: subcategories, error: subcatError } =
+            parentCategoryIds.length > 0
+              ? await supabase
+                  .from('subcategories')
+                  .select('id, name, parent_category_id, storage_location')
+                  .in('parent_category_id', parentCategoryIds)
+              : { data: [], error: null };
+
+          if (subcatError) {
+            console.error('Failed to fetch subcategories:', subcatError);
+          }
+
+          // 1-2. 임베딩 생성 및 벡터 검색
+          let matchedDocs: any[] = [];
+          const embeddingRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: { parts: [{ text: message }] },
+              }),
+            },
+          );
+
+          if (!embeddingRes.ok) {
+            const text = await embeddingRes.text();
+            console.error('Embedding API error:', text);
+          } else {
+            const embeddingJson = await embeddingRes.json();
+            const embedding = embeddingJson.embedding?.values;
+
+            if (embedding && Array.isArray(embedding)) {
+              const { data: docs, error } = await supabase.rpc('match_documents', {
+                query_embedding: embedding,
+                match_threshold: 0.3,
+                match_count: 5,
+                filter_company_id: userCompanyId,
+              });
+
+              if (error) {
+                console.error('match_documents RPC error:', error);
+              } else if (docs && docs.length > 0) {
+                matchedDocs = docs;
+                // 프론트엔드에 전달할 문서 메타데이터 저장 (필요한 필드만)
+                matchedDocsForResponse = docs.map((d: any) => ({
+                  id: d.id,
+                  title: d.title ?? '제목 없음',
+                  departmentName: d.department_name ?? '',
+                  categoryName: d.category_name ?? '',
+                  storageLocation: d.storage_location ?? null,
+                  uploadDate: d.uploaded_at ?? '',
+                }));
+              }
             }
           }
-        }
 
-        // 1-3. 컨텍스트 구성
-        const deptList = departments?.map((d: any) => d.name).join(', ') || '없음';
-        const catList = parentCategories?.map((c: any) => c.name).join(', ') || '없음';
-        const subList =
-          subcategories
-            ?.map(
-              (s: any) =>
-                `${s.name}(위치: ${s.storage_location || '미지정'})`,
-            )
-            .join(', ') || '없음';
-        const docList =
-          matchedDocs.length > 0
-            ? matchedDocs
-                .map(
-                  (d: any) =>
-                    `- ${d.title ?? '제목 없음'}: ${
-                      (d.ocr_text ?? '').toString().length > 200
-                        ? (d.ocr_text ?? '').toString().slice(0, 200) + '...'
-                        : (d.ocr_text ?? '').toString()
-                    }`,
-                )
-                .join('\n')
-            : '관련 문서 없음';
+          // 1-3. 컨텍스트 구성
+          const deptList = departments?.map((d: any) => d.name).join(', ') || '없음';
+          const catList = parentCategories?.map((c: any) => c.name).join(', ') || '없음';
+          const subList =
+            subcategories
+              ?.map(
+                (s: any) =>
+                  `${s.name}(위치: ${s.storage_location || '미지정'})`,
+              )
+              .join(', ') || '없음';
+          const docList =
+            matchedDocs.length > 0
+              ? matchedDocs
+                  .map(
+                    (d: any) =>
+                      `- ${d.title ?? '제목 없음'}: ${
+                        (d.ocr_text ?? '').toString().length > 200
+                          ? (d.ocr_text ?? '').toString().slice(0, 200) + '...'
+                          : (d.ocr_text ?? '').toString()
+                      }`,
+                  )
+                  .join('\n')
+              : '관련 문서 없음';
 
-        systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
+          systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
 
 [부서 목록]
 ${deptList}
@@ -127,6 +167,7 @@ ${subList}
 
 [관련 문서]
 ${docList}`;
+        }
       } catch (searchError) {
         console.error('DB 조회 중 오류:', searchError);
       }

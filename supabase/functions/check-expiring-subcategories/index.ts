@@ -3,14 +3,30 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 serve(async (req) => {
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const requestUrl = new URL(req.url);
+    const envProjectUrl = Deno.env.get('PROJECT_URL')?.trim() ?? null;
+    const supabaseUrl = envProjectUrl || `${requestUrl.protocol}//${requestUrl.host}`;
 
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      throw new Error('Missing environment variables');
+    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '';
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    const envServiceRoleKey = Deno.env.get('SERVICE_ROLE_KEY')?.trim() ?? null;
+
+    const rawKey =
+      envServiceRoleKey ??
+      match?.[1] ??
+      req.headers.get('apikey') ??
+      req.headers.get('x-apikey') ??
+      null;
+    const supabaseServiceRoleKey =
+      typeof rawKey === 'string' ? rawKey.trim().replace(/^"|"$/g, '') : null;
+
+    if (!supabaseServiceRoleKey) {
+      throw new Error('Missing Authorization bearer token (or apikey header)');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      global: { headers: { Authorization: `Bearer ${supabaseServiceRoleKey}` } },
+    });
 
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -19,41 +35,31 @@ serve(async (req) => {
     // 1. 7일 이내 만료되는 세부 카테고리 조회
     const { data: expiringSoon, error: expiringSoonError } = await supabase
       .from('subcategories')
-      .select(`
-        id,
-        name,
-        expiry_date,
-        department_id,
-        parent_category_id,
-        departments!inner(company_id)
-      `)
+      .select('id, name, expiry_date, department_id, parent_category_id, company_id')
       .gte('expiry_date', now.toISOString())
       .lte('expiry_date', sevenDaysLater.toISOString())
       .not('expiry_date', 'is', null);
 
     if (expiringSoonError) {
       console.error('Error fetching expiring soon subcategories:', expiringSoonError);
-      throw expiringSoonError;
+      throw new Error(
+        `Error fetching expiring soon subcategories: ${(expiringSoonError as any)?.message ?? 'Unknown error'}`
+      );
     }
 
     // 2. 30일 이내 만료되는 세부 카테고리 조회
     const { data: expiringLater, error: expiringLaterError } = await supabase
       .from('subcategories')
-      .select(`
-        id,
-        name,
-        expiry_date,
-        department_id,
-        parent_category_id,
-        departments!inner(company_id)
-      `)
+      .select('id, name, expiry_date, department_id, parent_category_id, company_id')
       .gt('expiry_date', sevenDaysLater.toISOString())
       .lte('expiry_date', thirtyDaysLater.toISOString())
       .not('expiry_date', 'is', null);
 
     if (expiringLaterError) {
       console.error('Error fetching expiring later subcategories:', expiringLaterError);
-      throw expiringLaterError;
+      throw new Error(
+        `Error fetching expiring later subcategories: ${(expiringLaterError as any)?.message ?? 'Unknown error'}`
+      );
     }
 
     let createdCount = 0;
@@ -87,7 +93,7 @@ serve(async (req) => {
           .select('*', { count: 'exact', head: true })
           .eq('subcategory_id', subcat.id);
 
-        const companyId = (subcat as any).departments?.company_id;
+        const companyId = (subcat as any).company_id;
 
         const { error: insertError } = await supabase.from('notifications').insert({
           type: 'subcategory_expiring_soon',
@@ -97,6 +103,7 @@ serve(async (req) => {
           parent_category_id: subcat.parent_category_id,
           subcategory_id: subcat.id,
           message: `⚠️ "${subcat.name}" 카테고리 만료 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개 삭제 예정)`,
+          created_at: now.toISOString(),
         });
 
         if (insertError) {
@@ -133,7 +140,7 @@ serve(async (req) => {
           .select('*', { count: 'exact', head: true })
           .eq('subcategory_id', subcat.id);
 
-        const companyId = (subcat as any).departments?.company_id;
+        const companyId = (subcat as any).company_id;
 
         const { error: insertError } = await supabase.from('notifications').insert({
           type: 'subcategory_expiring_very_soon',
@@ -143,6 +150,7 @@ serve(async (req) => {
           parent_category_id: subcat.parent_category_id,
           subcategory_id: subcat.id,
           message: `⏰ "${subcat.name}" 카테고리 만료 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개)`,
+          created_at: now.toISOString(),
         });
 
         if (insertError) {
@@ -156,13 +164,7 @@ serve(async (req) => {
     // 5. 만료된 카테고리 처리 (선택 사항: 자동 삭제)
     const { data: expired, error: expiredError } = await supabase
       .from('subcategories')
-      .select(`
-        id,
-        name,
-        department_id,
-        parent_category_id,
-        departments!inner(company_id)
-      `)
+      .select('id, name, department_id, parent_category_id, company_id')
       .lt('expiry_date', now.toISOString())
       .not('expiry_date', 'is', null);
 
@@ -191,9 +193,9 @@ serve(async (req) => {
             .select('*', { count: 'exact', head: true })
             .eq('subcategory_id', subcat.id);
 
-          const companyId = (subcat as any).departments?.company_id;
+          const companyId = (subcat as any).company_id;
 
-          await supabase.from('notifications').insert({
+          const { error: expiredInsertError } = await supabase.from('notifications').insert({
             type: 'subcategory_expired',
             document_id: null,
             company_id: companyId,
@@ -201,9 +203,14 @@ serve(async (req) => {
             parent_category_id: subcat.parent_category_id,
             subcategory_id: subcat.id,
             message: `🔒 "${subcat.name}" 카테고리가 만료되었습니다 (문서 ${docCount || 0}개 접근 차단)`,
+            created_at: now.toISOString(),
           });
 
-          createdCount++;
+          if (expiredInsertError) {
+            console.error('Error creating expired notification for subcategory:', subcat.id, expiredInsertError);
+          } else {
+            createdCount++;
+          }
         }
 
         // 자동 삭제 (옵션)
@@ -223,10 +230,12 @@ serve(async (req) => {
       }
     }
 
+    const deletionSuffix = AUTO_DELETE_EXPIRED ? `, ${deletedCount}개 삭제` : '';
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${createdCount}개의 카테고리 만료 알림 생성${AUTO_DELETE_EXPIRED ? `, ${deletedCount}개 삭제` : ''}`,
+        message: `${createdCount}개의 카테고리 만료 알림 생성${deletionSuffix}`,
         expiringSoonCount: expiringSoon?.length || 0,
         expiringLaterCount: expiringLater?.length || 0,
         expiredCount: expired?.length || 0,
@@ -240,10 +249,22 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in check-expiring-subcategories function:', error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : (error as any)?.message
+            ? String((error as any).message)
+            : 'Unknown error';
+    const hint = (error as any)?.hint ? String((error as any).hint) : null;
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: message,
+        hint,
       }),
       {
         status: 500,

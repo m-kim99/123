@@ -27,6 +27,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -1737,7 +1738,7 @@ export function DocumentManagement() {
                       />
                     </div>
                   </div>
-                  <DialogFooter>
+                  <DialogFooter className="flex-col sm:flex-row">
                     <Button
                       onClick={handleAddCategory}
                       variant="outline"
@@ -1762,6 +1763,11 @@ export function DocumentManagement() {
                       <Smartphone className="h-4 w-4" />
                       NFC 등록하며 추가
                     </Button>
+                    <DialogClose asChild>
+                      <Button variant="outline">
+                        취소
+                      </Button>
+                    </DialogClose>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>

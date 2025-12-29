@@ -895,15 +895,7 @@ export function SubcategoryManagement() {
                 </p>
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddDialogOpen(false)}
-                disabled={isSaving}
-              >
-                취소
-              </Button>
+            <DialogFooter className="flex-col sm:flex-row">
               <Button
                 type="button"
                 onClick={handleSubmit}
@@ -930,6 +922,14 @@ export function SubcategoryManagement() {
               >
                 <Smartphone className="h-4 w-4" />
                 NFC 등록하며 추가
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAddDialogOpen(false)}
+                disabled={isSaving}
+              >
+                취소
               </Button>
             </DialogFooter>
           </DialogContent>

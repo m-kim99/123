@@ -22,14 +22,25 @@ export interface ChatHistoryItem {
 // 키워드 기반 문서 검색 (제목 + OCR 텍스트)
 export function searchDocuments(query: string): ChatSearchResult[] {
   const { documents, categories, departments } = useDocumentStore.getState();
+  const { user } = useAuthStore.getState();
   const keyword = query.trim().toLowerCase();
 
   if (!keyword) {
     return [];
   }
 
+  if (!user?.companyId) {
+    return [];
+  }
+
+  const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+
   return documents
     .filter((doc) => {
+      if (!allowedDepartmentIds.has(doc.departmentId)) {
+        return false;
+      }
+
       const titleMatch = doc.name.toLowerCase().includes(keyword);
       const ocrMatch = (doc.ocrText || '').toLowerCase().includes(keyword);
       return titleMatch || ocrMatch;

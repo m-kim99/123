@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/store/authStore';
 
 // Exponential Backoff을 위한 sleep 헬퍼 함수
 async function sleep(ms: number): Promise<void> {
@@ -66,6 +67,12 @@ export async function searchDocumentsByEmbedding(
   console.log('쿼리:', query);
 
   try {
+    const { user } = useAuthStore.getState();
+
+    if (!user?.companyId) {
+      return [];
+    }
+
     const queryEmbedding = await generateEmbedding(query);
     console.log('쿼리 임베딩 생성 완료, 길이:', queryEmbedding.length);
 
@@ -73,6 +80,7 @@ export async function searchDocumentsByEmbedding(
       query_embedding: queryEmbedding,
       match_threshold: threshold,
       match_count: limit,
+      filter_company_id: user.companyId,
     });
 
     console.log('Supabase RPC 결과:', data?.length, '개');
