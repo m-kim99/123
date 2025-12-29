@@ -70,7 +70,7 @@ export function AdminAnnouncements() {
         .from('announcements')
         .select(`
           *,
-          users!announcements_created_by_fkey(name)
+          author:users!announcements_created_by_fkey(name)
         `)
         .eq('company_id', user.companyId)
         .order('created_at', { ascending: false });
@@ -86,7 +86,7 @@ export function AdminAnnouncements() {
         createdBy: a.created_by,
         createdAt: a.created_at,
         updatedAt: a.updated_at,
-        authorName: a.users?.name || '알 수 없음',
+        authorName: a.author?.name || '알 수 없음',
       }));
 
       setAnnouncements(formatted);

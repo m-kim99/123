@@ -35,7 +35,7 @@ export function TeamAnnouncements() {
         .from('announcements')
         .select(`
           *,
-          users!announcements_created_by_fkey(name)
+          author:users!announcements_created_by_fkey(name)
         `)
         .eq('company_id', user.companyId)
         .order('created_at', { ascending: false });
@@ -51,7 +51,7 @@ export function TeamAnnouncements() {
         createdBy: a.created_by,
         createdAt: a.created_at,
         updatedAt: a.updated_at,
-        authorName: a.users?.name || '알 수 없음',
+        authorName: a.author?.name || '알 수 없음',
       }));
 
       setAnnouncements(formatted);
@@ -74,7 +74,7 @@ export function TeamAnnouncements() {
         .from('announcement_comments')
         .select(`
           *,
-          users!announcement_comments_user_id_fkey(name)
+          commenter:users!announcement_comments_user_id_fkey(name)
         `)
         .eq('announcement_id', announcementId)
         .order('created_at', { ascending: true });
@@ -88,7 +88,7 @@ export function TeamAnnouncements() {
         content: c.content,
         createdAt: c.created_at,
         updatedAt: c.updated_at,
-        userName: c.users?.name || '알 수 없음',
+        userName: c.commenter?.name || '알 수 없음',
       }));
 
       setComments((prev) => ({
