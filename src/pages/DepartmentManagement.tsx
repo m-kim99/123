@@ -296,25 +296,26 @@ export function DepartmentManagement() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-4">
                       <div className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-slate-500" />
-                          <span className="text-xs text-slate-500 whitespace-nowrap">문서</span>
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">문서</span>
                         </div>
                         <p className="text-2xl font-bold">{deptDocuments.length}</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-slate-500" />
-                          <span className="text-xs text-slate-500"><span className="md:hidden">카테<br/>고리</span><span className="hidden md:inline">카테고리</span></span>
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 leading-tight">
+                            <span className="md:hidden">카테<br/>고리</span>
+                            <span className="hidden md:inline">카테고리</span>
+                          </span>
                         </div>
-                        <p className="text-2xl font-bold">
-                          {deptCategories.length}
-                        </p>
+                        <p className="text-2xl font-bold">{deptCategories.length}</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="h-4 w-4 text-slate-500" />
-                          <span className="text-xs text-slate-500 whitespace-nowrap">팀원</span>
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">팀원</span>
                         </div>
                         <p className="text-2xl font-bold">{memberCounts[dept.id] ?? 0}</p>
                       </div>
