@@ -1,6 +1,7 @@
+import { supabase } from '@/lib/supabase';
+
 // Dynamic Import로 필요할 때만 로드
 let pdfjsLib: any = null;
-let createWorker: any = null;
 
 async function loadPDFLib() {
   if (!pdfjsLib) {
@@ -9,14 +10,6 @@ async function loadPDFLib() {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
   }
   return pdfjsLib;
-}
-
-async function loadTesseract() {
-  if (!createWorker) {
-    const module = await import('tesseract.js');
-    createWorker = module.createWorker;
-  }
-  return createWorker;
 }
 
 /**
@@ -90,13 +83,7 @@ export async function extractTextFromPDF(
   file: File,
   onProgress?: (progress: { page: number; totalPages: number; percent: number; status: string }) => void
 ): Promise<string> {
-  let tesseractWorker: any = null;
-
   try {
-    // Dynamic imports
-    const pdfLib = await loadPDFLib();
-    const workerFactory = await loadTesseract();
-
     // 파일 타입 확인
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       throw new Error('PDF 파일만 처리할 수 있습니다.');
@@ -105,30 +92,13 @@ export async function extractTextFromPDF(
     console.log('PDF 파일 로딩 시작:', file.name);
 
     // PDF 파일 로드하여 페이지 수 확인
+    const pdfLib = await loadPDFLib();
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
     const totalPages = pdf.numPages;
 
     console.log(`총 ${totalPages}페이지 발견`);
-
-    // Tesseract.js Worker 생성 및 초기화
-    console.log('Tesseract.js Worker 초기화 중...');
-    onProgress?.({ page: 0, totalPages, percent: 0, status: 'Tesseract.js 초기화 중...' });
-
-    tesseractWorker = await workerFactory('kor+eng', 1, {
-      logger: (m: any) => {
-        if (m.status === 'recognizing text') {
-          const percent = Math.round(m.progress * 100);
-          onProgress?.({
-            page: 0,
-            totalPages,
-            percent,
-            status: `OCR 처리 중: ${percent}%`,
-          });
-        }
-      },
-    });
 
     const extractedTexts: string[] = [];
 
@@ -143,9 +113,9 @@ export async function extractTextFromPDF(
           status: `페이지 ${pageNum}/${totalPages} 이미지 변환 중...`,
         });
 
-        // PDF 페이지를 이미지로 변환
+        // PDF 페이지를 이미지로 변환 후 base64 Data URL 생성
         const canvas = await convertPDFPageToImage(file, pageNum, 2.0);
-        const imageData = canvasToImageData(canvas);
+        const dataUrl = canvas.toDataURL('image/png');
 
         console.log(`페이지 ${pageNum} OCR 처리 중...`);
         onProgress?.({
@@ -155,10 +125,23 @@ export async function extractTextFromPDF(
           status: `페이지 ${pageNum}/${totalPages} OCR 처리 중...`,
         });
 
-        // OCR 수행
-        const {
-          data: { text },
-        } = await tesseractWorker.recognize(imageData);
+        // Edge Function을 통해 네이버 클로바 OCR 호출
+        const { data, error } = await supabase.functions.invoke('naver-ocr', {
+          body: {
+            imageBase64: dataUrl,
+            mimeType: 'image/png',
+            page: pageNum,
+          },
+        });
+
+        if (error) {
+          console.error('네이버 OCR Edge Function 호출 오류:', error);
+          throw new Error(
+            error.message || `페이지 ${pageNum} OCR 처리 중 오류가 발생했습니다.`,
+          );
+        }
+
+        const text = (data as any)?.text as string | undefined;
 
         if (text && text.trim()) {
           extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${text.trim()}\n`);
@@ -185,12 +168,6 @@ export async function extractTextFromPDF(
       }
     }
 
-    // Worker 종료
-    if (tesseractWorker) {
-      await tesseractWorker.terminate();
-      tesseractWorker = null;
-    }
-
     // 모든 페이지 텍스트 합치기
     const fullText = extractedTexts.join('\n');
     console.log(`텍스트 추출 완료: 총 ${fullText.length}자`);
@@ -205,16 +182,6 @@ export async function extractTextFromPDF(
     return fullText.trim();
   } catch (error) {
     console.error('PDF 텍스트 추출 오류:', error);
-
-    // Worker 정리
-    if (tesseractWorker) {
-      try {
-        await tesseractWorker.terminate();
-      } catch (terminateError) {
-        console.error('Worker 종료 오류:', terminateError);
-      }
-    }
-
     throw new Error(
       `PDF 텍스트 추출 중 오류가 발생했습니다: ${
         error instanceof Error ? error.message : String(error)
@@ -227,7 +194,6 @@ export async function extractTextFromImage(
   file: File,
   onProgress?: (progress: { percent: number; status: string }) => void
 ): Promise<string> {
-  let tesseractWorker: any = null;
   try {
     const mimeType = file.type;
     const fileName = file.name.toLowerCase();
@@ -241,18 +207,7 @@ export async function extractTextFromImage(
       throw new Error('JPG, PNG 이미지 파일만 처리할 수 있습니다.');
     }
 
-    const workerFactory = await loadTesseract();
-
-    onProgress?.({ percent: 0, status: 'Tesseract.js 초기화 중...' });
-
-    tesseractWorker = await workerFactory('kor+eng', 1, {
-      logger: (m: any) => {
-        if (m.status === 'recognizing text') {
-          const percent = Math.round(m.progress * 100);
-          onProgress?.({ percent, status: '텍스트 인식 중...' });
-        }
-      },
-    });
+    onProgress?.({ percent: 0, status: '이미지 준비 중...' });
 
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -268,12 +223,30 @@ export async function extractTextFromImage(
       };
       reader.readAsDataURL(file);
     });
+    
+    onProgress?.({ percent: 30, status: 'OCR 요청 중...' });
 
-    const {
-      data: { text },
-    } = await tesseractWorker.recognize(dataUrl);
+    const { data, error } = await supabase.functions.invoke('naver-ocr', {
+      body: {
+        imageBase64: dataUrl,
+        mimeType: mimeType || 'image/jpeg',
+      },
+    });
 
+    if (error) {
+      console.error('네이버 OCR Edge Function 호출 오류:', error);
+      throw new Error(error.message || '이미지 OCR 처리 중 오류가 발생했습니다.');
+    }
+
+    const text = (data as any)?.text as string | undefined;
     const result = (text || '').trim();
+
+    if (!result) {
+      console.warn('이미지에서 텍스트를 찾을 수 없습니다.');
+    }
+
+    onProgress?.({ percent: 100, status: 'OCR 처리 완료' });
+
     return result;
   } catch (error) {
     console.error('이미지 텍스트 추출 오류:', error);
@@ -282,14 +255,6 @@ export async function extractTextFromImage(
         error instanceof Error ? error.message : String(error)
       }`
     );
-  } finally {
-    if (tesseractWorker) {
-      try {
-        await tesseractWorker.terminate();
-      } catch (terminateError) {
-        console.error('이미지 Worker 종료 오류:', terminateError);
-      }
-    }
   }
 }
 

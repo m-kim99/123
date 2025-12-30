@@ -47,7 +47,6 @@ export default defineConfig({
           'supabase-vendor': ['@supabase/supabase-js'],
 
           // 무거운 OCR/PDF 라이브러리를 별도 청크로 분리 (lazy loading용)
-          'ocr-vendor': ['tesseract.js'],
           'pdf-vendor': ['pdfjs-dist', 'jspdf'],
         },
       },
