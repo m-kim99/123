@@ -126,35 +126,35 @@ export function LoginPage() {
   };
 
   const handleNaverLogin = async () => {
-    console.log('🟢 Naver 로그인 시작');
-    console.log('🟢 Supabase 객체:', supabase);
-    console.log('🟢 window.location.origin:', window.location.origin);
+    console.log('🟢 Naver 커스텀 로그인 시작');
 
     try {
-      const redirectTo = `${window.location.origin}`;
+      const clientId = import.meta.env.VITE_NAVER_CLIENT_ID;
+      const callbackUrl = import.meta.env.VITE_NAVER_CALLBACK_URL || `${window.location.origin}/auth/naver/callback`;
 
-      console.log('🟢 signInWithOAuth 호출 전');
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'naver',
-        options: {
-          redirectTo,
-        },
-      });
-
-      console.log('🟢 signInWithOAuth 응답:', { data, error });
-
-      if (error) {
-        console.error('❌ Naver 로그인 실패:', error);
-        toast({
-          title: 'Naver 로그인 실패',
-          description: error.message || '다시 시도해주세요',
-          variant: 'destructive',
-        });
-      } else {
-        console.log('✅ Naver 로그인 성공, 리디렉션 시작');
+      if (!clientId) {
+        throw new Error('Naver OAuth 설정이 없습니다');
       }
+
+      // State 생성 (CSRF 방지)
+      const state = crypto.randomUUID();
+      sessionStorage.setItem('naver_oauth_state', state);
+
+      // 네이버 OAuth 인증 URL 생성
+      const naverAuthUrl = 'https://nid.naver.com/oauth2.0/authorize?' +
+        new URLSearchParams({
+          response_type: 'code',
+          client_id: clientId,
+          redirect_uri: callbackUrl,
+          state: state,
+        }).toString();
+
+      console.log('🟢 네이버 로그인 페이지로 리다이렉트');
+
+      // 네이버 로그인 페이지로 이동
+      window.location.href = naverAuthUrl;
     } catch (error: any) {
-      console.error('❌ Naver 로그인 예외:', error);
+      console.error('❌ Naver 로그인 오류:', error);
       toast({
         title: 'Naver 로그인 오류',
         description: error?.message || 'Naver 로그인 중 오류가 발생했습니다.',

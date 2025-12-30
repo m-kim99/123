@@ -54,6 +54,9 @@ const NfcRedirect = lazy(() =>
 const SharedDocuments = lazy(() =>
   import('./pages/SharedDocuments').then((m) => ({ default: m.SharedDocuments })),
 );
+const NaverCallback = lazy(() =>
+  import('./pages/NaverCallback').then((m) => ({ default: m.NaverCallback })),
+);
 
 const AdminAnnouncements = lazy(() =>
   import('./pages/AdminAnnouncements').then((m) => ({ default: m.AdminAnnouncements })),
@@ -161,6 +164,7 @@ function App() {
             <Route path="/" element={<RootRoute />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/nfc-redirect" element={<NfcRedirect />} />
+            <Route path="/auth/naver/callback" element={<NaverCallback />} />
 
             <Route
               path="/admin"
