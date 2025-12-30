@@ -60,18 +60,6 @@ async function convertPDFPageToImage(
   }
 }
 
-/**
- * Canvas를 ImageData로 변환
- * @param canvas Canvas 요소
- * @returns ImageData
- */
-function canvasToImageData(canvas: HTMLCanvasElement): ImageData {
-  const context = canvas.getContext('2d');
-  if (!context) {
-    throw new Error('Canvas context를 가져올 수 없습니다.');
-  }
-  return context.getImageData(0, 0, canvas.width, canvas.height);
-}
 
 /**
  * PDF 파일에서 텍스트 추출 (OCR 사용)
