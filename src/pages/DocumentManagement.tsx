@@ -210,6 +210,8 @@ export function DocumentManagement() {
   const [editedOcrText, setEditedOcrText] = useState('');
   const [isSavingOcr, setIsSavingOcr] = useState(false);
   const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
+  const [isExtractingOcr, setIsExtractingOcr] = useState(false);
+  const [extractedOcrText, setExtractedOcrText] = useState('');
   const [fileStatuses, setFileStatuses] = useState<
     { name: string; status: string; error?: string | null }[]
   >([]);
@@ -1046,7 +1048,7 @@ export function DocumentManagement() {
     }
   };
 
-  const handleFileDrop = useCallback((acceptedFiles: File[]) => {
+  const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!acceptedFiles || acceptedFiles.length === 0) {
       return;
     }
@@ -1074,6 +1076,9 @@ export function DocumentManagement() {
     setUploadError(null);
     setUploadSuccess(false);
     setOcrTextPreview('');
+    setExtractedOcrText('');
+    setIsEditingOcr(false);
+    setEditedOcrText('');
 
     const { pdfFiles, imageFiles } = splitFilesByType(validFiles);
 
@@ -1089,17 +1094,126 @@ export function DocumentManagement() {
     setFileStatuses(
       validFiles.map((file) => ({
         name: file.name,
-        status: '대기 중',
+        status: 'OCR 대기 중',
         error: null,
       })),
     );
 
-    if (imageFiles.length > 0 && pdfFiles.length === 0 && imageFiles.length > 1) {
-      setUploadStatus(`${imageFiles.length}개 이미지를 하나의 문서로 업로드합니다.`);
-    } else if (imageFiles.length > 0 && pdfFiles.length > 0) {
-      setUploadStatus(`PDF ${pdfFiles.length}개와 이미지 묶음 1개가 업로드됩니다.`);
-    } else {
-      setUploadStatus(`${validFiles.length}개 파일 선택됨`);
+    // OCR 추출 시작
+    setIsExtractingOcr(true);
+    setUploadStatus('OCR 텍스트 추출 중...');
+
+    try {
+      let allOcrText = '';
+
+      // PDF 파일 OCR 추출
+      for (let i = 0; i < pdfFiles.length; i++) {
+        const file = pdfFiles[i];
+        const index = validFiles.indexOf(file);
+
+        setFileStatuses((prev) => {
+          const next = [...prev];
+          if (next[index]) {
+            next[index] = { ...next[index], status: 'OCR 추출 중...' };
+          }
+          return next;
+        });
+
+        try {
+          const ocrText = await extractText(file);
+          if (pdfFiles.length === 1 && imageFiles.length === 0) {
+            allOcrText = ocrText;
+          } else if (ocrText && ocrText.trim()) {
+            allOcrText += `--- ${file.name} ---\n${ocrText.trim()}\n\n`;
+          }
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: 'OCR 완료' };
+            }
+            return next;
+          });
+        } catch (ocrError) {
+          console.error('OCR 처리 오류:', file.name, ocrError);
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: 'OCR 실패', error: 'OCR 추출 실패' };
+            }
+            return next;
+          });
+        }
+      }
+
+      // 이미지 파일 OCR 추출
+      if (imageFiles.length > 0) {
+        const ocrParts: { index: number; text: string }[] = [];
+
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          const index = validFiles.indexOf(file);
+
+          setFileStatuses((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], status: 'OCR 추출 중...' };
+            }
+            return next;
+          });
+
+          try {
+            const ocrText = await extractText(file);
+            if (ocrText && ocrText.trim()) {
+              ocrParts.push({
+                index: i,
+                text: imageFiles.length > 1
+                  ? `--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`
+                  : ocrText.trim(),
+              });
+            }
+
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = { ...next[index], status: 'OCR 완료' };
+              }
+              return next;
+            });
+          } catch (ocrError) {
+            console.error('OCR 처리 오류:', file.name, ocrError);
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = { ...next[index], status: 'OCR 실패', error: 'OCR 추출 실패' };
+              }
+              return next;
+            });
+          }
+        }
+
+        // 이미지 OCR 결과 결합
+        const imageOcrText = ocrParts
+          .sort((a, b) => a.index - b.index)
+          .map((result) => result.text)
+          .join('\n');
+
+        if (pdfFiles.length === 0) {
+          allOcrText = imageOcrText;
+        } else if (imageOcrText) {
+          allOcrText += `\n--- 이미지 문서 ---\n${imageOcrText}`;
+        }
+      }
+
+      setExtractedOcrText(allOcrText);
+      setOcrTextPreview(allOcrText);
+      setUploadStatus('OCR 추출 완료. 업로드 버튼을 눌러 업로드하세요.');
+    } catch (error) {
+      console.error('OCR 추출 오류:', error);
+      setUploadError('OCR 추출 중 오류가 발생했습니다.');
+      setUploadStatus('');
+    } finally {
+      setIsExtractingOcr(false);
     }
   }, []);
 
@@ -1120,9 +1234,14 @@ export function DocumentManagement() {
     },
   });
 
-  // 문서 업로드 및 OCR 처리 (PDF 개별 업로드 + 이미지 묶음 업로드)
+  // 문서 업로드 (OCR은 이미 추출됨)
   const handleUpload = async () => {
     if (!uploadFiles.length || !uploadSelection.subcategoryId || !user) {
+      return;
+    }
+
+    if (isExtractingOcr) {
+      setUploadError('OCR 추출이 완료될 때까지 기다려주세요.');
       return;
     }
 
@@ -1137,12 +1256,14 @@ export function DocumentManagement() {
     const parentCategoryId = subcategory.parentCategoryId;
     const departmentId = subcategory.departmentId;
 
+    // 편집된 OCR 텍스트가 있으면 그것을 사용, 아니면 추출된 텍스트 사용
+    const finalOcrText = isEditingOcr ? editedOcrText : extractedOcrText;
+
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStatus('파일 처리 준비 중...');
+    setUploadStatus('업로드 준비 중...');
     setUploadError(null);
     setUploadSuccess(false);
-    setOcrTextPreview('');
 
     try {
       const { pdfFiles, imageFiles } = splitFilesByType(uploadFiles);
@@ -1154,7 +1275,7 @@ export function DocumentManagement() {
       setFileStatuses(
         uploadFiles.map((file) => ({
           name: file.name,
-          status: '대기 중',
+          status: '업로드 대기 중',
           error: null,
         })),
       );
@@ -1171,7 +1292,7 @@ export function DocumentManagement() {
         return '문서';
       };
 
-      // PDF 파일 병렬 처리 (Promise.allSettled 사용)
+      // PDF 파일 병렬 업로드
       const pdfUploadPromises = pdfFiles.map(async (file) => {
         const index = uploadFiles.indexOf(file);
 
@@ -1179,27 +1300,21 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '처리 중...' };
+              next[index] = { ...next[index], status: '업로드 중...' };
             }
             return next;
           });
-
-          let ocrText = '';
-
-          try {
-            ocrText = await extractText(file);
-            if (!imageFiles.length && pdfFiles.length === 1) {
-              setOcrTextPreview(ocrText);
-            }
-          } catch (ocrError) {
-            console.error('OCR 처리 오류:', file.name, ocrError);
-          }
 
           const baseName = getBaseNameWithoutExt(file.name);
           const title =
             pdfFiles.length === 1 && imageFiles.length === 0
               ? getSingleDocTitle()
               : baseName;
+
+          // 단일 PDF인 경우 전체 OCR 텍스트 사용
+          const ocrTextForFile = (pdfFiles.length === 1 && imageFiles.length === 0) 
+            ? finalOcrText 
+            : '';
 
           await uploadDocument({
             name: title,
@@ -1211,7 +1326,7 @@ export function DocumentManagement() {
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
-            ocrText,
+            ocrText: ocrTextForFile,
           });
 
           setFileStatuses((prev) => {
@@ -1259,89 +1374,15 @@ export function DocumentManagement() {
         setUploadProgress(Math.round((completedCount / totalFiles) * 100));
       });
 
-      setUploadStatus(`PDF 파일 ${pdfFiles.length}개 업로드 완료`);
+      if (pdfFiles.length > 0) {
+        setUploadStatus(`PDF 파일 ${pdfFiles.length}개 업로드 완료`);
+      }
 
-      // 이미지 파일들을 하나의 문서로 묶어서 처리 (OCR 병렬 처리)
+      // 이미지 파일들을 하나의 문서로 묶어서 업로드
       if (imageFiles.length > 1) {
-        setUploadStatus(`${imageFiles.length}개 이미지 OCR 병렬 처리 중...`);
-
-        // 병렬 OCR 처리 (Promise.all 사용)
-        const ocrPromises = imageFiles.map(async (file, i) => {
-          const index = uploadFiles.indexOf(file);
-
-          try {
-            setFileStatuses((prev) => {
-              const next = [...prev];
-              if (next[index]) {
-                next[index] = { ...next[index], status: 'OCR 처리 중...' };
-              }
-              return next;
-            });
-
-            let ocrText = '';
-            try {
-              ocrText = await extractText(file);
-            } catch (ocrError) {
-              console.error('OCR 처리 오류:', file.name, ocrError);
-            }
-
-            setFileStatuses((prev) => {
-              const next = [...prev];
-              if (next[index]) {
-                next[index] = { ...next[index], status: 'OCR 완료' };
-              }
-              return next;
-            });
-
-            // 인덱스와 함께 반환하여 순서 보장
-            return {
-              index: i,
-              text: ocrText && ocrText.trim()
-                ? `--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`
-                : '',
-            };
-          } catch (fileError) {
-            console.error('이미지 OCR 오류:', file.name, fileError);
-            failureCount += 1;
-
-            setFileStatuses((prev) => {
-              const next = [...prev];
-              if (next[index]) {
-                next[index] = {
-                  ...next[index],
-                  status: '실패',
-                  error: fileError instanceof Error
-                    ? fileError.message
-                    : 'OCR 처리 실패',
-                };
-              }
-              return next;
-            });
-
-            return { index: i, text: '' };
-          } finally {
-            completedCount += 1;
-            setUploadProgress(Math.round((completedCount / totalFiles) * 100));
-          }
-        });
-
-        // 모든 OCR 작업 완료 대기
-        const ocrResults = await Promise.all(ocrPromises);
-
-        // 원래 순서대로 정렬하여 텍스트 결합
-        const ocrParts = ocrResults
-          .sort((a, b) => a.index - b.index)
-          .map(result => result.text)
-          .filter(text => text.length > 0);
-
-        const allOcrText = ocrParts.join('\n');
-        if (allOcrText) {
-          setOcrTextPreview(allOcrText);
-        }
+        setUploadStatus(`${imageFiles.length}개 이미지를 PDF로 변환 중...`);
 
         try {
-          setUploadStatus('PDF 생성 중...');
-
           const { jsPDF } = await import('jspdf');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1368,6 +1409,16 @@ export function DocumentManagement() {
               pageWidth,
               pageHeight,
             );
+
+            // 파일 상태 업데이트
+            const index = uploadFiles.indexOf(file);
+            setFileStatuses((prev) => {
+              const next = [...prev];
+              if (next[index]) {
+                next[index] = { ...next[index], status: 'PDF 변환 완료' };
+              }
+              return next;
+            });
           }
 
           const pdfBlob = pdf.output('blob');
@@ -1396,7 +1447,7 @@ export function DocumentManagement() {
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file: pdfFile,
-            ocrText: allOcrText,
+            ocrText: finalOcrText,
           });
 
           successCount += 1;
@@ -1417,23 +1468,10 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '처리 중...' };
+              next[index] = { ...next[index], status: '업로드 중...' };
             }
             return next;
           });
-
-          setUploadStatus('이미지 1/1 OCR 처리 중...');
-
-          let ocrText = '';
-          try {
-            ocrText = await extractText(file);
-          } catch (ocrError) {
-            console.error('OCR 처리 오류:', file.name, ocrError);
-          }
-
-          if (ocrText && ocrText.trim()) {
-            setOcrTextPreview(ocrText.trim());
-          }
 
           const imageTitle =
             pdfFiles.length === 0
@@ -1450,7 +1488,7 @@ export function DocumentManagement() {
             uploader: user.name || user.email || 'Unknown',
             classified: false,
             file,
-            ocrText,
+            ocrText: finalOcrText,
           });
 
           successCount += 1;
@@ -1554,6 +1592,14 @@ export function DocumentManagement() {
     setEditedOcrText('');
   };
 
+  const handleApplyOcrEdit = () => {
+    // 업로드 전 편집 적용 - extractedOcrText와 ocrTextPreview 업데이트
+    setExtractedOcrText(editedOcrText);
+    setOcrTextPreview(editedOcrText);
+    setIsEditingOcr(false);
+    setEditedOcrText('');
+  };
+
   const handleSaveOcrText = async () => {
     if (!lastUploadedDocId) {
       setUploadError('저장할 문서를 찾을 수 없습니다.');
@@ -1563,6 +1609,7 @@ export function DocumentManagement() {
     setIsSavingOcr(true);
     try {
       await updateDocumentOcrText(lastUploadedDocId, editedOcrText);
+      setExtractedOcrText(editedOcrText);
       setOcrTextPreview(editedOcrText);
       setIsEditingOcr(false);
       setEditedOcrText('');
@@ -2900,8 +2947,8 @@ export function DocumentManagement() {
                               <Button
                                 type="button"
                                 size="sm"
-                                onClick={handleSaveOcrText}
-                                disabled={isSavingOcr || !lastUploadedDocId}
+                                onClick={lastUploadedDocId ? handleSaveOcrText : handleApplyOcrEdit}
+                                disabled={isSavingOcr}
                                 style={{ backgroundColor: primaryColor }}
                               >
                                 {isSavingOcr ? (
@@ -2909,8 +2956,10 @@ export function DocumentManagement() {
                                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                                     저장 중...
                                   </>
-                                ) : (
+                                ) : lastUploadedDocId ? (
                                   '저장'
+                                ) : (
+                                  '적용'
                                 )}
                               </Button>
                             </>
@@ -2920,7 +2969,6 @@ export function DocumentManagement() {
                               variant="outline"
                               size="sm"
                               onClick={handleEditOcrText}
-                              disabled={!lastUploadedDocId}
                             >
                               <Edit className="h-4 w-4 mr-1" />
                               편집
@@ -2962,11 +3010,17 @@ export function DocumentManagement() {
                   disabled={
                     uploadFiles.length === 0 ||
                     !uploadSelection.subcategoryId ||
-                    isUploading
+                    isUploading ||
+                    isExtractingOcr
                   }
                   onClick={handleUpload}
                 >
-                  {isUploading ? (
+                  {isExtractingOcr ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      OCR 추출 중...
+                    </>
+                  ) : isUploading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       업로드 중...
