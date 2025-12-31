@@ -116,6 +116,7 @@ interface DocumentState {
     }
   ) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
+  updateDocumentOcrText: (id: string, ocrText: string) => Promise<void>;
   checkPermission: (
     userId: string,
     departmentId: string,
@@ -1356,6 +1357,36 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         description: '네트워크 오류로 인해 문서를 완전히 삭제하지 못했습니다.',
         variant: 'destructive',
       });
+    }
+  },
+
+  updateDocumentOcrText: async (id, ocrText) => {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ ocr_text: ocrText })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        documents: state.documents.map((doc) =>
+          doc.id === id ? { ...doc, ocrText } : doc
+        ),
+      }));
+
+      toast({
+        title: 'OCR 텍스트 저장 완료',
+        description: '편집한 OCR 텍스트가 저장되었습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to update OCR text:', err);
+      toast({
+        title: 'OCR 텍스트 저장 실패',
+        description: '네트워크 오류로 인해 저장하지 못했습니다.',
+        variant: 'destructive',
+      });
+      throw err;
     }
   },
 

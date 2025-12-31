@@ -163,6 +163,7 @@ export function DocumentManagement() {
     registerNfcTag,
     findSubcategoryByNfcUid,
     clearNfcByUid,
+    updateDocumentOcrText,
   } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -205,6 +206,10 @@ export function DocumentManagement() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [ocrTextPreview, setOcrTextPreview] = useState('');
+  const [isEditingOcr, setIsEditingOcr] = useState(false);
+  const [editedOcrText, setEditedOcrText] = useState('');
+  const [isSavingOcr, setIsSavingOcr] = useState(false);
+  const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
   const [fileStatuses, setFileStatuses] = useState<
     { name: string; status: string; error?: string | null }[]
   >([]);
@@ -1493,14 +1498,17 @@ export function DocumentManagement() {
       setUploadStatus('업로드 완료');
 
       await fetchDocuments();
+      
+      // 업로드 성공 시 최신 문서 ID 저장 (OCR 편집용)
+      if (successCount > 0) {
+        const latestDocs = useDocumentStore.getState().documents;
+        if (latestDocs.length > 0) {
+          setLastUploadedDocId(latestDocs[0].id);
+        }
+      }
 
       setTimeout(() => {
         setUploadFiles([]);
-        setUploadSelection({
-          departmentId: '',
-          parentCategoryId: '',
-          subcategoryId: '',
-        });
         setDocumentTitle('');
         setUploadProgress(0);
         setUploadStatus('');
@@ -1528,11 +1536,40 @@ export function DocumentManagement() {
   const handleCopyOcrText = async () => {
     if (!ocrTextPreview) return;
     try {
-      await navigator.clipboard.writeText(ocrTextPreview);
+      await navigator.clipboard.writeText(isEditingOcr ? editedOcrText : ocrTextPreview);
       setUploadStatus('OCR 텍스트가 클립보드에 복사되었습니다.');
     } catch (error) {
       console.error('텍스트 복사 오류:', error);
       setUploadError('텍스트 복사 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleEditOcrText = () => {
+    setEditedOcrText(ocrTextPreview);
+    setIsEditingOcr(true);
+  };
+
+  const handleCancelEditOcr = () => {
+    setIsEditingOcr(false);
+    setEditedOcrText('');
+  };
+
+  const handleSaveOcrText = async () => {
+    if (!lastUploadedDocId) {
+      setUploadError('저장할 문서를 찾을 수 없습니다.');
+      return;
+    }
+    
+    setIsSavingOcr(true);
+    try {
+      await updateDocumentOcrText(lastUploadedDocId, editedOcrText);
+      setOcrTextPreview(editedOcrText);
+      setIsEditingOcr(false);
+      setEditedOcrText('');
+    } catch (error) {
+      console.error('OCR 텍스트 저장 오류:', error);
+    } finally {
+      setIsSavingOcr(false);
     }
   };
   return (
@@ -2832,26 +2869,77 @@ export function DocumentManagement() {
                     <CardHeader>
                       <CardTitle>OCR 추출 텍스트</CardTitle>
                       <CardDescription>
-                        {ocrTextPreview.length.toLocaleString()}자 추출됨
+                        {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}자 {isEditingOcr ? '(편집 중)' : '추출됨'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">
-                          {ocrTextPreview.length.toLocaleString()}자 추출됨
+                          {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}자 {isEditingOcr ? '(편집 중)' : '추출됨'}
                         </span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyOcrText}
-                        >
-                          복사
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCopyOcrText}
+                          >
+                            복사
+                          </Button>
+                          {isEditingOcr ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCancelEditOcr}
+                                disabled={isSavingOcr}
+                              >
+                                취소
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleSaveOcrText}
+                                disabled={isSavingOcr || !lastUploadedDocId}
+                                style={{ backgroundColor: primaryColor }}
+                              >
+                                {isSavingOcr ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    저장 중...
+                                  </>
+                                ) : (
+                                  '저장'
+                                )}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleEditOcrText}
+                              disabled={!lastUploadedDocId}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              편집
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
-                        {ocrTextPreview}
-                      </div>
+                      {isEditingOcr ? (
+                        <Textarea
+                          value={editedOcrText}
+                          onChange={(e) => setEditedOcrText(e.target.value)}
+                          className="min-h-64 text-sm font-mono"
+                          placeholder="OCR 텍스트를 편집하세요..."
+                        />
+                      ) : (
+                        <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                          {ocrTextPreview}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
