@@ -32,12 +32,13 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
-import type { Announcement } from '@/types/announcement';
+import type { Announcement, AnnouncementComment } from '@/types/announcement';
 
 export function AdminAnnouncements() {
   const user = useAuthStore((state) => state.user);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [comments, setComments] = useState<Record<string, AnnouncementComment[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -90,6 +91,7 @@ export function AdminAnnouncements() {
       }));
 
       setAnnouncements(formatted);
+      await Promise.all(formatted.map((a) => fetchComments(a.id)));
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       toast({
@@ -99,6 +101,63 @@ export function AdminAnnouncements() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchComments = async (announcementId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('announcement_comments')
+        .select(`
+          *,
+          commenter:users!announcement_comments_user_id_fkey(name)
+        `)
+        .eq('announcement_id', announcementId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const formatted: AnnouncementComment[] = (data || []).map((c: any) => ({
+        id: c.id,
+        announcementId: c.announcement_id,
+        userId: c.user_id,
+        content: c.content,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+        userName: c.commenter?.name || '알 수 없음',
+      }));
+
+      setComments((prev) => ({
+        ...prev,
+        [announcementId]: formatted,
+      }));
+    } catch (error) {
+      console.error('댓글 로드 실패:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, announcementId: string) => {
+    const confirmed = window.confirm('정말 이 댓글을 삭제하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase.from('announcement_comments').delete().eq('id', commentId);
+
+      if (error) throw error;
+
+      toast({
+        title: '댓글 삭제',
+        description: '댓글이 삭제되었습니다.',
+      });
+
+      await fetchComments(announcementId);
+    } catch (error) {
+      console.error('댓글 삭제 실패:', error);
+      toast({
+        title: '댓글 삭제 실패',
+        description: '댓글을 삭제하지 못했습니다.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -355,9 +414,35 @@ export function AdminAnnouncements() {
                   <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
-                      댓글 {announcement.allowComments ? '허용' : '비허용'}
+                      댓글 {comments[announcement.id]?.length || 0}개 {announcement.allowComments ? '' : '(댓글 비허용)'}
                     </div>
                   </div>
+
+                  {/* 댓글 목록 */}
+                  {comments[announcement.id] && comments[announcement.id].length > 0 && (
+                    <div className="mt-4 pt-4 border-t space-y-3">
+                      <p className="text-sm font-medium text-slate-700">댓글 목록</p>
+                      {comments[announcement.id].map((comment) => (
+                        <div key={comment.id} className="bg-slate-50 rounded-lg p-3 flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-700">{comment.userName}</p>
+                            <p className="text-sm text-slate-600 mt-1">{comment.content}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-white hover:bg-slate-50"
+                            onClick={() => handleDeleteComment(comment.id, announcement.id)}
+                          >
+                            <Trash2 className="h-3 w-3 text-red-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
