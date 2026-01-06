@@ -1,4 +1,5 @@
-import { FileText, Calendar, Building2 } from 'lucide-react';
+import { FileText, Calendar, Building2, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,6 +10,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -24,6 +32,45 @@ export function Statistics() {
   const primaryColor = '#2563eb';
 
   const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  // 연도 선택 상태
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [companyCreatedYear, setCompanyCreatedYear] = useState(currentYear);
+  
+  // 문서 데이터에서 가장 오래된 연도 계산
+  useEffect(() => {
+    if (documents.length === 0) return;
+    
+    let oldestYear = currentYear;
+    
+    documents.forEach((doc) => {
+      if (doc.uploadDate) {
+        const docDate = new Date(doc.uploadDate);
+        const docYear = docDate.getFullYear();
+        if (docYear < oldestYear && docYear > 2000) {
+          oldestYear = docYear;
+        }
+      }
+    });
+    
+    console.log('Oldest document year:', oldestYear);
+    setCompanyCreatedYear(oldestYear);
+  }, [documents, currentYear]);
+  
+  // 디버깅: documents 데이터 확인
+  useEffect(() => {
+    if (documents.length > 0) {
+      console.log('Sample document:', documents[0]);
+      console.log('uploadDate sample:', documents[0]?.uploadDate);
+    }
+  }, [documents]);
+  
+  // 선택 가능한 연도 목록 생성 (가장 오래된 문서 연도부터 현재 연도까지)
+  const availableYears = [];
+  for (let year = companyCreatedYear; year <= currentYear; year++) {
+    availableYears.push(year);
+  }
 
   const thisMonthCount = documents.filter((doc) => {
     if (!doc.uploadDate) return false;
@@ -55,20 +102,19 @@ export function Statistics() {
     },
   ];
 
-  const getMonthlyData = () => {
+  // 선택된 연도의 1~12월 데이터 생성
+  const getMonthlyData = (year: number) => {
     const monthlyData: { month: string; count: number }[] = [];
-    const baseDate = new Date();
 
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(baseDate.getFullYear(), baseDate.getMonth() - i, 1);
-      const monthStr = `${date.getMonth() + 1}월`;
+    for (let month = 0; month < 12; month++) {
+      const monthStr = `${month + 1}월`;
 
       const count = documents.filter((doc) => {
         if (!doc.uploadDate) return false;
         const docDate = new Date(doc.uploadDate);
         return (
-          docDate.getFullYear() === date.getFullYear() &&
-          docDate.getMonth() === date.getMonth()
+          docDate.getFullYear() === year &&
+          docDate.getMonth() === month
         );
       }).length;
 
@@ -78,7 +124,7 @@ export function Statistics() {
     return monthlyData;
   };
 
-  const monthlyData = getMonthlyData();
+  const monthlyData = getMonthlyData(selectedYear);
 
   const parentCategoryStats = parentCategories
     .map((cat) => ({
@@ -130,8 +176,27 @@ export function Statistics() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>월별 업로드 현황</CardTitle>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1">
+                    {selectedYear}년
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {availableYears.map((year) => (
+                    <DropdownMenuItem
+                      key={year}
+                      onClick={() => setSelectedYear(year)}
+                      className={selectedYear === year ? 'bg-accent' : ''}
+                    >
+                      {year}년
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>

@@ -227,6 +227,14 @@ export function DocumentManagement() {
     | null
   >(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  // 공유 다이얼로그 상태
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [sharingDocumentId, setSharingDocumentId] = useState<string | null>(null);
+  const [companyUsers, setCompanyUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isSendingShare, setIsSendingShare] = useState(false);
   const [imageZoom, setImageZoom] = useState(100); // 확대/축소 %
   const [imageRotation, setImageRotation] = useState(0); // 회전 각도
 
@@ -1045,6 +1053,133 @@ export function DocumentManagement() {
         description: '문서를 삭제하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
+    }
+  };
+
+  // 공유 다이얼로그 열기
+  const handleOpenShareDialog = async (documentId: string) => {
+    setSharingDocumentId(documentId);
+    setSelectedUserIds([]);
+    setShareDialogOpen(true);
+    setIsLoadingUsers(true);
+
+    try {
+      if (!user?.companyId) {
+        throw new Error('회사 정보가 없습니다.');
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .eq('company_id', user.companyId)
+        .neq('id', user.id)
+        .order('name');
+
+      if (error) throw error;
+
+      setCompanyUsers(data || []);
+    } catch (error) {
+      console.error('사용자 목록 로드 실패:', error);
+      toast({
+        title: '사용자 목록 로드 실패',
+        description: '회사 내 사용자 목록을 불러오지 못했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // 사용자 선택 토글
+  const handleToggleUser = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  // 전체 선택/해제
+  const handleSelectAllUsers = () => {
+    if (selectedUserIds.length === companyUsers.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(companyUsers.map((u) => u.id));
+    }
+  };
+
+  // 공유 이메일 전송
+  const handleSendShare = async () => {
+    if (!sharingDocumentId || selectedUserIds.length === 0) {
+      toast({
+        title: '선택 오류',
+        description: '공유할 사용자를 선택해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingShare(true);
+
+    try {
+      const doc = documents.find((d) => d.id === sharingDocumentId);
+      if (!doc) {
+        throw new Error('문서를 찾을 수 없습니다.');
+      }
+
+      // 문서 파일 URL 가져오기
+      const { data: docData, error: docError } = await supabase
+        .from('documents')
+        .select('file_path, title')
+        .eq('id', sharingDocumentId)
+        .single();
+
+      if (docError || !docData) {
+        throw new Error('문서 정보를 가져올 수 없습니다.');
+      }
+
+      const { data: publicData } = supabase.storage
+        .from('123')
+        .getPublicUrl(docData.file_path);
+
+      const documentUrl = publicData?.publicUrl || '';
+
+      // 선택된 사용자들의 이메일 가져오기
+      const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
+      const recipientEmails = selectedUsers.map((u) => u.email);
+
+      // Supabase Edge Function을 통해 이메일 전송
+      const { error: emailError } = await supabase.functions.invoke('send-share-email', {
+        body: {
+          recipientEmails,
+          documentTitle: doc.name,
+          documentUrl,
+          senderName: user?.name || '알 수 없음',
+          senderEmail: user?.email || '',
+        },
+      });
+
+      if (emailError) {
+        throw emailError;
+      }
+
+      toast({
+        title: '공유 완료',
+        description: `${selectedUsers.length}명에게 문서가 공유되었습니다.`,
+      });
+
+      setShareDialogOpen(false);
+      setSharingDocumentId(null);
+      setSelectedUserIds([]);
+    } catch (error) {
+      console.error('문서 공유 실패:', error);
+      toast({
+        title: '공유 실패',
+        description: '문서를 공유하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingShare(false);
     }
   };
 
@@ -2628,6 +2763,13 @@ export function DocumentManagement() {
                               <Button
                                 variant="outline"
                                 size="icon"
+                                onClick={() => handleOpenShareDialog(doc.id)}
+                              >
+                                📤
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
                                 className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                 onClick={() => handleDeleteDocumentClick(doc.id)}
                               >
@@ -3232,6 +3374,101 @@ export function DocumentManagement() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* 문서 공유 다이얼로그 */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>문서 공유</DialogTitle>
+              <DialogDescription>
+                공유할 사용자를 선택하세요. 선택한 사용자들에게 이메일로 문서가 전송됩니다.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto py-4">
+              {isLoadingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                  <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
+                </div>
+              ) : companyUsers.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  공유할 수 있는 사용자가 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between pb-2 border-b">
+                    <span className="text-sm text-slate-500">
+                      {selectedUserIds.length}명 선택됨
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAllUsers}
+                    >
+                      {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
+                    </Button>
+                  </div>
+                  {companyUsers.map((companyUser) => (
+                    <div
+                      key={companyUser.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
+                        selectedUserIds.includes(companyUser.id)
+                          ? "bg-blue-50 border border-blue-200"
+                          : "bg-slate-50 hover:bg-slate-100 border border-transparent"
+                      )}
+                      onClick={() => handleToggleUser(companyUser.id)}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center",
+                        selectedUserIds.includes(companyUser.id)
+                          ? "bg-blue-600 border-blue-600"
+                          : "border-slate-300"
+                      )}>
+                        {selectedUserIds.includes(companyUser.id) && (
+                          <CheckCircle2 className="h-4 w-4 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{companyUser.name}</p>
+                        <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="border-t pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShareDialogOpen(false);
+                  setSharingDocumentId(null);
+                  setSelectedUserIds([]);
+                }}
+                disabled={isSendingShare}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSendShare}
+                disabled={isSendingShare || selectedUserIds.length === 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isSendingShare ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    전송 중...
+                  </>
+                ) : (
+                  <>📤 {selectedUserIds.length}명에게 공유</>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
