@@ -196,13 +196,13 @@ export function UserManagement() {
           {users.map((member) => (
             <Card key={member.id}>
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      {member.name}
+                      <Users className="h-5 w-5 flex-shrink-0" />
+                      <span className="truncate">{member.name}</span>
                     </CardTitle>
-                    <CardDescription className="mt-1">{member.email}</CardDescription>
+                    <CardDescription className="mt-1 truncate">{member.email}</CardDescription>
                   </div>
                   {member.role === 'admin' && (
                     <Badge variant="outline" className="bg-orange-50">

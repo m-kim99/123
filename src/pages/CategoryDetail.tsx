@@ -909,16 +909,16 @@ export function CategoryDetail() {
                           style={{ color: primaryColor }}
                         />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{doc.name}</p>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <p className="font-medium truncate flex-1 min-w-0">{doc.name}</p>
                           {doc.classified && (
                             <Badge variant="destructive" className="text-xs">
                               기밀
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 truncate">
                           {[
                             formatDateTimeSimple(doc.uploadDate),
                             doc.uploader || null,

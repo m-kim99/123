@@ -283,12 +283,12 @@ export function DepartmentManagement() {
               >
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="bg-[#2563eb] p-3 rounded-xl">
+                    <div className="bg-[#2563eb] p-3 rounded-xl flex-shrink-0">
                       <Building2 className="h-6 w-6 text-white" />
                     </div>
-                    <div>
-                      <CardTitle className="text-xl">{dept.name}</CardTitle>
-                      <p className="text-sm text-slate-500">{dept.code}</p>
+                    <div className="min-w-0 overflow-hidden">
+                      <CardTitle className="text-xl truncate">{dept.name}</CardTitle>
+                      <p className="text-sm text-slate-500 truncate">{dept.code}</p>
                     </div>
                   </div>
                 </CardHeader>

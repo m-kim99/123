@@ -338,9 +338,9 @@ export function DepartmentDetail() {
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{pc.name}</CardTitle>
-                          <CardDescription className="mt-1">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
+                          <CardDescription className="mt-1 truncate">
                             {pc.description || '설명이 없습니다.'}
                           </CardDescription>
                         </div>

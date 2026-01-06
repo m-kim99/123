@@ -557,9 +557,9 @@ export function ParentCategoryDetail() {
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{sub.name}</CardTitle>
-                          <CardDescription className="mt-1">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
+                          <CardDescription className="mt-1 truncate">
                             {sub.description || '설명이 없습니다.'}
                           </CardDescription>
                         </div>

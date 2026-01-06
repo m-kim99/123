@@ -381,10 +381,10 @@ export function AdminAnnouncements() {
             {announcements.map((announcement) => (
               <Card key={announcement.id}>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl">{announcement.title}</CardTitle>
-                      <p className="text-sm text-slate-500 mt-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
+                      <p className="text-sm text-slate-500 mt-1 truncate">
                         작성자: {announcement.authorName} ·{' '}
                         {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
                       </p>

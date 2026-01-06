@@ -555,8 +555,8 @@ export function SubcategoryManagement() {
                         className="flex-1 min-w-0"
                         onClick={handleClick}
                       >
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{sub.name}</p>
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <p className="font-medium truncate flex-1 min-w-0">{sub.name}</p>
                           {expiryStatus.label && (
                             <Badge
                               variant={

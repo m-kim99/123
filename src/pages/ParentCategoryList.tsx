@@ -192,8 +192,8 @@ export function ParentCategoryList() {
                     onClick={() => navigate(`${basePath}/parent-category/${pc.id}`)}
                   >
                     <CardHeader>
-                      <CardTitle className="text-lg">{pc.name}</CardTitle>
-                      <CardDescription className="mt-1">
+                      <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
+                      <CardDescription className="mt-1 truncate">
                         {pc.description || '설명이 없습니다.'}
                       </CardDescription>
                     </CardHeader>

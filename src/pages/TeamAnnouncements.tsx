@@ -233,8 +233,8 @@ export function TeamAnnouncements() {
             {announcements.map((announcement) => (
               <Card key={announcement.id}>
                 <CardHeader>
-                  <CardTitle className="text-xl">{announcement.title}</CardTitle>
-                  <p className="text-sm text-slate-500">
+                  <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
+                  <p className="text-sm text-slate-500 truncate">
                     작성자: {announcement.authorName} ·{' '}
                     {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
                   </p>
