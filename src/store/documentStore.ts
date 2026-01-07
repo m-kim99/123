@@ -1441,21 +1441,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         return;
       }
 
+      // 1. shared_documents 조회
       const { data, error } = await supabase
         .from('shared_documents')
-        .select(`
-          *,
-          documents!shared_documents_document_id_fkey(
-            id,
-            title,
-            department_id,
-            parent_category_id
-          ),
-          sharedByUser:users!shared_documents_shared_by_user_id_fkey(
-            id,
-            name
-          )
-        `)
+        .select('*')
         .eq('shared_to_user_id', user.id)
         .eq('is_active', true)
         .order('shared_at', { ascending: false });
@@ -1465,8 +1454,28 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (data && data.length > 0) {
         const { departments, parentCategories } = get();
         
+        // 2. 관련 document_id들 추출
+        const documentIds = [...new Set(data.map((s: any) => s.document_id))];
+        const sharedByUserIds = [...new Set(data.map((s: any) => s.shared_by_user_id))];
+        
+        // 3. documents 조회
+        const { data: docsData } = await supabase
+          .from('documents')
+          .select('id, title, department_id, parent_category_id')
+          .in('id', documentIds);
+        
+        // 4. users 조회 (공유한 사람들)
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name')
+          .in('id', sharedByUserIds);
+        
+        const docsMap = new Map((docsData || []).map((d: any) => [d.id, d]));
+        const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
+        
         const sharedDocuments: SharedDocument[] = data.map((share: any) => {
-          const doc = share.documents;
+          const doc = docsMap.get(share.document_id) as any;
+          const sharedByUser = usersMap.get(share.shared_by_user_id) as any;
           const department = departments.find(d => d.id === doc?.department_id);
           const category = parentCategories.find(c => c.id === doc?.parent_category_id);
           
@@ -1480,7 +1489,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             sharedAt: share.shared_at,
             isActive: share.is_active,
             documentName: doc?.title || '알 수 없는 문서',
-            sharedByUserName: share.sharedByUser?.name || '알 수 없음',
+            sharedByUserName: sharedByUser?.name || '알 수 없음',
             departmentName: department?.name || '',
             categoryName: category?.name || '',
           };
