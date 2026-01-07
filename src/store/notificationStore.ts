@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 export type NotificationEventType =
   | 'document_created'
   | 'document_deleted'
+  | 'document_shared'
   | 'subcategory_created'
   | 'subcategory_deleted'
   | 'parent_category_created'

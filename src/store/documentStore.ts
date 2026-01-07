@@ -11,7 +11,7 @@ import {
 import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
-import { createDocumentNotification, createShareNotification } from '@/lib/notifications';
+import { createDocumentNotification, createShareNotification, deleteShareNotification } from '@/lib/notifications';
 import { SharedDocument } from '@/types/document';
 
 export interface Department {
@@ -1584,12 +1584,27 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   unshareDocument: async (shareId) => {
     try {
+      // 먼저 공유 정보 조회 (알림 삭제를 위해)
+      const { data: shareData } = await supabase
+        .from('shared_documents')
+        .select('document_id, shared_to_user_id')
+        .eq('id', shareId)
+        .single();
+
       const { error } = await supabase
         .from('shared_documents')
         .update({ is_active: false })
         .eq('id', shareId);
 
       if (error) throw error;
+
+      // 해당 공유 알림 삭제
+      if (shareData) {
+        await deleteShareNotification({
+          documentId: shareData.document_id,
+          targetUserId: shareData.shared_to_user_id,
+        });
+      }
 
       set((state) => ({
         sharedDocuments: state.sharedDocuments.filter(s => s.id !== shareId),

@@ -154,3 +154,31 @@ export async function createShareNotification({
     console.error('공유 알림 생성 중 예외 발생:', err);
   }
 }
+
+/**
+ * 문서 공유 취소 시 해당 알림 삭제
+ */
+interface DeleteShareNotificationParams {
+  documentId: string;
+  targetUserId: string;
+}
+
+export async function deleteShareNotification({
+  documentId,
+  targetUserId,
+}: DeleteShareNotificationParams): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('type', 'document_shared')
+      .eq('document_id', documentId)
+      .eq('target_user_id', targetUserId);
+
+    if (error) {
+      console.error('공유 알림 삭제 실패:', error);
+    }
+  } catch (err) {
+    console.error('공유 알림 삭제 중 예외 발생:', err);
+  }
+}

@@ -216,7 +216,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       let targetPath = `${basePath}/documents`;
 
-      if (notification.parentCategoryId && notification.subcategoryId) {
+      // 공유 알림인 경우 공유받은 문서함으로 이동
+      if (notification.type === 'document_shared') {
+        targetPath = `${basePath}/shared`;
+      } else if (notification.parentCategoryId && notification.subcategoryId) {
         targetPath = `${basePath}/parent-category/${notification.parentCategoryId}/subcategory/${notification.subcategoryId}`;
       } else if (notification.parentCategoryId) {
         targetPath = `${basePath}/parent-category/${notification.parentCategoryId}`;
@@ -232,6 +235,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // 알림 메시지를 파싱하여 액션 부분과 나머지를 분리
   const parseNotificationMessage = useCallback((message: string) => {
     const actionPatterns = [
+      '📤 문서 공유',
       '문서 등록',
       '문서 삭제',
       '세부 카테고리 생성',
