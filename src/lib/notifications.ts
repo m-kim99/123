@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export type NotificationEventType =
   | 'document_created'
   | 'document_deleted'
+  | 'document_shared'
   | 'subcategory_created'
   | 'subcategory_deleted'
   | 'parent_category_created'
@@ -89,6 +90,9 @@ export async function createDocumentNotification({
       case 'subcategory_expired':
         prefix = '🔒 카테고리 만료됨';
         break;
+      case 'document_shared':
+        prefix = '📤 문서 공유';
+        break;
       default:
         prefix = '알림';
         break;
@@ -111,5 +115,42 @@ export async function createDocumentNotification({
     }
   } catch (err) {
     console.error('알림 생성 중 예외 발생:', err);
+  }
+}
+
+/**
+ * 문서 공유 알림 생성 (특정 사용자에게만)
+ */
+interface CreateShareNotificationParams {
+  documentId: string;
+  documentTitle: string;
+  sharedByUserName: string;
+  targetUserId: string;
+  companyId: string;
+}
+
+export async function createShareNotification({
+  documentId,
+  documentTitle,
+  sharedByUserName,
+  targetUserId,
+  companyId,
+}: CreateShareNotificationParams): Promise<void> {
+  try {
+    const message = `📤 문서 공유 ${sharedByUserName}님이 "${documentTitle}" 문서를 공유했습니다.`;
+
+    const { error } = await supabase.from('notifications').insert({
+      type: 'document_shared',
+      document_id: documentId,
+      company_id: companyId,
+      target_user_id: targetUserId,
+      message,
+    });
+
+    if (error) {
+      console.error('공유 알림 생성 실패:', error);
+    }
+  } catch (err) {
+    console.error('공유 알림 생성 중 예외 발생:', err);
   }
 }

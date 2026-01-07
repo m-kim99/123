@@ -50,24 +50,42 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         return;
       }
 
-      // 1. 알림 목록 조회
-      let query = supabase
+      // 1. 일반 알림 조회 (target_user_id가 NULL인 것들)
+      let generalQuery = supabase
         .from('notifications')
         .select('*')
         .eq('company_id', user.companyId)
+        .is('target_user_id', null)
         .order('created_at', { ascending: false })
         .limit(50);
 
       // 관리자: 전체 부서, 팀원: 자신의 부서만
       if (user.role !== 'admin' && user.departmentId) {
-        query = query.eq('department_id', user.departmentId);
+        generalQuery = generalQuery.eq('department_id', user.departmentId);
       }
 
-      const { data: notificationsData, error: notificationsError } = await query;
+      const { data: generalNotifications, error: generalError } = await generalQuery;
+      if (generalError) throw generalError;
 
-      if (notificationsError) throw notificationsError;
+      // 2. 나에게 온 개인 알림 조회 (target_user_id가 나인 것들)
+      const { data: personalNotifications, error: personalError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('company_id', user.companyId)
+        .eq('target_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      // 2. 사용자별 알림 상태 조회
+      if (personalError) throw personalError;
+
+      // 3. 두 결과 병합 후 시간순 정렬
+      const allNotifications = [...(generalNotifications || []), ...(personalNotifications || [])]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 50);
+
+      const notificationsData = allNotifications;
+
+      // 4. 사용자별 알림 상태 조회
       const { data: statusData, error: statusError } = await supabase
         .from('user_notification_status')
         .select('notification_id, is_read, is_dismissed')

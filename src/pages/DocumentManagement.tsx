@@ -165,6 +165,7 @@ export function DocumentManagement() {
     clearNfcByUid,
     updateDocumentOcrText,
     shareDocument,
+    unshareDocument,
   } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
@@ -237,6 +238,9 @@ export function DocumentManagement() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isSendingShare, setIsSendingShare] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
+  const [activeShareTab, setActiveShareTab] = useState<'new' | 'existing'>('new');
+  const [existingShares, setExistingShares] = useState<any[]>([]);
+  const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [imageZoom, setImageZoom] = useState(100); // 확대/축소 %
   const [imageRotation, setImageRotation] = useState(0); // 회전 각도
 
@@ -1062,33 +1066,83 @@ export function DocumentManagement() {
   const handleOpenShareDialog = async (documentId: string) => {
     setSharingDocumentId(documentId);
     setSelectedUserIds([]);
+    setActiveShareTab('new');
     setShareDialogOpen(true);
     setIsLoadingUsers(true);
+    setIsLoadingShares(true);
 
     try {
       if (!user?.companyId) {
         throw new Error('회사 정보가 없습니다.');
       }
 
-      const { data, error } = await supabase
+      // 1. 공유 가능한 사용자 목록
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('id, name, email')
         .eq('company_id', user.companyId)
         .neq('id', user.id)
         .order('name');
 
-      if (error) throw error;
+      if (usersError) throw usersError;
+      setCompanyUsers(usersData || []);
 
-      setCompanyUsers(data || []);
+      // 2. 현재 공유 현황
+      const { data: sharesData, error: sharesError } = await supabase
+        .from('shared_documents')
+        .select(`
+          id,
+          shared_to_user_id,
+          shared_at,
+          permission,
+          users:shared_to_user_id (
+            id,
+            name,
+            email
+          )
+        `)
+        .eq('document_id', documentId)
+        .eq('shared_by_user_id', user.id)
+        .eq('is_active', true)
+        .order('shared_at', { ascending: false });
+
+      if (sharesError) throw sharesError;
+      setExistingShares(sharesData || []);
+
     } catch (error) {
-      console.error('사용자 목록 로드 실패:', error);
+      console.error('공유 정보 로드 실패:', error);
       toast({
-        title: '사용자 목록 로드 실패',
-        description: '회사 내 사용자 목록을 불러오지 못했습니다.',
+        title: '공유 정보 로드 실패',
+        description: '공유 정보를 불러오지 못했습니다.',
         variant: 'destructive',
       });
     } finally {
       setIsLoadingUsers(false);
+      setIsLoadingShares(false);
+    }
+  };
+
+  // 공유 취소
+  const handleUnshare = async (shareId: string) => {
+    if (!confirm('공유를 취소하시겠습니까?')) return;
+
+    try {
+      await unshareDocument(shareId);
+      
+      // 목록에서 제거
+      setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
+      
+      toast({
+        title: '공유 취소 완료',
+        description: '문서 공유가 취소되었습니다.',
+      });
+    } catch (error) {
+      console.error('공유 취소 실패:', error);
+      toast({
+        title: '공유 취소 실패',
+        description: '공유 취소 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -3387,105 +3441,177 @@ export function DocumentManagement() {
             <DialogHeader>
               <DialogTitle>문서 공유</DialogTitle>
               <DialogDescription>
-                공유할 사용자를 선택하세요.
+                공유할 사용자를 선택하거나 기존 공유를 관리하세요.
               </DialogDescription>
             </DialogHeader>
 
+            {/* 탭 버튼 */}
+            <div className="flex border-b bg-white">
+              <button
+                className={`flex-1 py-2 text-sm font-medium bg-white ${
+                  activeShareTab === 'new'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+                onClick={() => setActiveShareTab('new')}
+              >
+                새로운 공유
+              </button>
+              <button
+                className={`flex-1 py-2 text-sm font-medium bg-white ${
+                  activeShareTab === 'existing'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+                onClick={() => setActiveShareTab('existing')}
+              >
+                공유 현황 ({existingShares.length})
+              </button>
+            </div>
+
             <div className="flex-1 overflow-y-auto py-4">
-              {isLoadingUsers ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                  <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
-                </div>
-              ) : companyUsers.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  공유할 수 있는 사용자가 없습니다.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between pb-2 border-b">
-                    <span className="text-sm text-slate-500">
-                      {selectedUserIds.length}명 선택됨
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSelectAllUsers}
-                    >
-                      {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
-                    </Button>
-                  </div>
-                  {companyUsers.map((companyUser) => (
-                    <div
-                      key={companyUser.id}
-                      className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-                        selectedUserIds.includes(companyUser.id)
-                          ? "bg-blue-50 border border-blue-200"
-                          : "bg-slate-50 hover:bg-slate-100 border border-transparent"
-                      )}
-                      onClick={() => handleToggleUser(companyUser.id)}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center",
-                        selectedUserIds.includes(companyUser.id)
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-slate-300"
-                      )}>
-                        {selectedUserIds.includes(companyUser.id) && (
-                          <CheckCircle2 className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{companyUser.name}</p>
-                        <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
-                      </div>
+              {activeShareTab === 'new' ? (
+                <>
+                  {/* 전체 선택 */}
+                  {companyUsers.length > 0 && (
+                    <div className="pb-2 mb-2 border-b">
+                      <button
+                        onClick={handleSelectAllUsers}
+                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
+                      >
+                        {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+
+                  {isLoadingUsers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                      <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
+                    </div>
+                  ) : companyUsers.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      공유할 수 있는 사용자가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {companyUsers.map((companyUser) => (
+                        <div
+                          key={companyUser.id}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
+                            selectedUserIds.includes(companyUser.id)
+                              ? "bg-blue-50 border border-blue-200"
+                              : "bg-slate-50 hover:bg-slate-100 border border-transparent"
+                          )}
+                          onClick={() => handleToggleUser(companyUser.id)}
+                        >
+                          <div className={cn(
+                            "w-5 h-5 rounded border-2 flex items-center justify-center",
+                            selectedUserIds.includes(companyUser.id)
+                              ? "bg-blue-600 border-blue-600"
+                              : "border-slate-300"
+                          )}>
+                            {selectedUserIds.includes(companyUser.id) && (
+                              <CheckCircle2 className="h-4 w-4 text-white" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{companyUser.name}</p>
+                            <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* 공유 현황 탭 */}
+                  {isLoadingShares ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                      <span className="ml-2 text-slate-500">공유 현황 로딩 중...</span>
+                    </div>
+                  ) : existingShares.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      아직 공유한 사용자가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {existingShares.map((share: any) => (
+                        <div
+                          key={share.id}
+                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{share.users?.name || '알 수 없음'}</p>
+                            <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {new Date(share.shared_at).toLocaleDateString('ko-KR')} 공유
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUnshare(share.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            {/* 이메일 알림 체크박스 */}
-            <div className="flex items-center justify-end space-x-2 pt-2 pb-2">
-              <input
-                type="checkbox"
-                id="emailNotification"
-                checked={sendEmailNotification}
-                onChange={(e) => setSendEmailNotification(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <label htmlFor="emailNotification" className="text-sm">
-                이메일 알림 전송
-              </label>
-            </div>
-
             <DialogFooter className="border-t pt-4">
+              {/* 이메일 알림 체크박스 - 우측 하단 */}
+              {activeShareTab === 'new' && (
+                <div className="flex items-center space-x-2 mr-auto">
+                  <input
+                    type="checkbox"
+                    id="emailNotification"
+                    checked={sendEmailNotification}
+                    onChange={(e) => setSendEmailNotification(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="emailNotification" className="text-sm">
+                    이메일 알림 전송
+                  </label>
+                </div>
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
                   setShareDialogOpen(false);
                   setSharingDocumentId(null);
                   setSelectedUserIds([]);
+                  setSendEmailNotification(false);
+                  setActiveShareTab('new');
                 }}
                 disabled={isSendingShare}
               >
-                취소
+                닫기
               </Button>
-              <Button
-                onClick={handleSendShare}
-                disabled={isSendingShare || selectedUserIds.length === 0}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isSendingShare ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    전송 중...
-                  </>
-                ) : (
-                  <>📤 {selectedUserIds.length}명에게 공유</>
-                )}
-              </Button>
+              {activeShareTab === 'new' && (
+                <Button
+                  onClick={handleSendShare}
+                  disabled={isSendingShare || selectedUserIds.length === 0}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isSendingShare ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      공유 중...
+                    </>
+                  ) : (
+                    <>📤 {selectedUserIds.length}명에게 공유</>
+                  )}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>

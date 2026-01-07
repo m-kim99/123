@@ -11,7 +11,7 @@ import {
 import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
-import { createDocumentNotification } from '@/lib/notifications';
+import { createDocumentNotification, createShareNotification } from '@/lib/notifications';
 import { SharedDocument } from '@/types/document';
 
 export interface Department {
@@ -1549,6 +1549,24 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         });
 
       if (error) throw error;
+
+      // 공유받은 사람에게 알림 생성
+      if (user.companyId) {
+        // 문서 제목 조회
+        const { data: docData } = await supabase
+          .from('documents')
+          .select('title')
+          .eq('id', documentId)
+          .single();
+
+        await createShareNotification({
+          documentId,
+          documentTitle: docData?.title || '문서',
+          sharedByUserName: user.name || '알 수 없음',
+          targetUserId: sharedToUserId,
+          companyId: user.companyId,
+        });
+      }
 
       toast({
         title: '문서가 공유되었습니다.',
