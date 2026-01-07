@@ -532,27 +532,36 @@ export function SubcategoryDetail() {
       if (usersError) throw usersError;
       setCompanyUsers(usersData || []);
 
-      // 2. 현재 공유 현황
+      // 2. 현재 공유 현황 (FK JOIN 대신 별도 쿼리)
       const { data: sharesData, error: sharesError } = await supabase
         .from('shared_documents')
-        .select(`
-          id,
-          shared_to_user_id,
-          shared_at,
-          permission,
-          users:shared_to_user_id (
-            id,
-            name,
-            email
-          )
-        `)
+        .select('id, shared_to_user_id, shared_at, permission')
         .eq('document_id', documentId)
         .eq('shared_by_user_id', user.id)
         .eq('is_active', true)
         .order('shared_at', { ascending: false });
 
       if (sharesError) throw sharesError;
-      setExistingShares(sharesData || []);
+
+      // 3. 공유받은 사용자 정보 조회
+      if (sharesData && sharesData.length > 0) {
+        const sharedToUserIds = [...new Set(sharesData.map((s: any) => s.shared_to_user_id))];
+        const { data: sharedUsersData } = await supabase
+          .from('users')
+          .select('id, name, email')
+          .in('id', sharedToUserIds);
+
+        const usersMap = new Map((sharedUsersData || []).map((u: any) => [u.id, u]));
+
+        const sharesWithUsers = sharesData.map((share: any) => ({
+          ...share,
+          users: usersMap.get(share.shared_to_user_id) || null,
+        }));
+
+        setExistingShares(sharesWithUsers);
+      } else {
+        setExistingShares([]);
+      }
 
     } catch (error) {
       console.error('공유 정보 로드 실패:', error);
