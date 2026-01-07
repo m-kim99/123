@@ -47,9 +47,10 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Document Share <noreply@yourdomain.com>',
+          from: 'TrayStorage <noreply@traystorageconnect.com>',
+          reply_to: senderEmail,
           to: email,
-          subject: `[문서 공유] ${senderName}님이 문서를 공유했습니다`,
+          subject: `[TrayStorage] ${senderName}님이 문서를 공유했습니다`,
           html: `
             <!DOCTYPE html>
             <html>

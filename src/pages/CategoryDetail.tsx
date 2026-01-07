@@ -91,7 +91,7 @@ export function CategoryDetail() {
   const departments = useDocumentStore((state) => state.departments);
   const subcategories = useDocumentStore((state) => state.subcategories);
   // 함수는 한 번에 가져오기 (참조 안정적)
-  const { fetchDocuments, uploadDocument } = useDocumentStore();
+  const { fetchDocuments, uploadDocument, shareDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
@@ -125,6 +125,7 @@ export function CategoryDetail() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isSendingShare, setIsSendingShare] = useState(false);
+  const [sendEmailNotification, setSendEmailNotification] = useState(false);
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -905,47 +906,54 @@ export function CategoryDetail() {
         throw new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: docData, error: docError } = await supabase
-        .from('documents')
-        .select('file_path, title')
-        .eq('id', sharingDocumentId)
-        .single();
-
-      if (docError || !docData) {
-        throw new Error('문서 정보를 가져올 수 없습니다.');
+      // 1. DB에 공유 정보 저장 (필수)
+      for (const userId of selectedUserIds) {
+        await shareDocument(sharingDocumentId, userId, 'download', undefined);
       }
 
-      const { data: publicData } = supabase.storage
-        .from('123')
-        .getPublicUrl(docData.file_path);
+      // 2. 이메일 전송 (선택사항)
+      if (sendEmailNotification) {
+        const { data: docData, error: docError } = await supabase
+          .from('documents')
+          .select('file_path, title')
+          .eq('id', sharingDocumentId)
+          .single();
 
-      const documentUrl = publicData?.publicUrl || '';
+        if (!docError && docData) {
+          const { data: publicData } = supabase.storage
+            .from('123')
+            .getPublicUrl(docData.file_path);
 
-      const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
-      const recipientEmails = selectedUsers.map((u) => u.email);
+          const documentUrl = publicData?.publicUrl || '';
+          const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
+          const recipientEmails = selectedUsers.map((u) => u.email);
 
-      const { error: emailError } = await supabase.functions.invoke('send-share-email', {
-        body: {
-          recipientEmails,
-          documentTitle: doc.name,
-          documentUrl,
-          senderName: user?.name || '알 수 없음',
-          senderEmail: user?.email || '',
-        },
-      });
-
-      if (emailError) {
-        throw emailError;
+          // 이메일 전송 시도 (실패해도 공유는 성공으로 처리)
+          try {
+            await supabase.functions.invoke('send-share-email', {
+              body: {
+                recipientEmails,
+                documentTitle: doc.name,
+                documentUrl,
+                senderName: user?.name || '알 수 없음',
+                senderEmail: user?.email || '',
+              },
+            });
+          } catch (emailError) {
+            console.warn('이메일 전송 실패 (공유는 완료됨):', emailError);
+          }
+        }
       }
 
       toast({
         title: '공유 완료',
-        description: `${selectedUsers.length}명에게 문서가 공유되었습니다.`,
+        description: `${selectedUserIds.length}명에게 문서가 공유되었습니다.${sendEmailNotification ? ' 이메일도 전송되었습니다.' : ''}`,
       });
 
       setShareDialogOpen(false);
       setSharingDocumentId(null);
       setSelectedUserIds([]);
+      setSendEmailNotification(false);
     } catch (error) {
       console.error('문서 공유 실패:', error);
       toast({
@@ -1410,7 +1418,7 @@ export function CategoryDetail() {
             <DialogHeader>
               <DialogTitle>문서 공유</DialogTitle>
               <DialogDescription>
-                공유할 사용자를 선택하세요. 선택한 사용자들에게 이메일로 문서가 전송됩니다.
+                공유할 사용자를 선택하세요.
               </DialogDescription>
             </DialogHeader>
 
@@ -1465,6 +1473,20 @@ export function CategoryDetail() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* 이메일 알림 체크박스 */}
+            <div className="flex items-center justify-end space-x-2 pt-2 pb-2">
+              <input
+                type="checkbox"
+                id="emailNotificationCategory"
+                checked={sendEmailNotification}
+                onChange={(e) => setSendEmailNotification(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="emailNotificationCategory" className="text-sm">
+                이메일 알림 전송
+              </label>
             </div>
 
             <DialogFooter className="border-t pt-4">
