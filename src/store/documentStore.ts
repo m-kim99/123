@@ -1203,6 +1203,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           uploaded_by: null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
           embedding: embedding,
+          uploaded_at: new Date().toISOString(), // 클라이언트 현재 시간을 ISO 형식으로 전송 (타임존 정보 포함)
         })
         .select()
         .single();

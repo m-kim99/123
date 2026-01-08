@@ -65,7 +65,7 @@ import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { PdfViewer } from '@/components/PdfViewer';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTimeSimple } from '@/lib/utils';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -2802,7 +2802,7 @@ export function DocumentManagement() {
                                 </div>
                                 <p className="text-sm text-slate-500 truncate">
                                   {[
-                                    format(new Date(doc.uploadDate), 'yyyy-MM-dd HH:mm', { locale: ko }),
+                                    formatDateTimeSimple(doc.uploadDate),
                                     doc.uploader || null,
                                     parentCategory?.name || null,
                                     subcategory?.name || null,

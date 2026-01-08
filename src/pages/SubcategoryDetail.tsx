@@ -14,8 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { formatDateTimeSimple } from '@/lib/utils';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
@@ -866,7 +865,7 @@ export function SubcategoryDetail() {
                           )}
                         </div>
                         <p className="text-sm text-slate-500 truncate">
-                          {[format(new Date(doc.uploadDate), 'yyyy-MM-dd HH:mm', { locale: ko }), doc.uploader || null]
+                          {[formatDateTimeSimple(doc.uploadDate), doc.uploader || null]
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
