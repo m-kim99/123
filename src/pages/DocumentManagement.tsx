@@ -3218,13 +3218,26 @@ export function DocumentManagement() {
                 <Button
                   className="w-full"
                   style={{ backgroundColor: primaryColor }}
-                  disabled={
-                    uploadFiles.length === 0 ||
-                    !uploadSelection.subcategoryId ||
-                    isUploading ||
-                    isExtractingOcr
-                  }
-                  onClick={handleUpload}
+                  disabled={isUploading || isExtractingOcr}
+                  onClick={() => {
+                    if (!uploadSelection.departmentId || !uploadSelection.parentCategoryId || !uploadSelection.subcategoryId) {
+                      toast({
+                        title: '저장 위치를 선택해주세요',
+                        description: '문서를 저장할 부서, 대분류, 세부 카테고리를 먼저 선택해주세요.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    if (uploadFiles.length === 0) {
+                      toast({
+                        title: '파일을 선택해주세요',
+                        description: '업로드할 파일을 먼저 선택해주세요.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    handleUpload();
+                  }}
                 >
                   {isExtractingOcr ? (
                     <>
