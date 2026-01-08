@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 import expandIcon from '@/assets/expand.png';
 import closeIcon from '@/assets/close.png';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,8 @@ interface AIChatbotProps {
 }
 
 export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -195,7 +199,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                         {message.searchResults.slice(0, 5).map((doc) => (
                           <div
                             key={doc.id}
-                            className="border border-slate-200 rounded-md bg-white px-3 py-2 text-xs shadow-sm"
+                            className="border border-slate-200 rounded-md bg-white px-3 py-2 text-xs shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                            onClick={() => {
+                              if (doc.parentCategoryId && doc.subcategoryId) {
+                                const basePath = user?.role === 'admin' ? '/admin' : '/team';
+                                navigate(`${basePath}/parent-category/${doc.parentCategoryId}/subcategory/${doc.subcategoryId}`);
+                                setIsOpen(false);
+                              }
+                            }}
                           >
                             <div className="font-semibold text-slate-800">
                               {doc.name}

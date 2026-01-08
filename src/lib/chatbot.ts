@@ -13,6 +13,8 @@ export interface ChatSearchResult {
   departmentName: string;
   storageLocation: string | null;
   uploadDate: string;
+  subcategoryId: string;
+  parentCategoryId: string;
 }
 
 export interface ChatHistoryItem {
@@ -171,6 +173,8 @@ export function searchDocumentsByDate(dateRange: { start: Date; end: Date }): Ch
         departmentName: department?.name ?? '',
         storageLocation: category?.storageLocation ?? null,
         uploadDate: doc.uploadDate,
+        subcategoryId: doc.subcategoryId,
+        parentCategoryId: doc.parentCategoryId,
       };
     })
     .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
@@ -213,6 +217,8 @@ export function searchDocuments(query: string): ChatSearchResult[] {
         departmentName: department?.name ?? '',
         storageLocation: category?.storageLocation ?? null,
         uploadDate: doc.uploadDate,
+        subcategoryId: doc.subcategoryId,
+        parentCategoryId: doc.parentCategoryId,
       };
     });
 }
@@ -543,6 +549,8 @@ export async function generateResponse(
           departmentName: d.departmentName ?? '',
           storageLocation: d.storageLocation ?? null,
           uploadDate: d.uploadDate ?? '',
+          subcategoryId: d.subcategoryId ?? '',
+          parentCategoryId: d.parentCategoryId ?? '',
         }));
       } catch (parseErr) {
         console.error('Failed to parse docs JSON from stream:', parseErr);

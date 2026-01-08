@@ -34,7 +34,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Download, Eye, X, FileText, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -224,9 +223,8 @@ export function SharedDocuments() {
                     <TableHead>공유한 사람</TableHead>
                     <TableHead>부서</TableHead>
                     <TableHead>카테고리</TableHead>
-                    <TableHead>권한</TableHead>
                     <TableHead>공유일</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+                    <TableHead className="text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -245,19 +243,6 @@ export function SharedDocuments() {
                       <TableCell>{share.sharedByUserName}</TableCell>
                       <TableCell>{share.departmentName}</TableCell>
                       <TableCell>{share.categoryName}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            share.permission === 'download'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                        >
-                          {share.permission === 'download'
-                            ? '다운로드'
-                            : '보기'}
-                        </Badge>
-                      </TableCell>
                       <TableCell>
                         {format(
                           new Date(share.sharedAt),
