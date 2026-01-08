@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
-import { formatDateTimeSimple } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface ChatMessage {
   id: string;
@@ -226,7 +227,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                               </div>
                             )}
                             <div className="text-slate-400 text-[10px]">
-                              업로드: {formatDateTimeSimple(doc.uploadDate)}
+                              업로드: {format(new Date(doc.uploadDate), 'yyyy-MM-dd HH:mm', { locale: ko })}
                             </div>
                           </div>
                         ))}

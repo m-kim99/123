@@ -59,7 +59,6 @@ import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
-import { formatDateTimeSimple } from '@/lib/utils';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
@@ -2803,7 +2802,7 @@ export function DocumentManagement() {
                                 </div>
                                 <p className="text-sm text-slate-500 truncate">
                                   {[
-                                    formatDateTimeSimple(doc.uploadDate),
+                                    format(new Date(doc.uploadDate), 'yyyy-MM-dd HH:mm', { locale: ko }),
                                     doc.uploader || null,
                                     parentCategory?.name || null,
                                     subcategory?.name || null,

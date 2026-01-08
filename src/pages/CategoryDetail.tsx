@@ -32,7 +32,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
-import { formatDateTimeSimple } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { PdfViewer } from '@/components/PdfViewer';
 
 function splitFilesByType(files: File[]) {
@@ -1122,7 +1123,7 @@ export function CategoryDetail() {
                         </div>
                         <p className="text-sm text-slate-500 truncate">
                           {[
-                            formatDateTimeSimple(doc.uploadDate),
+                            format(new Date(doc.uploadDate), 'yyyy-MM-dd HH:mm', { locale: ko }),
                             doc.uploader || null,
                           ]
                             .filter(Boolean)
