@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
@@ -72,13 +72,19 @@ function ProtectedRoute({
   children: React.ReactNode;
   requiredRole?: 'admin' | 'team';
 }) {
-  const { isAuthenticated, user, needsOnboarding } = useAuthStore();
+  const { isAuthenticated, user, needsOnboarding, setRedirectAfterLogin } = useAuthStore();
+  const location = useLocation();
 
   if (needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
 
   if (!isAuthenticated) {
+    // 현재 경로를 저장하여 로그인 후 돌아올 수 있도록 함
+    const currentPath = location.pathname + location.search;
+    if (currentPath !== '/' && currentPath !== '/team' && currentPath !== '/admin') {
+      setRedirectAfterLogin(currentPath);
+    }
     return <Navigate to="/" replace />;
   }
 

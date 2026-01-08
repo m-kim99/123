@@ -229,9 +229,10 @@ export function LoginPage() {
 
       const basePath = role === 'admin' ? '/admin' : '/team';
 
-      // NFC 등에서 저장된 리다이렉트 경로가 있으면 우선 이동
+      // 저장된 리다이렉트 경로가 있으면 우선 이동
       if (redirectAfterLogin) {
-        navigate(`${basePath}${redirectAfterLogin}`, { replace: true });
+        // 전체 경로가 저장되어 있으므로 그대로 사용
+        navigate(redirectAfterLogin, { replace: true });
         setRedirectAfterLogin(null);
       } else {
         navigate(basePath);
