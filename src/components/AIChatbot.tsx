@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Volume2, VolumeX, Square } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuthStore } from '@/store/authStore';
@@ -113,15 +113,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 음성 관련 상태
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [autoPlayVoice, setAutoPlayVoice] = useState(true);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
-  // Gemini Live 모드 상태
-  const [isLiveMode, setIsLiveMode] = useState(false);
+  // Gemini Live 모드
   const audioPlayer = useAudioPlayer();
 
   const geminiLive = useGeminiLive({
@@ -145,273 +138,28 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     onError: (error) => {
       console.error('Live API 오류:', error);
       alert('실시간 대화 중 오류가 발생했습니다.');
-      setIsLiveMode(false);
     },
   });
 
-  // Live 모드 토글
-  const toggleLiveMode = useCallback(async () => {
-    if (!isLiveMode) {
-      await geminiLive.connect();
-      setIsLiveMode(true);
-    } else {
+  // Live 음성 대화 토글 (한 번 클릭으로 시작/중단)
+  const toggleLiveVoice = useCallback(async () => {
+    if (geminiLive.isStreaming) {
+      // 스트리밍 중이면 중단
+      geminiLive.stopStreaming();
       geminiLive.disconnect();
       audioPlayer.stop();
-      setIsLiveMode(false);
-    }
-  }, [isLiveMode, geminiLive, audioPlayer]);
-
-  // Live 모드 음성 입력 시작/중단
-  const toggleLiveStreaming = useCallback(() => {
-    if (geminiLive.isStreaming) {
-      geminiLive.stopStreaming();
     } else {
+      // 스트리밍 시작
+      await geminiLive.connect();
       geminiLive.startStreaming();
     }
-  }, [geminiLive]);
-
-  // 음성 합성 함수
-  const speakText = useCallback((text: string) => {
-    if (!window.speechSynthesis) {
-      console.error('음성 합성을 지원하지 않는 브라우저입니다.');
-      return;
-    }
-
-    // 기존 재생 중단
-    window.speechSynthesis.cancel();
-
-    // 링크 텍스트 제거 (음성으로 읽지 않음)
-    let textOnly = text.replace(/→\s+\/[^\s\n]+/g, '');
-    // 특수문자 제거 (음성으로 읽지 않음) - 한글, 영어, 숫자, 공백만 유지
-    textOnly = textOnly.replace(/[^\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318Fa-zA-Z0-9\s]/g, ' ');
-    // 연속 공백을 하나로 정리
-    textOnly = textOnly.replace(/\s+/g, ' ').trim();
-    if (!textOnly) return;
-
-    const utterance = new SpeechSynthesisUtterance(textOnly);
-    utterance.lang = 'ko-KR';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    // 한국어 음성 선택
-    const voices = window.speechSynthesis.getVoices();
-    const koreanVoice = voices.find(voice =>
-      voice.lang === 'ko-KR' || voice.lang.startsWith('ko')
-    );
-    if (koreanVoice) {
-      utterance.voice = koreanVoice;
-    }
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, []);
-
-  // 음성 목록 로드 (초기화)
-  useEffect(() => {
-    if (window.speechSynthesis) {
-      // Chrome에서는 voices가 비동기로 로드됨
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
-  }, []);
+  }, [geminiLive, audioPlayer]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
-
-  // Gemini API를 통한 음성→텍스트 변환
-  const transcribeAudio = useCallback(async (audioBlob: Blob): Promise<string> => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase 설정이 없습니다.');
-    }
-
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.webm');
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/speech-to-text`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || '음성 인식 실패');
-    }
-
-    const result = await response.json();
-    return result.transcript || '';
-  }, []);
-
-  // 음성 입력 핸들러 (MediaRecorder 사용 - 모든 브라우저 지원)
-  const handleVoiceInput = useCallback(async () => {
-    if (isListening) {
-      // 녹음 중단
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-      return;
-    }
-
-    try {
-      // 마이크 권한 요청
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // MediaRecorder 설정
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
-        ? 'audio/webm' 
-        : MediaRecorder.isTypeSupported('audio/mp4') 
-          ? 'audio/mp4' 
-          : 'audio/wav';
-      
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // 스트림 정리
-        stream.getTracks().forEach(track => track.stop());
-        setIsListening(false);
-
-        if (audioChunksRef.current.length === 0) {
-          return;
-        }
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        
-        try {
-          setInputValue('음성 인식 중...');
-          const transcript = await transcribeAudio(audioBlob);
-          
-          if (transcript) {
-            setInputValue(transcript);
-            // 약간의 딜레이 후 자동 전송
-            setTimeout(() => {
-              sendMessageWithVoice(transcript);
-            }, 300);
-          } else {
-            setInputValue('');
-            alert('음성을 인식하지 못했습니다. 다시 시도해주세요.');
-          }
-        } catch (error) {
-          console.error('음성 인식 오류:', error);
-          setInputValue('');
-          alert('음성 인식 중 오류가 발생했습니다.');
-        }
-      };
-
-      mediaRecorder.onerror = () => {
-        stream.getTracks().forEach(track => track.stop());
-        setIsListening(false);
-        alert('녹음 중 오류가 발생했습니다.');
-      };
-
-      // 녹음 시작
-      mediaRecorder.start();
-      setIsListening(true);
-
-    } catch (error) {
-      console.error('마이크 접근 오류:', error);
-      alert('마이크 접근 권한이 필요합니다. 브라우저 설정에서 마이크 권한을 허용해주세요.');
-    }
-  }, [isListening, transcribeAudio]);
-
-  // 음성 입력 후 자동 전송 (음성 출력 포함)
-  const sendMessageWithVoice = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const userMessage: ChatMessage = {
-      id: `${Date.now()}-user`,
-      role: 'user',
-      content: trimmed,
-      timestamp: new Date(),
-    };
-
-    const assistantId = `${Date.now()}-assistant`;
-
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-      {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-      },
-    ]);
-    setInputValue('');
-    setIsTyping(true);
-
-    (async () => {
-      try {
-        const history: ChatHistoryItem[] = messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
-        let firstChunkReceived = false;
-        let fullResponse = '';
-
-        await generateResponse(trimmed, history, (partial, docs) => {
-          if (!firstChunkReceived) {
-            firstChunkReceived = true;
-            setIsTyping(false);
-          }
-
-          fullResponse = partial;
-
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? {
-                    ...m,
-                    content: partial,
-                    searchResults: docs && docs.length > 0 ? docs : undefined,
-                    timestamp: new Date(),
-                  }
-                : m
-            )
-          );
-        });
-
-        // 답변 완료 후 음성 재생
-        if (autoPlayVoice && fullResponse) {
-          speakText(fullResponse);
-        }
-      } finally {
-        setIsTyping(false);
-      }
-    })();
-  };
 
   const sendMessage = (text: string) => {
     const trimmed = text.trim();
@@ -508,42 +256,6 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               AI 챗봇
             </CardTitle>
             <div className="flex items-center gap-1">
-              {/* Live 모드 토글 */}
-              <button
-                type="button"
-                onClick={toggleLiveMode}
-                className={`h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0 text-sm ${
-                  isLiveMode ? 'bg-green-500' : 'bg-slate-300'
-                }`}
-                title={isLiveMode ? 'Live 모드 (실시간 대화) - 클릭하여 종료' : '일반 모드 - 클릭하여 Live 모드 시작'}
-              >
-                {isLiveMode ? '🔴' : '⚪'}
-              </button>
-              {/* 음성 자동 재생 토글 */}
-              <button
-                type="button"
-                onClick={() => setAutoPlayVoice(!autoPlayVoice)}
-                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                style={{ backgroundColor: autoPlayVoice ? primaryColor : '#e2e8f0' }}
-                title={autoPlayVoice ? '음성 자동 재생 켜짐' : '음성 자동 재생 꺼짐'}
-              >
-                {autoPlayVoice ? (
-                  <Volume2 className="h-4 w-4 text-white" />
-                ) : (
-                  <VolumeX className="h-4 w-4 text-slate-600" />
-                )}
-              </button>
-              {/* 음성 재생 중단 버튼 */}
-              {isSpeaking && (
-                <button
-                  type="button"
-                  onClick={() => window.speechSynthesis.cancel()}
-                  className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0 bg-red-500"
-                  title="음성 중단"
-                >
-                  <Square className="h-3 w-3 text-white" />
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setIsTall((prev) => !prev)}
@@ -679,60 +391,43 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               </Button>
             </div>
 
-            {/* Live 모드일 때 */}
-            {isLiveMode ? (
-              <div className="p-4 border-t flex flex-col items-center gap-3">
-                <div className="text-sm text-slate-500">
-                  {geminiLive.isStreaming ? '🎙️ 실시간 대화 중... 말씀하세요' : '마이크 버튼을 눌러 대화를 시작하세요'}
-                </div>
+            <form
+              onSubmit={handleSendMessage}
+              className="p-4 border-t flex gap-2"
+            >
+              <div className="relative flex-1">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder={geminiLive.isStreaming ? '🎤 실시간 대화 중...' : '질문하세요...'}
+                  className="text-sm pr-10"
+                  disabled={geminiLive.isStreaming}
+                />
                 <button
-                  type="button"
-                  onClick={toggleLiveStreaming}
-                  className={`h-14 w-14 rounded-full flex items-center justify-center text-2xl transition-all ${
-                    geminiLive.isStreaming
-                      ? 'bg-red-500 animate-pulse shadow-lg shadow-red-300'
-                      : 'bg-blue-500 hover:bg-blue-600 shadow-lg'
-                  }`}
-                  title={geminiLive.isStreaming ? '대화 중단' : '대화 시작'}
+                  type="submit"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md text-white border border-transparent hover:border-black focus:outline-none"
+                  style={{ backgroundColor: primaryColor }}
+                  disabled={geminiLive.isStreaming}
                 >
-                  {geminiLive.isStreaming ? '⏹️' : '🎤'}
+                  ↵
                 </button>
-                {audioPlayer.isPlaying && (
-                  <div className="text-xs text-green-600 animate-pulse">🔊 AI가 답변 중...</div>
-                )}
               </div>
-            ) : (
-              <form
-                onSubmit={handleSendMessage}
-                className="p-4 border-t flex gap-2"
+              {/* Live 음성 버튼 */}
+              <button
+                type="button"
+                onClick={toggleLiveVoice}
+                className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all text-xl ${
+                  geminiLive.isStreaming 
+                    ? 'bg-red-500 animate-pulse' 
+                    : 'bg-slate-200 hover:bg-slate-300'
+                }`}
+                title={geminiLive.isStreaming ? '음성 대화 종료' : '음성 대화 시작'}
               >
-                <div className="relative flex-1">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={isListening ? '말씀하세요...' : '질문하세요...'}
-                    className="text-sm pr-10"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md text-white border border-transparent hover:border-black focus:outline-none"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    ↵
-                  </button>
-                </div>
-                {/* 음성 입력 버튼 */}
-                <button
-                  type="button"
-                  onClick={handleVoiceInput}
-                  className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all text-xl ${
-                    isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-200 hover:bg-slate-300'
-                  }`}
-                  title={isListening ? '녹음 중단' : '음성으로 질문하기'}
-                >
-                  {isListening ? '⏹️' : '🎤'}
-                </button>
-              </form>
+                {geminiLive.isStreaming ? '⏹️' : '🎤'}
+              </button>
+            </form>
+            {audioPlayer.isPlaying && (
+              <div className="text-xs text-green-600 animate-pulse text-center pb-2">🔊 AI가 답변 중...</div>
             )}
           </CardContent>
         </Card>
