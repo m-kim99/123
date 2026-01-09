@@ -134,37 +134,62 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     
     console.log('🎤 사용자 전사:', transcript);
     
-    // 1. 사용자 메시지 표시
+    // 1. 사용자 메시지 + 빈 assistant 메시지 추가
     const userMessage: ChatMessage = {
       id: `${Date.now()}-user`,
       role: 'user',
       content: transcript,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
+    const assistantId = `${Date.now()}-assistant`;
     
-    // 2. 기존 generateResponse로 답변 생성 (DB 조회 포함)
+    setMessages(prev => [
+      ...prev,
+      userMessage,
+      {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      },
+    ]);
     setIsTyping(true);
+    
+    // 2. generateResponse 호출 (콜백으로 스트리밍 + docs 업데이트)
+    let finalText = '';
+    let firstChunkReceived = false;
+    
     try {
-      const history: ChatHistoryItem[] = messages.slice(-10).map(m => ({
+      const history: ChatHistoryItem[] = messages.map(m => ({
         role: m.role,
         content: m.content,
       }));
       
-      const result = await generateResponse(transcript, history);
+      await generateResponse(transcript, history, (partial, docs) => {
+        if (!firstChunkReceived) {
+          firstChunkReceived = true;
+          setIsTyping(false);
+        }
+        
+        finalText = partial;
+        
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content: partial,
+                  searchResults: docs && docs.length > 0 ? docs : undefined,
+                  timestamp: new Date(),
+                }
+              : m
+          )
+        );
+      });
       
-      // 3. AI 응답 메시지 표시
-      const assistantMessage: ChatMessage = {
-        id: `${Date.now()}-assistant`,
-        role: 'assistant',
-        content: result.text,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // 4. Gemini Live로 답변을 음성으로 읽어줌
-      if (geminiLiveRef.current?.isConnected) {
-        geminiLiveRef.current.sendText(result.text);
+      // 3. 최종 응답을 Gemini Live로 음성 출력
+      if (finalText && geminiLiveRef.current?.isConnected) {
+        geminiLiveRef.current.sendText(finalText);
       }
     } catch (error) {
       console.error('응답 생성 오류:', error);
