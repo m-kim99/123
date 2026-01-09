@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface UseGeminiLiveProps {
   apiKey: string;
   onTranscript?: (text: string, isFinal: boolean) => void;
+  onUserTranscript?: (text: string) => void;
   onAudioData?: (audioData: Int16Array) => void;
   onError?: (error: Error) => void;
 }
@@ -10,6 +11,7 @@ interface UseGeminiLiveProps {
 export function useGeminiLive({
   apiKey,
   onTranscript,
+  onUserTranscript,
   onAudioData,
   onError,
 }: UseGeminiLiveProps) {
@@ -20,34 +22,38 @@ export function useGeminiLive({
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
-  // WebSocket 연결
-  const connect = useCallback(async () => {
-    try {
-      const ws = new WebSocket(
-        `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`
-      );
+  // WebSocket 연결 - Promise로 연결 완료까지 대기
+  const connect = useCallback(() => {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        const ws = new WebSocket(
+          `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`
+        );
 
-      ws.onopen = () => {
-        console.log('✅ Gemini Live API 연결됨');
-        setIsConnected(true);
+        ws.onopen = () => {
+          console.log('✅ Gemini Live API 연결됨');
+          setIsConnected(true);
 
-        // 초기 설정 메시지
-        ws.send(JSON.stringify({
-          setup: {
-            model: 'models/gemini-2.0-flash-exp',
-            generation_config: {
-              response_modalities: ['AUDIO'],
-              speech_config: {
-                voice_config: {
-                  prebuilt_voice_config: {
-                    voice_name: 'Aoede',
+          // 초기 설정 메시지 - TEXT와 AUDIO 모두 요청
+          ws.send(JSON.stringify({
+            setup: {
+              model: 'models/gemini-2.0-flash-exp',
+              generation_config: {
+                response_modalities: ['TEXT', 'AUDIO'],
+                speech_config: {
+                  voice_config: {
+                    prebuilt_voice_config: {
+                      voice_name: 'Aoede',
+                    },
                   },
                 },
               },
             },
-          },
-        }));
-      };
+          }));
+          
+          // setup 응답을 받은 후 resolve
+          setTimeout(() => resolve(), 100);
+        };
 
       ws.onmessage = async (event) => {
         try {
@@ -79,6 +85,14 @@ export function useGeminiLive({
             const text = response.serverContent.modelTurn?.parts?.[0]?.text;
             if (text) onTranscript(text, false);
           }
+          
+          // 사용자 음성 전사 (inputTranscript)
+          if (response.serverContent?.inputTranscript && onUserTranscript) {
+            onUserTranscript(response.serverContent.inputTranscript);
+          }
+          
+          // 디버그 로깅
+          console.log('📩 Gemini 응답:', response);
         } catch (err) {
           console.error('메시지 파싱 오류:', err);
         }
@@ -88,6 +102,7 @@ export function useGeminiLive({
         console.error('❌ WebSocket 오류:', error);
         if (onError) onError(new Error('WebSocket connection failed'));
         setIsConnected(false);
+        reject(new Error('WebSocket connection failed'));
       };
 
       ws.onclose = () => {
@@ -96,12 +111,14 @@ export function useGeminiLive({
         setIsStreaming(false);
       };
 
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('연결 실패:', error);
-      if (onError) onError(error as Error);
-    }
-  }, [apiKey, onTranscript, onAudioData, onError]);
+        wsRef.current = ws;
+      } catch (error) {
+        console.error('연결 실패:', error);
+        if (onError) onError(error as Error);
+        reject(error);
+      }
+    });
+  }, [apiKey, onTranscript, onUserTranscript, onAudioData, onError]);
 
   // 마이크 스트리밍 시작
   const startStreaming = useCallback(async () => {
@@ -147,13 +164,15 @@ export function useGeminiLive({
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
               mediaChunks: [{
-                mimeType: 'audio/pcm',
+                mimeType: 'audio/pcm;rate=16000',
                 data: base64Audio,
               }],
             },
           }));
         }
       };
+      
+      console.log('🎤 오디오 컨텍스트 샘플레이트:', audioContext.sampleRate);
 
       source.connect(worklet);
       worklet.connect(audioContext.destination);

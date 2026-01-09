@@ -132,6 +132,20 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         ]);
       }
     },
+    onUserTranscript: (text) => {
+      // 사용자가 말한 내용을 사용자 말풍선으로 추가
+      if (text.trim()) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `${Date.now()}-user`,
+            role: 'user',
+            content: text,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    },
     onAudioData: (audioData) => {
       audioPlayer.play(audioData);
     },
