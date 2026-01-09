@@ -49,9 +49,15 @@ export function useGeminiLive({
         }));
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
-          const response = JSON.parse(event.data);
+          // Blob 데이터인 경우 텍스트로 변환
+          let data = event.data;
+          if (data instanceof Blob) {
+            data = await data.text();
+          }
+          
+          const response = JSON.parse(data);
 
           // 서버 응답 (텍스트 전사)
           if (response.serverContent?.modelTurn) {
