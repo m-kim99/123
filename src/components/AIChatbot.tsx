@@ -129,7 +129,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     window.speechSynthesis.cancel();
 
     // 링크 텍스트 제거 (음성으로 읽지 않음)
-    const textOnly = text.replace(/→\s+\/[^\s\n]+/g, '').trim();
+    let textOnly = text.replace(/→\s+\/[^\s\n]+/g, '');
+    // 특수문자 제거 (음성으로 읽지 않음) - 한글, 영어, 숫자, 공백만 유지
+    textOnly = textOnly.replace(/[^\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318Fa-zA-Z0-9\s]/g, ' ');
+    // 연속 공백을 하나로 정리
+    textOnly = textOnly.replace(/\s+/g, ' ').trim();
     if (!textOnly) return;
 
     const utterance = new SpeechSynthesisUtterance(textOnly);
