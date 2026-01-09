@@ -116,43 +116,69 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
   // Gemini Live 모드
   const audioPlayer = useAudioPlayer();
+  const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
 
-  // Live 모드용 시스템 프롬프트
-  const liveSystemPrompt = `당신은 TrayStorage 문서 관리 시스템의 AI 어시스턴트 "트로이"입니다.
-사용자의 음성 질문에 친절하고 자연스럽게 한국어로 답변하세요.
-답변은 짧고 명확하게 하되, 필요한 정보는 빠뜨리지 마세요.
-문서 위치, 카테고리, 부서 정보 등에 대한 질문에 도움을 줄 수 있습니다.
-모르는 정보는 솔직하게 모른다고 말하고, 텍스트 채팅으로 더 자세한 검색을 권유하세요.`;
+  // Live 모드용 시스템 프롬프트 - TTS 역할만 수행
+  const liveSystemPrompt = `당신은 한국어 음성 안내 도우미입니다.
+사용자가 보내는 메시지를 자연스럽게 한국어로 읽어주세요.
+메시지를 그대로 읽되, 마크다운 기호(**, -, →, 등)는 자연스럽게 생략하거나 말로 바꿔서 읽어주세요.
+예를 들어 "**문서명**"은 그냥 "문서명"으로, "→"는 "다음 경로"로 읽어주세요.
+추가 설명이나 해석을 덧붙이지 말고, 전달받은 내용만 친절하게 읽어주세요.`;
+
+  // 사용자 음성 전사 처리 - generateResponse 호출 후 음성으로 읽어줌
+  const handleUserSpeech = useCallback(async (transcript: string) => {
+    if (!transcript.trim()) return;
+    
+    console.log('🎤 사용자 전사:', transcript);
+    
+    // 1. 사용자 메시지 표시
+    const userMessage: ChatMessage = {
+      id: `${Date.now()}-user`,
+      role: 'user',
+      content: transcript,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // 2. 기존 generateResponse로 답변 생성 (DB 조회 포함)
+    setIsTyping(true);
+    try {
+      const history: ChatHistoryItem[] = messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+      
+      const result = await generateResponse(transcript, history);
+      
+      // 3. AI 응답 메시지 표시
+      const assistantMessage: ChatMessage = {
+        id: `${Date.now()}-assistant`,
+        role: 'assistant',
+        content: result.text,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // 4. Gemini Live로 답변을 음성으로 읽어줌
+      if (geminiLiveRef.current?.isConnected) {
+        geminiLiveRef.current.sendText(result.text);
+      }
+    } catch (error) {
+      console.error('응답 생성 오류:', error);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [messages]);
 
   const geminiLive = useGeminiLive({
     apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
     systemPrompt: liveSystemPrompt,
-    onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `${Date.now()}-assistant`,
-            role: 'assistant',
-            content: text,
-            timestamp: new Date(),
-          },
-        ]);
-      }
+    onTranscript: () => {
+      // Gemini가 읽어주는 내용은 이미 채팅에 표시되었으므로 무시
     },
     onUserTranscript: (text) => {
-      // 사용자가 말한 내용을 사용자 말풍선으로 추가
-      if (text.trim()) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `${Date.now()}-user`,
-            role: 'user',
-            content: text,
-            timestamp: new Date(),
-          },
-        ]);
-      }
+      // 사용자가 말한 내용을 전사받으면 handleUserSpeech 호출
+      handleUserSpeech(text);
     },
     onAudioData: (audioData) => {
       audioPlayer.play(audioData);
@@ -162,6 +188,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       alert('실시간 대화 중 오류가 발생했습니다.');
     },
   });
+
+  // geminiLive를 ref에 저장
+  useEffect(() => {
+    geminiLiveRef.current = {
+      sendText: geminiLive.sendText,
+      isConnected: geminiLive.isConnected,
+    };
+  }, [geminiLive.sendText, geminiLive.isConnected]);
 
   // Live 음성 대화 토글 (한 번 클릭으로 시작/중단)
   const toggleLiveVoice = useCallback(async () => {

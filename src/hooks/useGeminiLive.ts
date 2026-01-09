@@ -248,6 +248,25 @@ export function useGeminiLive({
     setIsConnected(false);
   }, [stopStreaming]);
 
+  // 텍스트를 Gemini에 보내서 음성 응답 받기
+  const sendText = useCallback((text: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket 연결되지 않음');
+      return;
+    }
+
+    console.log('📤 텍스트 전송:', text);
+    wsRef.current.send(JSON.stringify({
+      clientContent: {
+        turns: [{
+          role: 'user',
+          parts: [{ text }],
+        }],
+        turnComplete: true,
+      },
+    }));
+  }, []);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -262,6 +281,7 @@ export function useGeminiLive({
     startStreaming,
     stopStreaming,
     disconnect,
+    sendText,
   };
 }
 
