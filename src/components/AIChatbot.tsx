@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Mic, Volume2, VolumeX, Square } from 'lucide-react';
+import { MessageSquare, Volume2, VolumeX, Square } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import expandIcon from '@/assets/expand.png';
 import closeIcon from '@/assets/close.png';
@@ -11,7 +11,34 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
 
-// 링크 파싱 함수: "→ /path/..." 형식을 클릭 가능한 Link로 변환
+// **텍스트** 패턴을 <strong>으로 변환하는 함수
+function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
+  const boldRegex = /\*\*([^*]+)\*\*/g;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let keyIndex = 0;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <strong key={`${keyPrefix}-bold-${keyIndex++}`} className="font-semibold">
+        {match[1]}
+      </strong>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
+// 링크 파싱 함수: "→ /path/..." 형식을 클릭 가능한 Link로 변환 + **bold** 처리
 function parseLinksInMessage(content: string, navigate: (path: string) => void, onClose: () => void): ReactNode[] {
   const linkRegex = /→\s+(\/[^\s\n]+)/g;
   const parts: ReactNode[] = [];
@@ -20,9 +47,10 @@ function parseLinksInMessage(content: string, navigate: (path: string) => void, 
   let keyIndex = 0;
 
   while ((match = linkRegex.exec(content)) !== null) {
-    // 링크 앞의 텍스트 추가
+    // 링크 앞의 텍스트 추가 (bold 처리 포함)
     if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index));
+      const textBefore = content.slice(lastIndex, match.index);
+      parts.push(...parseBoldText(textBefore, `pre-${keyIndex}`));
     }
 
     const path = match[1];
@@ -45,12 +73,13 @@ function parseLinksInMessage(content: string, navigate: (path: string) => void, 
     lastIndex = match.index + match[0].length;
   }
 
-  // 남은 텍스트 추가
+  // 남은 텍스트 추가 (bold 처리 포함)
   if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex));
+    const remaining = content.slice(lastIndex);
+    parts.push(...parseBoldText(remaining, 'end'));
   }
 
-  return parts.length > 0 ? parts : [content];
+  return parts.length > 0 ? parts : parseBoldText(content, 'full');
 }
 
 interface ChatMessage {
@@ -496,24 +525,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                           : message.content
                         }
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs opacity-70">
-                          {message.timestamp.toLocaleTimeString('ko-KR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        {message.role === 'assistant' && message.content && (
-                          <button
-                            type="button"
-                            onClick={() => speakText(message.content)}
-                            className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                            title="다시 듣기"
-                          >
-                            🔊
-                          </button>
-                        )}
-                      </div>
+                      <span className="text-xs opacity-70 mt-1 block">
+                        {message.timestamp.toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
                   </div>
                   {message.role === 'assistant' &&
@@ -618,17 +635,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               <button
                 type="button"
                 onClick={handleVoiceInput}
-                className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all ${
+                className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all text-xl ${
                   isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-200 hover:bg-slate-300'
                 }`}
                 title={isListening ? '녹음 중단' : '음성으로 질문하기'}
               >
-                <span className="flex items-center gap-1">
-                  <span className="text-base leading-none">
-                    {isListening ? '⏹️' : '🎤'}
-                  </span>
-                  <Mic className={`h-4 w-4 ${isListening ? 'text-white' : 'text-slate-600'}`} />
-                </span>
+                {isListening ? '⏹️' : '🎤'}
               </button>
             </form>
           </CardContent>
