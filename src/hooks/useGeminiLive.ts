@@ -87,7 +87,7 @@ export function useGeminiLive({
               return;
             }
 
-            // 서버 응답 (텍스트 전사)
+            // 서버 응답 - 오디오 데이터 처리
             if (response.serverContent?.modelTurn) {
               const parts = response.serverContent.modelTurn.parts || [];
               for (const part of parts) {
@@ -102,14 +102,15 @@ export function useGeminiLive({
               }
             }
 
-            // 중간 전사 결과
-            if (response.serverContent?.turnComplete === false && onTranscript) {
-              const text = response.serverContent.modelTurn?.parts?.[0]?.text;
-              if (text) onTranscript(text, false);
+            // AI 응답 전사 (outputTranscript) - 챗봇이 말한 내용
+            if (response.serverContent?.outputTranscript && onTranscript) {
+              console.log('🤖 AI 전사:', response.serverContent.outputTranscript);
+              onTranscript(response.serverContent.outputTranscript, true);
             }
             
-            // 사용자 음성 전사 (inputTranscript)
+            // 사용자 음성 전사 (inputTranscript) - 사용자가 말한 내용
             if (response.serverContent?.inputTranscript && onUserTranscript) {
+              console.log('🎤 사용자 전사:', response.serverContent.inputTranscript);
               onUserTranscript(response.serverContent.inputTranscript);
             }
           } catch (err) {
