@@ -22,24 +22,35 @@ export function useGeminiLive({
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
-  // WebSocket 연결 - Promise로 연결 완료까지 대기
+  // 연결 완료 resolve 함수를 저장할 ref
+  const connectResolveRef = useRef<(() => void) | null>(null);
+
+  // WebSocket 연결 - Promise로 setup 완료까지 대기
   const connect = useCallback(() => {
     return new Promise<void>((resolve, reject) => {
       try {
+        // 이미 연결되어 있으면 바로 resolve
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          resolve();
+          return;
+        }
+
         const ws = new WebSocket(
           `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`
         );
 
+        // setup 완료 시 resolve할 함수 저장
+        connectResolveRef.current = resolve;
+
         ws.onopen = () => {
           console.log('✅ Gemini Live API 연결됨');
-          setIsConnected(true);
-
-          // 초기 설정 메시지 - TEXT와 AUDIO 모두 요청
+          
+          // 초기 설정 메시지 - AUDIO만 요청 (Live API 권장)
           ws.send(JSON.stringify({
             setup: {
               model: 'models/gemini-2.0-flash-exp',
               generation_config: {
-                response_modalities: ['TEXT', 'AUDIO'],
+                response_modalities: ['AUDIO'],
                 speech_config: {
                   voice_config: {
                     prebuilt_voice_config: {
@@ -50,66 +61,74 @@ export function useGeminiLive({
               },
             },
           }));
-          
-          // setup 응답을 받은 후 resolve
-          setTimeout(() => resolve(), 100);
         };
 
-      ws.onmessage = async (event) => {
-        try {
-          // Blob 데이터인 경우 텍스트로 변환
-          let data = event.data;
-          if (data instanceof Blob) {
-            data = await data.text();
-          }
-          
-          const response = JSON.parse(data);
+        ws.onmessage = async (event) => {
+          try {
+            // Blob 데이터인 경우 텍스트로 변환
+            let data = event.data;
+            if (data instanceof Blob) {
+              data = await data.text();
+            }
+            
+            const response = JSON.parse(data);
+            
+            // 디버그 로깅
+            console.log('📩 Gemini 응답:', response);
 
-          // 서버 응답 (텍스트 전사)
-          if (response.serverContent?.modelTurn) {
-            const parts = response.serverContent.modelTurn.parts || [];
-            for (const part of parts) {
-              if (part.text && onTranscript) {
-                onTranscript(part.text, true);
+            // setupComplete 응답 확인 - 이때 연결 완료
+            if (response.setupComplete) {
+              console.log('✅ Setup 완료');
+              setIsConnected(true);
+              if (connectResolveRef.current) {
+                connectResolveRef.current();
+                connectResolveRef.current = null;
               }
-              if (part.inlineData?.data && onAudioData) {
-                // Base64 PCM 오디오 디코딩
-                const audioBytes = base64ToInt16Array(part.inlineData.data);
-                onAudioData(audioBytes);
+              return;
+            }
+
+            // 서버 응답 (텍스트 전사)
+            if (response.serverContent?.modelTurn) {
+              const parts = response.serverContent.modelTurn.parts || [];
+              for (const part of parts) {
+                if (part.text && onTranscript) {
+                  onTranscript(part.text, true);
+                }
+                if (part.inlineData?.data && onAudioData) {
+                  // Base64 PCM 오디오 디코딩
+                  const audioBytes = base64ToInt16Array(part.inlineData.data);
+                  onAudioData(audioBytes);
+                }
               }
             }
-          }
 
-          // 중간 전사 결과
-          if (response.serverContent?.turnComplete === false && onTranscript) {
-            const text = response.serverContent.modelTurn?.parts?.[0]?.text;
-            if (text) onTranscript(text, false);
+            // 중간 전사 결과
+            if (response.serverContent?.turnComplete === false && onTranscript) {
+              const text = response.serverContent.modelTurn?.parts?.[0]?.text;
+              if (text) onTranscript(text, false);
+            }
+            
+            // 사용자 음성 전사 (inputTranscript)
+            if (response.serverContent?.inputTranscript && onUserTranscript) {
+              onUserTranscript(response.serverContent.inputTranscript);
+            }
+          } catch (err) {
+            console.error('메시지 파싱 오류:', err);
           }
-          
-          // 사용자 음성 전사 (inputTranscript)
-          if (response.serverContent?.inputTranscript && onUserTranscript) {
-            onUserTranscript(response.serverContent.inputTranscript);
-          }
-          
-          // 디버그 로깅
-          console.log('📩 Gemini 응답:', response);
-        } catch (err) {
-          console.error('메시지 파싱 오류:', err);
-        }
-      };
+        };
 
-      ws.onerror = (error) => {
-        console.error('❌ WebSocket 오류:', error);
-        if (onError) onError(new Error('WebSocket connection failed'));
-        setIsConnected(false);
-        reject(new Error('WebSocket connection failed'));
-      };
+        ws.onerror = (error) => {
+          console.error('❌ WebSocket 오류:', error);
+          if (onError) onError(new Error('WebSocket connection failed'));
+          setIsConnected(false);
+          reject(new Error('WebSocket connection failed'));
+        };
 
-      ws.onclose = () => {
-        console.log('🔌 연결 종료');
-        setIsConnected(false);
-        setIsStreaming(false);
-      };
+        ws.onclose = (event) => {
+          console.log('🔌 연결 종료, 코드:', event.code, '이유:', event.reason);
+          setIsConnected(false);
+          setIsStreaming(false);
+        };
 
         wsRef.current = ws;
       } catch (error) {
