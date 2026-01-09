@@ -117,8 +117,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   // Gemini Live 모드
   const audioPlayer = useAudioPlayer();
 
+  // Live 모드용 시스템 프롬프트
+  const liveSystemPrompt = `당신은 TrayStorage 문서 관리 시스템의 AI 어시스턴트 "트로이"입니다.
+사용자의 음성 질문에 친절하고 자연스럽게 한국어로 답변하세요.
+답변은 짧고 명확하게 하되, 필요한 정보는 빠뜨리지 마세요.
+문서 위치, 카테고리, 부서 정보 등에 대한 질문에 도움을 줄 수 있습니다.
+모르는 정보는 솔직하게 모른다고 말하고, 텍스트 채팅으로 더 자세한 검색을 권유하세요.`;
+
   const geminiLive = useGeminiLive({
     apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
+    systemPrompt: liveSystemPrompt,
     onTranscript: (text, isFinal) => {
       if (isFinal && text.trim()) {
         setMessages(prev => [

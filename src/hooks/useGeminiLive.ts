@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseGeminiLiveProps {
   apiKey: string;
+  systemPrompt?: string;
   onTranscript?: (text: string, isFinal: boolean) => void;
   onUserTranscript?: (text: string) => void;
   onAudioData?: (audioData: Int16Array) => void;
@@ -10,6 +11,7 @@ interface UseGeminiLiveProps {
 
 export function useGeminiLive({
   apiKey,
+  systemPrompt,
   onTranscript,
   onUserTranscript,
   onAudioData,
@@ -45,8 +47,8 @@ export function useGeminiLive({
         ws.onopen = () => {
           console.log('✅ Gemini Live API 연결됨');
           
-          // 초기 설정 메시지 - AUDIO만 요청 (Live API 권장)
-          ws.send(JSON.stringify({
+          // 초기 설정 메시지 - 시스템 프롬프트 포함
+          const setupMessage: any = {
             setup: {
               model: 'models/gemini-2.0-flash-exp',
               generation_config: {
@@ -60,7 +62,16 @@ export function useGeminiLive({
                 },
               },
             },
-          }));
+          };
+          
+          // 시스템 프롬프트가 있으면 추가
+          if (systemPrompt) {
+            setupMessage.setup.system_instruction = {
+              parts: [{ text: systemPrompt }],
+            };
+          }
+          
+          ws.send(JSON.stringify(setupMessage));
         };
 
         ws.onmessage = async (event) => {
@@ -138,7 +149,7 @@ export function useGeminiLive({
         reject(error);
       }
     });
-  }, [apiKey, onTranscript, onUserTranscript, onAudioData, onError]);
+  }, [apiKey, systemPrompt, onTranscript, onUserTranscript, onAudioData, onError]);
 
   // 마이크 스트리밍 시작
   const startStreaming = useCallback(async () => {
