@@ -77,12 +77,52 @@ serve(async (req) => {
             parentCategoryIds.length > 0
               ? await supabase
                   .from('subcategories')
-                  .select('id, name, parent_category_id, storage_location')
+                  .select('id, name, parent_category_id, storage_location, expiry_date, nfc_uid, nfc_registered')
                   .in('parent_category_id', parentCategoryIds)
               : { data: [], error: null };
 
           if (subcatError) {
             console.error('Failed to fetch subcategories:', subcatError);
+          }
+
+          // 1-1-1. 만기 임박 세부카테고리 조회 (3개월 이내)
+          const now = new Date();
+          const threeMonthsLater = new Date(now);
+          threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+          
+          const expiringSubcategories = (subcategories ?? []).filter((s: any) => {
+            if (!s.expiry_date) return false;
+            const expiryDate = new Date(s.expiry_date);
+            return expiryDate >= now && expiryDate <= threeMonthsLater;
+          }).sort((a: any, b: any) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+
+          // 1-1-2. NFC 등록 현황
+          const nfcRegistered = (subcategories ?? []).filter((s: any) => s.nfc_uid || s.nfc_registered);
+          const nfcUnregistered = (subcategories ?? []).filter((s: any) => !s.nfc_uid && !s.nfc_registered);
+
+          // 1-1-3. 공유 문서 조회 (현재 사용자가 공유한 문서)
+          let sharedDocuments: any[] = [];
+          const { data: shares, error: shareError } = await supabase
+            .from('shared_documents')
+            .select(`
+              id,
+              document_id,
+              shared_at,
+              shared_to_user_id,
+              documents!inner (
+                id,
+                title
+              )
+            `)
+            .eq('shared_by_user_id', userId)
+            .eq('is_active', true)
+            .order('shared_at', { ascending: false })
+            .limit(10);
+
+          if (shareError) {
+            console.error('Failed to fetch shared documents:', shareError);
+          } else {
+            sharedDocuments = shares ?? [];
           }
 
           // 1-2. 임베딩 생성 및 벡터 검색
@@ -154,7 +194,33 @@ serve(async (req) => {
                   .join('\n')
               : '관련 문서 없음';
 
+          // 만기 임박 목록 구성
+          const oneWeek = 7 * 24 * 60 * 60 * 1000;
+          const oneMonth = 30 * 24 * 60 * 60 * 1000;
+          const expiryList = expiringSubcategories.length > 0
+            ? expiringSubcategories.map((s: any) => {
+                const expiryDate = new Date(s.expiry_date);
+                const diff = expiryDate.getTime() - now.getTime();
+                const parentCat = parentCategories?.find((c: any) => c.id === s.parent_category_id);
+                const dept = departments?.find((d: any) => d.id === parentCat?.department_id);
+                const emoji = diff <= oneWeek ? '🚨' : diff <= oneMonth ? '⚠️' : '⏰';
+                return `${emoji} ${s.name}: ${expiryDate.toLocaleDateString('ko-KR')} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})`;
+              }).join('\n')
+            : '만기 임박 없음';
+
+          // NFC 현황 구성
+          const nfcList = `등록됨: ${nfcRegistered.length}개, 미등록: ${nfcUnregistered.length}개`;
+
+          // 공유 문서 목록 구성
+          const sharedList = sharedDocuments.length > 0
+            ? sharedDocuments.map((s: any) => {
+                const doc = s.documents as any;
+                return `- ${doc?.title || '제목 없음'} (${new Date(s.shared_at).toLocaleDateString('ko-KR')} 공유)`;
+              }).join('\n')
+            : '공유한 문서 없음';
+
           systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 아래 정보를 참고해서 사용자 질문에 답변하세요.
+답변에 링크를 포함할 때는 "→ /admin/..." 또는 "→ /team/..." 형식으로 작성하세요.
 
 [부서 목록]
 ${deptList}
@@ -164,6 +230,15 @@ ${catList}
 
 [세부카테고리 목록 (저장 위치 포함)]
 ${subList}
+
+[만기 임박 세부카테고리 (3개월 이내)]
+${expiryList}
+
+[NFC 등록 현황]
+${nfcList}
+
+[공유한 문서]
+${sharedList}
 
 [관련 문서]
 ${docList}`;

@@ -279,6 +279,286 @@ function isDateSearchIntent(text: string): boolean {
   return (hasDateKeyword || hasNDaysAgo || hasNWeeksAgo || hasNMonthsAgo || hasNYearsAgo || hasSpecificDate) && hasDocumentKeyword;
 }
 
+// 만기 임박 키워드 감지
+function isExpiryIntent(text: string): boolean {
+  const expiryKeywords = ['만기', '만료', '임박', '다음주 만료', '이번달 만료', '만료 예정', '만기 임박'];
+  return expiryKeywords.some(keyword => text.includes(keyword));
+}
+
+// 공유 문서 키워드 감지
+function isSharedDocumentIntent(text: string): boolean {
+  const sharedKeywords = ['공유', '공유한 문서', '공유된', '공유 목록', '공유문서'];
+  return sharedKeywords.some(keyword => text.includes(keyword));
+}
+
+// NFC 키워드 감지
+function isNfcIntent(text: string): boolean {
+  const nfcKeywords = ['NFC', 'nfc', 'Nfc', 'NFC 등록', 'NFC 안 된', '태그 등록', 'NFC 현황'];
+  return nfcKeywords.some(keyword => text.includes(keyword));
+}
+
+// 만기 임박 세부카테고리 조회
+async function getExpiringSubcategories(): Promise<string> {
+  const { user } = useAuthStore.getState();
+  if (!user?.companyId) {
+    return '사용자 정보를 찾을 수 없습니다.';
+  }
+
+  const isAdmin = user.role === 'admin';
+  const basePath = isAdmin ? '/admin' : '/team';
+
+  try {
+    const now = new Date();
+    const threeMonthsLater = new Date(now);
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+    // 부서 목록 조회
+    const { data: departments, error: deptError } = await supabase
+      .from('departments')
+      .select('id, name')
+      .eq('company_id', user.companyId);
+
+    if (deptError || !departments?.length) {
+      return '부서 정보를 조회할 수 없습니다.';
+    }
+
+    const departmentIds = departments.map((d: { id: string; name: string }) => d.id);
+
+    // 대분류 조회
+    const { data: parentCategories, error: catError } = await supabase
+      .from('categories')
+      .select('id, name, department_id')
+      .in('department_id', departmentIds);
+
+    if (catError || !parentCategories?.length) {
+      return '카테고리 정보를 조회할 수 없습니다.';
+    }
+
+    const parentCategoryIds = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+
+    // 만기 임박 세부카테고리 조회
+    const { data: subcategories, error: subError } = await supabase
+      .from('subcategories')
+      .select('id, name, expiry_date, parent_category_id')
+      .in('parent_category_id', parentCategoryIds)
+      .not('expiry_date', 'is', null)
+      .gte('expiry_date', now.toISOString())
+      .lte('expiry_date', threeMonthsLater.toISOString())
+      .order('expiry_date', { ascending: true });
+
+    if (subError) {
+      console.error('만기 조회 오류:', subError);
+      return '만기 정보를 조회하는 중 오류가 발생했습니다.';
+    }
+
+    if (!subcategories?.length) {
+      return '3개월 이내 만기 임박한 세부 카테고리가 없습니다. ✅';
+    }
+
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const oneMonth = 30 * 24 * 60 * 60 * 1000;
+
+    const urgent: string[] = [];    // 1주일 이내
+    const warning: string[] = [];   // 1개월 이내
+    const notice: string[] = [];    // 3개월 이내
+
+    for (const sub of subcategories) {
+      const expiryDate = new Date(sub.expiry_date);
+      const diff = expiryDate.getTime() - now.getTime();
+      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
+      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const dateStr = expiryDate.toLocaleDateString('ko-KR');
+      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
+      const line = `${sub.name}: ${dateStr} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})\n→ ${link}`;
+
+      if (diff <= oneWeek) {
+        urgent.push(line);
+      } else if (diff <= oneMonth) {
+        warning.push(line);
+      } else {
+        notice.push(line);
+      }
+    }
+
+    const lines: string[] = ['만기 임박한 세부 카테고리를 찾았습니다:'];
+
+    if (urgent.length > 0) {
+      lines.push('\n🚨 [1주일 이내]');
+      lines.push(...urgent);
+    }
+    if (warning.length > 0) {
+      lines.push('\n⚠️ [1개월 이내]');
+      lines.push(...warning);
+    }
+    if (notice.length > 0) {
+      lines.push('\n⏰ [3개월 이내]');
+      lines.push(...notice);
+    }
+
+    lines.push(`\n(총 ${subcategories.length}건)`);
+    return lines.join('\n');
+  } catch (error) {
+    console.error('만기 조회 오류:', error);
+    return '만기 정보를 조회하는 중 오류가 발생했습니다.';
+  }
+}
+
+// 공유 문서 조회
+async function getSharedDocuments(): Promise<string> {
+  const { user } = useAuthStore.getState();
+  if (!user?.id) {
+    return '사용자 정보를 찾을 수 없습니다.';
+  }
+
+  const isAdmin = user.role === 'admin';
+  const basePath = isAdmin ? '/admin' : '/team';
+
+  try {
+    const { data: shares, error } = await supabase
+      .from('shared_documents')
+      .select(`
+        id,
+        document_id,
+        shared_at,
+        shared_to_user_id,
+        documents!inner (
+          id,
+          title,
+          department_id,
+          parent_category_id
+        )
+      `)
+      .eq('shared_by_user_id', user.id)
+      .eq('is_active', true)
+      .order('shared_at', { ascending: false });
+
+    if (error) {
+      console.error('공유 문서 조회 오류:', error);
+      return '공유 문서 정보를 조회하는 중 오류가 발생했습니다.';
+    }
+
+    if (!shares?.length) {
+      return '공유한 문서가 없습니다.';
+    }
+
+    // 수신자 정보 조회
+    const recipientIds = [...new Set(shares.map((s: { shared_to_user_id: string }) => s.shared_to_user_id))];
+    const { data: recipients } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', recipientIds);
+
+    const recipientMap = new Map(recipients?.map((r: { id: string; name: string }) => [r.id, r.name]) || []);
+
+    const lines: string[] = [`총 ${shares.length}개의 문서를 공유했습니다:`];
+
+    for (const share of shares.slice(0, 10)) {
+      const doc = share.documents as any;
+      const recipientName = recipientMap.get(share.shared_to_user_id) || '알 수 없음';
+      const sharedDate = new Date(share.shared_at).toLocaleDateString('ko-KR');
+      const link = `${basePath}/documents?id=${doc.id}`;
+
+      lines.push(`\n🔗 ${doc.title}`);
+      lines.push(`→ ${recipientName}님에게 공유 (${sharedDate})`);
+      lines.push(`문서: ${link}`);
+    }
+
+    lines.push(`\n공유 문서함: ${basePath}/shared`);
+    return lines.join('\n');
+  } catch (error) {
+    console.error('공유 문서 조회 오류:', error);
+    return '공유 문서 정보를 조회하는 중 오류가 발생했습니다.';
+  }
+}
+
+// NFC 등록 현황 조회
+async function getNfcStatus(): Promise<string> {
+  const { user } = useAuthStore.getState();
+  if (!user?.companyId) {
+    return '사용자 정보를 찾을 수 없습니다.';
+  }
+
+  const isAdmin = user.role === 'admin';
+  const basePath = isAdmin ? '/admin' : '/team';
+
+  try {
+    // 부서 목록 조회
+    const { data: departments, error: deptError } = await supabase
+      .from('departments')
+      .select('id, name')
+      .eq('company_id', user.companyId);
+
+    if (deptError || !departments?.length) {
+      return '부서 정보를 조회할 수 없습니다.';
+    }
+
+    const departmentIds2 = departments.map((d: { id: string; name: string }) => d.id);
+
+    // 대분류 조회
+    const { data: parentCategories, error: catError } = await supabase
+      .from('categories')
+      .select('id, name, department_id')
+      .in('department_id', departmentIds2);
+
+    if (catError || !parentCategories?.length) {
+      return '카테고리 정보를 조회할 수 없습니다.';
+    }
+
+    const parentCategoryIds2 = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+
+    // 세부카테고리 조회
+    const { data: subcategories, error: subError } = await supabase
+      .from('subcategories')
+      .select('id, name, nfc_uid, nfc_registered, parent_category_id')
+      .in('parent_category_id', parentCategoryIds2);
+
+    if (subError) {
+      console.error('NFC 조회 오류:', subError);
+      return 'NFC 정보를 조회하는 중 오류가 발생했습니다.';
+    }
+
+    if (!subcategories?.length) {
+      return '세부 카테고리가 없습니다.';
+    }
+
+    const registered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => s.nfc_uid || s.nfc_registered);
+    const unregistered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => !s.nfc_uid && !s.nfc_registered);
+
+    const lines: string[] = ['NFC 등록 현황:'];
+
+    lines.push(`\n✅ NFC 등록됨 (${registered.length}개)`);
+    for (const sub of registered.slice(0, 5)) {
+      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
+      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const tagId = sub.nfc_uid || 'NFC';
+      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
+      lines.push(`${sub.name} (${dept?.name || ''}) - 태그: ${tagId}`);
+      lines.push(`→ ${link}`);
+    }
+    if (registered.length > 5) {
+      lines.push(`... 외 ${registered.length - 5}개`);
+    }
+
+    lines.push(`\n❌ NFC 미등록 (${unregistered.length}개)`);
+    for (const sub of unregistered.slice(0, 5)) {
+      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
+      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
+      lines.push(`${sub.name} (${dept?.name || ''})`);
+      lines.push(`→ ${link}`);
+    }
+    if (unregistered.length > 5) {
+      lines.push(`... 외 ${unregistered.length - 5}개`);
+    }
+
+    lines.push(`\n전체 카테고리 관리: ${basePath}/parent-categories`);
+    return lines.join('\n');
+  } catch (error) {
+    console.error('NFC 조회 오류:', error);
+    return 'NFC 정보를 조회하는 중 오류가 발생했습니다.';
+  }
+}
+
 // 기존 규칙 기반 응답 (Gemini 장애 시 폴백용)
 function generateFallbackResponse(message: string): string {
   console.log('fallback 로직 사용');
@@ -379,6 +659,9 @@ function generateFallbackResponse(message: string): string {
       '- "전체 문서 수 알려줘"',
       '- "부서별 문서 수 알려줘"',
       '- "카테고리 목록 보여줘"',
+      '- "만기 임박 문서 알려줘"',
+      '- "공유한 문서 목록"',
+      '- "NFC 등록 현황"',
     ].join('\n');
   }
 
@@ -389,6 +672,28 @@ function generateFallbackResponse(message: string): string {
   });
 
   return ['다음 문서를 찾았습니다:', ...lines].join('\n');
+}
+
+// 비동기 폴백 응답 생성 (만기, 공유, NFC 조회용)
+async function generateAsyncFallbackResponse(message: string): Promise<string | null> {
+  const text = message.trim();
+
+  // 만기 임박 조회
+  if (isExpiryIntent(text)) {
+    return await getExpiringSubcategories();
+  }
+
+  // 공유 문서 조회
+  if (isSharedDocumentIntent(text)) {
+    return await getSharedDocuments();
+  }
+
+  // NFC 등록 현황 조회
+  if (isNfcIntent(text)) {
+    return await getNfcStatus();
+  }
+
+  return null;
 }
 
 export interface StreamedDocsResult {
@@ -424,6 +729,15 @@ export async function generateResponse(
 
   if (fastReplyQuestions.includes(text)) {
     return emitFallback();
+  }
+
+  // 만기, 공유, NFC 조회는 비동기 폴백으로 처리
+  const asyncFallback = await generateAsyncFallbackResponse(text);
+  if (asyncFallback) {
+    if (onPartialUpdate) {
+      onPartialUpdate(asyncFallback, []);
+    }
+    return { text: asyncFallback, docs: [] };
   }
 
   // 기간 기반 문서 검색은 로컬에서 빠르게 처리

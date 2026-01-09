@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, FormEvent } from 'react';
+import React, { useState, useRef, useEffect, FormEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -10,6 +10,48 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
+
+// 링크 파싱 함수: "→ /path/..." 형식을 클릭 가능한 Link로 변환
+function parseLinksInMessage(content: string, navigate: (path: string) => void, onClose: () => void): ReactNode[] {
+  const linkRegex = /→\s+(\/[^\s\n]+)/g;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let keyIndex = 0;
+
+  while ((match = linkRegex.exec(content)) !== null) {
+    // 링크 앞의 텍스트 추가
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index));
+    }
+
+    const path = match[1];
+    parts.push(
+      <span key={`link-${keyIndex++}`}>
+        →{' '}
+        <button
+          type="button"
+          onClick={() => {
+            navigate(path);
+            onClose();
+          }}
+          className="text-blue-600 underline hover:text-blue-800 cursor-pointer bg-transparent border-none p-0 font-inherit"
+        >
+          {path}
+        </button>
+      </span>
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // 남은 텍스트 추가
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [content];
+}
 
 interface ChatMessage {
   id: string;
@@ -183,7 +225,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                           : { backgroundColor: '#f1f5f9' }
                       }
                     >
-                      <p className="text-sm break-words whitespace-pre-line">{message.content}</p>
+                      <div className="text-sm break-words whitespace-pre-line">
+                        {message.role === 'assistant'
+                          ? parseLinksInMessage(message.content, navigate, () => setIsOpen(false))
+                          : message.content
+                        }
+                      </div>
                       <span className="text-xs opacity-70 mt-1 block">
                         {message.timestamp.toLocaleTimeString('ko-KR', {
                           hour: '2-digit',
