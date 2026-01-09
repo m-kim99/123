@@ -165,7 +165,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     const response = await fetch(`${supabaseUrl}/functions/v1/speech-to-text`, {
       method: 'POST',
       headers: {
-        apikey: supabaseAnonKey,
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: formData,
     });
@@ -622,7 +623,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 }`}
                 title={isListening ? '녹음 중단' : '음성으로 질문하기'}
               >
-                <Mic className={`h-5 w-5 ${isListening ? 'text-white' : 'text-slate-600'}`} />
+                <span className="flex items-center gap-1">
+                  <span className="text-base leading-none">
+                    {isListening ? '⏹️' : '🎤'}
+                  </span>
+                  <Mic className={`h-4 w-4 ${isListening ? 'text-white' : 'text-slate-600'}`} />
+                </span>
               </button>
             </form>
           </CardContent>
