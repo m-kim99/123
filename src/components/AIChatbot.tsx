@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuthStore } from '@/store/authStore';
 import expandIcon from '@/assets/expand.png';
 import closeIcon from '@/assets/close.png';
@@ -114,9 +115,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
-  // Gemini Live 모드
+  // Gemini Live 모드 (TTS용)
   const audioPlayer = useAudioPlayer();
   const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   // Live 모드용 시스템 프롬프트 - TTS 역할만 수행
   const liveSystemPrompt = `당신은 한국어 음성 안내 도우미입니다.
@@ -170,22 +172,31 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     }
   }, [messages]);
 
+  // Web Speech API로 음성 인식 (STT)
+  const speechRecognition = useSpeechRecognition({
+    language: 'ko-KR',
+    onResult: (transcript, isFinal) => {
+      if (isFinal) {
+        handleUserSpeech(transcript);
+      }
+    },
+    onError: (error) => {
+      console.error('음성 인식 오류:', error);
+    },
+  });
+
+  // Gemini Live API (TTS용)
   const geminiLive = useGeminiLive({
     apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
     systemPrompt: liveSystemPrompt,
     onTranscript: () => {
       // Gemini가 읽어주는 내용은 이미 채팅에 표시되었으므로 무시
     },
-    onUserTranscript: (text) => {
-      // 사용자가 말한 내용을 전사받으면 handleUserSpeech 호출
-      handleUserSpeech(text);
-    },
     onAudioData: (audioData) => {
       audioPlayer.play(audioData);
     },
     onError: (error) => {
       console.error('Live API 오류:', error);
-      alert('실시간 대화 중 오류가 발생했습니다.');
     },
   });
 
@@ -197,19 +208,21 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     };
   }, [geminiLive.sendText, geminiLive.isConnected]);
 
-  // Live 음성 대화 토글 (한 번 클릭으로 시작/중단)
+  // 음성 모드 토글
   const toggleLiveVoice = useCallback(async () => {
-    if (geminiLive.isStreaming) {
-      // 스트리밍 중이면 중단
-      geminiLive.stopStreaming();
+    if (isVoiceMode) {
+      // 음성 모드 종료
+      speechRecognition.stopListening();
       geminiLive.disconnect();
       audioPlayer.stop();
+      setIsVoiceMode(false);
     } else {
-      // 스트리밍 시작
+      // 음성 모드 시작: Gemini Live 연결 (TTS용) + 음성 인식 시작 (STT용)
       await geminiLive.connect();
-      geminiLive.startStreaming();
+      speechRecognition.startListening();
+      setIsVoiceMode(true);
     }
-  }, [geminiLive, audioPlayer]);
+  }, [isVoiceMode, speechRecognition, geminiLive, audioPlayer]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -455,31 +468,31 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={geminiLive.isStreaming ? '🎤 실시간 대화 중...' : '질문하세요...'}
+                  placeholder={isVoiceMode ? '🎤 음성 대화 중... 말씀하세요' : '질문하세요...'}
                   className="text-sm pr-10"
-                  disabled={geminiLive.isStreaming}
+                  disabled={isVoiceMode}
                 />
                 <button
                   type="submit"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md text-white border border-transparent hover:border-black focus:outline-none"
                   style={{ backgroundColor: primaryColor }}
-                  disabled={geminiLive.isStreaming}
+                  disabled={isVoiceMode}
                 >
                   ↵
                 </button>
               </div>
-              {/* Live 음성 버튼 */}
+              {/* 음성 대화 버튼 */}
               <button
                 type="button"
                 onClick={toggleLiveVoice}
                 className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all text-xl ${
-                  geminiLive.isStreaming 
+                  isVoiceMode 
                     ? 'bg-red-500 animate-pulse' 
                     : 'bg-slate-200 hover:bg-slate-300'
                 }`}
-                title={geminiLive.isStreaming ? '음성 대화 종료' : '음성 대화 시작'}
+                title={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
               >
-                {geminiLive.isStreaming ? '⏹️' : '🎤'}
+                {isVoiceMode ? '⏹️' : '🎤'}
               </button>
             </form>
             {audioPlayer.isPlaying && (
