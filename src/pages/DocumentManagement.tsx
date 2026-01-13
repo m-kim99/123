@@ -176,6 +176,8 @@ export function DocumentManagement() {
     departmentId: '',
     parentCategoryId: '',
     storageLocation: '',
+    defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
   });
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -631,6 +633,8 @@ export function DocumentManagement() {
       storageLocation: newCategory.storageLocation,
       nfcRegistered: false,
       nfcUid: null,
+      defaultExpiryDays: newCategory.defaultExpiryDays,
+      expiryDate: newCategory.expiryDate,
     }).then(() => {
       fetchSubcategories();
     });
@@ -641,6 +645,8 @@ export function DocumentManagement() {
       departmentId: '',
       parentCategoryId: '',
       storageLocation: '',
+      defaultExpiryDays: null,
+      expiryDate: null,
     });
   };
 
@@ -663,6 +669,8 @@ export function DocumentManagement() {
         storageLocation: newCategory.storageLocation,
         nfcRegistered: false,
         nfcUid: null,
+        defaultExpiryDays: newCategory.defaultExpiryDays,
+        expiryDate: newCategory.expiryDate,
       });
 
       if (!created) {
@@ -703,6 +711,8 @@ export function DocumentManagement() {
         departmentId: '',
         parentCategoryId: '',
         storageLocation: '',
+        defaultExpiryDays: null,
+        expiryDate: null,
       });
     } catch (error: any) {
       scanToast?.dismiss();
@@ -776,6 +786,8 @@ export function DocumentManagement() {
       departmentId: '',
       parentCategoryId: '',
       storageLocation: '',
+      defaultExpiryDays: null,
+      expiryDate: null,
     });
   };
 
@@ -1930,14 +1942,58 @@ export function DocumentManagement() {
                     세부 카테고리 추가
                   </Button>
                 </DialogTrigger>
-                <DialogContent closeClassName="text-white data-[state=open]:text-white">
+                <DialogContent className="max-h-[85vh] flex flex-col" closeClassName="text-white data-[state=open]:text-white">
                   <DialogHeader>
                     <DialogTitle>새 세부 카테고리 추가</DialogTitle>
                     <DialogDescription>
-                      새로운 문서 세부 카테고리를 생성합니다
+                      부서와 대분류를 선택하여 세부 카테고리를 생성합니다.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+                    <div className="space-y-2">
+                      <Label>부서</Label>
+                      <select
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        value={newCategory.departmentId}
+                        onChange={(e) =>
+                          setNewCategory({
+                            ...newCategory,
+                            departmentId: e.target.value,
+                            parentCategoryId: '',
+                          })
+                        }
+                      >
+                        <option value="">부서를 선택하세요</option>
+                        {departments
+                          .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                          .map((dept) => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.name} ({dept.code})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>대분류</Label>
+                      <select
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        value={newCategory.parentCategoryId}
+                        onChange={(e) =>
+                          setNewCategory({
+                            ...newCategory,
+                            parentCategoryId: e.target.value,
+                          })
+                        }
+                        disabled={newCategoryParentOptions.length === 0}
+                      >
+                        <option value="">대분류를 선택하세요</option>
+                        {newCategoryParentOptions.map((pc) => (
+                          <option key={pc.id} value={pc.id}>
+                            {pc.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <div className="space-y-2">
                       <Label>세부 카테고리 이름</Label>
                       <Input
@@ -1945,7 +2001,7 @@ export function DocumentManagement() {
                         onChange={(e) =>
                           setNewCategory({ ...newCategory, name: e.target.value })
                         }
-                        placeholder="예: 근로계약서(2024년)"
+                        placeholder="예: 채용 서류 보관함"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1962,56 +2018,6 @@ export function DocumentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>부서</Label>
-                      <Select
-                        value={newCategory.departmentId}
-                        onValueChange={(value) =>
-                          setNewCategory({
-                            ...newCategory,
-                            departmentId: value,
-                            parentCategoryId: '',
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="부서 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departments
-                            .filter((dept) => accessibleDepartmentIds.includes(dept.id))
-                            .map((dept) => (
-                              <SelectItem key={dept.id} value={dept.id}>
-                                {dept.name} ({dept.code})
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>대분류</Label>
-                      <Select
-                        value={newCategory.parentCategoryId}
-                        onValueChange={(value) =>
-                          setNewCategory({
-                            ...newCategory,
-                            parentCategoryId: value,
-                          })
-                        }
-                        disabled={newCategoryParentOptions.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="대분류 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {newCategoryParentOptions.map((pc) => (
-                            <SelectItem key={pc.id} value={pc.id}>
-                              {pc.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
                       <Label>보관 위치</Label>
                       <Input
                         value={newCategory.storageLocation}
@@ -2024,9 +2030,205 @@ export function DocumentManagement() {
                         placeholder="예: A동 2층 캐비닛 3"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>기본 보관 만료일 (선택)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addMonths(new Date(), 3);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          3개월
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addYears(new Date(), 1);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          1년
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addYears(new Date(), 3);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          3년
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addYears(new Date(), 5);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          5년
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addYears(new Date(), 7);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          7년
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const target = addYears(new Date(), 10);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(target);
+                            targetDay.setHours(0, 0, 0, 0);
+                            const diffTime = targetDay.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setNewCategory((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: target.toISOString(),
+                            }));
+                          }}
+                        >
+                          10년
+                        </Button>
+                        {newCategory.defaultExpiryDays && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setNewCategory((prev) => ({
+                                ...prev,
+                                defaultExpiryDays: null,
+                                expiryDate: null,
+                              }))
+                            }
+                            className="bg-white text-slate-600 hover:bg-slate-100"
+                          >
+                            초기화
+                          </Button>
+                        )}
+                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              'w-full justify-start text-left font-normal',
+                              !newCategory.expiryDate && 'text-muted-foreground'
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newCategory.expiryDate
+                              ? format(new Date(newCategory.expiryDate), 'PPP', { locale: ko })
+                              : '달력에서 보관 만료일 선택'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            fromYear={2020}
+                            toYear={2040}
+                            selected={newCategory.expiryDate ? new Date(newCategory.expiryDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const selected = new Date(date);
+                                selected.setHours(0, 0, 0, 0);
+                                const diffTime = selected.getTime() - today.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                setNewCategory((prev) => ({
+                                  ...prev,
+                                  defaultExpiryDays: diffDays,
+                                  expiryDate: date.toISOString(),
+                                }));
+                              }
+                            }}
+                            initialFocus
+                            className="bg-white"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-slate-500">
+                        보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                        {newCategory.expiryDate && ` (${format(new Date(newCategory.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
+                      </p>
+                    </div>
                   </div>
                   <DialogFooter className="flex-col sm:flex-row">
                     <Button
+                      type="button"
                       onClick={handleAddCategory}
                       variant="outline"
                       disabled={
@@ -2038,8 +2240,8 @@ export function DocumentManagement() {
                       세부 카테고리만 추가
                     </Button>
                     <Button
+                      type="button"
                       onClick={handleAddCategoryWithNfc}
-                      style={{ backgroundColor: primaryColor }}
                       disabled={
                         !newCategory.name.trim() ||
                         !newCategory.departmentId ||
@@ -2051,7 +2253,7 @@ export function DocumentManagement() {
                       NFC 등록하며 추가
                     </Button>
                     <DialogClose asChild>
-                      <Button variant="outline">
+                      <Button type="button" variant="outline">
                         취소
                       </Button>
                     </DialogClose>
