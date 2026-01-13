@@ -2781,7 +2781,7 @@ export function DocumentManagement() {
                             key={doc.id}
                             className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg border border-slate-200 bg-white shadow-sm"
                           >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="flex items-center gap-3 min-w-0 flex-1 w-full">
                               <div
                                 className="p-2 rounded-lg"
                                 style={{ backgroundColor: `${primaryColor}20` }}
@@ -2793,14 +2793,14 @@ export function DocumentManagement() {
                               </div>
                               <div className="flex-1 min-w-0 overflow-hidden">
                                 <div className="flex items-center gap-2 overflow-hidden">
-                                  <p className="font-medium truncate flex-1 min-w-0">{doc.name}</p>
+                                  <p className="font-medium truncate flex-1 min-w-0 max-w-full">{doc.name}</p>
                                   {doc.classified && (
                                     <Badge variant="destructive" className="text-xs">
                                       기밀
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="text-sm text-slate-500 truncate">
+                                <p className="text-sm text-slate-500 truncate max-w-full">
                                   {[
                                     formatDateTimeSimple(doc.uploadDate),
                                     doc.uploader || null,
