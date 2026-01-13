@@ -40,6 +40,13 @@ export function LoginPage() {
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
   const [companyCodeVerified, setCompanyCodeVerified] = useState(false);
+  const socialLogoBaseClass = 'h-5 w-5 object-contain';
+  const socialLogoClassByProvider: Record<'google' | 'apple' | 'kakao' | 'naver', string> = {
+    google: `${socialLogoBaseClass} scale-[1.08]`,
+    apple: `${socialLogoBaseClass} scale-[1.18]`,
+    kakao: `${socialLogoBaseClass} scale-[1]`,
+    naver: `${socialLogoBaseClass} scale-[1]`,
+  };
   const [signupForm, setSignupForm] = useState({
     email: '',
     password: '',
@@ -408,44 +415,60 @@ export function LoginPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white"
+                      className="w-full flex items-center justify-center bg-white"
                       onClick={handleGoogleLogin}
                     >
-                      <img src={googleLogo} alt="Google" className="h-5 w-5" />
-                      <span className="text-sm text-black">Google 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                        </span>
+                        <span className="text-sm text-black w-[165px] text-left">Google 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleAppleLogin}
                     >
-                      <img src={appleLogo} alt="Apple" className="h-5 w-5" />
-                      <span className="text-sm">Apple 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Apple 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleKakaoLogin}
                     >
-                      <img src={kakaoLogo} alt="Kakao" className="h-5 w-5" />
-                      <span className="text-sm">Kakao 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Kakao 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleNaverLogin}
                     >
-                      <img src={naverLogo} alt="Naver" className="h-5 w-5" />
-                      <span className="text-sm">Naver 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Naver 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-4 text-center">
@@ -517,44 +540,60 @@ export function LoginPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white"
+                      className="w-full flex items-center justify-center bg-white"
                       onClick={handleGoogleLogin}
                     >
-                      <img src={googleLogo} alt="Google" className="h-5 w-5" />
-                      <span className="text-sm text-black">Google 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                        </span>
+                        <span className="text-sm text-black w-[165px] text-left">Google 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleAppleLogin}
                     >
-                      <img src={appleLogo} alt="Apple" className="h-5 w-5" />
-                      <span className="text-sm">Apple 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Apple 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleKakaoLogin}
                     >
-                      <img src={kakaoLogo} alt="Kakao" className="h-5 w-5" />
-                      <span className="text-sm">Kakao 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Kakao 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full flex items-center justify-center gap-2 bg-white text-black"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleNaverLogin}
                     >
-                      <img src={naverLogo} alt="Naver" className="h-5 w-5" />
-                      <span className="text-sm">Naver 계정으로 계속하기</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">Naver 계정으로 계속하기</span>
+                      </span>
                     </Button>
                   </div>
                   <div className="mt-4 text-center">
