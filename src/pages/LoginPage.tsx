@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +52,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const { login, signup, isLoading, error, clearError, redirectAfterLogin, setRedirectAfterLogin } =
     useAuthStore();
 
@@ -441,6 +448,19 @@ export function LoginPage() {
                       <span className="text-sm">Naver 계정으로 계속하기</span>
                     </Button>
                   </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-slate-500">
+                      회원가입 또는 로그인 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주합니다.
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
+                        onClick={() => setTermsModalOpen(true)}
+                      >
+                        보기
+                      </Button>
+                    </p>
+                  </div>
                 </form>
               </TabsContent>
               <TabsContent value="team">
@@ -536,6 +556,19 @@ export function LoginPage() {
                       <img src={naverLogo} alt="Naver" className="h-5 w-5" />
                       <span className="text-sm">Naver 계정으로 계속하기</span>
                     </Button>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-slate-500">
+                      회원가입 또는 로그인 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주합니다.
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
+                        onClick={() => setTermsModalOpen(true)}
+                      >
+                        보기
+                      </Button>
+                    </p>
                   </div>
                 </form>
               </TabsContent>
@@ -842,6 +875,213 @@ export function LoginPage() {
           </Card>
         </div>
       )}
+      <Dialog open={termsModalOpen} onOpenChange={setTermsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>서비스 이용약관 및 개인정보 처리방침</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 flex-1 min-h-0">
+            <div className="border rounded-lg flex flex-col min-h-0 flex-1">
+              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">서비스 이용 약관</h2>
+              <div className="overflow-y-auto flex-1 p-4">
+                <div className="text-sm text-slate-700 space-y-4">
+                <p>
+                  이 약관은 주식회사 인포크리에이티브(이하 "회사")가 제공하는 문서 관리 서비스인 트레이 스토리지 커넥트의 이용과 관련하여 회사와 회원 사이 권리와 의무, 회원의 서비스 이용 절차 및 그 밖의 제반 사항을 정하는 것을 목적으로 합니다.
+                </p>
+
+                <h3 className="font-semibold text-slate-900">제1조 (정의)</h3>
+                <p>이 약관에서 사용하는 용어의 정의는 다음과 같습니다.</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>"서비스"란 이용자가 보유하고 있는 문서를 쉽고 편리하게 관리할 수 있도록 회사가 온라인으로 제공하는 서비스를 말합니다.</li>
+                  <li>"트레이 스토리지 커넥트"란 회사가 서비스를 제공하기 위하여 운영하는 온라인 플랫폼 서비스를 말합니다.</li>
+                  <li>"회원"이란 서비스를 이용하기 위하여 회사가 정한 절차에 따라 트레이 스토리지 커넥트에 회원으로 등록된 이용자를 말합니다.</li>
+                  <li>"게시물"이란 종이문서 촬영 사진, 전자적 형태로 작성된 문서 파일, 이미지 등 회원이 보유하고 있는 각종 문서파일 및 이미지로서 트레이 스토리지 커넥트에 등록된 것을 말합니다.</li>
+                  <li>"트레이 스토리지 제품"이란 종이문서를 편하게 보관하고 관리할 수 있는 것으로서 별도 구매한 NFC 스티커를 부착하여 트레이 스토리지 커넥트와 연동하여 사용할 수 있는 유료 판매 제품을 말합니다.</li>
+                </ul>
+                <p>본조에서 정하지 않은 용어의 뜻은 일반 상관례 및 관련 법령에 따릅니다.</p>
+
+                <h3 className="font-semibold text-slate-900">제2조 (약관의 게시 및 개정)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>회사는 회원이 이 약관을 쉽게 찾을 수 있도록 트레이 스토리지 브랜드 홈페이지 공지 게시판에 게시합니다.</li>
+                  <li>회사는 필요할 경우 관련 법령에 위반되지 않는 범위 내에서 이 약관을 개정할 수 있습니다.</li>
+                  <li>회사가 약관을 개정할 경우, 개정 내용과 시행 일자를 시행일 7일 전부터 공지합니다. 다만 개정 내용이 회원의 권리 의무에 중대한 영향을 미치거나 회원에게 불리한 경우에는, 최소 30일 전에 공지하고 회원에게는 등록된 연락처(휴대전화번호 또는 이메일 주소)로 개별적으로 통지합니다.</li>
+                  <li>회사는 회원에게 약관 개정 내용을 공지 또는 통지하면서, "시행일 전까지 이에 동의하지 않는다는 뜻을 표시하지 아니하면 개정 약관에 동의한 것으로 본다"는 뜻을 명확히 알립니다.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제3조 (약관 효력 및 운영 정책)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>이 약관은 회원이 이에 동의함으로써 효력이 발생하고 회원에게 적용됩니다.</li>
+                  <li>이 약관에서 정하지 아니한 사항은, 「약관의 규제에 관한 법률」, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」, 「소비자기본법」, 「전자상거래 등에서의 소비자 보호에 관한 법률」, 「전자문서 및 전자거래 기본법」 등 관련 법령 및 회사가 별도로 정하는 운영 정책 등에서 정하는 바에 따릅니다.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제4조 (회원 가입)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>회사가 제공하는 서비스를 이용하고자 하는 자는 회사가 정한 절차에 따라 회원 가입 신청을 하고 이 약관에 동의해야 합니다.</li>
+                  <li>회사는 회원 가입 신청을 받으면 다음 사유가 없는 한 회원 가입을 승인하고 회원으로 등록합니다: 회원 탈퇴 후 7일이 경과되지 않은 자, 허위 사실 포함, 약관 위반으로 말소된 전력이 있는 자 등.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제5조 (회원 탈퇴 및 회원 등록 말소)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>회원은 언제든지 트레이 스토리지 커넥트의 '회원 탈퇴하기'를 이용하여 회원 탈퇴를 할 수 있습니다.</li>
+                  <li>6개월 동안 로그인 기록이 없는 경우, 휴면회원으로 전환 후 해당 회원의 개인정보를 별도로 분리하여 보관</li>
+                  <li>1년 동안 로그인 기록이 없는 경우, 회원 등록 말소 후 해당 회원의 개인정보 파기 및 트레이 스토리지 커넥트의 게시물 영구 삭제</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제6조 (서비스의 내용 및 변경)</h3>
+                <p>회사는 다음과 같은 서비스를 제공합니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>문서파일, 이미지 등을 저장하고 관리하는 서비스</li>
+                  <li>부서를 생성하고 부서별로 문서파일, 이미지 등을 저장하고 관리하는 서비스</li>
+                  <li>트레이 스토리지 제품과 연동하여 문서를 저장하고 관리하는 서비스</li>
+                  <li>기타 관련 부수 서비스</li>
+                </ul>
+                <p>회사가 제공하는 서비스는 베타 테스터 기간동안 한시적인 무료입니다.</p>
+
+                <h3 className="font-semibold text-slate-900">제7조 (서비스의 중지)</h3>
+                <p>회사는 365일 중단 없는 계속적인 서비스 제공을 원칙으로 합니다. 다만 시스템 정기점검이나 업그레이드 등 서비스 품질 향상을 위하거나 시스템 장애 또는 고장이 발생하여 수리가 필요한 경우에는 사전에 회원에게 공지 또는 통지한 후 서비스 제공을 일시 중지할 수 있습니다.</p>
+
+                <h3 className="font-semibold text-slate-900">제8조 (게시물 등록에 관한 사항)</h3>
+                <p>회원은 다음의 게시물은 등록할 수 없습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>인감증명서, 등기권리증 등 법적인 권리의무자격을 증명하는 문서</li>
+                  <li>가족관계증명서, 주민등록표등본 등 신분관계 증명에 관한 문서</li>
+                  <li>이력서, 경력증명서, 재직증명서 등 개인의 경력 사항을 알 수 있는 문서</li>
+                  <li>통장 사본 등 금융기관에서 발행한 문서</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제9조 (서비스 이용 시 회원의 준수사항)</h3>
+                <p>회원은 다음 사항을 준수하여야 합니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>컴퓨터 바이러스 또는 악성 프로그램의 유포, 서버 공격 등 회사의 원활한 서비스 제공에 방해되는 행위 금지</li>
+                  <li>회사의 시스템에 비정상적인 방법으로 접근하는 행위 금지</li>
+                  <li>다른 회원의 개인정보를 무단으로 수집하여 처리하는 행위 금지</li>
+                  <li>다른 회원이나 회사의 임직원에 대한 욕설, 비방, 모욕, 명예훼손 행위 금지</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제10조 (회사의 역할)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>회사는 지속적이고 안정된 서비스가 제공될 수 있도록 노력합니다.</li>
+                  <li>회사는 회원의 게시물을 안전하게 관리하고 외부 해킹에 의하여 게시물이 유출되지 않도록 필요한 조치를 취하고 있습니다.</li>
+                  <li>회사는 회원의 개인정보를 보호하기 위하여 「개인정보 보호법」 등 관련 법령에서 정하는 바를 준수합니다.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제11조 (회원 정보 관리)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>회원은 자신의 계정 및 회원 정보에 관한 관리책임이 있습니다.</li>
+                  <li>회원은 자신의 계정 및 회원 정보를 제3자에게 이용하게 함으로써 발생된 문제에 대하여 책임을 부담해야 합니다.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제12조 (분쟁해결 및 관할)</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>이 약관에서 정하지 아니한 사항 또는 이 약관의 내용에 대하여 회사와 회원 사이 이견이 있을 경우, 회사와 회원이 협의하여 결정합니다.</li>
+                  <li>분쟁에 대하여 소송이 제기되는 경우, 재판의 관할은 민사소송법의 관할 규정에 따릅니다.</li>
+                </ul>
+
+                <p className="font-semibold">이 약관은 2026. 2. 1. 부터 시행합니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded-lg flex flex-col min-h-0 flex-1">
+              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">개인정보 처리방침</h2>
+              <div className="overflow-y-auto flex-1 p-4">
+                <div className="text-sm text-slate-700 space-y-4">
+                <p>
+                  주식회사 인포크리에이티브(이하 "회사")는 「개인정보 보호법」 제30조에 따라 회사가 서비스하는 트레이 스토리지 커넥트를 이용하는 사용자(이하 "정보주체")의 개인정보를 보호하고 이와 관련된 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보 처리방침을 운영합니다.
+                </p>
+
+                <h3 className="font-semibold text-slate-900">제1조 (개인정보 수집·이용 목적)</h3>
+                <p>회사는 서비스 제공을 위한 필요 최소한의 개인정보를 수집하고 있으며, 정보주체의 동의를 받아 다음의 목적으로 개인정보를 수집합니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>회원 가입 및 관리:</strong> 회원제 서비스에 제공에 따른 본인 식별인증, 중복 가입 및 부정 가입 방지, 회원 자격 유지제한, 각종 통지 및 고지</li>
+                  <li><strong>서비스 제공 및 이용:</strong> 문서 등록 및 관리</li>
+                  <li><strong>고충 처리:</strong> 회원 고충 사항 확인, 본인 확인, 처리 결과 통지 및 연락</li>
+                  <li><strong>마케팅 및 프로모션:</strong> 이벤트, 프로모션 정보 및 참여 기회 제공</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제2조 (수집·이용하는 개인정보 항목)</h3>
+                <p>회사가 수집 및 이용하는 개인정보의 항목:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>웹을 통한 회원 가입:</strong> 회사명, 부서명, 이메일, 생년월일, 아이디, 비밀번호, 휴대전화번호</li>
+                  <li><strong>카카오 계정을 통한 회원 가입:</strong> 카카오 계정(아이디), 비밀번호</li>
+                  <li><strong>구글 계정을 통한 회원 가입:</strong> 이름, 이메일주소</li>
+                  <li><strong>네이버 계정을 통한 회원 가입:</strong> 아이디, 비밀번호</li>
+                  <li><strong>애플 계정을 통한 회원 가입:</strong> 아이디, 비밀번호</li>
+                  <li><strong>회원 고충 및 불만 처리:</strong> 이름, 이메일주소, 연락처, 1:1문의, 고충 및 불만 내용</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제3조 (개인정보 보유 및 이용 기간)</h3>
+                <p>회사는 정보주체의 개인정보를 수집할 때 동의 받은 개인정보 보유 및 이용기간 또는 법령에 따른 개인정보 보유 및 이용기간 내에서 개인정보를 처리합니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>회원 가입 및 관리:</strong> 회원 탈퇴 및 말소 시까지. 다만, 회원 재가입 확인 또는 부정 가입 방지를 위하여 탈퇴 또는 말소 후 2년 동안 보유</li>
+                  <li><strong>고충 처리:</strong> 해당 고충 및 분쟁 처리 시까지. 다만, 처리 과정 및 결과에 관한 기록은 「전자상거래법」에 따라 최소한 3년 동안 보유</li>
+                  <li><strong>정보통신 기록:</strong> 회원 탈퇴 및 말소 시까지. 다만, 「통신비밀보호법 시행령」에 따라 최소한 3개월 동안 보유</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제4조 (개인정보의 제3자 제공)</h3>
+                <p>회사는 원칙적으로 정보주체의 개인정보를 제3자에게 제공하지 않습니다. 다음의 경우에는 정보주체의 동의 없이 제3자에게 제공할 수 있습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>법률에 특별한 규정이 있는 경우</li>
+                  <li>법률에 근거하여 정부 및 공공기관, 수사기관, 법원 등에서 정보 제공을 요청하는 경우</li>
+                  <li>통계작성, 과학적 연구, 공익적 기록보존 등을 위하여 가명정보를 제공하는 경우</li>
+                  <li>재난, 감염병, 급박한 생명 및 신체 위험을 초래하는 사건 및 사고 등의 긴급사항이 발생하는 경우</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제5조 (정보주체의 권리 및 행사방법)</h3>
+                <p>정보주체는 회사가 처리하는 자신의 개인정보에 대하여 언제든지 다음의 권리를 행사할 수 있습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>개인정보 열람 요구권:</strong> 회사가 보유한 개인정보의 열람을 청구할 수 있습니다.</li>
+                  <li><strong>개인정보 정정·삭제 요구권:</strong> 자신이 열람한 개인정보의 정정 또는 삭제를 요구할 수 있습니다.</li>
+                  <li><strong>개인정보 처리정지 요구 및 동의철회권:</strong> 자신의 개인정보 처리의 정지를 요구하거나 개인정보 처리에 대한 동의를 철회할 수 있습니다.</li>
+                </ul>
+                <p>정보주체는 개인정보 보호책임자(연락처: 02-333-7334) 또는 전자우편(support@traystorage.net)을 통해 권리를 행사할 수 있습니다.</p>
+
+                <h3 className="font-semibold text-slate-900">제6조 (개인정보의 파기)</h3>
+                <p>회사는 개인정보 처리목적의 달성, 개인정보 보유 및 이용 기간의 경과, 사업의 종료 등 정보주체의 개인정보가 불필요하게 되었을 때는 즉시 개인정보를 파기합니다.</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>파기 절차:</strong> 파기 사유가 발생한 개인정보를 선정하고 개인정보 보호책임자의 책임하에 개인정보를 파기합니다.</li>
+                  <li><strong>파기 방법:</strong> 전자적 파일 형태로 기록·저장된 개인정보는 복원이 불가능한 방법으로 영구 삭제하고, 종이 문서나 그 밖의 기록매체에 기록된 개인정보는 파쇄 또는 소각합니다.</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제7조 (개인정보의 안전성 확보조치)</h3>
+                <p>회사는 정보주체의 개인정보가 분실·도난·유출·위/변조·훼손되지 않도록 다음과 같은 조치를 하고 있습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>개인정보 보호를 위한 내부 관리계획의 수립·시행, 정기적 직원 교육</li>
+                  <li>개인정보처리시스템에 대한 접근 통제 및 접근 권한 제한 조치, 고유식별정보 등의 암호화, 보안프로그램의 설치</li>
+                  <li>개인정보의 안전한 보관을 위한 보관시설의 마련 또는 잠금장치의 설치 및 접근 통제</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제8조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)</h3>
+                <p>회사는 정보주체에게 개별적인 맞춤서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.</p>
+                <p>정보주체는 웹 브라우저 설정을 통하여 쿠키를 허용하거나 거부할 수 있습니다. 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다.</p>
+
+                <h3 className="font-semibold text-slate-900">제9조 (개인정보 보호책임자)</h3>
+                <p>회사는 개인정보 처리에 관한 업무를 총괄하여 책임지고, 개인정보 처리와 관련된 정보주체의 불만처리 및 피해구제와 권리행사를 위하여 다음과 같이 개인정보 보호책임자를 지정하여 운영하고 있습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>성명:</strong> 정도천</li>
+                  <li><strong>직책:</strong> 대표이사</li>
+                  <li><strong>연락처:</strong> 02-333-7334</li>
+                  <li><strong>이메일:</strong> support@traystorage.net</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제10조 (정보주체의 권익침해에 대한 구제방법)</h3>
+                <p>정보주체는 아래의 기관에 개인정보 침해에 대한 피해구제, 상담 등을 문의할 수 있습니다:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>개인정보침해 신고센터 (한국인터넷진흥원 운영):</strong> (국번없이) 118, privacy.kisa.or.kr</li>
+                  <li><strong>개인정보 분쟁조정위원회:</strong> (국번없이) 1833-6972, www.kopico.go.kr</li>
+                  <li><strong>대검찰청 사이버수사과:</strong> (국번없이) 1301, www.spo.go.kr</li>
+                  <li><strong>경찰청 사이버범죄 신고시스템(ECRM):</strong> (국번없이) 182, ecrm.cyber.go.kr</li>
+                </ul>
+
+                <h3 className="font-semibold text-slate-900">제11조 (개인정보 처리방침의 변경 및 시행)</h3>
+                <p>회사가 본 개인정보 처리방침을 변경하는 경우에는, 변경내용 시행 7일 전부터 정보주체가 알 수 있도록 변경 전·후의 내용을 비교하여 공지합니다.</p>
+                <p className="font-semibold">본 개인정보 처리방침은 2026. 2. 1.부터 시행합니다.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
