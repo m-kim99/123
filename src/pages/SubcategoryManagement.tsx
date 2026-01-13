@@ -611,14 +611,14 @@ export function SubcategoryManagement() {
           </CardContent>
         </Card>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[85vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>새 세부 카테고리 추가</DialogTitle>
               <DialogDescription>
                 부서와 대분류를 선택하여 세부 카테고리를 생성합니다.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 pr-2">
               <div className="space-y-2">
                 <Label>부서</Label>
                 <select
