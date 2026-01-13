@@ -120,6 +120,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
 
+  // 음성 중복 처리 방지용 ref
+  const lastProcessedTranscriptRef = useRef<string>('');
+  const isProcessingSpeechRef = useRef<boolean>(false);
+
   // Live 모드용 시스템 프롬프트 - TTS 역할만 수행
   const liveSystemPrompt = `당신은 한국어 음성 안내 도우미입니다.
 사용자가 보내는 메시지를 자연스럽게 한국어로 읽어주세요.
@@ -130,15 +134,25 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
   // 사용자 음성 전사 처리 - generateResponse 호출 후 음성으로 읽어줌
   const handleUserSpeech = useCallback(async (transcript: string) => {
-    if (!transcript.trim()) return;
+    const trimmed = transcript.trim();
+    if (!trimmed) return;
+
+    // 중복 처리 방지: 동일 transcript거나 이미 처리 중이면 무시
+    if (trimmed === lastProcessedTranscriptRef.current || isProcessingSpeechRef.current) {
+      console.log('🎤 중복 전사 무시:', trimmed);
+      return;
+    }
+
+    lastProcessedTranscriptRef.current = trimmed;
+    isProcessingSpeechRef.current = true;
     
-    console.log('🎤 사용자 전사:', transcript);
+    console.log('🎤 사용자 전사:', trimmed);
     
     // 1. 사용자 메시지 + 빈 assistant 메시지 추가
     const userMessage: ChatMessage = {
       id: `${Date.now()}-user`,
       role: 'user',
-      content: transcript,
+      content: trimmed,
       timestamp: new Date(),
     };
     const assistantId = `${Date.now()}-assistant`;
@@ -165,7 +179,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         content: m.content,
       }));
       
-      await generateResponse(transcript, history, (partial, docs) => {
+      await generateResponse(trimmed, history, (partial, docs) => {
         if (!firstChunkReceived) {
           firstChunkReceived = true;
           setIsTyping(false);
@@ -195,6 +209,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.error('응답 생성 오류:', error);
     } finally {
       setIsTyping(false);
+      isProcessingSpeechRef.current = false;
     }
   }, [messages]);
 
@@ -219,6 +234,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // Gemini가 읽어주는 내용은 이미 채팅에 표시되었으므로 무시
     },
     onAudioData: (audioData) => {
+      // TTS 재생 중에는 STT 일시정지 (되먹임 방지)
+      if (speechRecognition.isListening) {
+        speechRecognition.stopListening();
+      }
       audioPlayer.play(audioData);
     },
     onError: (error) => {
