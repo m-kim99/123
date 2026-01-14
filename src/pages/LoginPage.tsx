@@ -374,7 +374,6 @@ export function LoginPage() {
                     <Input
                       id="admin-email"
                       type="email"
-                      placeholder="admin@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
@@ -386,7 +385,6 @@ export function LoginPage() {
                     <Input
                       id="admin-password"
                       type="password"
-                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
@@ -499,7 +497,6 @@ export function LoginPage() {
                     <Input
                       id="team-email"
                       type="email"
-                      placeholder="team@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
@@ -511,7 +508,6 @@ export function LoginPage() {
                     <Input
                       id="team-password"
                       type="password"
-                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
