@@ -130,10 +130,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'search_documents': {
         const { keyword, department_name, limit = 10 } = args;
-        let query = supabase.from('documents').select('id, title, uploaded_at, uploader, subcategory:subcategories(name, storage_location), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        let query = supabase.from('documents').select('id, title, uploaded_at, uploaded_by, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(name, storage_location), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, parent_category: d.parent_category?.name, department: d.department?.name, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at })), count: data?.length || 0 });
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, parent_category: d.parent_category?.name, department: d.department?.name, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
       }
       case 'search_by_keyword': {
         const { keyword, entity_type } = args;
@@ -187,10 +187,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       case 'list_recent_documents': {
         const { days = 7, department_name, limit = 10 } = args;
         const since = new Date(); since.setDate(since.getDate() - days);
-        let query = supabase.from('documents').select('title, uploaded_at, uploader, department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', since.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
+        let query = supabase.from('documents').select('title, uploaded_at, uploader:users!documents_uploaded_by_fkey(name), department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', since.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0, period: `최근 ${days}일` });
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0, period: `최근 ${days}일` });
       }
       case 'list_filtered': {
         const { filter_type, days = 30 } = args;
@@ -231,8 +231,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         return JSON.stringify({ name: user?.name || '알 수 없음', email: user?.email || '알 수 없음', role: user?.role || '알 수 없음', department: user?.department?.name || '미배정' });
       }
       case 'get_documents_by_uploader': {
-        const { data } = await supabase.from('documents').select('title, uploaded_at, subcategory:subcategories(name), department:departments(name)').in('department_id', deptIds).ilike('uploader', `%${args.uploader_name}%`).order('uploaded_at', { ascending: false }).limit(args.limit || 10);
-        return JSON.stringify({ uploader: args.uploader_name, documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, department: d.department?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0 });
+        const { data: uploaderUser } = await supabase.from('users').select('id, name').eq('company_id', companyId).ilike('name', `%${args.uploader_name}%`).single();
+        if (!uploaderUser) return JSON.stringify({ error: `'${args.uploader_name}' 사용자를 찾을 수 없습니다.`, documents: [], count: 0 });
+        const { data } = await supabase.from('documents').select('title, uploaded_at, subcategory:subcategories(name), department:departments(name)').in('department_id', deptIds).eq('uploaded_by', uploaderUser.id).order('uploaded_at', { ascending: false }).limit(args.limit || 10);
+        return JSON.stringify({ uploader: uploaderUser.name, documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, department: d.department?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0 });
       }
       case 'get_expiring_subcategories': {
         const days = args.days || 30;
@@ -254,10 +256,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           case 'this_year': startDate = new Date(now.getFullYear(), 0, 1); break;
           default: startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
         }
-        let query = supabase.from('documents').select('title, uploaded_at, uploader, department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', startDate.toISOString()).lt('uploaded_at', endDate.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
+        let query = supabase.from('documents').select('title, uploaded_at, uploader:users!documents_uploaded_by_fkey(name), department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', startDate.toISOString()).lt('uploaded_at', endDate.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0, period });
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0, period });
       }
       case 'get_oldest_newest': {
         const { entity_type, order, limit = 5 } = args;
