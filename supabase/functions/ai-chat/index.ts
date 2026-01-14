@@ -6,401 +6,330 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 채팅 로그를 DB(chat_messages)에 저장할지 여부 플래그
-// 요구 사항에 따라 기본값을 false로 두어, 더 이상 기록이 남지 않게 함
-const ENABLE_CHAT_LOGGING = false;
+const functionDeclarations = [
+  { name: 'get_total_counts', description: '전체 부서, 대분류, 세부카테고리, 문서, 사용자 수를 조회합니다.', parameters: { type: 'object', properties: {}, required: [] } },
+  { name: 'get_department_stats', description: '특정 부서의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string', description: '부서명' } }, required: ['department_name'] } },
+  { name: 'get_parent_category_stats', description: '특정 대분류의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { category_name: { type: 'string', description: '대분류명' } }, required: ['category_name'] } },
+  { name: 'get_subcategory_stats', description: '특정 세부카테고리의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string', description: '세부카테고리명' } }, required: ['subcategory_name'] } },
+  { name: 'get_ranking', description: '문서가 가장 많은/적은 부서, 대분류, 세부카테고리 순위를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, order: { type: 'string', enum: ['most', 'least'] }, limit: { type: 'number' } }, required: ['entity_type', 'order'] } },
+  { name: 'get_empty_entities', description: '문서가 없는 세부카테고리, 세부카테고리가 없는 대분류, 대분류가 없는 부서 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['entity_type'] } },
+  { name: 'check_exists', description: '특정 이름의 부서/대분류/세부카테고리/문서가 존재하는지 확인합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'search_documents', description: '키워드로 문서를 검색합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['keyword'] } },
+  { name: 'search_by_keyword', description: '키워드로 부서/대분류/세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['keyword', 'entity_type'] } },
+  { name: 'get_hierarchy_path', description: '문서나 세부카테고리의 전체 계층 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'get_parent_info', description: '특정 항목의 상위 항목 정보를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory', 'parent_category'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'get_navigation_link', description: '특정 항목으로 이동하는 링크를 생성합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'list_all', description: '전체 부서/대분류/세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, limit: { type: 'number' } }, required: ['entity_type'] } },
+  { name: 'list_children', description: '특정 항목의 하위 목록을 조회합니다.', parameters: { type: 'object', properties: { parent_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, parent_name: { type: 'string' }, limit: { type: 'number' } }, required: ['parent_type', 'parent_name'] } },
+  { name: 'list_recent_documents', description: '최근 업로드된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { days: { type: 'number' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: [] } },
+  { name: 'list_filtered', description: 'NFC 등록 여부, 만료 임박 여부 등으로 필터링된 세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { filter_type: { type: 'string', enum: ['nfc_registered', 'nfc_unregistered', 'expiring_soon', 'expired'] }, days: { type: 'number' } }, required: ['filter_type'] } },
+  { name: 'get_storage_location', description: '세부카테고리 또는 문서의 실제 저장 위치를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'search_by_location', description: '저장 위치로 세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { location_keyword: { type: 'string' } }, required: ['location_keyword'] } },
+  { name: 'get_nfc_status', description: 'NFC 등록 현황 요약 또는 특정 세부카테고리의 NFC 등록 여부를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string' } }, required: [] } },
+  { name: 'get_department_members', description: '특정 부서의 소속 팀원 목록을 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string' } }, required: ['department_name'] } },
+  { name: 'get_user_info', description: '특정 사용자의 정보를 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
+  { name: 'get_my_info', description: '현재 로그인한 사용자의 정보를 조회합니다.', parameters: { type: 'object', properties: {}, required: [] } },
+  { name: 'get_documents_by_uploader', description: '특정 사용자가 업로드한 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { uploader_name: { type: 'string' }, limit: { type: 'number' } }, required: ['uploader_name'] } },
+  { name: 'get_expiring_subcategories', description: '만료 임박한 세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { days: { type: 'number' } }, required: [] } },
+  { name: 'get_documents_by_period', description: '특정 기간에 업로드된 문서를 조회합니다.', parameters: { type: 'object', properties: { period: { type: 'string', enum: ['today', 'yesterday', 'this_week', 'last_week', 'this_month', 'last_month', 'this_year'] }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['period'] } },
+  { name: 'get_oldest_newest', description: '가장 오래된 또는 최신 문서/세부카테고리를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory'] }, order: { type: 'string', enum: ['oldest', 'newest'] }, limit: { type: 'number' } }, required: ['entity_type', 'order'] } },
+  { name: 'get_shared_documents', description: '내가 공유한 문서 또는 나에게 공유된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { direction: { type: 'string', enum: ['shared_by_me', 'shared_to_me'] }, limit: { type: 'number' } }, required: ['direction'] } },
+  { name: 'get_document_share_info', description: '특정 문서의 공유 정보를 조회합니다.', parameters: { type: 'object', properties: { document_name: { type: 'string' } }, required: ['document_name'] } },
+  { name: 'get_shares_with_user', description: '특정 사용자와 주고받은 공유 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } }
+];
+
+async function getDeptIds(supabase: any, companyId: string) {
+  const { data } = await supabase.from('departments').select('id').eq('company_id', companyId);
+  return data?.map((d: any) => d.id) || [];
+}
+
+async function executeFunction(name: string, args: any, supabase: any, companyId: string, userId: string): Promise<string> {
+  const deptIds = await getDeptIds(supabase, companyId);
+  try {
+    switch (name) {
+      case 'get_total_counts': {
+        const [depts, cats, subs, docs, users] = await Promise.all([
+          supabase.from('departments').select('id', { count: 'exact' }).eq('company_id', companyId),
+          supabase.from('categories').select('id', { count: 'exact' }).in('department_id', deptIds),
+          supabase.from('subcategories').select('id', { count: 'exact' }).in('department_id', deptIds),
+          supabase.from('documents').select('id', { count: 'exact' }).in('department_id', deptIds),
+          supabase.from('users').select('id', { count: 'exact' }).eq('company_id', companyId)
+        ]);
+        return JSON.stringify({ departments: depts.count || 0, parent_categories: cats.count || 0, subcategories: subs.count || 0, documents: docs.count || 0, users: users.count || 0 });
+      }
+      case 'get_department_stats': {
+        const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
+        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.` });
+        const [users, cats, subs, docs] = await Promise.all([
+          supabase.from('users').select('id', { count: 'exact' }).eq('department_id', dept.id),
+          supabase.from('categories').select('id', { count: 'exact' }).eq('department_id', dept.id),
+          supabase.from('subcategories').select('id', { count: 'exact' }).eq('department_id', dept.id),
+          supabase.from('documents').select('id', { count: 'exact' }).eq('department_id', dept.id)
+        ]);
+        return JSON.stringify({ department_name: dept.name, user_count: users.count || 0, parent_category_count: cats.count || 0, subcategory_count: subs.count || 0, document_count: docs.count || 0 });
+      }
+      case 'get_parent_category_stats': {
+        const { data: cat } = await supabase.from('categories').select('id, name, department_id').in('department_id', deptIds).ilike('name', `%${args.category_name}%`).single();
+        if (!cat) return JSON.stringify({ error: `'${args.category_name}' 대분류를 찾을 수 없습니다.` });
+        const { data: dept } = await supabase.from('departments').select('name').eq('id', cat.department_id).single();
+        const [subs, docs] = await Promise.all([
+          supabase.from('subcategories').select('id', { count: 'exact' }).eq('parent_category_id', cat.id),
+          supabase.from('documents').select('id', { count: 'exact' }).eq('parent_category_id', cat.id)
+        ]);
+        return JSON.stringify({ category_name: cat.name, department_name: dept?.name || '알 수 없음', subcategory_count: subs.count || 0, document_count: docs.count || 0 });
+      }
+      case 'get_subcategory_stats': {
+        const { data: sub } = await supabase.from('subcategories').select('id, name, parent_category_id, department_id, storage_location, nfc_uid, nfc_registered, expiry_date').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single();
+        if (!sub) return JSON.stringify({ error: `'${args.subcategory_name}' 세부카테고리를 찾을 수 없습니다.` });
+        const [cat, dept, docs] = await Promise.all([
+          supabase.from('categories').select('name').eq('id', sub.parent_category_id).single(),
+          supabase.from('departments').select('name').eq('id', sub.department_id).single(),
+          supabase.from('documents').select('id', { count: 'exact' }).eq('subcategory_id', sub.id)
+        ]);
+        return JSON.stringify({ subcategory_name: sub.name, parent_category_name: cat.data?.name || '알 수 없음', department_name: dept.data?.name || '알 수 없음', storage_location: sub.storage_location || '미지정', nfc_registered: sub.nfc_registered || false, expiry_date: sub.expiry_date, document_count: docs.count || 0 });
+      }
+      case 'get_ranking': {
+        const { entity_type, order, limit = 5 } = args;
+        let results: any[] = [];
+        if (entity_type === 'department') {
+          const { data: depts } = await supabase.from('departments').select('id, name').eq('company_id', companyId);
+          for (const d of depts || []) { const { count } = await supabase.from('documents').select('id', { count: 'exact' }).eq('department_id', d.id); results.push({ name: d.name, document_count: count || 0 }); }
+        } else if (entity_type === 'parent_category') {
+          const { data: cats } = await supabase.from('categories').select('id, name').in('department_id', deptIds);
+          for (const c of cats || []) { const { count } = await supabase.from('documents').select('id', { count: 'exact' }).eq('parent_category_id', c.id); results.push({ name: c.name, document_count: count || 0 }); }
+        } else {
+          const { data: subs } = await supabase.from('subcategories').select('id, name').in('department_id', deptIds);
+          for (const s of subs || []) { const { count } = await supabase.from('documents').select('id', { count: 'exact' }).eq('subcategory_id', s.id); results.push({ name: s.name, document_count: count || 0 }); }
+        }
+        results.sort((a, b) => order === 'most' ? b.document_count - a.document_count : a.document_count - b.document_count);
+        return JSON.stringify({ ranking: results.slice(0, limit), order });
+      }
+      case 'get_empty_entities': {
+        const { entity_type } = args;
+        let emptyItems: string[] = [];
+        if (entity_type === 'subcategory') {
+          const { data: subs } = await supabase.from('subcategories').select('id, name').in('department_id', deptIds);
+          for (const s of subs || []) { const { count } = await supabase.from('documents').select('id', { count: 'exact' }).eq('subcategory_id', s.id); if (count === 0) emptyItems.push(s.name); }
+        } else if (entity_type === 'parent_category') {
+          const { data: cats } = await supabase.from('categories').select('id, name').in('department_id', deptIds);
+          for (const c of cats || []) { const { count } = await supabase.from('subcategories').select('id', { count: 'exact' }).eq('parent_category_id', c.id); if (count === 0) emptyItems.push(c.name); }
+        } else {
+          const { data: depts } = await supabase.from('departments').select('id, name').eq('company_id', companyId);
+          for (const d of depts || []) { const { count } = await supabase.from('categories').select('id', { count: 'exact' }).eq('department_id', d.id); if (count === 0) emptyItems.push(d.name); }
+        }
+        return JSON.stringify({ empty_items: emptyItems, count: emptyItems.length });
+      }
+      case 'check_exists': {
+        const { entity_type, name: n } = args;
+        let exists = false, foundItem: any = null;
+        if (entity_type === 'department') { const { data } = await supabase.from('departments').select('name').eq('company_id', companyId).ilike('name', `%${n}%`).single(); exists = !!data; foundItem = data; }
+        else if (entity_type === 'parent_category') { const { data } = await supabase.from('categories').select('name').in('department_id', deptIds).ilike('name', `%${n}%`).single(); exists = !!data; foundItem = data; }
+        else if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('name').in('department_id', deptIds).ilike('name', `%${n}%`).single(); exists = !!data; foundItem = data; }
+        else { const { data } = await supabase.from('documents').select('title').in('department_id', deptIds).ilike('title', `%${n}%`).single(); exists = !!data; foundItem = data; }
+        return JSON.stringify({ exists, name: foundItem?.name || foundItem?.title || n });
+      }
+      case 'search_documents': {
+        const { keyword, department_name, limit = 10 } = args;
+        let query = supabase.from('documents').select('id, title, uploaded_at, uploader, subcategory:subcategories(name, storage_location), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
+        const { data } = await query;
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, parent_category: d.parent_category?.name, department: d.department?.name, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at })), count: data?.length || 0 });
+      }
+      case 'search_by_keyword': {
+        const { keyword, entity_type } = args;
+        let results: any[] = [];
+        if (entity_type === 'department') { const { data } = await supabase.from('departments').select('name').eq('company_id', companyId).ilike('name', `%${keyword}%`); results = data || []; }
+        else if (entity_type === 'parent_category') { const { data } = await supabase.from('categories').select('name').in('department_id', deptIds).ilike('name', `%${keyword}%`); results = data || []; }
+        else { const { data } = await supabase.from('subcategories').select('name').in('department_id', deptIds).ilike('name', `%${keyword}%`); results = data || []; }
+        return JSON.stringify({ results: results.map((r: any) => r.name), count: results.length });
+      }
+      case 'get_hierarchy_path': {
+        const { entity_type, name: n } = args;
+        if (entity_type === 'document') {
+          const { data: doc } = await supabase.from('documents').select('title, subcategory:subcategories(name), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('title', `%${n}%`).single();
+          if (!doc) return JSON.stringify({ error: `'${n}' 문서를 찾을 수 없습니다.` });
+          return JSON.stringify({ path: `${doc.department?.name} → ${doc.parent_category?.name} → ${doc.subcategory?.name} → ${doc.title}`, department: doc.department?.name, parent_category: doc.parent_category?.name, subcategory: doc.subcategory?.name, document: doc.title });
+        } else {
+          const { data: sub } = await supabase.from('subcategories').select('name, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('name', `%${n}%`).single();
+          if (!sub) return JSON.stringify({ error: `'${n}' 세부카테고리를 찾을 수 없습니다.` });
+          return JSON.stringify({ path: `${sub.department?.name} → ${sub.parent_category?.name} → ${sub.name}`, department: sub.department?.name, parent_category: sub.parent_category?.name, subcategory: sub.name });
+        }
+      }
+      case 'get_parent_info': {
+        const { entity_type, name: n } = args;
+        if (entity_type === 'document') { const { data } = await supabase.from('documents').select('title, subcategory:subcategories(name)').in('department_id', deptIds).ilike('title', `%${n}%`).single(); return JSON.stringify({ item: n, parent: data?.subcategory?.name || '알 수 없음', parent_type: 'subcategory' }); }
+        else if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('name, parent_category:categories(name)').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ item: n, parent: data?.parent_category?.name || '알 수 없음', parent_type: 'parent_category' }); }
+        else { const { data } = await supabase.from('categories').select('name, department:departments(name)').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ item: n, parent: data?.department?.name || '알 수 없음', parent_type: 'department' }); }
+      }
+      case 'get_navigation_link': {
+        const { entity_type, name: n } = args;
+        if (entity_type === 'department') { const { data } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${n}%`).single(); return JSON.stringify({ link: data ? `/admin/department/${data.id}` : null, name: n }); }
+        else if (entity_type === 'parent_category') { const { data } = await supabase.from('categories').select('id, department_id').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ link: data ? `/admin/department/${data.department_id}/category/${data.id}` : null, name: n }); }
+        else if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('id, parent_category_id').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ link: data ? `/admin/category/${data.parent_category_id}/subcategory/${data.id}` : null, name: n }); }
+        return JSON.stringify({ error: '지원하지 않는 유형입니다.' });
+      }
+      case 'list_all': {
+        const { entity_type, limit = 50 } = args;
+        let items: string[] = [];
+        if (entity_type === 'department') { const { data } = await supabase.from('departments').select('name').eq('company_id', companyId).limit(limit); items = (data || []).map((d: any) => d.name); }
+        else if (entity_type === 'parent_category') { const { data } = await supabase.from('categories').select('name').in('department_id', deptIds).limit(limit); items = (data || []).map((c: any) => c.name); }
+        else { const { data } = await supabase.from('subcategories').select('name').in('department_id', deptIds).limit(limit); items = (data || []).map((s: any) => s.name); }
+        return JSON.stringify({ items, count: items.length });
+      }
+      case 'list_children': {
+        const { parent_type, parent_name, limit = 50 } = args;
+        let children: any[] = [];
+        if (parent_type === 'department') { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${parent_name}%`).single(); if (dept) { const { data } = await supabase.from('categories').select('name').eq('department_id', dept.id).limit(limit); children = (data || []).map((c: any) => c.name); } }
+        else if (parent_type === 'parent_category') { const { data: cat } = await supabase.from('categories').select('id').in('department_id', deptIds).ilike('name', `%${parent_name}%`).single(); if (cat) { const { data } = await supabase.from('subcategories').select('name').eq('parent_category_id', cat.id).limit(limit); children = (data || []).map((s: any) => s.name); } }
+        else { const { data: sub } = await supabase.from('subcategories').select('id').in('department_id', deptIds).ilike('name', `%${parent_name}%`).single(); if (sub) { const { data } = await supabase.from('documents').select('title').eq('subcategory_id', sub.id).limit(limit); children = (data || []).map((d: any) => d.title); } }
+        return JSON.stringify({ parent: parent_name, children, count: children.length });
+      }
+      case 'list_recent_documents': {
+        const { days = 7, department_name, limit = 10 } = args;
+        const since = new Date(); since.setDate(since.getDate() - days);
+        let query = supabase.from('documents').select('title, uploaded_at, uploader, department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', since.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
+        if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
+        const { data } = await query;
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0, period: `최근 ${days}일` });
+      }
+      case 'list_filtered': {
+        const { filter_type, days = 30 } = args;
+        let items: any[] = [];
+        if (filter_type === 'nfc_registered') { const { data } = await supabase.from('subcategories').select('name, storage_location').in('department_id', deptIds).eq('nfc_registered', true); items = data || []; }
+        else if (filter_type === 'nfc_unregistered') { const { data } = await supabase.from('subcategories').select('name').in('department_id', deptIds).or('nfc_registered.is.null,nfc_registered.eq.false'); items = data || []; }
+        else if (filter_type === 'expiring_soon') { const futureDate = new Date(); futureDate.setDate(futureDate.getDate() + days); const { data } = await supabase.from('subcategories').select('name, expiry_date').in('department_id', deptIds).not('expiry_date', 'is', null).lte('expiry_date', futureDate.toISOString()).gte('expiry_date', new Date().toISOString()); items = data || []; }
+        else { const { data } = await supabase.from('subcategories').select('name, expiry_date').in('department_id', deptIds).not('expiry_date', 'is', null).lt('expiry_date', new Date().toISOString()); items = data || []; }
+        return JSON.stringify({ items, count: items.length, filter: filter_type });
+      }
+      case 'get_storage_location': {
+        const { entity_type, name: n } = args;
+        if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('name, storage_location').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ name: data?.name, storage_location: data?.storage_location || '미지정' }); }
+        else { const { data } = await supabase.from('documents').select('title, subcategory:subcategories(storage_location)').in('department_id', deptIds).ilike('title', `%${n}%`).single(); return JSON.stringify({ name: data?.title, storage_location: data?.subcategory?.storage_location || '미지정' }); }
+      }
+      case 'search_by_location': {
+        const { data } = await supabase.from('subcategories').select('name, storage_location, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('storage_location', `%${args.location_keyword}%`);
+        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, storage_location: s.storage_location, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0 });
+      }
+      case 'get_nfc_status': {
+        if (args.subcategory_name) { const { data } = await supabase.from('subcategories').select('name, nfc_registered, nfc_uid').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single(); return JSON.stringify({ name: data?.name, nfc_registered: data?.nfc_registered || false, nfc_uid: data?.nfc_uid }); }
+        const [reg, unreg] = await Promise.all([supabase.from('subcategories').select('id', { count: 'exact' }).in('department_id', deptIds).eq('nfc_registered', true), supabase.from('subcategories').select('id', { count: 'exact' }).in('department_id', deptIds).or('nfc_registered.is.null,nfc_registered.eq.false')]);
+        return JSON.stringify({ registered_count: reg.count || 0, unregistered_count: unreg.count || 0, total: (reg.count || 0) + (unreg.count || 0) });
+      }
+      case 'get_department_members': {
+        const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
+        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.` });
+        const { data: users } = await supabase.from('users').select('name, email, role').eq('department_id', dept.id);
+        return JSON.stringify({ department: args.department_name, members: users || [], count: users?.length || 0 });
+      }
+      case 'get_user_info': {
+        const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('company_id', companyId).ilike('name', `%${args.user_name}%`).single();
+        if (!user) return JSON.stringify({ error: `'${args.user_name}' 사용자를 찾을 수 없습니다.` });
+        return JSON.stringify({ name: user.name, email: user.email, role: user.role, department: user.department?.name || '미배정' });
+      }
+      case 'get_my_info': {
+        const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('id', userId).single();
+        return JSON.stringify({ name: user?.name || '알 수 없음', email: user?.email || '알 수 없음', role: user?.role || '알 수 없음', department: user?.department?.name || '미배정' });
+      }
+      case 'get_documents_by_uploader': {
+        const { data } = await supabase.from('documents').select('title, uploaded_at, subcategory:subcategories(name), department:departments(name)').in('department_id', deptIds).ilike('uploader', `%${args.uploader_name}%`).order('uploaded_at', { ascending: false }).limit(args.limit || 10);
+        return JSON.stringify({ uploader: args.uploader_name, documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, department: d.department?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0 });
+      }
+      case 'get_expiring_subcategories': {
+        const days = args.days || 30;
+        const futureDate = new Date(); futureDate.setDate(futureDate.getDate() + days);
+        const { data } = await supabase.from('subcategories').select('name, expiry_date, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).not('expiry_date', 'is', null).lte('expiry_date', futureDate.toISOString()).gte('expiry_date', new Date().toISOString()).order('expiry_date', { ascending: true });
+        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, expiry_date: s.expiry_date, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0, period: `${days}일 이내` });
+      }
+      case 'get_documents_by_period': {
+        const { period, department_name, limit = 20 } = args;
+        const now = new Date();
+        let startDate: Date, endDate: Date = now;
+        switch (period) {
+          case 'today': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+          case 'yesterday': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+          case 'this_week': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()); break;
+          case 'last_week': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7); endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()); break;
+          case 'this_month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); break;
+          case 'last_month': startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1); endDate = new Date(now.getFullYear(), now.getMonth(), 1); break;
+          case 'this_year': startDate = new Date(now.getFullYear(), 0, 1); break;
+          default: startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        }
+        let query = supabase.from('documents').select('title, uploaded_at, uploader, department:departments(name), subcategory:subcategories(name)').in('department_id', deptIds).gte('uploaded_at', startDate.toISOString()).lt('uploaded_at', endDate.toISOString()).order('uploaded_at', { ascending: false }).limit(limit);
+        if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
+        const { data } = await query;
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, department: d.department?.name, subcategory: d.subcategory?.name, uploaded_at: d.uploaded_at })), count: data?.length || 0, period });
+      }
+      case 'get_oldest_newest': {
+        const { entity_type, order, limit = 5 } = args;
+        const ascending = order === 'oldest';
+        let items: any[] = [];
+        if (entity_type === 'document') { const { data } = await supabase.from('documents').select('title, uploaded_at, department:departments(name)').in('department_id', deptIds).order('uploaded_at', { ascending }).limit(limit); items = (data || []).map((d: any) => ({ title: d.title, date: d.uploaded_at, department: d.department?.name })); }
+        else { const { data } = await supabase.from('subcategories').select('name, created_at, department:departments(name)').in('department_id', deptIds).order('created_at', { ascending }).limit(limit); items = (data || []).map((s: any) => ({ name: s.name, date: s.created_at, department: s.department?.name })); }
+        return JSON.stringify({ items, order, entity_type });
+      }
+      case 'get_shared_documents': {
+        const { direction, limit = 10 } = args;
+        if (direction === 'shared_by_me') {
+          const { data } = await supabase.from('shared_documents').select('shared_at, permission, document:documents(title), shared_to:users!shared_documents_shared_to_user_id_fkey(name)').eq('shared_by_user_id', userId).eq('is_active', true).order('shared_at', { ascending: false }).limit(limit);
+          return JSON.stringify({ documents: (data || []).map((s: any) => ({ title: s.document?.title, shared_to: s.shared_to?.name, permission: s.permission, shared_at: s.shared_at })), count: data?.length || 0 });
+        } else {
+          const { data } = await supabase.from('shared_documents').select('shared_at, permission, document:documents(title), shared_by:users!shared_documents_shared_by_user_id_fkey(name)').eq('shared_to_user_id', userId).eq('is_active', true).order('shared_at', { ascending: false }).limit(limit);
+          return JSON.stringify({ documents: (data || []).map((s: any) => ({ title: s.document?.title, shared_by: s.shared_by?.name, permission: s.permission, shared_at: s.shared_at })), count: data?.length || 0 });
+        }
+      }
+      case 'get_document_share_info': {
+        const { data: doc } = await supabase.from('documents').select('id, title').in('department_id', deptIds).ilike('title', `%${args.document_name}%`).single();
+        if (!doc) return JSON.stringify({ error: `'${args.document_name}' 문서를 찾을 수 없습니다.` });
+        const { data: shares } = await supabase.from('shared_documents').select('shared_at, permission, shared_to:users!shared_documents_shared_to_user_id_fkey(name)').eq('document_id', doc.id).eq('is_active', true);
+        return JSON.stringify({ document: doc.title, shared_to: (shares || []).map((s: any) => ({ name: s.shared_to?.name, permission: s.permission, shared_at: s.shared_at })), count: shares?.length || 0 });
+      }
+      case 'get_shares_with_user': {
+        const { data: targetUser } = await supabase.from('users').select('id, name').eq('company_id', companyId).ilike('name', `%${args.user_name}%`).single();
+        if (!targetUser) return JSON.stringify({ error: `'${args.user_name}' 사용자를 찾을 수 없습니다.` });
+        const [sharedByMe, sharedToMe] = await Promise.all([
+          supabase.from('shared_documents').select('document:documents(title)').eq('shared_by_user_id', userId).eq('shared_to_user_id', targetUser.id).eq('is_active', true),
+          supabase.from('shared_documents').select('document:documents(title)').eq('shared_by_user_id', targetUser.id).eq('shared_to_user_id', userId).eq('is_active', true)
+        ]);
+        return JSON.stringify({ user: targetUser.name, shared_by_me: (sharedByMe.data || []).map((s: any) => s.document?.title), shared_to_me: (sharedToMe.data || []).map((s: any) => s.document?.title) });
+      }
+      default: return JSON.stringify({ error: `알 수 없는 함수: ${name}` });
+    }
+  } catch (error) { console.error(`Function ${name} error:`, error); return JSON.stringify({ error: `함수 실행 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }); }
+}
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const { message, userId, history = [] } = await req.json();
-
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
-    }
-
-    // Supabase 환경 변수 (문서 검색 및 선택적 채팅 로그용)
+    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    // 1. DB에서 전체 구조 + 문서 검색 (벡터 검색)
-    let systemPrompt = '관련 정보를 찾지 못했습니다.';
-    let matchedDocsForResponse: any[] = []; // 프론트엔드에 전달할 문서 메타데이터
-
-    if (supabaseUrl && supabaseServiceRoleKey) {
-      try {
-        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('company_id')
-          .eq('id', userId)
-          .single();
-
-        if (userError || !userData?.company_id) {
-          console.error('Failed to fetch user company_id:', userError);
-          systemPrompt = '사용자의 회사 정보를 찾을 수 없습니다.';
-        } else {
-          const userCompanyId = userData.company_id;
-
-          // 1-1. 회사 범위의 부서/대분류/세부카테고리 조회
-          const { data: departments, error: deptError } = await supabase
-            .from('departments')
-            .select('id, name')
-            .eq('company_id', userCompanyId);
-
-          if (deptError) {
-            console.error('Failed to fetch departments:', deptError);
-          }
-
-          const departmentIds = (departments ?? []).map((d: any) => d.id);
-
-          const { data: parentCategories, error: parentCatError } =
-            departmentIds.length > 0
-              ? await supabase
-                  .from('categories')
-                  .select('id, name, department_id')
-                  .in('department_id', departmentIds)
-              : { data: [], error: null };
-
-          if (parentCatError) {
-            console.error('Failed to fetch categories:', parentCatError);
-          }
-
-          const parentCategoryIds = (parentCategories ?? []).map((c: any) => c.id);
-
-          const { data: subcategories, error: subcatError } =
-            parentCategoryIds.length > 0
-              ? await supabase
-                  .from('subcategories')
-                  .select('id, name, parent_category_id, storage_location, expiry_date, nfc_uid, nfc_registered')
-                  .in('parent_category_id', parentCategoryIds)
-              : { data: [], error: null };
-
-          if (subcatError) {
-            console.error('Failed to fetch subcategories:', subcatError);
-          }
-
-          // 1-1-1. 만기 임박 세부카테고리 조회 (3개월 이내)
-          const now = new Date();
-          const threeMonthsLater = new Date(now);
-          threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-          
-          const expiringSubcategories = (subcategories ?? []).filter((s: any) => {
-            if (!s.expiry_date) return false;
-            const expiryDate = new Date(s.expiry_date);
-            return expiryDate >= now && expiryDate <= threeMonthsLater;
-          }).sort((a: any, b: any) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
-
-          // 1-1-2. NFC 등록 현황
-          const nfcRegistered = (subcategories ?? []).filter((s: any) => s.nfc_uid || s.nfc_registered);
-          const nfcUnregistered = (subcategories ?? []).filter((s: any) => !s.nfc_uid && !s.nfc_registered);
-
-          // 1-1-3. 공유 문서 조회 (현재 사용자가 공유한 문서)
-          let sharedDocuments: any[] = [];
-          const { data: shares, error: shareError } = await supabase
-            .from('shared_documents')
-            .select(`
-              id,
-              document_id,
-              shared_at,
-              shared_to_user_id,
-              documents!inner (
-                id,
-                title
-              )
-            `)
-            .eq('shared_by_user_id', userId)
-            .eq('is_active', true)
-            .order('shared_at', { ascending: false })
-            .limit(10);
-
-          if (shareError) {
-            console.error('Failed to fetch shared documents:', shareError);
-          } else {
-            sharedDocuments = shares ?? [];
-          }
-
-          // 1-2. 임베딩 생성 및 벡터 검색
-          let matchedDocs: any[] = [];
-          const embeddingRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                content: { parts: [{ text: message }] },
-              }),
-            },
-          );
-
-          if (!embeddingRes.ok) {
-            const text = await embeddingRes.text();
-            console.error('Embedding API error:', text);
-          } else {
-            const embeddingJson = await embeddingRes.json();
-            const embedding = embeddingJson.embedding?.values;
-
-            if (embedding && Array.isArray(embedding)) {
-              const { data: docs, error } = await supabase.rpc('match_documents', {
-                query_embedding: embedding,
-                match_threshold: 0.3,
-                match_count: 5,
-                filter_company_id: userCompanyId,
-              });
-
-              if (error) {
-                console.error('match_documents RPC error:', error);
-              } else if (docs && docs.length > 0) {
-                matchedDocs = docs;
-                // 프론트엔드에 전달할 문서 메타데이터 저장 (필요한 필드만)
-                matchedDocsForResponse = docs.map((d: any) => ({
-                  id: d.id,
-                  title: d.title ?? '제목 없음',
-                  departmentName: d.department_name ?? '',
-                  categoryName: d.category_name ?? '',
-                  storageLocation: d.storage_location ?? null,
-                  uploadDate: d.uploaded_at ?? '',
-                }));
-              }
-            }
-          }
-
-          // 1-3. 컨텍스트 구성
-          const deptList = departments?.map((d: any) => d.name).join(', ') || '없음';
-          const catList = parentCategories?.map((c: any) => c.name).join(', ') || '없음';
-          const subList =
-            subcategories
-              ?.map(
-                (s: any) =>
-                  `${s.name}(위치: ${s.storage_location || '미지정'})`,
-              )
-              .join(', ') || '없음';
-          const docList =
-            matchedDocs.length > 0
-              ? matchedDocs
-                  .map(
-                    (d: any) =>
-                      `- ${d.title ?? '제목 없음'}: ${
-                        (d.ocr_text ?? '').toString().length > 200
-                          ? (d.ocr_text ?? '').toString().slice(0, 200) + '...'
-                          : (d.ocr_text ?? '').toString()
-                      }`,
-                  )
-                  .join('\n')
-              : '관련 문서 없음';
-
-          // 만기 임박 목록 구성
-          const oneWeek = 7 * 24 * 60 * 60 * 1000;
-          const oneMonth = 30 * 24 * 60 * 60 * 1000;
-          const expiryList = expiringSubcategories.length > 0
-            ? expiringSubcategories.map((s: any) => {
-                const expiryDate = new Date(s.expiry_date);
-                const diff = expiryDate.getTime() - now.getTime();
-                const parentCat = parentCategories?.find((c: any) => c.id === s.parent_category_id);
-                const dept = departments?.find((d: any) => d.id === parentCat?.department_id);
-                const emoji = diff <= oneWeek ? '🚨' : diff <= oneMonth ? '⚠️' : '⏰';
-                return `${emoji} ${s.name}: ${expiryDate.toLocaleDateString('ko-KR')} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})`;
-              }).join('\n')
-            : '만기 임박 없음';
-
-          // NFC 현황 구성
-          const nfcList = `등록됨: ${nfcRegistered.length}개, 미등록: ${nfcUnregistered.length}개`;
-
-          // 공유 문서 목록 구성
-          const sharedList = sharedDocuments.length > 0
-            ? sharedDocuments.map((s: any) => {
-                const doc = s.documents as any;
-                return `- ${doc?.title || '제목 없음'} (${new Date(s.shared_at).toLocaleDateString('ko-KR')} 공유)`;
-              }).join('\n')
-            : '공유한 문서 없음';
-
-          systemPrompt = `당신은 문서 관리 시스템의 AI 어시스턴트입니다. 반드시 한국어로만 답변하세요.
-아래 정보를 참고해서 사용자 질문에 답변하세요.
-답변에 링크를 포함할 때는 "→ /admin/..." 또는 "→ /team/..." 형식으로 작성하세요.
-
-[부서 목록]
-${deptList}
-
-[대분류 목록]
-${catList}
-
-[세부카테고리 목록 (저장 위치 포함)]
-${subList}
-
-[만기 임박 세부카테고리 (3개월 이내)]
-${expiryList}
-
-[NFC 등록 현황]
-${nfcList}
-
-[공유한 문서]
-${sharedList}
-
-[관련 문서]
-${docList}`;
-        }
-      } catch (searchError) {
-        console.error('DB 조회 중 오류:', searchError);
-      }
+    if (!supabaseUrl || !supabaseServiceRoleKey) throw new Error('Supabase credentials not configured');
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const { data: userData } = await supabase.from('users').select('company_id').eq('id', userId).single();
+    if (!userData?.company_id) throw new Error('User company not found');
+    const userCompanyId = userData.company_id;
+    const systemInstruction = `당신은 문서 관리 시스템(DMS)의 AI 어시스턴트 '트로이'입니다. 반드시 한국어로만 답변하세요. 사용자 질문의 의도를 파악하고, 적절한 함수를 호출하여 정확한 정보를 제공하세요. 답변에 링크를 포함할 때는 "→ /admin/..." 또는 "→ /team/..." 형식으로 작성하세요. 답변은 친절하고 간결하게 작성하세요.`;
+    const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
+    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
+    if (!initialResponse.ok) { const errorText = await initialResponse.text(); console.error('Gemini API error:', errorText); throw new Error('Gemini API request failed'); }
+    const initialData = await initialResponse.json();
+    const candidate = initialData.candidates?.[0];
+    if (!candidate) throw new Error('No response from Gemini');
+    const functionCalls = candidate.content?.parts?.filter((p: any) => p.functionCall) || [];
+    if (functionCalls.length > 0) {
+      const functionResults = [];
+      for (const fc of functionCalls) { const { name, args } = fc.functionCall; console.log(`Executing function: ${name}`, args); const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); }
+      const finalContents = [...contents, { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, { role: 'user', parts: functionResults }];
+      const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
+      if (!finalResponse.ok) throw new Error('Final Gemini API request failed');
+      const finalData = await finalResponse.json();
+      const finalText = finalData.candidates?.[0]?.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
+      return new Response(finalText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     } else {
-      console.warn(
-        'DB 조회를 건너뜀: SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다.',
-      );
+      const responseText = candidate.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
+      return new Response(responseText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     }
-
-    // 2. 이전 대화 히스토리 변환
-    const historyContents = history.map((h: any) => ({
-      role: h.role === 'user' ? 'user' : 'model',
-      parts: [{ text: h.content }],
-    }));
-
-    // 3. 시스템 프롬프트(검색 결과) + 히스토리 + 현재 질문을 하나의 contents로 구성
-    const contents = [
-      {
-        role: 'user',
-        parts: [{ text: systemPrompt }],
-      },
-      ...historyContents,
-      {
-        role: 'user',
-        parts: [{ text: message }],
-      },
-    ];
-
-    const apiVersion = 'v1beta';
-    const modelPath = 'models/gemini-2.5-flash';
-
-    const streamUrl = `https://generativelanguage.googleapis.com/${apiVersion}/${modelPath}:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
-
-    const geminiResponse = await fetch(streamUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents }),
-    });
-
-    if (!geminiResponse.ok || !geminiResponse.body) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini streaming API error body:', errorText);
-
-      return new Response(
-        JSON.stringify({
-          error: 'Gemini streaming API request failed',
-          geminiStatus: geminiResponse.status,
-          geminiBody: errorText,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = geminiResponse.body!.getReader();
-        let buffer = '';
-        let fullText = '';
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (!value) continue;
-
-            buffer += decoder.decode(value, { stream: true });
-            // SSE는 CRLF(\r\n)를 사용할 수 있으므로, 파싱을 쉽게 하기 위해 LF로 정규화
-            buffer = buffer.replace(/\r\n/g, '\n');
-
-            let boundary = buffer.indexOf('\n\n');
-            while (boundary !== -1) {
-              const eventStr = buffer.slice(0, boundary);
-              buffer = buffer.slice(boundary + 2);
-
-              const lines = eventStr.split('\n');
-              for (const line of lines) {
-                const trimmed = line.trim();
-                if (!trimmed || trimmed.startsWith(':')) continue;
-                if (!trimmed.startsWith('data:')) continue;
-
-                const dataStr = trimmed.slice(5).trim();
-                if (!dataStr || dataStr === '[DONE]') {
-                  continue;
-                }
-
-                try {
-                  const parsed = JSON.parse(dataStr);
-                  const candidates = parsed.candidates ?? [];
-                  for (const candidate of candidates) {
-                    const parts = candidate.content?.parts ?? [];
-                    for (const part of parts) {
-                      const delta = typeof part.text === 'string' ? part.text : '';
-                      if (delta) {
-                        fullText += delta;
-                        controller.enqueue(encoder.encode(delta));
-                      }
-                    }
-                  }
-                } catch (parseError) {
-                  console.error('Failed to parse Gemini stream chunk:', parseError);
-                }
-              }
-
-              boundary = buffer.indexOf('\n\n');
-            }
-          }
-
-          console.log('Gemini stream completed, length:', fullText.length);
-
-          // 스트림 끝에 검색된 문서 메타데이터 추가 (프론트엔드에서 파싱할 수 있도록)
-          if (matchedDocsForResponse.length > 0) {
-            const docsJson = JSON.stringify(matchedDocsForResponse);
-            controller.enqueue(encoder.encode(`\n---DOCS---\n${docsJson}`));
-          }
-
-          if (ENABLE_CHAT_LOGGING) {
-            // chat_messages 저장은 베스트 에포트: 환경변수나 DB 문제가 있어도 응답은 그대로 반환
-            if (supabaseUrl && supabaseServiceRoleKey && fullText) {
-              try {
-                const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-                await supabase.from('chat_messages').insert([
-                  { user_id: userId, role: 'user', content: message },
-                  { user_id: userId, role: 'bot', content: fullText },
-                ]);
-              } catch (dbError) {
-                console.error('Failed to log chat_messages:', dbError);
-              }
-            } else if (!supabaseUrl || !supabaseServiceRoleKey) {
-              console.warn(
-                'chat_messages logging skipped: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set'
-              );
-            }
-          }
-        } catch (streamError) {
-          console.error('Error while streaming from Gemini:', streamError);
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  } catch (error) { console.error('Error:', error); const message = error instanceof Error ? error.message : 'Unknown error'; return new Response(JSON.stringify({ error: message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }); }
 });
