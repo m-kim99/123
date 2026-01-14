@@ -47,28 +47,35 @@ interface ExtractedLink {
   label: string;
 }
 
-// 텍스트에서 링크 제거하고 bold 처리만 적용
+// 텍스트에서 링크 패턴만 제거하고 나머지 텍스트는 유지
 function parseContentWithoutLinks(content: string): ReactNode[] {
-  // 링크 포함된 줄 제거
-  const cleanedLines = content.split('\n').filter(line => {
-    const hasLink = /(?:→\s*|문서:\s*)\/[^\s]+/.test(line);
-    return !hasLink;
-  });
-  const cleanedContent = cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  // 링크 패턴만 제거 (→ /path/... 또는 문서: /path/...)
+  const cleanedContent = content
+    .replace(/→\s*\/[^\s\n]+/g, '') // → /path/... 제거
+    .replace(/문서:\s*\/[^\s\n]+/g, '') // 문서: /path/... 제거
+    .replace(/\n{3,}/g, '\n\n') // 여러 줄바꿈 정리
+    .trim();
   
   return parseBoldText(cleanedContent, 'content');
 }
 
-// 메시지에서 링크 추출
+// 메시지에서 링크 추출 및 경로 수정
 function extractLinksFromMessage(content: string): ExtractedLink[] {
   const links: ExtractedLink[] = [];
   const linkRegex = /(?:→\s*|문서:\s*)(\/[^\s\n]+)/g;
   let match;
   
   while ((match = linkRegex.exec(content)) !== null) {
-    const path = match[1];
+    let path = match[1];
     let label = '문서 보기';
-    if (path.includes('/department/')) {
+    
+    // 경로 수정: /department/ → /departments/ (라우트와 일치시키기)
+    if (path.includes('/department/') && !path.includes('/departments/')) {
+      path = path.replace('/department/', '/departments/');
+    }
+    
+    // 레이블 설정
+    if (path.includes('/departments/')) {
       label = '부서 페이지로 이동';
     } else if (path.includes('/parent-category/') && path.includes('/subcategory/')) {
       label = '세부 카테고리로 이동';
@@ -463,9 +470,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                             <div
                               key={`link-card-${idx}`}
                               className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
-                              onClick={() => {
-                                navigate(link.path);
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setIsOpen(false);
+                                // 약간의 딜레이 후 네비게이션 (챗봇 닫힌 후)
+                                setTimeout(() => {
+                                  navigate(link.path);
+                                }, 100);
                               }}
                             >
                               <div className="font-semibold text-slate-800 text-sm">
