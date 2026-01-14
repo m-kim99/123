@@ -41,48 +41,48 @@ function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
   return parts.length > 0 ? parts : [text];
 }
 
-// 링크 파싱 함수: "→ /path/..." 형식을 클릭 가능한 Link로 변환 + **bold** 처리
-function parseLinksInMessage(content: string, navigate: (path: string) => void, onClose: () => void): ReactNode[] {
-  const linkRegex = /→\s+(\/[^\s\n]+)/g;
-  const parts: ReactNode[] = [];
-  let lastIndex = 0;
+// 링크 추출용 인터페이스
+interface ExtractedLink {
+  path: string;
+  label: string;
+}
+
+// 텍스트에서 링크 제거하고 bold 처리만 적용
+function parseContentWithoutLinks(content: string): ReactNode[] {
+  // 링크 포함된 줄 제거
+  const cleanedLines = content.split('\n').filter(line => {
+    const hasLink = /(?:→\s*|문서:\s*)\/[^\s]+/.test(line);
+    return !hasLink;
+  });
+  const cleanedContent = cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  
+  return parseBoldText(cleanedContent, 'content');
+}
+
+// 메시지에서 링크 추출
+function extractLinksFromMessage(content: string): ExtractedLink[] {
+  const links: ExtractedLink[] = [];
+  const linkRegex = /(?:→\s*|문서:\s*)(\/[^\s\n]+)/g;
   let match;
-  let keyIndex = 0;
-
+  
   while ((match = linkRegex.exec(content)) !== null) {
-    // 링크 앞의 텍스트 추가 (bold 처리 포함)
-    if (match.index > lastIndex) {
-      const textBefore = content.slice(lastIndex, match.index);
-      parts.push(...parseBoldText(textBefore, `pre-${keyIndex}`));
-    }
-
     const path = match[1];
-    parts.push(
-      <span key={`link-${keyIndex++}`}>
-        →{' '}
-        <button
-          type="button"
-          onClick={() => {
-            navigate(path);
-            onClose();
-          }}
-          className="text-blue-600 underline hover:text-blue-800 cursor-pointer bg-transparent border-none p-0 font-inherit"
-        >
-          {path}
-        </button>
-      </span>
-    );
-
-    lastIndex = match.index + match[0].length;
+    let label = '문서 보기';
+    if (path.includes('/department/')) {
+      label = '부서 페이지로 이동';
+    } else if (path.includes('/parent-category/') && path.includes('/subcategory/')) {
+      label = '세부 카테고리로 이동';
+    } else if (path.includes('/parent-category/')) {
+      label = '대분류로 이동';
+    } else if (path.includes('/documents')) {
+      label = '문서 보기';
+    } else if (path.includes('/shared')) {
+      label = '공유 문서함';
+    }
+    links.push({ path, label });
   }
-
-  // 남은 텍스트 추가 (bold 처리 포함)
-  if (lastIndex < content.length) {
-    const remaining = content.slice(lastIndex);
-    parts.push(...parseBoldText(remaining, 'end'));
-  }
-
-  return parts.length > 0 ? parts : parseBoldText(content, 'full');
+  
+  return links;
 }
 
 interface ChatMessage {
@@ -441,7 +441,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     >
                       <div className="text-sm break-words whitespace-pre-line">
                         {message.role === 'assistant'
-                          ? parseLinksInMessage(message.content, navigate, () => setIsOpen(false))
+                          ? parseContentWithoutLinks(message.content)
                           : message.content
                         }
                       </div>
@@ -453,6 +453,35 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                       </span>
                     </div>
                   </div>
+                  {/* 텍스트 내 링크를 카드로 표시 */}
+                  {message.role === 'assistant' && (() => {
+                    const extractedLinks = extractLinksFromMessage(message.content);
+                    if (extractedLinks.length > 0) {
+                      return (
+                        <div className="ml-2 space-y-2 mt-2">
+                          {extractedLinks.map((link, idx) => (
+                            <div
+                              key={`link-card-${idx}`}
+                              className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
+                              onClick={() => {
+                                navigate(link.path);
+                                setIsOpen(false);
+                              }}
+                            >
+                              <div className="font-semibold text-slate-800 text-sm">
+                                📄 {link.label}
+                              </div>
+                              <div className="text-slate-400 text-[10px] mt-1 truncate">
+                                {link.path}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {/* searchResults 카드 표시 */}
                   {message.role === 'assistant' &&
                     message.searchResults &&
                     message.searchResults.length > 0 && (
