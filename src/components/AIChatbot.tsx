@@ -433,11 +433,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   {message.role === 'assistant' &&
                     message.searchResults &&
                     message.searchResults.length > 0 && (
-                      <div className="ml-2 space-y-2">
+                      <div className="ml-2 space-y-2 mt-2">
                         {message.searchResults.slice(0, 5).map((doc) => (
                           <div
                             key={doc.id}
-                            className="border border-slate-200 rounded-md bg-white px-3 py-2 text-xs shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                            className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
                             onClick={() => {
                               if (doc.parentCategoryId && doc.subcategoryId) {
                                 const basePath = user?.role === 'admin' ? '/admin' : '/team';
@@ -446,10 +446,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                               }
                             }}
                           >
-                            <div className="font-semibold text-slate-800">
+                            <div className="font-semibold text-slate-800 text-sm">
                               {doc.name}
                             </div>
-                            <div className="text-slate-500">
+                            <div className="text-slate-500 mt-1">
                               {doc.departmentName && <span>{doc.departmentName}</span>}
                               {doc.categoryName && (
                                 <span>
@@ -460,12 +460,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                             </div>
                             {doc.storageLocation && (
                               <div className="text-slate-500">
-                                보관 위치: {doc.storageLocation}
+                                {doc.storageLocation}
                               </div>
                             )}
-                            <div className="text-slate-400 text-[10px]">
-                              업로드: {formatDateTimeSimple(doc.uploadDate)}
-                            </div>
+                            {doc.uploadDate && (
+                              <div className="text-slate-400 text-[10px] mt-1">
+                                {formatDateTimeSimple(doc.uploadDate)}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

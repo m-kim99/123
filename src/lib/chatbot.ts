@@ -298,14 +298,11 @@ function isNfcIntent(text: string): boolean {
 }
 
 // 만기 임박 세부카테고리 조회
-async function getExpiringSubcategories(): Promise<string> {
+async function getExpiringSubcategories(): Promise<{ text: string; docs: ChatSearchResult[] }> {
   const { user } = useAuthStore.getState();
   if (!user?.companyId) {
-    return '사용자 정보를 찾을 수 없습니다.';
+    return { text: '사용자 정보를 찾을 수 없습니다.', docs: [] };
   }
-
-  const isAdmin = user.role === 'admin';
-  const basePath = isAdmin ? '/admin' : '/team';
 
   try {
     const now = new Date();
@@ -319,7 +316,7 @@ async function getExpiringSubcategories(): Promise<string> {
       .eq('company_id', user.companyId);
 
     if (deptError || !departments?.length) {
-      return '부서 정보를 조회할 수 없습니다.';
+      return { text: '부서 정보를 조회할 수 없습니다.', docs: [] };
     }
 
     const departmentIds = departments.map((d: { id: string; name: string }) => d.id);
@@ -331,7 +328,7 @@ async function getExpiringSubcategories(): Promise<string> {
       .in('department_id', departmentIds);
 
     if (catError || !parentCategories?.length) {
-      return '카테고리 정보를 조회할 수 없습니다.';
+      return { text: '카테고리 정보를 조회할 수 없습니다.', docs: [] };
     }
 
     const parentCategoryIds = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
@@ -348,70 +345,88 @@ async function getExpiringSubcategories(): Promise<string> {
 
     if (subError) {
       console.error('만기 조회 오류:', subError);
-      return '만기 정보를 조회하는 중 오류가 발생했습니다.';
+      return { text: '만기 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
     }
 
     if (!subcategories?.length) {
-      return '3개월 이내 만기 임박한 세부 카테고리가 없습니다. ✅';
+      return { text: '3개월 이내 만기 임박한 세부 카테고리가 없습니다. ✅', docs: [] };
     }
 
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
     const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
-    const urgent: string[] = [];    // 1주일 이내
-    const warning: string[] = [];   // 1개월 이내
-    const notice: string[] = [];    // 3개월 이내
+    const urgent: { sub: any; parentCat: any; dept: any }[] = [];
+    const warning: { sub: any; parentCat: any; dept: any }[] = [];
+    const notice: { sub: any; parentCat: any; dept: any }[] = [];
 
     for (const sub of subcategories) {
       const expiryDate = new Date(sub.expiry_date);
       const diff = expiryDate.getTime() - now.getTime();
       const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
       const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
-      const dateStr = expiryDate.toLocaleDateString('ko-KR');
-      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
-      const line = `${sub.name}: ${dateStr} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})\n→ ${link}`;
 
       if (diff <= oneWeek) {
-        urgent.push(line);
+        urgent.push({ sub, parentCat, dept });
       } else if (diff <= oneMonth) {
-        warning.push(line);
+        warning.push({ sub, parentCat, dept });
       } else {
-        notice.push(line);
+        notice.push({ sub, parentCat, dept });
       }
     }
 
+    // 텍스트 생성 (링크 없이)
     const lines: string[] = ['만기 임박한 세부 카테고리를 찾았습니다:'];
 
     if (urgent.length > 0) {
       lines.push('\n🚨 [1주일 이내]');
-      lines.push(...urgent);
+      for (const { sub, parentCat, dept } of urgent) {
+        const dateStr = new Date(sub.expiry_date).toLocaleDateString('ko-KR');
+        lines.push(`${sub.name}: ${dateStr} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})`);
+      }
     }
     if (warning.length > 0) {
       lines.push('\n⚠️ [1개월 이내]');
-      lines.push(...warning);
+      for (const { sub, parentCat, dept } of warning) {
+        const dateStr = new Date(sub.expiry_date).toLocaleDateString('ko-KR');
+        lines.push(`${sub.name}: ${dateStr} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})`);
+      }
     }
     if (notice.length > 0) {
       lines.push('\n⏰ [3개월 이내]');
-      lines.push(...notice);
+      for (const { sub, parentCat, dept } of notice) {
+        const dateStr = new Date(sub.expiry_date).toLocaleDateString('ko-KR');
+        lines.push(`${sub.name}: ${dateStr} 만료 (${dept?.name || ''} > ${parentCat?.name || ''})`);
+      }
     }
 
     lines.push(`\n(총 ${subcategories.length}건)`);
-    return lines.join('\n');
+    lines.push('\n아래 카드를 클릭하면 해당 카테고리로 이동합니다.');
+
+    // 카드용 데이터 생성
+    const docs: ChatSearchResult[] = [...urgent, ...warning, ...notice].map(({ sub, parentCat, dept }) => ({
+      id: sub.id,
+      name: sub.name,
+      categoryName: parentCat?.name || '',
+      departmentName: dept?.name || '',
+      storageLocation: null,
+      uploadDate: sub.expiry_date,
+      subcategoryId: sub.id,
+      parentCategoryId: sub.parent_category_id,
+    }));
+
+    return { text: lines.join('\n'), docs };
   } catch (error) {
     console.error('만기 조회 오류:', error);
-    return '만기 정보를 조회하는 중 오류가 발생했습니다.';
+    return { text: '만기 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
   }
 }
 
 // 공유 문서 조회
-async function getSharedDocuments(): Promise<string> {
+async function getSharedDocuments(): Promise<{ text: string; docs: ChatSearchResult[] }> {
   const { user } = useAuthStore.getState();
   if (!user?.id) {
-    return '사용자 정보를 찾을 수 없습니다.';
+    return { text: '사용자 정보를 찾을 수 없습니다.', docs: [] };
   }
-
-  const isAdmin = user.role === 'admin';
-  const basePath = isAdmin ? '/admin' : '/team';
 
   try {
     const { data: shares, error } = await supabase
@@ -425,7 +440,8 @@ async function getSharedDocuments(): Promise<string> {
           id,
           title,
           department_id,
-          parent_category_id
+          parent_category_id,
+          subcategory_id
         )
       `)
       .eq('shared_by_user_id', user.id)
@@ -434,11 +450,11 @@ async function getSharedDocuments(): Promise<string> {
 
     if (error) {
       console.error('공유 문서 조회 오류:', error);
-      return '공유 문서 정보를 조회하는 중 오류가 발생했습니다.';
+      return { text: '공유 문서 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
     }
 
     if (!shares?.length) {
-      return '공유한 문서가 없습니다.';
+      return { text: '공유한 문서가 없습니다.', docs: [] };
     }
 
     // 수신자 정보 조회
@@ -456,30 +472,40 @@ async function getSharedDocuments(): Promise<string> {
       const doc = share.documents as any;
       const recipientName = recipientMap.get(share.shared_to_user_id) || '알 수 없음';
       const sharedDate = new Date(share.shared_at).toLocaleDateString('ko-KR');
-      const link = `${basePath}/documents?id=${doc.id}`;
-
-      lines.push(`\n🔗 ${doc.title}`);
-      lines.push(`→ ${recipientName}님에게 공유 (${sharedDate})`);
-      lines.push(`문서: ${link}`);
+      lines.push(`\n🔗 ${doc.title} → ${recipientName}님에게 공유 (${sharedDate})`);
     }
 
-    lines.push(`\n공유 문서함: ${basePath}/shared`);
-    return lines.join('\n');
+    lines.push('\n아래 카드를 클릭하면 해당 문서로 이동합니다.');
+
+    // 카드용 데이터 생성
+    const docs: ChatSearchResult[] = shares.slice(0, 10).map((share: any) => {
+      const doc = share.documents as any;
+      const recipientName = recipientMap.get(share.shared_to_user_id) || '알 수 없음';
+      return {
+        id: doc.id,
+        name: doc.title,
+        categoryName: `${recipientName}님에게 공유`,
+        departmentName: '',
+        storageLocation: null,
+        uploadDate: share.shared_at,
+        subcategoryId: doc.subcategory_id || '',
+        parentCategoryId: doc.parent_category_id || '',
+      };
+    });
+
+    return { text: lines.join('\n'), docs };
   } catch (error) {
     console.error('공유 문서 조회 오류:', error);
-    return '공유 문서 정보를 조회하는 중 오류가 발생했습니다.';
+    return { text: '공유 문서 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
   }
 }
 
 // NFC 등록 현황 조회
-async function getNfcStatus(): Promise<string> {
+async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] }> {
   const { user } = useAuthStore.getState();
   if (!user?.companyId) {
-    return '사용자 정보를 찾을 수 없습니다.';
+    return { text: '사용자 정보를 찾을 수 없습니다.', docs: [] };
   }
-
-  const isAdmin = user.role === 'admin';
-  const basePath = isAdmin ? '/admin' : '/team';
 
   try {
     // 부서 목록 조회
@@ -489,7 +515,7 @@ async function getNfcStatus(): Promise<string> {
       .eq('company_id', user.companyId);
 
     if (deptError || !departments?.length) {
-      return '부서 정보를 조회할 수 없습니다.';
+      return { text: '부서 정보를 조회할 수 없습니다.', docs: [] };
     }
 
     const departmentIds2 = departments.map((d: { id: string; name: string }) => d.id);
@@ -501,7 +527,7 @@ async function getNfcStatus(): Promise<string> {
       .in('department_id', departmentIds2);
 
     if (catError || !parentCategories?.length) {
-      return '카테고리 정보를 조회할 수 없습니다.';
+      return { text: '카테고리 정보를 조회할 수 없습니다.', docs: [] };
     }
 
     const parentCategoryIds2 = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
@@ -514,48 +540,43 @@ async function getNfcStatus(): Promise<string> {
 
     if (subError) {
       console.error('NFC 조회 오류:', subError);
-      return 'NFC 정보를 조회하는 중 오류가 발생했습니다.';
+      return { text: 'NFC 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
     }
 
     if (!subcategories?.length) {
-      return '세부 카테고리가 없습니다.';
+      return { text: '세부 카테고리가 없습니다.', docs: [] };
     }
 
     const registered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => s.nfc_uid || s.nfc_registered);
     const unregistered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => !s.nfc_uid && !s.nfc_registered);
 
     const lines: string[] = ['NFC 등록 현황:'];
+    lines.push(`\n✅ NFC 등록됨: ${registered.length}개`);
+    lines.push(`❌ NFC 미등록: ${unregistered.length}개`);
+    lines.push('\n아래 카드를 클릭하면 해당 카테고리로 이동합니다.');
 
-    lines.push(`\n✅ NFC 등록됨 (${registered.length}개)`);
-    for (const sub of registered.slice(0, 5)) {
+    // 카드용 데이터 생성 (미등록 우선 표시)
+    const allSubs = [...unregistered.slice(0, 5), ...registered.slice(0, 5)];
+    const docs: ChatSearchResult[] = allSubs.map((sub: any) => {
       const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
       const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
-      const tagId = sub.nfc_uid || 'NFC';
-      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
-      lines.push(`${sub.name} (${dept?.name || ''}) - 태그: ${tagId}`);
-      lines.push(`→ ${link}`);
-    }
-    if (registered.length > 5) {
-      lines.push(`... 외 ${registered.length - 5}개`);
-    }
+      const isRegistered = sub.nfc_uid || sub.nfc_registered;
+      return {
+        id: sub.id,
+        name: `${isRegistered ? '✅' : '❌'} ${sub.name}`,
+        categoryName: parentCat?.name || '',
+        departmentName: dept?.name || '',
+        storageLocation: isRegistered ? `NFC: ${sub.nfc_uid || '등록됨'}` : 'NFC 미등록',
+        uploadDate: '',
+        subcategoryId: sub.id,
+        parentCategoryId: sub.parent_category_id,
+      };
+    });
 
-    lines.push(`\n❌ NFC 미등록 (${unregistered.length}개)`);
-    for (const sub of unregistered.slice(0, 5)) {
-      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
-      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
-      const link = `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`;
-      lines.push(`${sub.name} (${dept?.name || ''})`);
-      lines.push(`→ ${link}`);
-    }
-    if (unregistered.length > 5) {
-      lines.push(`... 외 ${unregistered.length - 5}개`);
-    }
-
-    lines.push(`\n전체 카테고리 관리: ${basePath}/parent-categories`);
-    return lines.join('\n');
+    return { text: lines.join('\n'), docs };
   } catch (error) {
     console.error('NFC 조회 오류:', error);
-    return 'NFC 정보를 조회하는 중 오류가 발생했습니다.';
+    return { text: 'NFC 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
   }
 }
 
@@ -675,7 +696,7 @@ function generateFallbackResponse(message: string): string {
 }
 
 // 비동기 폴백 응답 생성 (만기, 공유, NFC 조회용)
-async function generateAsyncFallbackResponse(message: string): Promise<string | null> {
+async function generateAsyncFallbackResponse(message: string): Promise<{ text: string; docs: ChatSearchResult[] } | null> {
   const text = message.trim();
 
   // 만기 임박 조회
@@ -735,9 +756,9 @@ export async function generateResponse(
   const asyncFallback = await generateAsyncFallbackResponse(text);
   if (asyncFallback) {
     if (onPartialUpdate) {
-      onPartialUpdate(asyncFallback, []);
+      onPartialUpdate(asyncFallback.text, asyncFallback.docs);
     }
-    return { text: asyncFallback, docs: [] };
+    return { text: asyncFallback.text, docs: asyncFallback.docs };
   }
 
   // 기간 기반 문서 검색은 로컬에서 빠르게 처리
