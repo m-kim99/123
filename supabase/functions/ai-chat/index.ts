@@ -35,7 +35,9 @@ const functionDeclarations = [
   { name: 'get_oldest_newest', description: '가장 오래된 또는 최신 문서/세부카테고리를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory'] }, order: { type: 'string', enum: ['oldest', 'newest'] }, limit: { type: 'number' } }, required: ['entity_type', 'order'] } },
   { name: 'get_shared_documents', description: '내가 공유한 문서 또는 나에게 공유된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { direction: { type: 'string', enum: ['shared_by_me', 'shared_to_me'] }, limit: { type: 'number' } }, required: ['direction'] } },
   { name: 'get_document_share_info', description: '특정 문서의 공유 정보를 조회합니다.', parameters: { type: 'object', properties: { document_name: { type: 'string' } }, required: ['document_name'] } },
-  { name: 'get_shares_with_user', description: '특정 사용자와 주고받은 공유 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } }
+  { name: 'get_shares_with_user', description: '특정 사용자와 주고받은 공유 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
+  { name: 'list_users_by_role', description: '역할(관리자, 팀원 등)별로 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { role: { type: 'string', description: '역할 (admin, manager, team 등)' } }, required: ['role'] } },
+  { name: 'list_all_users', description: '회사의 전체 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { limit: { type: 'number' } }, required: [] } }
 ];
 
 async function getDeptIds(supabase: any, companyId: string) {
@@ -216,10 +218,11 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         return JSON.stringify({ registered_count: reg.count || 0, unregistered_count: unreg.count || 0, total: (reg.count || 0) + (unreg.count || 0) });
       }
       case 'get_department_members': {
-        const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
-        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.` });
-        const { data: users } = await supabase.from('users').select('name, email, role').eq('department_id', dept.id);
-        return JSON.stringify({ department: args.department_name, members: users || [], count: users?.length || 0 });
+        const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
+        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.`, members: [], count: 0 });
+        const { data: users } = await supabase.from('users').select('name, email, role').eq('department_id', dept.id).eq('company_id', companyId);
+        if (!users || users.length === 0) return JSON.stringify({ department: dept.name, members: [], count: 0, message: `${dept.name}에 등록된 팀원이 없습니다.` });
+        return JSON.stringify({ department: dept.name, members: users.map((u: any) => ({ name: u.name || u.email, email: u.email, role: u.role })), count: users.length });
       }
       case 'get_user_info': {
         const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('company_id', companyId).ilike('name', `%${args.user_name}%`).single();
@@ -229,6 +232,18 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       case 'get_my_info': {
         const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('id', userId).single();
         return JSON.stringify({ name: user?.name || '알 수 없음', email: user?.email || '알 수 없음', role: user?.role || '알 수 없음', department: user?.department?.name || '미배정' });
+      }
+      case 'list_users_by_role': {
+        const roleMap: { [key: string]: string } = { '관리자': 'admin', 'admin': 'admin', '매니저': 'manager', 'manager': 'manager', '팀원': 'team', 'team': 'team', '뷰어': 'viewer', 'viewer': 'viewer' };
+        const dbRole = roleMap[args.role?.toLowerCase()] || args.role;
+        const { data: users } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('company_id', companyId).eq('role', dbRole);
+        if (!users || users.length === 0) return JSON.stringify({ role: args.role, users: [], count: 0, message: `'${args.role}' 역할의 사용자가 없습니다.` });
+        return JSON.stringify({ role: args.role, users: users.map((u: any) => ({ name: u.name || u.email, email: u.email, department: u.department?.name || '미배정' })), count: users.length });
+      }
+      case 'list_all_users': {
+        const { data: users } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('company_id', companyId).limit(args.limit || 50);
+        if (!users || users.length === 0) return JSON.stringify({ users: [], count: 0, message: '등록된 사용자가 없습니다.' });
+        return JSON.stringify({ users: users.map((u: any) => ({ name: u.name || u.email, email: u.email, role: u.role, department: u.department?.name || '미배정' })), count: users.length });
       }
       case 'get_documents_by_uploader': {
         const { data: uploaderUser } = await supabase.from('users').select('id, name').eq('company_id', companyId).ilike('name', `%${args.uploader_name}%`).single();
