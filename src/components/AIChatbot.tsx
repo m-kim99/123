@@ -116,9 +116,25 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
 
   // Gemini Live 모드 (TTS용)
-  const audioPlayer = useAudioPlayer();
-  const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const isVoiceModeRef = useRef(false);
+  const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
+  
+  // TTS 재생 완료 시 STT 재시작 (에코 방지)
+  const handlePlaybackComplete = useCallback(() => {
+    console.log('🔊 TTS 재생 완료, STT 재시작');
+    // 음성 모드가 활성화되어 있으면 STT 재시작 (약간의 딜레이로 에코 방지)
+    if (isVoiceModeRef.current && speechRecognitionRef.current) {
+      setTimeout(() => {
+        if (isVoiceModeRef.current) {
+          speechRecognitionRef.current?.startListening();
+        }
+      }, 300);
+    }
+  }, []);
+  
+  const audioPlayer = useAudioPlayer({ onPlaybackComplete: handlePlaybackComplete });
+  const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
 
   // 음성 중복 처리 방지용 ref
   const lastProcessedTranscriptRef = useRef<string>('');
@@ -249,6 +265,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
   });
 
+  // speechRecognition을 ref에 저장 (콜백에서 접근용)
+  useEffect(() => {
+    speechRecognitionRef.current = speechRecognition;
+  }, [speechRecognition]);
+
   // geminiLive를 ref에 저장
   useEffect(() => {
     geminiLiveRef.current = {
@@ -261,12 +282,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const toggleLiveVoice = useCallback(async () => {
     if (isVoiceMode) {
       // 음성 모드 종료
+      isVoiceModeRef.current = false;
       speechRecognition.stopListening();
       geminiLive.disconnect();
       audioPlayer.stop();
       setIsVoiceMode(false);
     } else {
       // 음성 모드 시작: Gemini Live 연결 (TTS용) + 음성 인식 시작 (STT용)
+      isVoiceModeRef.current = true;
       await geminiLive.connect();
       speechRecognition.startListening();
       setIsVoiceMode(true);

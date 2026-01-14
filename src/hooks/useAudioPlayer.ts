@@ -1,10 +1,19 @@
 import { useCallback, useRef, useState } from 'react';
 
-export function useAudioPlayer() {
+interface UseAudioPlayerProps {
+  onPlaybackComplete?: () => void;
+}
+
+export function useAudioPlayer(props?: UseAudioPlayerProps) {
+  const { onPlaybackComplete } = props || {};
   const [isPlaying, setIsPlaying] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<Int16Array[]>([]);
   const isPlayingRef = useRef(false);
+  const onPlaybackCompleteRef = useRef(onPlaybackComplete);
+  
+  // 콜백 ref 업데이트
+  onPlaybackCompleteRef.current = onPlaybackComplete;
 
   const playNext = useCallback(async () => {
     const audioContext = audioContextRef.current;
@@ -36,6 +45,11 @@ export function useAudioPlayer() {
 
     isPlayingRef.current = false;
     setIsPlaying(false);
+    
+    // 재생 완료 콜백 호출
+    if (onPlaybackCompleteRef.current) {
+      onPlaybackCompleteRef.current();
+    }
   }, []);
 
   const play = useCallback(async (audioData: Int16Array) => {
