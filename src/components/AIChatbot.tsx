@@ -47,12 +47,12 @@ interface ExtractedLink {
   label: string;
 }
 
-// 텍스트에서 링크 패턴만 제거하고 나머지 텍스트는 유지
+// 텍스트에서 링크 패턴을 "아래"로 대치
 function parseContentWithoutLinks(content: string): ReactNode[] {
-  // 링크 패턴만 제거 (→ /path/... 또는 문서: /path/...)
+  // 링크 패턴을 "아래"로 대치 (→ /path/... 또는 문서: /path/...)
   const cleanedContent = content
-    .replace(/→\s*\/[^\s\n]+/g, '') // → /path/... 제거
-    .replace(/문서:\s*\/[^\s\n]+/g, '') // 문서: /path/... 제거
+    .replace(/→\s*\/[^\s\n]+/g, '아래') // → /path/... → 아래
+    .replace(/문서:\s*\/[^\s\n]+/g, '아래 문서') // 문서: /path/... → 아래 문서
     .replace(/\n{3,}/g, '\n\n') // 여러 줄바꿈 정리
     .trim();
   
