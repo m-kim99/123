@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -309,13 +308,26 @@ export function AdminAnnouncements() {
             <p className="text-slate-500 mt-1">회사 공지사항을 작성하고 관리합니다</p>
           </div>
 
-          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                새 공지사항
-              </Button>
-            </DialogTrigger>
+          {/* 데스크톱: 헤더 옆에 표시 */}
+          <Button 
+            className="hidden md:flex bg-blue-600 hover:bg-blue-700"
+            onClick={() => setAddDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            글쓰기
+          </Button>
+        </div>
+
+        {/* 모바일: 전체 너비 버튼 */}
+        <Button 
+          className="md:hidden w-full bg-blue-600 hover:bg-blue-700"
+          onClick={() => setAddDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          글쓰기
+        </Button>
+
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">
               <DialogHeader>
                 <DialogTitle>새 공지사항 작성</DialogTitle>
@@ -364,9 +376,8 @@ export function AdminAnnouncements() {
                   {isAdding ? '추가 중...' : '추가'}
                 </Button>
               </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+          </DialogContent>
+        </Dialog>
 
         {isLoading ? (
           <p className="text-slate-500">로딩 중...</p>
