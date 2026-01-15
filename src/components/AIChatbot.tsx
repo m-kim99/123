@@ -262,8 +262,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
     onAudioData: (audioData) => {
       // TTS 재생 중에는 STT 일시정지 (되먹임 방지)
-      if (speechRecognition.isListening) {
-        speechRecognition.stopListening();
+      if (speechRecognitionRef.current?.isListening) {
+        speechRecognitionRef.current.stopListening();
       }
       audioPlayer.play(audioData);
     },
