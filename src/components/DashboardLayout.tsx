@@ -41,6 +41,7 @@ import { AIChatbot } from '@/components/AIChatbot';
 import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
+import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -75,6 +76,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
+  const [newPasswordValidation, setNewPasswordValidation] = useState<PasswordValidation | null>(null);
+
+  // 새 비밀번호 실시간 검증
+  useEffect(() => {
+    if (newPassword) {
+      const validation = validatePasswordClient(newPassword);
+      setNewPasswordValidation(validation);
+    } else {
+      setNewPasswordValidation(null);
+    }
+  }, [newPassword]);
 
   // Selector 최적화: notifications만 변경 시 리렌더링
   const notifications = useNotificationStore((state) => state.notifications);
@@ -391,6 +403,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       if (newPassword) {
         if (newPassword !== confirmPassword) {
           setProfileError('새 비밀번호가 일치하지 않습니다.');
+          setIsSavingProfile(false);
+          return;
+        }
+
+        // Edge Function으로 비밀번호 검증
+        const { data: validation, error: validationError } = await supabase.functions.invoke('validate-password', {
+          body: { password: newPassword },
+        });
+
+        if (validationError) {
+          console.error('비밀번호 검증 오류:', validationError);
+        } else if (validation && !validation.valid) {
+          setProfileError('비밀번호 보안 요구사항: ' + validation.errors.join(', '));
           setIsSavingProfile(false);
           return;
         }
@@ -1140,9 +1165,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Input
                     id="new-password"
                     type="password"
+                    placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
+                  {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
+                    <p className="text-[11px] text-red-500 mt-1">
+                      ⚠️ {newPasswordValidation.errors.join(' / ')}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="confirm-password">비밀번호 확인</Label>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import googleLogo from '@/assets/google.png';
 import appleLogo from '@/assets/apple.png';
 import kakaoLogo from '@/assets/kakao.png';
 import naverLogo from '@/assets/naver.png';
+import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -60,6 +61,17 @@ export function LoginPage() {
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null);
+
+  // 비밀번호 실시간 검증
+  useEffect(() => {
+    if (signupForm.password) {
+      const validation = validatePasswordClient(signupForm.password);
+      setPasswordValidation(validation);
+    } else {
+      setPasswordValidation(null);
+    }
+  }, [signupForm.password]);
   const { login, signup, isLoading, error, clearError, redirectAfterLogin, setRedirectAfterLogin } =
     useAuthStore();
 
@@ -801,7 +813,7 @@ export function LoginPage() {
                 <Label>비밀번호</Label>
                 <Input
                   type="password"
-                  placeholder="최소 6자"
+                  placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
                   value={signupForm.password}
                   onChange={(e) =>
                     setSignupForm((prev) => ({
@@ -810,6 +822,11 @@ export function LoginPage() {
                     }))
                   }
                 />
+                {passwordValidation && !passwordValidation.isValid && signupForm.password && (
+                  <p className="text-[11px] text-red-500 mt-1">
+                    ⚠️ {passwordValidation.errors.join(' / ')}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

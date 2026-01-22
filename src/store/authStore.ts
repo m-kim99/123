@@ -131,6 +131,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
+      // 0. Edge Function으로 비밀번호 검증
+      const { data: validation, error: validationError } = await supabase.functions.invoke('validate-password', {
+        body: { password },
+      });
+
+      if (validationError) {
+        console.error('비밀번호 검증 오류:', validationError);
+      } else if (validation && !validation.valid) {
+        set({ error: validation.errors.join(', '), isLoading: false });
+        return { success: false, error: validation.errors.join(', ') };
+      }
+
       // 1. 회사 코드로 조회
       const { data: existingCompany, error: checkError } = await supabase
         .from('companies')
