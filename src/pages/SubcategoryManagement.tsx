@@ -124,6 +124,10 @@ export function SubcategoryManagement() {
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
   const [expiredSubcategory, setExpiredSubcategory] = useState<Subcategory | null>(null);
 
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
   useEffect(() => {
     // Zustand actions는 안정적이므로 getState()로 직접 호출
     useDocumentStore.getState().fetchParentCategories();
@@ -203,6 +207,22 @@ export function SubcategoryManagement() {
       }),
     [subcategories, selectedDepartmentId, selectedParentCategoryId, accessibleDepartmentIds]
   );
+
+  // 페이지네이션 계산
+  const paginatedSubcategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredSubcategories.slice(startIndex, endIndex);
+  }, [filteredSubcategories, currentPage]);
+
+  const totalPages = Math.ceil(filteredSubcategories.length / ITEMS_PER_PAGE);
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filteredSubcategories.length);
+
+  // 필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDepartmentId, selectedParentCategoryId]);
 
   // useCallback으로 최적화
   const handleDelete = useCallback(async (id: string) => {
@@ -520,8 +540,9 @@ export function SubcategoryManagement() {
                 조건에 해당하는 세부 카테고리가 없습니다.
               </div>
             ) : (
+              <>
               <div className="space-y-3">
-                {filteredSubcategories.map((sub) => {
+                {paginatedSubcategories.map((sub) => {
                   const dept = departments.find((d) => d.id === sub.departmentId);
                   const parent = parentCategories.find((pc) => pc.id === sub.parentCategoryId);
                   const isAdminPath = window.location.pathname.startsWith('/admin');
@@ -607,6 +628,64 @@ export function SubcategoryManagement() {
                   );
                 })}
               </div>
+
+              {filteredSubcategories.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="text-sm text-slate-500">
+                    {startItem}-{endItem} / 총 {filteredSubcategories.length}개
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      이전
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-10"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      다음
+                    </Button>
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </CardContent>
         </Card>

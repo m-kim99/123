@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Building2, FileText, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +38,21 @@ export function DepartmentManagement() {
   const [nameError, setNameError] = useState('');
   const [codeError, setCodeError] = useState('');
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // 페이지네이션 계산
+  const paginatedDepartments = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return departments.slice(startIndex, endIndex);
+  }, [departments, currentPage]);
+
+  const totalPages = Math.ceil(departments.length / ITEMS_PER_PAGE);
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, departments.length);
 
   // useCallback으로 최적화
   const resetForm = useCallback(() => {
@@ -267,7 +282,7 @@ export function DepartmentManagement() {
         </Dialog>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {departments.map((dept) => {
+          {paginatedDepartments.map((dept) => {
             const deptCategories = categories.filter(
               (c) => c.departmentId === dept.id
             );
@@ -347,6 +362,63 @@ export function DepartmentManagement() {
             );
           })}
         </div>
+
+        {departments.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="text-sm text-slate-500">
+              {startItem}-{endItem} / 총 {departments.length}개
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                이전
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                다음
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

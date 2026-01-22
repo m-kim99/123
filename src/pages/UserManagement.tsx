@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +49,21 @@ export function UserManagement() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user: authUser } = useAuthStore();
+
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // 페이지네이션 계산
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return users.slice(startIndex, endIndex);
+  }, [users, currentPage]);
+
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, users.length);
 
   useEffect(() => {
     fetchUsers();
@@ -193,7 +208,7 @@ export function UserManagement() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {users.map((member) => (
+          {paginatedUsers.map((member) => (
             <Card key={member.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
@@ -249,8 +264,65 @@ export function UserManagement() {
           ))}
         </div>
 
+        {users.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="text-sm text-slate-500">
+              {startItem}-{endItem} / 총 {users.length}개
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                이전
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                다음
+              </Button>
+            </div>
+          </div>
+        )}
+
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-2rem)] max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedUser?.name} 권한 설정</DialogTitle>
               <DialogDescription>각 부서별 접근 권한을 설정합니다</DialogDescription>
@@ -274,15 +346,15 @@ export function UserManagement() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center gap-4">
-                        <Label className="text-sm text-slate-600 min-w-[60px]">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <Label className="text-sm text-slate-600 sm:min-w-[60px]">
                           접근 권한
                         </Label>
                         <Select
                           value={perm.role}
                           onValueChange={(value) => handleRoleChange(dept.id, value)}
                         >
-                          <SelectTrigger className="w-[200px]">
+                          <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
