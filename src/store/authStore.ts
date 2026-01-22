@@ -52,7 +52,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // 초기 로딩 true → checkSession 완료 후 false
   error: null,
   needsOnboarding: false,
   redirectAfterLogin: null,

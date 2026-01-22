@@ -96,7 +96,12 @@ function ProtectedRoute({
 }
 
 function RootRoute() {
-  const { isAuthenticated, user, needsOnboarding } = useAuthStore();
+  const { isAuthenticated, user, needsOnboarding, isLoading } = useAuthStore();
+
+  // OAuth 콜백 등으로 세션 체크 중일 때 로딩 표시
+  if (isLoading) {
+    return <PageLoader />;
+  }
 
   if (needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
