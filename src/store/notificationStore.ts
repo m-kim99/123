@@ -14,6 +14,15 @@ export type NotificationEventType =
   | 'subcategory_expiring_very_soon'
   | 'subcategory_expired';
 
+export interface NotificationPreferences {
+  document_created: boolean;
+  document_deleted: boolean;
+  document_shared: boolean;
+  category_changes: boolean;
+  expiry_alerts: boolean;
+  notify_my_department_only: boolean;
+}
+
 export interface Notification {
   id: string;
   type: NotificationEventType;
@@ -28,19 +37,105 @@ export interface Notification {
   createdAt: string;
 }
 
+const DEFAULT_PREFERENCES: NotificationPreferences = {
+  document_created: true,
+  document_deleted: true,
+  document_shared: true,
+  category_changes: true,
+  expiry_alerts: true,
+  notify_my_department_only: false,
+};
+
 interface NotificationState {
   notifications: Notification[];
+  preferences: NotificationPreferences;
   isLoading: boolean;
+  isLoadingPreferences: boolean;
   error: string | null;
   fetchNotifications: () => Promise<void>;
+  fetchPreferences: () => Promise<void>;
+  updatePreferences: (preferences: Partial<NotificationPreferences>) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   dismissNotification: (id: string) => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
+  preferences: DEFAULT_PREFERENCES,
   isLoading: false,
+  isLoadingPreferences: false,
   error: null,
+
+  fetchPreferences: async () => {
+    set({ isLoadingPreferences: true });
+    try {
+      const { user } = useAuthStore.getState();
+      if (!user?.companyId || !user?.id) {
+        set({ preferences: DEFAULT_PREFERENCES, isLoadingPreferences: false });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('company_id', user.companyId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // 설정이 없으면 기본값 사용
+          set({ preferences: DEFAULT_PREFERENCES, isLoadingPreferences: false });
+          return;
+        }
+        throw error;
+      }
+
+      set({
+        preferences: {
+          document_created: data.document_created ?? true,
+          document_deleted: data.document_deleted ?? true,
+          document_shared: data.document_shared ?? true,
+          category_changes: data.category_changes ?? true,
+          expiry_alerts: data.expiry_alerts ?? true,
+          notify_my_department_only: data.notify_my_department_only ?? false,
+        },
+        isLoadingPreferences: false,
+      });
+    } catch (err) {
+      console.error('알림 설정 로드 실패:', err);
+      set({ preferences: DEFAULT_PREFERENCES, isLoadingPreferences: false });
+    }
+  },
+
+  updatePreferences: async (newPreferences: Partial<NotificationPreferences>) => {
+    try {
+      const { user } = useAuthStore.getState();
+      if (!user?.companyId || !user?.id) return;
+
+      const currentPrefs = get().preferences;
+      const updatedPrefs = { ...currentPrefs, ...newPreferences };
+
+      const { error } = await supabase
+        .from('user_notification_preferences')
+        .upsert(
+          {
+            user_id: user.id,
+            company_id: user.companyId,
+            ...updatedPrefs,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,company_id' }
+        );
+
+      if (error) throw error;
+
+      set({ preferences: updatedPrefs });
+    } catch (err) {
+      console.error('알림 설정 저장 실패:', err);
+      throw err;
+    }
+  },
 
   fetchNotifications: async () => {
     set({ isLoading: true, error: null });
@@ -51,6 +146,9 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         return;
       }
 
+      // 먼저 preferences를 가져옴
+      const { preferences } = get();
+
       // 1. 일반 알림 조회 (target_user_id가 NULL인 것들)
       let generalQuery = supabase
         .from('notifications')
@@ -60,8 +158,10 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         .order('created_at', { ascending: false })
         .limit(50);
 
-      // 관리자: 전체 부서, 팀원: 자신의 부서만
+      // 관리자: notify_my_department_only 설정에 따라, 팀원: 자신의 부서만
       if (user.role !== 'admin' && user.departmentId) {
+        generalQuery = generalQuery.eq('department_id', user.departmentId);
+      } else if (user.role === 'admin' && preferences.notify_my_department_only && user.departmentId) {
         generalQuery = generalQuery.eq('department_id', user.departmentId);
       }
 
@@ -103,8 +203,8 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         });
       });
 
-      // 3. 알림 목록에 사용자별 상태 병합 (dismissed된 알림 제외)
-      const notifications: Notification[] = (notificationsData || [])
+      // 5. 알림 목록에 사용자별 상태 병합 (dismissed된 알림 제외)
+      let notifications: Notification[] = (notificationsData || [])
         .map((n: any) => {
           const status = statusMap.get(n.id);
           return {
@@ -122,6 +222,31 @@ export const useNotificationStore = create<NotificationState>((set) => ({
           };
         })
         .filter((n: Notification) => !n.isDismissed); // dismissed된 알림 제외
+
+      // 6. preferences에 따라 클라이언트 측 필터링
+      notifications = notifications.filter((n) => {
+        // 문서 등록 알림
+        if (!preferences.document_created && n.type === 'document_created') return false;
+        // 문서 삭제 알림
+        if (!preferences.document_deleted && n.type === 'document_deleted') return false;
+        // 문서 공유 알림
+        if (!preferences.document_shared && n.type === 'document_shared') return false;
+        // 카테고리 변경 알림
+        if (!preferences.category_changes && [
+          'parent_category_created',
+          'parent_category_deleted',
+          'subcategory_created',
+          'subcategory_deleted',
+        ].includes(n.type)) return false;
+        // 만료 알림
+        if (!preferences.expiry_alerts && [
+          'subcategory_expiring_soon',
+          'subcategory_expiring_very_soon',
+          'subcategory_expired',
+        ].includes(n.type)) return false;
+
+        return true;
+      });
 
       set({ notifications, isLoading: false, error: null });
     } catch (err) {

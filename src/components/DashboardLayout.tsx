@@ -39,6 +39,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
 import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
+import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
 
 interface DashboardLayoutProps {
@@ -72,6 +73,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
 
   // Selector 최적화: notifications만 변경 시 리렌더링
@@ -729,7 +731,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuItem onClick={openProfileDialog}>
                 프로필 설정
               </DropdownMenuItem>
-              <DropdownMenuItem>알림 설정</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>알림 설정</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -925,7 +927,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <DropdownMenuItem onClick={openProfileDialog}>
                     프로필 설정
                   </DropdownMenuItem>
-                  <DropdownMenuItem>알림 설정</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>알림 설정</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -1178,6 +1180,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </Dialog>
 
       <AIChatbot primaryColor={primaryColor} />
+
+      <NotificationSettingsDialog
+        open={isNotificationSettingsOpen}
+        onOpenChange={setIsNotificationSettingsOpen}
+      />
     </div>
   );
 }
