@@ -62,6 +62,9 @@ export function LoginPage() {
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   // 비밀번호 실시간 검증
   useEffect(() => {
@@ -272,6 +275,44 @@ export function LoginPage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim()) {
+      toast({
+        title: '이메일 입력',
+        description: '이메일 주소를 입력해주세요',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: '이메일 전송 완료',
+        description: '비밀번호 재설정 링크를 이메일로 발송했습니다. 이메일을 확인해주세요.',
+      });
+
+      setResetPasswordOpen(false);
+      setResetEmail('');
+    } catch (error: any) {
+      console.error('비밀번호 재설정 오류:', error);
+      toast({
+        title: '재설정 링크 발송 실패',
+        description: error?.message || '다시 시도해주세요',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleSignup = async () => {
     clearError();
 
@@ -403,6 +444,16 @@ export function LoginPage() {
                       required
                     />
                   </div>
+                  <div className="text-right">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
+                      onClick={() => setResetPasswordOpen(true)}
+                    >
+                      비밀번호를 잊으셨나요?
+                    </Button>
+                  </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? '로그인 중...' : '관리자 로그인'}
                   </Button>
@@ -525,6 +576,16 @@ export function LoginPage() {
                       disabled={isLoading}
                       required
                     />
+                  </div>
+                  <div className="text-right">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
+                      onClick={() => setResetPasswordOpen(true)}
+                    >
+                      비밀번호를 잊으셨나요?
+                    </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? '로그인 중...' : '팀원 로그인'}
@@ -1130,6 +1191,54 @@ export function LoginPage() {
                 <p className="font-semibold">본 개인정보 처리방침은 2026. 2. 1.부터 시행합니다.</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>비밀번호 재설정</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-slate-600">
+              가입하신 이메일 주소를 입력하시면<br />
+              비밀번호 재설정 링크를 보내드립니다.
+            </p>
+            
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">이메일</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="example@company.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                disabled={isResetting}
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setResetPasswordOpen(false);
+                  setResetEmail('');
+                }}
+                disabled={isResetting}
+                className="flex-1"
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleResetPassword}
+                disabled={isResetting || !resetEmail.trim()}
+                className="flex-1"
+              >
+                {isResetting ? '전송 중...' : '재설정 링크 보내기'}
+              </Button>
             </div>
           </div>
         </DialogContent>
