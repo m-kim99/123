@@ -78,6 +78,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
   const [newPasswordValidation, setNewPasswordValidation] = useState<PasswordValidation | null>(null);
 
+  const FAQIcon = ({ className }: { className?: string }) => (
+    <MessageSquare className={className} />
+  );
+
   // 새 비밀번호 실시간 검증
   useEffect(() => {
     if (newPassword) {
@@ -477,6 +481,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       : []),
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
     { name: '공지사항', href: `${basePath}/announcements`, icon: MessageSquare },
+    ...(isAdmin
+      ? [
+          {
+            name: 'F&Q',
+            href: 'https://traystorage.net/contact/',
+            icon: FAQIcon,
+            external: true,
+          },
+        ]
+      : []),
   ];
 
   const handleLogout = async () => {
@@ -525,25 +539,47 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <nav className="p-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
+            const isActive = !item.external && location.pathname === item.href;
             return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-slate-700 hover:bg-slate-100'
-                }`}
-                style={
-                  isActive
-                    ? { backgroundColor: primaryColor }
-                    : undefined
-                }
-              >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </Link>
+              item.external ? (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: primaryColor }
+                      : undefined
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.name}
+                </a>
+              ) : (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: primaryColor }
+                      : undefined
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              )
             );
           })}
         </nav>
