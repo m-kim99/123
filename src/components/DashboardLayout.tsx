@@ -484,7 +484,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(isAdmin
       ? [
           {
-            name: 'F&Q',
+            name: '고객센터',
             href: 'https://traystorage.net/contact/',
             icon: FAQIcon,
             external: true,
