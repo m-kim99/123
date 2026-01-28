@@ -508,18 +508,32 @@ export function ParentCategoryDetail() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle>세부 카테고리</CardTitle>
               <CardDescription className="mt-1">
                 이 대분류에 속한 세부 카테고리 목록입니다.
               </CardDescription>
             </div>
-            <Button onClick={() => setAddDialogOpen(true)}>
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              className="hidden md:inline-flex"
+            >
               <Plus className="h-4 w-4 mr-2" />
               세부 카테고리 추가
             </Button>
           </CardHeader>
+          {/* 모바일용 세부 카테고리 추가 버튼 */}
+          <div className="md:hidden px-6 pb-4">
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              className="w-full"
+              variant="outline"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              세부 카테고리 추가
+            </Button>
+          </div>
           <CardContent>
             {childSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
