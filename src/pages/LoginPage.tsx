@@ -67,6 +67,13 @@ export function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
+  const [adminPhone, setAdminPhone] = useState('');
+  const [adminOtp, setAdminOtp] = useState('');
+  const [adminOtpSent, setAdminOtpSent] = useState(false);
+  const [adminOtpVerified, setAdminOtpVerified] = useState(false);
+  const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
+  const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
+
   // 비밀번호 실시간 검증
   useEffect(() => {
     if (signupForm.password) {
@@ -244,6 +251,131 @@ export function LoginPage() {
     setCompanyCodeVerified(false);
     setAvailableDepartments([]);
     setIsLoadingDepartments(false);
+
+    setAdminPhone('');
+    setAdminOtp('');
+    setAdminOtpSent(false);
+    setAdminOtpVerified(false);
+    setIsSendingAdminOtp(false);
+    setIsVerifyingAdminOtp(false);
+  };
+
+  const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
+
+  const handleSendAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+
+    if (!companyCodeVerified) {
+      toast({
+        title: '회사 인증 필요',
+        description: '먼저 회사 정보를 인증해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: '휴대폰 번호 입력',
+        description: '휴대폰 번호를 정확히 입력해주세요. (예: 01012345678)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('send-phone-otp', {
+        body: { phone, purpose: 'admin_signup' },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || '문자 발송 실패');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || '문자 발송 실패');
+      }
+
+      setAdminOtpSent(true);
+      setAdminOtpVerified(false);
+      setAdminOtp('');
+
+      toast({
+        title: '인증번호 전송 완료',
+        description: '문자로 받은 인증번호를 입력해주세요. (5분 유효)',
+      });
+    } catch (err: any) {
+      toast({
+        title: '인증번호 전송 실패',
+        description: err?.message || '잠시 후 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingAdminOtp(false);
+    }
+  };
+
+  const handleVerifyAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+    const code = (adminOtp || '').trim();
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: '휴대폰 번호 입력',
+        description: '휴대폰 번호를 확인해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!adminOtpSent) {
+      toast({
+        title: '인증번호 전송',
+        description: '먼저 인증번호를 전송해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!code) {
+      toast({
+        title: '인증번호 입력',
+        description: '인증번호를 입력해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifyingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('verify-phone-otp', {
+        body: { phone, code, purpose: 'admin_signup' },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || '인증 실패');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || '인증 실패');
+      }
+
+      setAdminOtpVerified(true);
+
+      toast({
+        title: '휴대폰 인증 완료',
+        description: '관리자 회원가입을 계속 진행할 수 있습니다.',
+      });
+    } catch (err: any) {
+      toast({
+        title: '인증 실패',
+        description: err?.message || '다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingAdminOtp(false);
+    }
   };
 
   const handleLogin = async (role: 'admin' | 'team') => {
@@ -373,6 +505,27 @@ export function LoginPage() {
         variant: 'destructive',
       });
       return;
+    }
+
+    if (signupRole === 'admin') {
+      const phone = normalizePhone(adminPhone);
+      if (!phone) {
+        toast({
+          title: '휴대폰 번호 입력',
+          description: '관리자 가입을 위해 휴대폰 인증이 필요합니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!adminOtpVerified) {
+        toast({
+          title: '휴대폰 인증 필요',
+          description: '관리자 가입을 위해 휴대폰 인증을 완료해주세요.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     const result = await signup(
@@ -906,6 +1059,70 @@ export function LoginPage() {
                 />
               </div>
 
+              {signupRole === 'admin' && (
+                <div className="space-y-2">
+                  <Label>휴대폰 인증</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="01012345678"
+                      value={adminPhone}
+                      onChange={(e) => {
+                        setAdminPhone(e.target.value);
+                        setAdminOtpVerified(false);
+                      }}
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSendAdminOtp}
+                      disabled={isLoading || isSendingAdminOtp || !companyCodeVerified || !adminPhone.trim()}
+                      className="shrink-0"
+                    >
+                      {isSendingAdminOtp
+                        ? '전송 중...'
+                        : adminOtpSent
+                        ? '재전송'
+                        : '인증번호 전송'}
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="인증번호 6자리"
+                      value={adminOtp}
+                      onChange={(e) => setAdminOtp(e.target.value)}
+                      disabled={isLoading || !adminOtpSent || adminOtpVerified}
+                    />
+                    <Button
+                      type="button"
+                      variant={adminOtpVerified ? 'default' : 'outline'}
+                      onClick={handleVerifyAdminOtp}
+                      disabled={
+                        isLoading ||
+                        !adminOtpSent ||
+                        adminOtpVerified ||
+                        isVerifyingAdminOtp ||
+                        !adminOtp.trim()
+                      }
+                      className="shrink-0"
+                    >
+                      {adminOtpVerified
+                        ? '인증 완료'
+                        : isVerifyingAdminOtp
+                        ? '확인 중...'
+                        : '확인'}
+                    </Button>
+                  </div>
+
+                  {adminOtpVerified ? (
+                    <p className="text-xs text-green-600">휴대폰 인증이 완료되었습니다.</p>
+                  ) : (
+                    <p className="text-xs text-slate-400">관리자 가입을 위해 휴대폰 인증이 필요합니다.</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>비밀번호</Label>
                 <Input
@@ -1015,7 +1232,8 @@ export function LoginPage() {
                   !signupForm.email ||
                   !signupForm.password ||
                   !signupForm.name ||
-                  (signupRole === 'team' && !signupForm.departmentId)
+                  (signupRole === 'team' && !signupForm.departmentId) ||
+                  (signupRole === 'admin' && (!adminPhone.trim() || !adminOtpVerified))
                 }
               >
                 {isLoading ? '가입 중...' : '회원가입'}

@@ -1,0 +1,149 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+function json(body: unknown, init: ResponseInit = {}) {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', ...(init.headers || {}) },
+  });
+}
+
+function normalizePhone(raw: string): string {
+  const digits = (raw || '').replace(/\D/g, '');
+  return digits;
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function parseQueryString(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of text.split('&')) {
+    if (!part) continue;
+    const [k, v] = part.split('=');
+    if (!k) continue;
+    out[decodeURIComponent(k)] = decodeURIComponent(v || '');
+  }
+  return out;
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const { phone, purpose } = await req.json();
+
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone || normalizedPhone.length < 10 || normalizedPhone.length > 11) {
+      return json({ success: false, error: '휴대폰 번호를 확인해주세요.' }, { status: 400 });
+    }
+
+    const resolvedPurpose = (purpose || 'admin_signup') as string;
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      throw new Error('Supabase credentials not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    const { data: latest } = await supabase
+      .from('phone_verifications')
+      .select('id, last_sent_at, send_count, verified_at')
+      .eq('phone', normalizedPhone)
+      .eq('purpose', resolvedPurpose)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const lastSentAtMs = latest?.last_sent_at ? new Date(latest.last_sent_at).getTime() : 0;
+    if (lastSentAtMs && Date.now() - lastSentAtMs < 60_000) {
+      return json({ success: false, error: '잠시 후 다시 시도해주세요.' }, { status: 429 });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = await sha256Hex(code);
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('phone_verifications')
+      .insert({
+        phone: normalizedPhone,
+        purpose: resolvedPurpose,
+        otp_hash: otpHash,
+        expires_at: expiresAt.toISOString(),
+        attempts: 0,
+        send_count: (latest?.send_count ?? 0) + 1,
+        last_sent_at: new Date().toISOString(),
+        verified_at: null,
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error('Failed to insert phone_verifications:', insertError);
+      throw new Error('OTP 저장 실패');
+    }
+
+    const SMSCEO_USERKEY = Deno.env.get('SMSCEO_USERKEY');
+    const SMSCEO_USERID = Deno.env.get('SMSCEO_USERID');
+    const SMSCEO_CALLBACK = Deno.env.get('SMSCEO_CALLBACK');
+
+    if (!SMSCEO_USERKEY || !SMSCEO_USERID || !SMSCEO_CALLBACK) {
+      return json(
+        {
+          success: false,
+          error: 'SMS 설정이 필요합니다. (SMSCEO_USERKEY/SMSCEO_USERID/SMSCEO_CALLBACK)',
+        },
+        { status: 500 }
+      );
+    }
+
+    const msg = `[TrayStorage CONNECT] 인증번호는 ${code} 입니다. (5분 유효)`;
+
+    const url =
+      `http://link.smsceo.co.kr/sendsms_utf8.php?userkey=${encodeURIComponent(SMSCEO_USERKEY)}` +
+      `&userid=${encodeURIComponent(SMSCEO_USERID)}` +
+      `&phone=${encodeURIComponent(normalizedPhone)}` +
+      `&callback=${encodeURIComponent(SMSCEO_CALLBACK)}` +
+      `&msg=${encodeURIComponent(msg)}`;
+
+    const resp = await fetch(url, { method: 'GET' });
+    const text = (await resp.text()).trim();
+    const parsed = parseQueryString(text);
+
+    const resultCode = parsed.result_code;
+
+    if (!resp.ok || resultCode !== '1') {
+      console.error('SMSCEO send failed:', { status: resp.status, text, parsed });
+      return json(
+        {
+          success: false,
+          error: '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+          provider: { result_code: resultCode, result_msg: parsed.result_msg },
+        },
+        { status: 502 }
+      );
+    }
+
+    return json({ success: true, verification_id: inserted.id, expires_in: 300 });
+  } catch (error) {
+    console.error('send-phone-otp error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return json({ success: false, error: message }, { status: 500 });
+  }
+});
