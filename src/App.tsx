@@ -5,6 +5,7 @@ import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 const AdminDashboard = lazy(() =>
   import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
@@ -176,6 +177,7 @@ function App() {
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/nfc-redirect" element={<NfcRedirect />} />
             <Route path="/auth/naver/callback" element={<NaverCallback />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route
               path="/admin"

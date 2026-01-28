@@ -288,15 +288,37 @@ export function LoginPage() {
     setIsResetting(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Edge Function 호출
+      const { data, error: fnError } = await supabase.functions.invoke('check-reset-password', {
+        body: { email: resetEmail },
       });
 
-      if (error) throw error;
+      if (fnError) {
+        throw new Error(fnError.message || '요청 처리 실패');
+      }
 
+      if (!data.success) {
+        // OAuth 사용자인 경우
+        if (data.isOAuth) {
+          toast({
+            title: 'OAuth 계정',
+            description: data.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: '오류',
+            description: data.error || '다시 시도해주세요',
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
+
+      // 성공
       toast({
         title: '이메일 전송 완료',
-        description: '비밀번호 재설정 링크를 이메일로 발송했습니다. 이메일을 확인해주세요.',
+        description: data.message,
       });
 
       setResetPasswordOpen(false);
@@ -304,7 +326,7 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('비밀번호 재설정 오류:', error);
       toast({
-        title: '재설정 링크 발송 실패',
+        title: '오류',
         description: error?.message || '다시 시도해주세요',
         variant: 'destructive',
       });
