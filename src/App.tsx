@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
+import { trackPageView } from '@/lib/analytics';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -128,6 +129,16 @@ function PageLoader() {
   );
 }
 
+function RouteAnalytics() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname, document.title);
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function App() {
   const { isAuthenticated } = useAuthStore();
   const {
@@ -171,6 +182,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <RouteAnalytics />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<RootRoute />} />

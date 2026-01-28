@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import { generateEmbedding } from '@/lib/embedding';
 import { createDocumentNotification, createShareNotification, deleteShareNotification } from '@/lib/notifications';
 import { SharedDocument } from '@/types/document';
+import { trackEvent } from '@/lib/analytics';
 
 export interface Department {
   id: string;
@@ -604,9 +605,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             },
           ],
         }));
+
       }
     } catch (err) {
       console.error('Failed to add category to Supabase:', err);
+
+
       // Supabase 실패 시 로컬 상태에만 추가 (mock 데이터처럼)
       const newCategory: Category = {
         id: `temp_${Date.now()}`,
@@ -681,9 +685,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             subcategoryName: null,
           });
         }
+
       }
     } catch (err) {
       console.error('Failed to add parent category to Supabase:', err);
+
+
       const newParent: ParentCategory = {
         id: `temp_${Date.now()}`,
         name: category.name,
@@ -775,9 +782,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         });
       }
 
+
       return created;
     } catch (err) {
       console.error('Failed to add subcategory to Supabase:', err);
+
+
       const newSub: Subcategory = {
         id: `temp_${Date.now()}`,
         name: subcategory.name,
@@ -853,8 +863,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           sub.id === id ? { ...sub, ...normalizedUpdates } : sub
         ),
       }));
+
     } catch (err) {
       console.error('Failed to update subcategory in Supabase:', err);
+
+
       set((state) => ({
         subcategories: state.subcategories.map((sub) =>
           sub.id === id ? { ...sub, ...updates } : sub
@@ -908,8 +921,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           subcategoryName: targetSub.name,
         });
       }
+
     } catch (err) {
       console.error('Failed to delete subcategory from Supabase:', err);
+
+
       set((state) => ({
         subcategories: state.subcategories.filter((sub) => sub.id !== id),
         documents: state.documents.filter((doc) => doc.subcategoryId !== id),
@@ -942,8 +958,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             : sub
         ),
       }));
+
     } catch (err) {
       console.error('Failed to register NFC tag for subcategory:', err);
+
+
       toast({
         title: 'NFC 태그 등록 실패',
         description: '세부 카테고리의 NFC 정보를 업데이트하지 못했습니다.',
@@ -1005,8 +1024,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             : sub
         ),
       }));
+
     } catch (err) {
       console.error('Failed to clear NFC from subcategory:', err);
+
     }
   },
 
@@ -1037,8 +1058,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             : sub
         ),
       }));
+
     } catch (err) {
       console.error('Failed to clear NFC by UID:', err);
+
     }
   },
 
@@ -1085,8 +1108,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           cat.id === id ? { ...cat, ...updates } : cat
         ),
       }));
+
     } catch (err) {
       console.error('Failed to update category in Supabase:', err);
+
+
       // Supabase 실패 시에도 로컬 상태는 업데이트 (사용자 경험 개선)
       set((state) => ({
         categories: state.categories.map((cat) =>
@@ -1139,8 +1165,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           subcategoryName: null,
         });
       }
+
     } catch (err) {
       console.error('Failed to delete category from Supabase:', err);
+
+
       // Supabase 실패 시에도 로컬 상태에서는 제거 (사용자 경험 개선)
       set((state) => ({
         categories: state.categories.filter((cat) => cat.id !== id),
@@ -1159,6 +1188,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     try {
       const originalNameForStorage = document.originalFileName || document.name;
       const filePath = sanitizeFileName(originalNameForStorage);
+
+      const originalLower = (originalNameForStorage || '').toLowerCase();
+      const fileExt = originalLower.includes('.') ? originalLower.split('.').pop() : undefined;
 
       const { error: storageError } = await supabase.storage
         .from('123')
@@ -1281,9 +1313,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             subcategoryName: subcategory?.name ?? null,
           });
         }
+
+        trackEvent('document_upload', {
+          document_id: data.id,
+          department_id: data.department_id,
+          parent_category_id: parentCategoryIdFromDb,
+          subcategory_id: subcategoryIdFromDb,
+          file_size: document.file.size,
+          file_ext: fileExt,
+          has_ocr_text: !!document.ocrText,
+          embedding_created: !!embedding,
+        });
       }
     } catch (err) {
       console.error('Failed to upload document to Supabase:', err);
+
       // Supabase 실패 시 로컬 상태에만 추가 (mock 데이터처럼)
       const newDocument: Document = {
         id: `temp_${Date.now()}`,
@@ -1346,8 +1390,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set((state) => ({
         documents: state.documents.filter((doc) => doc.id !== id),
       }));
+
+      trackEvent('document_delete', {
+        document_id: id,
+      });
     } catch (err) {
       console.error('Failed to delete document from Supabase:', err);
+
+
       // Supabase 실패 시에도 로컬 상태에서는 제거 (사용자 경험 개선)
       set((state) => ({
         documents: state.documents.filter((doc) => doc.id !== id),
@@ -1380,8 +1430,15 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         title: 'OCR 텍스트 저장 완료',
         description: '편집한 OCR 텍스트가 저장되었습니다.',
       });
+
+      trackEvent('document_ocr_update', {
+        document_id: id,
+        ocr_length: ocrText?.length ?? 0,
+      });
     } catch (err) {
       console.error('Failed to update OCR text:', err);
+
+
       toast({
         title: 'OCR 텍스트 저장 실패',
         description: '네트워크 오류로 인해 저장하지 못했습니다.',
@@ -1531,6 +1588,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .single();
 
       if (existing) {
+        trackEvent('document_share_duplicate', {
+          document_id: documentId,
+          permission,
+        });
         toast({
           title: '이미 공유된 문서입니다.',
           description: '해당 사용자에게 이미 이 문서를 공유했습니다.',
@@ -1573,8 +1634,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         title: '문서가 공유되었습니다.',
         description: '상대방이 공유받은 문서함에서 확인할 수 있습니다.',
       });
+
+      trackEvent('document_share', {
+        document_id: documentId,
+        permission,
+        has_message: !!message,
+      });
     } catch (err) {
       console.error('Failed to share document:', err);
+
+
       toast({
         title: '문서 공유 실패',
         description: '문서를 공유하지 못했습니다.',
@@ -1614,8 +1683,15 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       toast({
         title: '공유가 취소되었습니다.',
       });
+
+      trackEvent('document_unshare', {
+        share_id: shareId,
+        document_id: (shareData as any)?.document_id,
+      });
     } catch (err) {
       console.error('Failed to unshare document:', err);
+
+
       toast({
         title: '공유 취소 실패',
         description: '나중에 다시 시도해 주세요.',

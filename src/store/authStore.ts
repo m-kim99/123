@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { trackEvent } from '@/lib/analytics';
 
 export type UserRole = 'admin' | 'team';
 
@@ -109,12 +110,24 @@ export const useAuthStore = create<AuthState>((set) => ({
         needsOnboarding: false,
       });
 
+      trackEvent('login', {
+        method: 'password',
+        selected_role: role,
+      });
+
       return { success: true };
     } catch (error) {
       console.error('로그인 실패:', error);
       const errorMsg =
         error instanceof Error ? error.message : '로그인에 실패했습니다';
       set({ user: null, isAuthenticated: false, isLoading: false, error: errorMsg, needsOnboarding: false });
+
+      trackEvent('login_failed', {
+        method: 'password',
+        selected_role: role,
+        error_message: errorMsg,
+      });
+
       return { success: false, error: errorMsg };
     }
   },
@@ -240,17 +253,33 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (insertError) throw insertError;
 
       set({ isLoading: false });
+
+      trackEvent('sign_up', {
+        method: 'password',
+        selected_role: role,
+        is_new_company: isNewCompany,
+        has_department: !!finalDepartmentId,
+      });
+
       return { success: true };
     } catch (error) {
       console.error('회원가입 실패:', error);
       const errorMsg = error instanceof Error ? error.message : '회원가입 실패';
       set({ isLoading: false, error: errorMsg });
+
+      trackEvent('sign_up_failed', {
+        method: 'password',
+        selected_role: role,
+        error_message: errorMsg,
+      });
+
       return { success: false, error: errorMsg };
     }
   },
 
   logout: async () => {
     try {
+      trackEvent('logout', {});
       await supabase.auth.signOut();
     } catch (error) {
       console.error('로그아웃 실패:', error);
@@ -330,6 +359,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           isLoading: false,
           needsOnboarding,
         });
+
       } else {
         set({
           user: null,
@@ -338,6 +368,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           needsOnboarding: false,
           redirectAfterLogin: null,
         });
+
       }
     } catch (error) {
       console.error('세션 체크 오류:', error);
@@ -348,6 +379,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         needsOnboarding: false,
         redirectAfterLogin: null,
       });
+
     }
   },
 
@@ -492,12 +524,23 @@ export const useAuthStore = create<AuthState>((set) => ({
         needsOnboarding: false,
       });
 
+      trackEvent('onboarding_complete', {
+        selected_role: role,
+        has_department: role === 'team' ? !!resolvedDepartmentId : false,
+      });
+
       return { success: true };
     } catch (error) {
       console.error('온보딩 실패:', error);
       const errorMsg =
         error instanceof Error ? error.message : '온보딩에 실패했습니다';
       set({ isLoading: false, error: errorMsg });
+
+      trackEvent('onboarding_failed', {
+        selected_role: role,
+        error_message: errorMsg,
+      });
+
       return { success: false, error: errorMsg };
     }
   },

@@ -34,6 +34,7 @@ import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { PdfViewer } from '@/components/PdfViewer';
+import { trackEvent } from '@/lib/analytics';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -173,6 +174,11 @@ export function CategoryDetail() {
 
   const handleOpenPreviewDocument = async (documentId: string) => {
     try {
+      trackEvent('document_preview_open', {
+        document_id: documentId,
+        preview_context: 'category_detail',
+      });
+
       setPreviewLoading(true);
 
       const { data, error } = await supabase
@@ -217,6 +223,8 @@ export function CategoryDetail() {
       setPreviewOpen(true);
     } catch (error) {
       console.error('문서 미리보기 로드 실패:', error);
+
+
       toast({
         title: '문서를 불러오지 못했습니다.',
         description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
@@ -706,6 +714,11 @@ export function CategoryDetail() {
 
   const handleDownloadDocument = async (documentId: string) => {
     try {
+      trackEvent('document_download', {
+        document_id: documentId,
+        download_context: 'category_detail',
+      });
+
       const { data, error } = await supabase
         .from('documents')
         .select('file_path, title')
@@ -735,6 +748,8 @@ export function CategoryDetail() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
+
+
       toast({
         title: '다운로드 실패',
         description: '문서를 다운로드하는 중 오류가 발생했습니다.',
@@ -764,6 +779,11 @@ export function CategoryDetail() {
     const targetDoc = categoryDocuments.find((d) => d.id === deletingDocumentId);
 
     try {
+      trackEvent('document_delete', {
+        document_id: deletingDocumentId,
+        delete_context: 'category_detail',
+      });
+
       const { data, error } = await supabase
         .from('documents')
         .select('file_path')
@@ -819,7 +839,7 @@ export function CategoryDetail() {
           departmentId: targetDoc.departmentId,
           departmentName: department?.name ?? null,
           parentCategoryId: targetDoc.parentCategoryId,
-          parentCategoryName: category.name,
+          parentCategoryName: category?.name ?? null,
           subcategoryId: targetDoc.subcategoryId,
           subcategoryName: subcategoryForDoc?.name ?? null,
         });
@@ -828,6 +848,8 @@ export function CategoryDetail() {
       handleCloseDeleteDialog();
     } catch (error) {
       console.error('문서 삭제 실패:', error);
+
+
       toast({
         title: '삭제 실패',
         description: '문서를 삭제하는 중 오류가 발생했습니다.',
@@ -840,6 +862,11 @@ export function CategoryDetail() {
 
   // 공유 다이얼로그 열기
   const handleOpenShareDialog = async (documentId: string) => {
+    trackEvent('share_dialog_open', {
+      document_id: documentId,
+      share_context: 'category_detail',
+    });
+
     setSharingDocumentId(documentId);
     setSelectedUserIds([]);
     setActiveShareTab('new');
@@ -959,6 +986,13 @@ export function CategoryDetail() {
       });
       return;
     }
+
+    trackEvent('document_share_send', {
+      document_id: sharingDocumentId,
+      recipient_count: selectedUserIds.length,
+      send_email_notification: sendEmailNotification,
+      share_context: 'category_detail',
+    });
 
     setIsSendingShare(true);
 

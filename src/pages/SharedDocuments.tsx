@@ -38,6 +38,7 @@ import { Download, Eye, X, FileText, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { PdfViewer } from '@/components/PdfViewer';
@@ -81,6 +82,11 @@ export function SharedDocuments() {
 
   const handleDownload = async (documentId: string) => {
     try {
+      trackEvent('document_download', {
+        document_id: documentId,
+        download_context: 'shared_documents',
+      });
+
       const { data, error } = await supabase
         .from('documents')
         .select('file_path, title')
@@ -109,6 +115,8 @@ export function SharedDocuments() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
+
+
       toast({
         title: '다운로드 실패',
         description: '문서를 다운로드하는 중 오류가 발생했습니다.',
@@ -119,6 +127,11 @@ export function SharedDocuments() {
 
   const handleView = async (documentId: string) => {
     try {
+      trackEvent('document_preview_open', {
+        document_id: documentId,
+        preview_context: 'shared_documents',
+      });
+
       setPreviewLoading(true);
 
       const { data, error } = await supabase
@@ -163,6 +176,8 @@ export function SharedDocuments() {
       setPreviewOpen(true);
     } catch (error) {
       console.error('문서 미리보기 로드 실패:', error);
+
+
       toast({
         title: '문서를 불러오지 못했습니다.',
         description: '문서 미리보기를 여는 중 오류가 발생했습니다.',

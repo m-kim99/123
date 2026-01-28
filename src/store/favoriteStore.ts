@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
+import { trackEvent } from '@/lib/analytics';
 
 export interface FavoriteSubcategory {
   id: string;
@@ -144,6 +145,10 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
       if (error) throw error;
 
+      trackEvent('favorite_add', {
+        subcategory_id: subcategoryId,
+      });
+
       toast({
         title: '즐겨찾기 추가',
         description: '세부 카테고리를 즐겨찾기에 추가했습니다.',
@@ -153,6 +158,9 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       await get().fetchFavorites();
     } catch (error: any) {
       if (error.code === '23505') {
+        trackEvent('favorite_add_duplicate', {
+          subcategory_id: subcategoryId,
+        });
         toast({
           title: '이미 즐겨찾기에 추가됨',
           description: '이미 즐겨찾기에 추가된 카테고리입니다.',
@@ -160,6 +168,8 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
         });
       } else {
         console.error('즐겨찾기 추가 실패:', error);
+
+
         toast({
           title: '오류',
           description: '즐겨찾기 추가에 실패했습니다.',
@@ -183,6 +193,10 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
       if (error) throw error;
 
+      trackEvent('favorite_remove', {
+        subcategory_id: subcategoryId,
+      });
+
       toast({
         title: '즐겨찾기 제거',
         description: '즐겨찾기에서 제거되었습니다.',
@@ -192,6 +206,8 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       await get().fetchFavorites();
     } catch (error) {
       console.error('즐겨찾기 제거 실패:', error);
+
+
       toast({
         title: '오류',
         description: '즐겨찾기 제거에 실패했습니다.',
@@ -308,8 +324,15 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
       // 부서 통계 새로고침
       await get().fetchDepartmentStats();
+
+      trackEvent('subcategory_visit', {
+        subcategory_id: subcategoryId,
+        parent_category_id: parentCategoryId,
+        department_id: departmentId,
+      });
     } catch (error) {
       console.error('방문 기록 저장 실패:', error);
+
     }
   },
 

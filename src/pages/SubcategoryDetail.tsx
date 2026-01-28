@@ -20,6 +20,7 @@ import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
 import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
+import { trackEvent } from '@/lib/analytics';
 
 export function SubcategoryDetail() {
   const { parentCategoryId, subcategoryId } = useParams<{
@@ -333,6 +334,11 @@ export function SubcategoryDetail() {
 
   const handleOpenPreviewDocument = async (documentId: string) => {
     try {
+      trackEvent('document_preview_open', {
+        document_id: documentId,
+        preview_context: 'subcategory_detail',
+      });
+
       setPreviewLoading(true);
 
       const { data, error } = await supabase
@@ -377,6 +383,8 @@ export function SubcategoryDetail() {
       setPreviewOpen(true);
     } catch (error) {
       console.error('문서 미리보기 로드 실패:', error);
+
+
       toast({
         title: '문서를 불러오지 못했습니다.',
         description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
@@ -389,6 +397,11 @@ export function SubcategoryDetail() {
 
   const handleDownloadDocument = async (documentId: string) => {
     try {
+      trackEvent('document_download', {
+        document_id: documentId,
+        download_context: 'subcategory_detail',
+      });
+
       const { data, error } = await supabase
         .from('documents')
         .select('file_path, title')
@@ -418,6 +431,8 @@ export function SubcategoryDetail() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
+
+
       toast({
         title: '다운로드 실패',
         description: '문서를 다운로드하는 중 오류가 발생했습니다.',
@@ -433,6 +448,11 @@ export function SubcategoryDetail() {
     const targetDoc = documents.find((d) => d.id === documentId);
 
     try {
+      trackEvent('document_delete', {
+        document_id: documentId,
+        delete_context: 'subcategory_detail',
+      });
+
       const { data, error } = await supabase
         .from('documents')
         .select('file_path')
@@ -499,6 +519,8 @@ export function SubcategoryDetail() {
       }
     } catch (error) {
       console.error('문서 삭제 실패:', error);
+
+
       toast({
         title: '삭제 실패',
         description: '문서를 삭제하는 중 오류가 발생했습니다.',
@@ -509,6 +531,11 @@ export function SubcategoryDetail() {
 
   // 공유 다이얼로그 열기
   const handleOpenShareDialog = async (documentId: string) => {
+    trackEvent('share_dialog_open', {
+      document_id: documentId,
+      share_context: 'subcategory_detail',
+    });
+
     setSharingDocumentId(documentId);
     setSelectedUserIds([]);
     setActiveShareTab('new');

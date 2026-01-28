@@ -38,6 +38,7 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
+import { trackEvent } from '@/lib/analytics';
 import { NFCAutoRedirect } from '@/components/NFCAutoRedirect';
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
@@ -280,6 +281,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (!query) return;
 
     const targetPath = isAdmin ? '/admin/documents' : '/team/documents';
+
+    trackEvent('search', {
+      search_query_length: query.length,
+      search_target_path: targetPath,
+      search_source: 'header',
+    });
 
     try {
       const { data: existing } = await supabase
