@@ -41,6 +41,7 @@ export function LoginPage() {
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
   const [companyCodeVerified, setCompanyCodeVerified] = useState(false);
+  const backgroundVideoSrc = '/login-bg.mp4';
   const socialLogoBaseClass = 'h-5 w-5 object-contain';
   const socialLogoClassByProvider: Record<'google' | 'apple' | 'kakao' | 'naver', string> = {
     google: `${socialLogoBaseClass} scale-[1.08]`,
@@ -401,8 +402,21 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="flex flex-col items-center">
+    <div className="relative min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 overflow-hidden">
+      <video
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      >
+        <source src={backgroundVideoSrc} type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
+
+      <div className="relative z-10 flex flex-col items-center">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="text-center">
             <CardTitle className="flex flex-row justify-center items-center gap-2 max-w-full overflow-hidden">
@@ -707,10 +721,10 @@ export function LoginPage() {
         </Card>
 
         <div className="mt-4 text-center">
-          <p className="text-xs text-black">
+          <p className="text-xs text-white">
             COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
           </p>
-          <p className="text-xs text-black mt-1">
+          <p className="text-xs text-white mt-1">
             (주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다.
           </p>
         </div>
