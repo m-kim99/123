@@ -50,7 +50,7 @@ export function useGeminiLive({
           // 초기 설정 메시지 - 시스템 프롬프트 포함
           const setupMessage: any = {
             setup: {
-              model: 'models/gemini-2.0-flash-exp',
+              model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
               generation_config: {
                 response_modalities: ['AUDIO'],
                 speech_config: {
