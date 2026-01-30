@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
@@ -108,6 +109,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPortalReady, setIsPortalReady] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -297,16 +299,9 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     } else {
       // 음성 모드 시작: Gemini Live 연결 (TTS용) + 음성 인식 시작 (STT용)
       isVoiceModeRef.current = true;
-      setIsVoiceMode(true);
-
-      // 사용자 제스처(클릭) 타이밍에 STT를 먼저 켜서 기존 음성모드처럼 즉시 동작하게 함
+      await geminiLive.connect();
       speechRecognition.startListening();
-
-      // TTS(Gemini Live)는 실패해도 음성모드(STT)는 유지되도록 비동기로 연결
-      geminiLive.connect().catch((error) => {
-        console.error('Gemini Live 연결 실패(음성모드는 STT로만 진행):', error);
-        geminiLive.disconnect();
-      });
+      setIsVoiceMode(true);
     }
   }, [isVoiceMode, speechRecognition, geminiLive, audioPlayer]);
 
@@ -315,6 +310,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  useEffect(() => {
+    setIsPortalReady(true);
+  }, []);
 
   const sendMessage = (text: string) => {
     const trimmed = text.trim();
@@ -388,12 +387,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     sendMessage(question);
   };
 
-  return (
+  const ui = (
     <>
       {!isOpen && (
         <Button
           size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-[9999] pointer-events-auto transition-all duration-300 hover:scale-110"
           style={{ backgroundColor: primaryColor }}
           onClick={() => setIsOpen(true)}
         >
@@ -402,7 +401,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       )}
 
       {isOpen && (
-        <Card className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300">
+        <Card className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-[10000] pointer-events-auto animate-in slide-in-from-bottom duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
             <CardTitle className="flex items-center gap-2">
               <div className="p-1 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
@@ -625,4 +624,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       )}
     </>
   );
+
+  if (!isPortalReady || typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(ui, document.body);
 });
