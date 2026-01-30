@@ -31,6 +31,11 @@ export function useGeminiLive({
   const connect = useCallback(() => {
     return new Promise<void>((resolve, reject) => {
       try {
+        if (!apiKey) {
+          reject(new Error('Missing Gemini API key'));
+          return;
+        }
+
         // 이미 연결되어 있으면 바로 resolve
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           resolve();
@@ -133,6 +138,9 @@ export function useGeminiLive({
           console.error('❌ WebSocket 오류:', error);
           if (onError) onError(new Error('WebSocket connection failed'));
           setIsConnected(false);
+          if (connectResolveRef.current) {
+            connectResolveRef.current = null;
+          }
           reject(new Error('WebSocket connection failed'));
         };
 
@@ -140,6 +148,11 @@ export function useGeminiLive({
           console.log('🔌 연결 종료, 코드:', event.code, '이유:', event.reason);
           setIsConnected(false);
           setIsStreaming(false);
+          // setup 완료 전에 연결이 닫히면 reject
+          if (connectResolveRef.current) {
+            connectResolveRef.current = null;
+            reject(new Error(`WebSocket closed before setup complete: ${event.code}`));
+          }
         };
 
         wsRef.current = ws;

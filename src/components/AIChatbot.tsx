@@ -297,9 +297,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     } else {
       // 음성 모드 시작: Gemini Live 연결 (TTS용) + 음성 인식 시작 (STT용)
       isVoiceModeRef.current = true;
-      await geminiLive.connect();
-      speechRecognition.startListening();
       setIsVoiceMode(true);
+
+      // 사용자 제스처(클릭) 타이밍에 STT를 먼저 켜서 기존 음성모드처럼 즉시 동작하게 함
+      speechRecognition.startListening();
+
+      // TTS(Gemini Live)는 실패해도 음성모드(STT)는 유지되도록 비동기로 연결
+      geminiLive.connect().catch((error) => {
+        console.error('Gemini Live 연결 실패(음성모드는 STT로만 진행):', error);
+        geminiLive.disconnect();
+      });
     }
   }, [isVoiceMode, speechRecognition, geminiLive, audioPlayer]);
 
