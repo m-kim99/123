@@ -91,6 +91,7 @@ export function ParentCategoryDetail() {
     name: '',
     description: '',
     storageLocation: '',
+    managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
   });
@@ -174,8 +175,13 @@ export function ParentCategoryDetail() {
         name: '',
         description: '',
         storageLocation: '',
+        managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+      });
+      toast({
+        title: '세부 카테고리 등록 완료',
+        description: '세부 카테고리가 성공적으로 추가되었습니다.',
       });
     } finally {
       setIsSaving(false);
@@ -239,6 +245,7 @@ export function ParentCategoryDetail() {
         name: '',
         description: '',
         storageLocation: '',
+        managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
       });
@@ -302,6 +309,7 @@ export function ParentCategoryDetail() {
       name: '',
       description: '',
       storageLocation: '',
+      managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
     });
@@ -674,7 +682,7 @@ export function ParentCategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관 위치</Label>
+                <Label>보관위치(선택)</Label>
                 <Input
                   value={form.storageLocation}
                   onChange={(e) =>
@@ -684,6 +692,19 @@ export function ParentCategoryDetail() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>관리번호(선택)</Label>
+                <Input
+                  value={form.managementNumber}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="예: MGT-2024-001"
                 />
               </div>
               <div className="space-y-2">

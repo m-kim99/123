@@ -97,6 +97,7 @@ export function SubcategoryManagement() {
     departmentId: '',
     parentCategoryId: '',
     storageLocation: '',
+    managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
   });
@@ -298,11 +299,16 @@ export function SubcategoryManagement() {
         departmentId: '',
         parentCategoryId: '',
         storageLocation: '',
+        managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
       });
 
       await fetchSubcategories();
+      toast({
+        title: '세부 카테고리 등록 완료',
+        description: '세부 카테고리가 성공적으로 추가되었습니다.',
+      });
     } catch (error) {
       console.error('세부 카테고리 추가 실패:', error);
     } finally {
@@ -369,6 +375,7 @@ export function SubcategoryManagement() {
         departmentId: '',
         parentCategoryId: '',
         storageLocation: '',
+        managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
       });
@@ -436,6 +443,7 @@ export function SubcategoryManagement() {
       departmentId: '',
       parentCategoryId: '',
       storageLocation: '',
+      managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
     });
@@ -801,7 +809,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관 위치</Label>
+                <Label>보관위치(선택)</Label>
                 <Input
                   value={form.storageLocation}
                   onChange={(e) =>
@@ -811,6 +819,19 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>관리번호(선택)</Label>
+                <Input
+                  value={form.managementNumber}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="예: MGT-2024-001"
                 />
               </div>
               <div className="space-y-2">
@@ -1056,7 +1077,7 @@ export function SubcategoryManagement() {
             }
           }}
         >
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>세부 카테고리 수정</DialogTitle>
               <DialogDescription>
@@ -1316,8 +1337,52 @@ export function SubcategoryManagement() {
               </Button>
               <Button
                 type="button"
+                onClick={async () => {
+                  if (!editingSubcategory) return;
+                  let scanToast: ReturnType<typeof toast> | null = null;
+                  try {
+                    scanToast = toast({
+                      title: 'NFC 태그 인식 대기',
+                      description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+                      duration: 1000000,
+                    });
+                    const uid = await readNFCUid();
+                    scanToast.dismiss();
+
+                    // 이 UID가 이미 등록된 태그인지 확인
+                    const existingSub = await findSubcategoryByNfcUid(uid);
+
+                    if (existingSub) {
+                      // 이미 등록된 태그 → 확인 다이얼로그 띄우기
+                      setPendingNfcUid(uid);
+                      setPendingNfcSubcategoryId(editingSubcategory.id);
+                      setExistingNfcSubcategory({ id: existingSub.id, name: existingSub.name });
+                      setNfcConfirmDialogOpen(true);
+                      return;
+                    }
+
+                    // 등록된 적 없는 태그 → 바로 등록 진행
+                    await proceedNfcRegistration(uid, editingSubcategory.id);
+                  } catch (error: any) {
+                    scanToast?.dismiss();
+                    toast({
+                      title: '오류',
+                      description:
+                        error?.message || 'NFC 태그 등록 중 오류가 발생했습니다.',
+                      variant: 'destructive',
+                    });
+                    setNfcMode('idle');
+                  }
+                }}
+                disabled={!editingSubcategory || isSavingEdit}
+              >
+                📱 NFC 태그 등록
+              </Button>
+              <Button
+                type="button"
                 onClick={handleSaveEditSubcategory}
                 disabled={isSavingEdit}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isSavingEdit ? '수정 중...' : '저장'}
               </Button>

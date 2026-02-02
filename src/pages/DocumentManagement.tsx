@@ -178,6 +178,7 @@ export function DocumentManagement() {
     departmentId: '',
     parentCategoryId: '',
     storageLocation: '',
+    managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
   });
@@ -647,8 +648,13 @@ export function DocumentManagement() {
       departmentId: '',
       parentCategoryId: '',
       storageLocation: '',
+      managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
+    });
+    toast({
+      title: '세부 카테고리 등록 완료',
+      description: '세부 카테고리가 성공적으로 추가되었습니다.',
     });
   };
 
@@ -713,6 +719,7 @@ export function DocumentManagement() {
         departmentId: '',
         parentCategoryId: '',
         storageLocation: '',
+        managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
       });
@@ -788,6 +795,7 @@ export function DocumentManagement() {
       departmentId: '',
       parentCategoryId: '',
       storageLocation: '',
+      managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
     });
@@ -2053,7 +2061,7 @@ export function DocumentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>보관 위치</Label>
+                      <Label>보관위치(선택)</Label>
                       <Input
                         value={newCategory.storageLocation}
                         onChange={(e) =>
@@ -2063,6 +2071,19 @@ export function DocumentManagement() {
                           })
                         }
                         placeholder="예: A동 2층 캐비닛 3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>관리번호(선택)</Label>
+                      <Input
+                        value={newCategory.managementNumber}
+                        onChange={(e) =>
+                          setNewCategory({
+                            ...newCategory,
+                            managementNumber: e.target.value,
+                          })
+                        }
+                        placeholder="예: MGT-2024-001"
                       />
                     </div>
                     <div className="space-y-2">
@@ -2305,16 +2326,16 @@ export function DocumentManagement() {
                 }
               }}
             >
-              <DialogContent closeClassName="text-white data-[state=open]:text-white">
+              <DialogContent closeClassName="text-white data-[state=open]:text-white" className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>카테고리 수정</DialogTitle>
+                  <DialogTitle>세부 카테고리 수정</DialogTitle>
                   <DialogDescription>
-                    선택한 카테고리 정보를 수정합니다
+                    선택한 세부 카테고리 정보를 수정합니다
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>카테고리 이름</Label>
+                    <Label>세부 카테고리 이름</Label>
                     <Input
                       value={editCategoryForm.name}
                       onChange={(e) =>
