@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/logo1.png';
+import searchIcon from '@/assets/search.png';
+import bellIcon from '@/assets/bell.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -742,7 +744,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
               onClick={handleSearch}
             >
-              🔍
+              <img src={searchIcon} alt="검색" className="h-7 w-7 block object-contain" />
             </Button>
             <Button
               type="button"
@@ -751,7 +753,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
               onClick={() => setIsNotificationOpen((prev) => !prev)}
             >
-              🔔
+              <img src={bellIcon} alt="알림" className="h-7 w-7 block object-contain" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -932,7 +934,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
                   onClick={handleSearch}
                 >
-                  🔍
+                  <img src={searchIcon} alt="검색" className="h-7 w-7 block object-contain" />
                 </Button>
                 <Button
                   type="button"
@@ -941,7 +943,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
                   onClick={() => setIsNotificationOpen((prev) => !prev)}
                 >
-                  🔔
+                  <img src={bellIcon} alt="알림" className="h-7 w-7 block object-contain" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}

@@ -6,7 +6,10 @@ import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuthStore } from '@/store/authStore';
 import expandIcon from '@/assets/expand.png';
+import reduceIcon from '@/assets/reduce.png';
 import closeIcon from '@/assets/close.png';
+import micIcon from '@/assets/mic.png';
+import sendIcon from '@/assets/send.png';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -410,7 +413,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                <img src={expandIcon} alt="확장" className="h-4 w-4" />
+                <img
+                  src={isTall ? reduceIcon : expandIcon}
+                  alt={isTall ? '축소' : '확장'}
+                  className="h-5 w-5 block object-contain"
+                />
               </button>
               <button
                 type="button"
@@ -418,7 +425,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                <img src={closeIcon} alt="닫기" className="h-4 w-4" />
+                <img src={closeIcon} alt="닫기" className="h-5 w-5 block object-contain" />
               </button>
             </div>
           </CardHeader>
@@ -577,7 +584,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
             <form
               onSubmit={handleSendMessage}
-              className="p-4 border-t flex gap-2"
+              className="p-4 border-t flex items-center gap-2"
             >
               <div className="relative flex-1">
                 <Input
@@ -589,25 +596,26 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md text-white border border-transparent hover:border-black focus:outline-none"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                   style={{ backgroundColor: primaryColor }}
                   disabled={isVoiceMode}
                 >
-                  ↵
+                  <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain" />
                 </button>
               </div>
               {/* 음성 대화 버튼 */}
               <button
                 type="button"
                 onClick={toggleLiveVoice}
-                className={`h-10 w-10 flex items-center justify-center rounded-md focus:outline-none transition-all text-xl ${
-                  isVoiceMode 
-                    ? 'bg-red-500 animate-pulse' 
-                    : 'bg-slate-200 hover:bg-slate-300'
-                }`}
+                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
+                style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor }}
                 title={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
               >
-                {isVoiceMode ? '⏹️' : '🎤'}
+                <img
+                  src={micIcon}
+                  alt={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
+                  className="h-5 w-5 block object-contain"
+                />
               </button>
             </form>
             {audioPlayer.isPlaying && (
