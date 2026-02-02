@@ -1055,9 +1055,9 @@ export function SubcategoryDetail() {
           }}
         >
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
@@ -1089,9 +1089,9 @@ export function SubcategoryDetail() {
           )}
 
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle>{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
               </DialogHeader>
 
               <div className="flex items-center justify-center gap-2 p-2 border-b bg-slate-50">

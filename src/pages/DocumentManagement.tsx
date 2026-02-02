@@ -3444,9 +3444,10 @@ export function DocumentManagement() {
                   </h4>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• PDF, JPG, PNG 파일 형식을 지원합니다</li>
-                    <li>• 너무 큰 파일은 Supabase Storage 정책에 따라 업로드가 실패할 수 있습니다</li>
                     <li>• 문서명은 명확하게 작성해주세요</li>
                     <li>• 기밀 문서는 별도로 표시해주세요</li>
+                    <li>• 민감한 정보가 담긴 서류는 마스킹 처리를 해주세요</li>
+                    <li>• 기밀 문서는 원칙적으로 업로드 금지하며, 민감한 부분이 제외된 일부 내용만 업로드 해주세요</li>
                   </ul>
                 </div>
 
@@ -3508,9 +3509,9 @@ export function DocumentManagement() {
         >
           {/* PDF 미리보기: 기존 브라우저 뷰어 유지 */}
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle>{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
@@ -3543,9 +3544,9 @@ export function DocumentManagement() {
 
           {/* 이미지 미리보기: 전문 뷰어 레이아웃 */}
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle>{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
               </DialogHeader>
 
               {/* 상단 툴바 */}
