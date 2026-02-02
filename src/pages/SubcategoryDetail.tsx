@@ -947,7 +947,7 @@ export function SubcategoryDetail() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>파일</Label>
-                <Input type="file" onChange={handleFileChange} />
+                <Input type="file" accept="application/pdf,image/*" onChange={handleFileChange} />
               </div>
               <div className="space-y-2">
                 <Label>문서 제목</Label>

@@ -132,10 +132,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'search_documents': {
         const { keyword, department_name, limit = 10 } = args;
-        let query = supabase.from('documents').select('id, title, uploaded_at, uploaded_by, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(name, storage_location), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        let query = supabase.from('documents').select('id, title, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ title: d.title, subcategory: d.subcategory?.name, parent_category: d.parent_category?.name, department: d.department?.name, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ id: d.id, title: d.title, subcategory: d.subcategory?.name, subcategory_id: d.subcategory_id || d.subcategory?.id, parent_category: d.parent_category?.name, parent_category_id: d.parent_category_id || d.parent_category?.id, department: d.department?.name, department_id: d.department?.id, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
       }
       case 'search_by_keyword': {
         const { keyword, entity_type } = args;
@@ -382,7 +382,27 @@ serve(async (req) => {
       if (!finalResponse.ok) throw new Error('Final Gemini API request failed');
       const finalData = await finalResponse.json();
       const finalText = finalData.candidates?.[0]?.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
-      return new Response(finalText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
+      // 검색 함수 실행 결과에서 문서 메타데이터 추출
+      let docsMetadata: any[] = [];
+      for (const fr of functionResults) {
+        const funcName = fr.functionResponse?.name;
+        const result = fr.functionResponse?.response?.result;
+        if (funcName === 'search_documents' && result?.documents?.length > 0) {
+          docsMetadata = result.documents.map((d: any) => ({
+            id: d.id || '',
+            title: d.title || '',
+            categoryName: d.parent_category || '',
+            departmentName: d.department || '',
+            storageLocation: d.storage_location || null,
+            uploadDate: d.uploaded_at || '',
+            subcategoryId: d.subcategory_id || '',
+            parentCategoryId: d.parent_category_id || ''
+          }));
+        }
+      }
+      // 문서 메타데이터가 있으면 ---DOCS--- 구분자로 추가
+      const responseWithDocs = docsMetadata.length > 0 ? `${finalText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` : finalText;
+      return new Response(responseWithDocs, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     } else {
       const responseText = candidate.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
       return new Response(responseText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });

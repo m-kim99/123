@@ -124,6 +124,11 @@ export function SubcategoryManagement() {
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
   const [expiredSubcategory, setExpiredSubcategory] = useState<Subcategory | null>(null);
 
+  // 세부 카테고리 삭제 확인 다이얼로그 상태
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingSubcategory, setDeletingSubcategory] = useState<Subcategory | null>(null);
+  const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
+
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
@@ -226,15 +231,43 @@ export function SubcategoryManagement() {
 
   // useCallback으로 최적화
   const handleDelete = useCallback(async (id: string) => {
-    const confirmed = window.confirm('정말 이 세부 카테고리를 삭제하시겠습니까? 관련 문서도 함께 제거될 수 있습니다.');
-    if (!confirmed) return;
+    const target = subcategories.find((s) => s.id === id) || null;
+    setDeletingSubcategory(target);
+    setDeleteDialogOpen(true);
+  }, [subcategories]);
+
+  const handleCloseDeleteDialog = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setDeletingSubcategory(null);
+    setIsDeletingSubcategory(false);
+  }, []);
+
+  const handleConfirmDeleteSubcategory = useCallback(async () => {
+    if (!deletingSubcategory?.id) {
+      return;
+    }
+
+    setIsDeletingSubcategory(true);
 
     try {
-      await deleteSubcategory(id);
+      await deleteSubcategory(deletingSubcategory.id);
+
+      toast({
+        title: '삭제 완료',
+        description: '세부 카테고리가 삭제되었습니다.',
+      });
+
+      handleCloseDeleteDialog();
     } catch (error) {
       console.error('세부 카테고리 삭제 실패:', error);
+      toast({
+        title: '삭제 실패',
+        description: '세부 카테고리를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+      setIsDeletingSubcategory(false);
     }
-  }, [deleteSubcategory]);
+  }, [deletingSubcategory?.id, deleteSubcategory, handleCloseDeleteDialog]);
 
   // useCallback으로 최적화
   const handleSubmit = useCallback(async () => {
@@ -1289,6 +1322,44 @@ export function SubcategoryManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseDeleteDialog();
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>세부 카테고리 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                <p>
+                  "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
+                </p>
+                <p className="mt-1">
+                  이 세부 카테고리에 속한 문서 {deletingSubcategory?.documentCount ?? 0}개도 함께 삭제됩니다.
+                </p>
+                <p className="mt-3 text-sm font-medium text-red-600">
+                  삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingSubcategory}>
+                취소
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteSubcategory}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeletingSubcategory}
+              >
+                {isDeletingSubcategory ? '삭제 중...' : '삭제'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>

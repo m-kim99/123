@@ -2624,13 +2624,13 @@ export function DocumentManagement() {
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+                  <AlertDialogTitle>세부 카테고리 삭제</AlertDialogTitle>
                   <AlertDialogDescription>
                     <p>
                       "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
                     </p>
                     <p className="mt-1">
-                      이 카테고리에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
+                      이 세부 카테고리에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
                     </p>
                     <p className="mt-3 text-sm font-medium text-red-600">
                       삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.

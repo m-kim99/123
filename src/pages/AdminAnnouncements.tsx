@@ -506,7 +506,7 @@ export function AdminAnnouncements() {
                 disabled={isEditing}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {isEditing ? '저장 중...' : '저장'}
+                {isEditing ? '확인 중...' : '확인'}
               </Button>
             </DialogFooter>
           </DialogContent>
