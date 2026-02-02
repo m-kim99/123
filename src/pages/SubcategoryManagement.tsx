@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -646,7 +648,7 @@ export function SubcategoryManagement() {
                           size="icon"
                           onClick={() => handleOpenEditDialog(sub)}
                         >
-                          ✏️
+                          <img src={penIcon} alt="수정" className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -654,7 +656,7 @@ export function SubcategoryManagement() {
                           onClick={() => handleDelete(sub.id)}
                           className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         >
-                          🗑️
+                          <img src={binIcon} alt="삭제" className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>

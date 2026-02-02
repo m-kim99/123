@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Smartphone, Upload, Star, Loader2, CheckCircle2 } from 'lucide-react';
+import binIcon from '@/assets/bin.svg';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -926,7 +927,7 @@ export function SubcategoryDetail() {
                         className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => handleDeleteDocumentClick(doc.id)}
                       >
-                        🗑️
+                        <img src={binIcon} alt="삭제" className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>

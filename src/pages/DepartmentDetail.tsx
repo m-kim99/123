@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -268,7 +270,7 @@ export function DepartmentDetail() {
                   setIsEditDialogOpen(true);
                 }}
               >
-                ✏️
+                <img src={penIcon} alt="수정" className="w-4 h-4" />
               </Button>
 
               <Button
@@ -277,7 +279,7 @@ export function DepartmentDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                🗑️
+                <img src={binIcon} alt="삭제" className="w-4 h-4" />
               </Button>
             </div>
           </div>

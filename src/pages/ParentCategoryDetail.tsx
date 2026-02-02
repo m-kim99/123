@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Smartphone, CalendarIcon } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -470,7 +472,7 @@ export function ParentCategoryDetail() {
                 size="icon"
                 onClick={handleOpenEditDialog}
               >
-                ✏️
+                <img src={penIcon} alt="수정" className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -478,7 +480,7 @@ export function ParentCategoryDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                🗑️
+                <img src={binIcon} alt="삭제" className="w-4 h-4" />
               </Button>
             </div>
           </div>

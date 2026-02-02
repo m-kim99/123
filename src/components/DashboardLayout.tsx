@@ -19,8 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/logo1.png';
-import searchIcon from '@/assets/search.png';
-import bellIcon from '@/assets/bell.png';
+import searchIcon from '@/assets/search.svg';
+import bellIcon from '@/assets/bell.svg';
 import {
   DropdownMenu,
   DropdownMenuContent,

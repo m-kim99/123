@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import binIcon from '@/assets/bin.svg';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1191,7 +1192,7 @@ export function CategoryDetail() {
                         size="icon"
                         onClick={() => handleOpenDeleteDialog(doc.id)}
                       >
-                        🗑️
+                        <img src={binIcon} alt="삭제" className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>

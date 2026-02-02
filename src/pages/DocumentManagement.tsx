@@ -14,6 +14,7 @@ import {
   Search,
   CalendarIcon,
 } from 'lucide-react';
+import binIcon from '@/assets/bin.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -3077,7 +3078,7 @@ export function DocumentManagement() {
                                 className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                 onClick={() => handleDeleteDocumentClick(doc.id)}
                               >
-                                🗑️
+                                <img src={binIcon} alt="삭제" className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
