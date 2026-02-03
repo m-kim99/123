@@ -192,6 +192,7 @@ export function DocumentManagement() {
     name: '',
     description: '',
     storageLocation: '',
+    managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
   });
@@ -826,6 +827,7 @@ export function DocumentManagement() {
       name: subcategory.name || '',
       description: subcategory.description || '',
       storageLocation: subcategory.storageLocation || '',
+      managementNumber: subcategory.managementNumber || '',
       defaultExpiryDays: subcategory.defaultExpiryDays || null,
       expiryDate: subcategory.expiryDate || null,
     });
@@ -858,6 +860,7 @@ export function DocumentManagement() {
         name: trimmedName,
         description: editCategoryForm.description,
         storageLocation: editCategoryForm.storageLocation,
+        managementNumber: editCategoryForm.managementNumber,
         defaultExpiryDays: editCategoryForm.defaultExpiryDays,
         expiryDate: editCategoryForm.expiryDate,
       });
@@ -2476,7 +2479,7 @@ export function DocumentManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>보관 위치</Label>
+                    <Label>보관위치(선택)</Label>
                     <Input
                       value={editCategoryForm.storageLocation}
                       onChange={(e) =>
@@ -2489,12 +2492,26 @@ export function DocumentManagement() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label>관리번호(선택)</Label>
+                    <Input
+                      value={editCategoryForm.managementNumber}
+                      onChange={(e) =>
+                        setEditCategoryForm((prev) => ({
+                          ...prev,
+                          managementNumber: e.target.value,
+                        }))
+                      }
+                      placeholder="예: MGT-2024-001"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label>기본 보관 만료일 (선택)</Label>
                     <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addMonths(new Date(), 3);
                           const today = new Date();
@@ -2516,6 +2533,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 1);
                           const today = new Date();
@@ -2537,6 +2555,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 3);
                           const today = new Date();
@@ -2558,6 +2577,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 5);
                           const today = new Date();
@@ -2579,6 +2599,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 7);
                           const today = new Date();
@@ -2600,6 +2621,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 10);
                           const today = new Date();

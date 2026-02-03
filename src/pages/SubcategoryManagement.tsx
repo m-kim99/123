@@ -109,6 +109,7 @@ export function SubcategoryManagement() {
     name: '',
     description: '',
     storageLocation: '',
+    managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
   });
@@ -464,6 +465,7 @@ export function SubcategoryManagement() {
       name: sub.name || '',
       description: sub.description || '',
       storageLocation: sub.storageLocation || '',
+      managementNumber: sub.managementNumber || '',
       defaultExpiryDays: sub.defaultExpiryDays || null,
       expiryDate: sub.expiryDate || null,
     });
@@ -493,6 +495,7 @@ export function SubcategoryManagement() {
         name: trimmedName,
         description: editForm.description,
         storageLocation: editForm.storageLocation,
+        managementNumber: editForm.managementNumber,
         defaultExpiryDays: editForm.defaultExpiryDays,
         expiryDate: editForm.expiryDate,
       });
@@ -1112,7 +1115,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관 위치</Label>
+                <Label>보관위치(선택)</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>
@@ -1122,6 +1125,19 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>관리번호(선택)</Label>
+                <Input
+                  value={editForm.managementNumber}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="예: MGT-2024-001"
                 />
               </div>
               <div className="space-y-2">

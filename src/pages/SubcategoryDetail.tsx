@@ -68,6 +68,7 @@ export function SubcategoryDetail() {
     name: '',
     description: '',
     storageLocation: '',
+    managementNumber: '',
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -360,6 +361,7 @@ export function SubcategoryDetail() {
         name: trimmedName,
         description: editForm.description,
         storageLocation: editForm.storageLocation,
+        managementNumber: editForm.managementNumber,
       });
 
       toast({
@@ -1197,7 +1199,7 @@ export function SubcategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관 위치</Label>
+                <Label>보관위치(선택)</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>
@@ -1207,6 +1209,19 @@ export function SubcategoryDetail() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>관리번호(선택)</Label>
+                <Input
+                  value={editForm.managementNumber}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="예: MGT-2024-001"
                 />
               </div>
               {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,

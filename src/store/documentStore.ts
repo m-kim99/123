@@ -67,6 +67,7 @@ export interface Subcategory {
   nfcUid?: string | null;
   nfcRegistered: boolean;
   storageLocation?: string;
+  managementNumber?: string;
   defaultExpiryDays?: number | null;
   expiryDate?: string | null;
   documentCount: number;
@@ -464,6 +465,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 nfcUid: sub.nfc_tag_id || null,
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
+                managementNumber: (sub as any).management_number || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
                 expiryDate: (sub as any).expiry_date || null,
                 documentCount: count || 0,
@@ -478,6 +480,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 nfcUid: sub.nfc_tag_id || null,
                 nfcRegistered: sub.nfc_registered,
                 storageLocation: sub.storage_location || undefined,
+                managementNumber: (sub as any).management_number || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
                 expiryDate: (sub as any).expiry_date || null,
                 documentCount: 0,
@@ -847,6 +850,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         updateData.nfc_registered = normalizedUpdates.nfcRegistered;
       if (normalizedUpdates.storageLocation !== undefined)
         updateData.storage_location = normalizedUpdates.storageLocation;
+      if (normalizedUpdates.managementNumber !== undefined)
+        updateData.management_number = normalizedUpdates.managementNumber;
       if (normalizedUpdates.defaultExpiryDays !== undefined)
         updateData.default_expiry_days = normalizedUpdates.defaultExpiryDays;
       if (normalizedUpdates.expiryDate !== undefined)
