@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Smartphone, Upload, Star, Loader2, CheckCircle2 } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+import { ArrowLeft, FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
 import shareIcon from '@/assets/share.svg';
@@ -49,6 +51,7 @@ export function SubcategoryDetail() {
     clearNfcByUid,
     shareDocument,
     unshareDocument,
+    updateDocumentFile,
   } = useDocumentStore();
 
   const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
@@ -93,6 +96,14 @@ export function SubcategoryDetail() {
   const [activeShareTab, setActiveShareTab] = useState<'new' | 'existing'>('new');
   const [existingShares, setExistingShares] = useState<any[]>([]);
   const [isLoadingShares, setIsLoadingShares] = useState(false);
+
+  // 파일 교체 다이얼로그 상태
+  const [fileReplaceDialogOpen, setFileReplaceDialogOpen] = useState(false);
+  const [replacingDocumentId, setReplacingDocumentId] = useState<string | null>(null);
+  const [replaceFile, setReplaceFile] = useState<File | null>(null);
+  const [isReplacingFile, setIsReplacingFile] = useState(false);
+  const [replaceOcrText, setReplaceOcrText] = useState('');
+  const [isExtractingOcr, setIsExtractingOcr] = useState(false);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -727,6 +738,101 @@ export function SubcategoryDetail() {
     }
   };
 
+  // 파일 교체 다이얼로그 열기
+  const handleOpenFileReplaceDialog = (documentId: string) => {
+    setReplacingDocumentId(documentId);
+    setReplaceFile(null);
+    setReplaceOcrText('');
+    setFileReplaceDialogOpen(true);
+  };
+
+  // 파일 교체 다이얼로그 닫기
+  const handleCloseFileReplaceDialog = () => {
+    setFileReplaceDialogOpen(false);
+    setReplacingDocumentId(null);
+    setReplaceFile(null);
+    setReplaceOcrText('');
+    setIsExtractingOcr(false);
+  };
+
+  // 파일 교체용 파일 선택 핸들러
+  const handleReplaceFileDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!acceptedFiles || acceptedFiles.length === 0) return;
+
+    const file = acceptedFiles[0];
+    const lowerName = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+    const isImage =
+      file.type.startsWith('image/') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.png');
+
+    if (!isPdf && !isImage) {
+      toast({
+        title: '파일 형식 오류',
+        description: 'PDF, JPG, PNG 파일만 업로드 가능합니다.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setReplaceFile(file);
+    setIsExtractingOcr(true);
+
+    try {
+      const ocrText = await extractText(file);
+      setReplaceOcrText(ocrText);
+      toast({
+        title: 'OCR 추출 완료',
+        description: `${ocrText.length.toLocaleString()}자가 추출되었습니다.`,
+      });
+    } catch (error) {
+      console.error('OCR 추출 오류:', error);
+      setReplaceOcrText('');
+      toast({
+        title: 'OCR 추출 실패',
+        description: '텍스트 추출에 실패했습니다. 파일은 업로드됩니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExtractingOcr(false);
+    }
+  }, []);
+
+  const { getRootProps: getReplaceRootProps, getInputProps: getReplaceInputProps, isDragActive: isReplaceDragActive } = useDropzone({
+    onDrop: handleReplaceFileDrop,
+    accept: {
+      'image/*': ['.jpg', '.jpeg', '.png'],
+      'application/pdf': ['.pdf'],
+    },
+    multiple: false,
+  });
+
+  // 파일 교체 실행
+  const handleReplaceFile = async () => {
+    if (!replacingDocumentId || !replaceFile) {
+      toast({
+        title: '파일을 선택해주세요',
+        description: '교체할 파일을 먼저 선택해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsReplacingFile(true);
+
+    try {
+      await updateDocumentFile(replacingDocumentId, replaceFile, replaceOcrText);
+      await fetchDocuments();
+      handleCloseFileReplaceDialog();
+    } catch (error) {
+      console.error('파일 교체 실패:', error);
+    } finally {
+      setIsReplacingFile(false);
+    }
+  };
+
   if (!subcategoryId) {
     return null;
   }
@@ -901,13 +1007,22 @@ export function SubcategoryDetail() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto">
+                    <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenPreviewDocument(doc.id)}
                       >
                         문서 보기
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenFileReplaceDialog(doc.id)}
+                        title="파일 교체"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        파일 교체
                       </Button>
                       <Button
                         variant="outline"
@@ -1413,6 +1528,95 @@ export function SubcategoryDetail() {
                   )}
                 </Button>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 파일 교체 다이얼로그 */}
+        <Dialog open={fileReplaceDialogOpen} onOpenChange={(open) => !open && handleCloseFileReplaceDialog()}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>파일 교체</DialogTitle>
+              <DialogDescription>
+                기존 문서의 파일을 새 파일로 교체합니다. AI OCR이 자동으로 적용됩니다.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* 파일 업로드 영역 */}
+              <div
+                {...getReplaceRootProps()}
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  isReplaceDragActive
+                    ? 'border-blue-500 bg-blue-50'
+                    : replaceFile
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-slate-300 hover:border-slate-400'
+                }`}
+              >
+                <input {...getReplaceInputProps()} />
+                {isExtractingOcr ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    <p className="text-sm text-blue-600">OCR 텍스트 추출 중...</p>
+                  </div>
+                ) : replaceFile ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
+                    <p className="text-sm font-medium text-green-700">{replaceFile.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}자 추출됨` : 'OCR 텍스트 없음'}
+                    </p>
+                    <p className="text-xs text-slate-400">다른 파일을 선택하려면 클릭하세요</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-8 w-8 text-slate-400" />
+                    <p className="text-sm text-slate-600">
+                      {isReplaceDragActive ? '파일을 놓으세요' : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                    </p>
+                    <p className="text-xs text-slate-400">PDF, JPG, PNG 파일 업로드 가능</p>
+                  </div>
+                )}
+              </div>
+
+              {/* OCR 결과 미리보기 */}
+              {replaceOcrText && (
+                <div className="space-y-2">
+                  <Label>OCR 추출 텍스트 미리보기</Label>
+                  <div className="border rounded-md p-3 max-h-32 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                    {replaceOcrText.slice(0, 500)}
+                    {replaceOcrText.length > 500 && '...'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={handleCloseFileReplaceDialog}
+                disabled={isReplacingFile}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleReplaceFile}
+                disabled={!replaceFile || isReplacingFile || isExtractingOcr}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isReplacingFile ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    교체 중...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    파일 교체
+                  </>
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

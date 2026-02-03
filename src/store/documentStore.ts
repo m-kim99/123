@@ -118,6 +118,7 @@ interface DocumentState {
   ) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   updateDocumentOcrText: (id: string, ocrText: string) => Promise<void>;
+  updateDocumentFile: (id: string, file: File, ocrText?: string) => Promise<void>;
   checkPermission: (
     userId: string,
     departmentId: string,
@@ -1442,6 +1443,116 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       toast({
         title: 'OCR 텍스트 저장 실패',
         description: '네트워크 오류로 인해 저장하지 못했습니다.',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  },
+
+  updateDocumentFile: async (id, file, ocrText) => {
+    try {
+      // 1. 기존 문서 정보 조회
+      const { data: existingDoc, error: fetchError } = await supabase
+        .from('documents')
+        .select('file_path, title, parent_category_id, subcategory_id, department_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !existingDoc) {
+        throw new Error('문서를 찾을 수 없습니다.');
+      }
+
+      // 2. 기존 파일 삭제
+      if (existingDoc.file_path) {
+        await supabase.storage.from('123').remove([existingDoc.file_path]);
+      }
+
+      // 3. 새 파일 업로드
+      const newFilePath = sanitizeFileName(file.name);
+      const { error: storageError } = await supabase.storage
+        .from('123')
+        .upload(newFilePath, file);
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      // 4. 임베딩 재생성 (OCR 텍스트가 있는 경우)
+      let embedding: number[] | null = null;
+      if (ocrText) {
+        try {
+          embedding = await generateEmbedding(
+            `${existingDoc.title} ${ocrText}`,
+            3,
+            1000
+          );
+        } catch (embeddingError) {
+          console.error('Failed to generate embedding:', embeddingError);
+        }
+      }
+
+      // 5. DB 업데이트
+      const updateData: any = {
+        file_path: newFilePath,
+        file_size: file.size,
+      };
+
+      if (ocrText !== undefined) {
+        updateData.ocr_text = ocrText;
+      }
+
+      if (embedding) {
+        updateData.embedding = embedding;
+      }
+
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update(updateData)
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      // 6. 로컬 상태 업데이트
+      let fileUrl = '#';
+      try {
+        const { data: publicUrlData } = supabase.storage
+          .from('123')
+          .getPublicUrl(newFilePath);
+
+        if (publicUrlData?.publicUrl) {
+          fileUrl = publicUrlData.publicUrl;
+        }
+      } catch {
+        fileUrl = '#';
+      }
+
+      set((state) => ({
+        documents: state.documents.map((doc) =>
+          doc.id === id
+            ? {
+                ...doc,
+                fileUrl,
+                ocrText: ocrText !== undefined ? ocrText : doc.ocrText,
+              }
+            : doc
+        ),
+      }));
+
+      toast({
+        title: '파일 업데이트 완료',
+        description: '문서 파일이 성공적으로 교체되었습니다.',
+      });
+
+      trackEvent('document_file_update', {
+        document_id: id,
+        file_size: file.size,
+        has_ocr_text: !!ocrText,
+      });
+    } catch (err) {
+      console.error('Failed to update document file:', err);
+      toast({
+        title: '파일 업데이트 실패',
+        description: '파일 교체 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       throw err;
