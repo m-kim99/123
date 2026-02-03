@@ -113,7 +113,7 @@ export function NotificationSettingsDialog({
                       카테고리 생성/삭제 알림
                     </Label>
                     <p className="text-xs text-slate-500">
-                      대분류 및 세부 카테고리의 추가/삭제 시 알림
+                      대분류 및 세부 스토리지의 추가/삭제 시 알림
                     </p>
                   </div>
                   <Switch
@@ -137,7 +137,7 @@ export function NotificationSettingsDialog({
                       만료 알림
                     </Label>
                     <p className="text-xs text-slate-500">
-                      세부 카테고리 만료 예정 및 만료 알림 (7일/30일 전)
+                      세부 스토리지 만료 예정 및 만료 알림 (7일/30일 전)
                     </p>
                   </div>
                   <Switch

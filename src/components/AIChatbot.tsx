@@ -9,6 +9,7 @@ import expandIcon from '@/assets/expand.svg';
 import reduceIcon from '@/assets/reduce.svg';
 import closeIcon from '@/assets/close.svg';
 import micIcon from '@/assets/mic.svg';
+import micOnIcon from '@/assets/mic_on.svg';
 import sendIcon from '@/assets/send.svg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,7 +82,7 @@ function extractLinksFromMessage(content: string): ExtractedLink[] {
     if (path.includes('/departments/')) {
       label = '부서 페이지로 이동';
     } else if (path.includes('/parent-category/') && path.includes('/subcategory/')) {
-      label = '세부 카테고리로 이동';
+      label = '세부 스토리지로 이동';
     } else if (path.includes('/parent-category/')) {
       label = '대분류로 이동';
     } else if (path.includes('/documents')) {
@@ -612,7 +613,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 title={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
               >
                 <img
-                  src={micIcon}
+                  src={isVoiceMode ? micOnIcon : micIcon}
                   alt={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
                   className="h-5 w-5 block object-contain"
                 />

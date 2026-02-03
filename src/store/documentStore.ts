@@ -38,7 +38,7 @@ export interface Document {
   name: string;
   // 3단 구조(기존)용 카테고리 ID (가능하면 새 구조에서는 사용 지양)
   categoryId?: string;
-  // 4단 구조용: 세부 카테고리 / 대분류 ID
+  // 4단 구조용: 세부 스토리지 / 대분류 ID
   subcategoryId: string;
   parentCategoryId: string;
   departmentId: string;
@@ -398,7 +398,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  // 세부 카테고리(Subcategory) 목록 조회
+  // 세부 스토리지(Subcategory) 목록 조회
   fetchSubcategories: async (parentCategoryId?: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -490,7 +490,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     } catch (err) {
       console.error('Failed to fetch subcategories from Supabase:', err);
       toast({
-        title: '세부 카테고리를 불러오지 못했습니다.',
+        title: '세부 스토리지를 불러오지 못했습니다.',
         description: '빈 상태로 표시합니다.',
         variant: 'destructive',
       });
@@ -711,7 +711,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  // 세부 카테고리 추가 (subcategories 테이블에 삽입)
+  // 세부 스토리지 추가 (subcategories 테이블에 삽입)
   addSubcategory: async (subcategory) => {
     try {
       const computedExpiryDate =
@@ -810,8 +810,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         error: 'Failed to add subcategory to Supabase, added locally only',
       }));
       toast({
-        title: '세부 카테고리 추가 실패',
-        description: '네트워크 오류로 인해 세부 카테고리를 로컬에만 추가했습니다.',
+        title: '세부 스토리지 추가 실패',
+        description: '네트워크 오류로 인해 세부 스토리지를 로컬에만 추가했습니다.',
         variant: 'destructive',
       });
 
@@ -875,8 +875,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         error: 'Failed to update subcategory in Supabase, updated locally only',
       }));
       toast({
-        title: '세부 카테고리 수정 실패',
-        description: '네트워크 오류로 인해 세부 카테고리를 서버에 반영하지 못했습니다.',
+        title: '세부 스토리지 수정 실패',
+        description: '네트워크 오류로 인해 세부 스토리지를 서버에 반영하지 못했습니다.',
         variant: 'destructive',
       });
     }
@@ -932,8 +932,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         error: 'Failed to delete subcategory from Supabase, removed locally only',
       }));
       toast({
-        title: '세부 카테고리 삭제 실패',
-        description: '네트워크 오류로 인해 세부 카테고리를 서버에서 삭제하지 못했습니다.',
+        title: '세부 스토리지 삭제 실패',
+        description: '네트워크 오류로 인해 세부 스토리지를 서버에서 삭제하지 못했습니다.',
         variant: 'destructive',
       });
     }
@@ -965,7 +965,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       toast({
         title: 'NFC 태그 등록 실패',
-        description: '세부 카테고리의 NFC 정보를 업데이트하지 못했습니다.',
+        description: '세부 스토리지의 NFC 정보를 업데이트하지 못했습니다.',
         variant: 'destructive',
       });
     }

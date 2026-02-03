@@ -151,7 +151,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
       toast({
         title: '즐겨찾기 추가',
-        description: '세부 카테고리를 즐겨찾기에 추가했습니다.',
+        description: '세부 스토리지를 즐겨찾기에 추가했습니다.',
       });
 
       // 목록 새로고침
@@ -264,7 +264,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
           departmentName: visit.departments?.name,
         })) || [];
 
-      // 같은 세부 카테고리(같은 장소)는 가장 최근 방문 기록만 남기기
+      // 같은 세부 스토리지(같은 장소)는 가장 최근 방문 기록만 남기기
       const seen = new Set<string>();
       const recentVisits: RecentVisit[] = [];
       for (const visit of mapped) {

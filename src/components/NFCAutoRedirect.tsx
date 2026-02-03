@@ -100,7 +100,7 @@ export function NFCAutoRedirect() {
                     if (parentCategoryId) {
                       toast({
                         title: '✅ NFC 태그 인식',
-                        description: '연결된 세부 카테고리로 이동합니다.',
+                        description: '연결된 세부 스토리지로 이동합니다.',
                       });
 
                       navigate(
@@ -115,7 +115,7 @@ export function NFCAutoRedirect() {
               }
             }
 
-            // 1차: 세부 카테고리(subcategories)에서 UID 기반 매핑
+            // 1차: 세부 스토리지(subcategories)에서 UID 기반 매핑
             const { data: sub, error: subError } = await supabase
               .from('subcategories')
               .select('id, parent_category_id')
@@ -125,7 +125,7 @@ export function NFCAutoRedirect() {
             if (!subError && sub) {
               toast({
                 title: '✅ NFC 태그 인식',
-                description: '연결된 세부 카테고리로 이동합니다.',
+                description: '연결된 세부 스토리지로 이동합니다.',
               });
 
               navigate(

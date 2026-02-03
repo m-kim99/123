@@ -169,7 +169,7 @@ export function TeamDepartmentDetail() {
                     <CardContent>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 카테고리</span>
+                          <span className="text-slate-500">세부 스토리지</span>
                           <span className="font-medium">{pc.subcategoryCount}개</span>
                         </div>
                         <div className="flex items-center justify-between">

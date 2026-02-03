@@ -15,6 +15,8 @@ import {
   CalendarIcon,
 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
+import downloadIcon from '@/assets/download.svg';
+import shareIcon from '@/assets/share.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -149,7 +151,7 @@ export function DocumentManagement() {
   const subcategories = useDocumentStore((state) => state.subcategories);
   const documents = useDocumentStore((state) => state.documents);
   
-  // 세부 카테고리 로딩 상태 (페이지 진입 시 전체 데이터 재조회 중)
+  // 세부 스토리지 로딩 상태 (페이지 진입 시 전체 데이터 재조회 중)
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(true);
   // 팀원용: 권한 있는 부서 ID 목록
   const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
@@ -505,7 +507,7 @@ export function DocumentManagement() {
     : null;
   const deletingCategoryDocCount = deletingSubcategory?.documentCount ?? 0;
 
-  // 페이지 진입 시 전체 세부 카테고리 재조회 (상세 페이지에서 필터링된 상태 복구)
+  // 페이지 진입 시 전체 세부 스토리지 재조회 (상세 페이지에서 필터링된 상태 복구)
   useEffect(() => {
     setIsLoadingSubcategories(true);
     // Zustand actions는 안정적이므로 getState()로 직접 호출
@@ -560,7 +562,7 @@ export function DocumentManagement() {
   }, [searchQuery, dateFilter, sortBy]);
  
   useEffect(() => {
-    // URL 파라미터에서 카테고리/세부 카테고리 정보 읽기 (레거시 및 호환용)
+    // URL 파라미터에서 카테고리/세부 스토리지 정보 읽기 (레거시 및 호환용)
     const params = new URLSearchParams(location.search);
     const categoryId = params.get('category');
     const categoryName = params.get('name');
@@ -578,7 +580,7 @@ export function DocumentManagement() {
         if (categoryName) {
           toast({
             title: '✅ NFC 태그 인식',
-            description: `"${categoryName}" 세부 카테고리가 선택되었습니다`,
+            description: `"${categoryName}" 세부 스토리지가 선택되었습니다`,
           });
         }
 
@@ -589,7 +591,7 @@ export function DocumentManagement() {
     }
 
     if (categoryId && categoryName) {
-      // 레거시: 카테고리 ID만 전달된 경우, 해당 대분류 및 첫 세부 카테고리를 선택
+      // 레거시: 카테고리 ID만 전달된 경우, 해당 대분류 및 첫 세부 스토리지를 선택
       const parent = parentCategories.find((pc) => pc.id === categoryId);
       const sub = subcategories.find((s) => s.parentCategoryId === categoryId);
 
@@ -653,8 +655,8 @@ export function DocumentManagement() {
       expiryDate: null,
     });
     toast({
-      title: '세부 카테고리 등록 완료',
-      description: '세부 카테고리가 성공적으로 추가되었습니다.',
+      title: '세부 스토리지 등록 완료',
+      description: '세부 스토리지가 성공적으로 추가되었습니다.',
     });
   };
 
@@ -683,8 +685,8 @@ export function DocumentManagement() {
 
       if (!created) {
         toast({
-          title: '세부 카테고리 생성 실패',
-          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          title: '세부 스토리지 생성 실패',
+          description: '세부 스토리지를 생성하지 못해 NFC를 등록할 수 없습니다.',
           variant: 'destructive',
         });
         return;
@@ -725,11 +727,11 @@ export function DocumentManagement() {
       });
     } catch (error: any) {
       scanToast?.dismiss();
-      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
       toast({
         title: 'NFC 등록 실패',
         description:
-          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+          error?.message || '세부 스토리지 생성 또는 NFC 등록 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setNfcMode('idle'); // 에러 시 모드 초기화
@@ -747,23 +749,23 @@ export function DocumentManagement() {
           .eq('id', subcategoryId)
           .single();
         if (!data) {
-          throw new Error('세부 카테고리를 찾을 수 없습니다.');
+          throw new Error('세부 스토리지를 찾을 수 없습니다.');
         }
       }
 
-      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      // 기존에 이 UID를 쓰던 모든 세부 스토리지에서 NFC 정보 해제
       await clearNfcByUid(uid, subcategoryId);
 
-      // NFC 태그에 세부 카테고리용 URL을 쓴다
+      // NFC 태그에 세부 스토리지용 URL을 쓴다
       const subName = targetSub?.name || subcategoryId;
       await writeNFCUrl(subcategoryId, subName);
 
-      // 세부 카테고리 테이블에 UID 및 등록 여부 반영
+      // 세부 스토리지 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategoryId, uid);
 
       toast({
         title: 'NFC 등록 완료',
-        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+        description: 'NFC에 세부 스토리지가 등록되었습니다.',
       });
 
       await fetchSubcategories();
@@ -853,15 +855,15 @@ export function DocumentManagement() {
 
       toast({
         title: '수정 완료',
-        description: '세부 카테고리가 성공적으로 수정되었습니다.',
+        description: '세부 스토리지가 성공적으로 수정되었습니다.',
       });
 
       handleCloseEditDialog();
     } catch (error) {
-      console.error('세부 카테고리 수정 실패:', error);
+      console.error('세부 스토리지 수정 실패:', error);
       toast({
         title: '수정 실패',
-        description: '세부 카테고리를 수정하는 중 오류가 발생했습니다.',
+        description: '세부 스토리지를 수정하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
     } finally {
@@ -892,15 +894,15 @@ export function DocumentManagement() {
 
       toast({
         title: '삭제 완료',
-        description: '세부 카테고리가 삭제되었습니다.',
+        description: '세부 스토리지가 삭제되었습니다.',
       });
 
       handleCloseDeleteDialog();
     } catch (error) {
-      console.error('세부 카테고리 삭제 실패:', error);
+      console.error('세부 스토리지 삭제 실패:', error);
       toast({
         title: '삭제 실패',
-        description: '세부 카테고리를 삭제하는 중 오류가 발생했습니다.',
+        description: '세부 스토리지를 삭제하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setIsDeletingCategory(false);
@@ -1507,7 +1509,7 @@ export function DocumentManagement() {
       (s) => s.id === uploadSelection.subcategoryId,
     );
     if (!subcategory) {
-      setUploadError('세부 카테고리를 찾을 수 없습니다.');
+      setUploadError('세부 스토리지를 찾을 수 없습니다.');
       return;
     }
 
@@ -1891,7 +1893,7 @@ export function DocumentManagement() {
 
         <div>
           <h1 className="text-3xl font-bold text-slate-900">문서 관리</h1>
-          <p className="text-slate-500 mt-1">카테고리와 문서를 관리하세요</p>
+          <p className="text-slate-500 mt-1">세부 스토리지와 문서를 관리하세요</p>
         </div>
 
         <Tabs
@@ -1906,7 +1908,7 @@ export function DocumentManagement() {
               value="categories"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              세부 카테고리
+              세부 스토리지
             </TabsTrigger>
             <TabsTrigger
               value="documents"
@@ -1982,14 +1984,14 @@ export function DocumentManagement() {
                 <DialogTrigger asChild>
                   <Button style={{ backgroundColor: primaryColor }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    세부 카테고리 추가
+                    세부 스토리지 추가
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[85vh] flex flex-col" closeClassName="text-white data-[state=open]:text-white">
                   <DialogHeader>
-                    <DialogTitle>새 세부 카테고리 추가</DialogTitle>
+                    <DialogTitle>새 세부 스토리지 추가</DialogTitle>
                     <DialogDescription>
-                      부서와 대분류를 선택하여 세부 카테고리를 생성합니다.
+                      부서와 대분류를 선택하여 세부 스토리지를 생성합니다.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 overflow-y-auto flex-1 pr-2">
@@ -2038,7 +2040,7 @@ export function DocumentManagement() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label>세부 카테고리 이름</Label>
+                      <Label>세부 스토리지 이름</Label>
                       <Input
                         value={newCategory.name}
                         onChange={(e) =>
@@ -2057,7 +2059,7 @@ export function DocumentManagement() {
                             description: e.target.value,
                           })
                         }
-                        placeholder="세부 카테고리 설명"
+                        placeholder="세부 스토리지 설명"
                       />
                     </div>
                     <div className="space-y-2">
@@ -2293,7 +2295,7 @@ export function DocumentManagement() {
                         !newCategory.parentCategoryId
                       }
                     >
-                      세부 카테고리만 추가
+                      세부 스토리지만 추가
                     </Button>
                     <Button
                       type="button"
@@ -2328,14 +2330,14 @@ export function DocumentManagement() {
             >
               <DialogContent closeClassName="text-white data-[state=open]:text-white" className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>세부 카테고리 수정</DialogTitle>
+                  <DialogTitle>세부 스토리지 수정</DialogTitle>
                   <DialogDescription>
-                    선택한 세부 카테고리 정보를 수정합니다
+                    선택한 세부 스토리지 정보를 수정합니다
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>세부 카테고리 이름</Label>
+                    <Label>세부 스토리지 이름</Label>
                     <Input
                       value={editCategoryForm.name}
                       onChange={(e) =>
@@ -2646,13 +2648,13 @@ export function DocumentManagement() {
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>세부 카테고리 삭제</AlertDialogTitle>
+                  <AlertDialogTitle>세부 스토리지 삭제</AlertDialogTitle>
                   <AlertDialogDescription>
                     <p>
                       "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
                     </p>
                     <p className="mt-1">
-                      이 세부 카테고리에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
+                      이 세부 스토리지에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
                     </p>
                     <p className="mt-3 text-sm font-medium text-red-600">
                       삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
@@ -2694,7 +2696,7 @@ export function DocumentManagement() {
               </div>
             ) : paginatedSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                조건에 해당하는 세부 카테고리가 없습니다.
+                조건에 해당하는 세부 스토리지가 없습니다.
               </div>
             ) : (
               <>
@@ -3084,14 +3086,14 @@ export function DocumentManagement() {
                                 size="icon"
                                 onClick={() => handleDownloadDocument(doc.id)}
                               >
-                                ⬇️
+                                <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
                               </Button>
                               <Button
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleOpenShareDialog(doc.id)}
                               >
-                                📤
+                                <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
                               </Button>
                               <Button
                                 variant="outline"
@@ -3099,7 +3101,7 @@ export function DocumentManagement() {
                                 className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                 onClick={() => handleDeleteDocumentClick(doc.id)}
                               >
-                                <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                               </Button>
                             </div>
                           </div>
@@ -3243,7 +3245,7 @@ export function DocumentManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>세부 카테고리</Label>
+                    <Label>세부 스토리지</Label>
                     <Select
                       value={uploadSelection.subcategoryId}
                       onValueChange={(value) =>
@@ -3258,7 +3260,7 @@ export function DocumentManagement() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="세부 카테고리 선택" />
+                        <SelectValue placeholder="세부 스토리지 선택" />
                       </SelectTrigger>
                       <SelectContent>
                         {uploadSubcategories.map((sub) => (
@@ -3481,7 +3483,7 @@ export function DocumentManagement() {
                     if (!uploadSelection.departmentId || !uploadSelection.parentCategoryId || !uploadSelection.subcategoryId) {
                       toast({
                         title: '저장 위치를 선택해주세요',
-                        description: '문서를 저장할 부서, 대분류, 세부 카테고리를 먼저 선택해주세요.',
+                        description: '문서를 저장할 부서, 대분류, 세부 스토리지를 먼저 선택해주세요.',
                         variant: 'destructive',
                       });
                       return;
@@ -3614,7 +3616,7 @@ export function DocumentManagement() {
                       onClick={() => handleDownloadDocument(previewDoc.id)}
                       title="다운로드"
                     >
-                      ⬇️
+                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
                     </Button>
 
                     <Button

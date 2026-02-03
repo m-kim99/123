@@ -136,7 +136,7 @@ export function ParentCategoryList() {
           <div>
             <h1 className="text-3xl font-bold">대분류 관리</h1>
             <p className="text-slate-500 mt-1">
-              부서별 문서 대분류(Parent Category)를 관리합니다.
+              부서별 문서 대분류를 관리합니다
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -206,7 +206,7 @@ export function ParentCategoryList() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 카테고리</span>
+                          <span className="text-slate-500">세부 스토리지</span>
                           <span className="font-medium">{pc.subcategoryCount}개</span>
                         </div>
                         <div className="flex items-center justify-between">

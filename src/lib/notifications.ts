@@ -26,9 +26,9 @@ interface CreateDocumentNotificationParams {
   parentCategoryId?: string | null;
   /** UI에 보여줄 대분류명 */
   parentCategoryName?: string | null;
-  /** 세부 카테고리 ID */
+  /** 세부 스토리지 ID */
   subcategoryId?: string | null;
-  /** UI에 보여줄 세부 카테고리명 */
+  /** UI에 보여줄 세부 스토리지명 */
   subcategoryName?: string | null;
 }
 
@@ -70,10 +70,10 @@ export async function createDocumentNotification({
         prefix = '문서 삭제';
         break;
       case 'subcategory_created':
-        prefix = '세부 카테고리 생성';
+        prefix = '세부 스토리지 생성';
         break;
       case 'subcategory_deleted':
-        prefix = '세부 카테고리 삭제';
+        prefix = '세부 스토리지 삭제';
         break;
       case 'parent_category_created':
         prefix = '대분류 카테고리 생성';

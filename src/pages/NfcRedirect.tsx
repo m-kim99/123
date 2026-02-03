@@ -44,7 +44,7 @@ export function NfcRedirect() {
           .single();
 
         if (error || !data) {
-          console.error('NFC Redirect: 세부 카테고리 조회 실패', error);
+          console.error('NFC Redirect: 세부 스토리지 조회 실패', error);
           navigate(user?.role === 'admin' ? '/admin' : '/team');
           return;
         }
@@ -61,7 +61,7 @@ export function NfcRedirect() {
 
         const basePath = user.role === 'admin' ? '/admin' : '/team';
 
-        // 세부 카테고리 페이지로 리다이렉트
+        // 세부 스토리지 페이지로 리다이렉트
         navigate(`${basePath}${targetRelativePath}`, { replace: true });
       } catch (error) {
         console.error('NFC Redirect 오류:', error);

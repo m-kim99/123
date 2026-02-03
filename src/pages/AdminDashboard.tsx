@@ -49,7 +49,7 @@ export function AdminDashboard() {
       color: '#3b82f6',
     },
     {
-      title: '총 세부 카테고리',
+      title: '총 세부 스토리지',
       value: subcategories.length,
       icon: TrendingUp,
       color: '#8B5CF6',
@@ -101,7 +101,7 @@ export function AdminDashboard() {
             <CardContent>
               {favorites.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">
-                  즐겨찾기한 세부 카테고리가 없습니다
+                  즐겨찾기한 세부 스토리지가 없습니다
                 </p>
               ) : (
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
@@ -118,7 +118,7 @@ export function AdminDashboard() {
                       className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
                     >
                       <p className="font-medium text-sm truncate">
-                        {fav.subcategoryName || '이름 없는 세부 카테고리'}
+                        {fav.subcategoryName || '이름 없는 세부 스토리지'}
                       </p>
                       <p className="text-xs text-slate-500 truncate">
                         {[fav.departmentName, fav.parentCategoryName]
@@ -158,7 +158,7 @@ export function AdminDashboard() {
                       className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
                     >
                       <p className="font-medium text-sm truncate">
-                        {visit.subcategoryName || '이름 없는 세부 카테고리'}
+                        {visit.subcategoryName || '이름 없는 세부 스토리지'}
                       </p>
                       <div className="flex items-center justify-between mt-1">
                         <p className="text-xs text-slate-500 truncate">

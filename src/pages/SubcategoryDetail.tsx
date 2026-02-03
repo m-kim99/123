@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Smartphone, Upload, Star, Loader2, CheckCircle2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
+import downloadIcon from '@/assets/download.svg';
+import shareIcon from '@/assets/share.svg';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -245,18 +247,18 @@ export function SubcategoryDetail() {
 
     setIsRegisteringNfc(true);
     try {
-      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      // 기존에 이 UID를 쓰던 모든 세부 스토리지에서 NFC 정보 해제
       await clearNfcByUid(uid, subcategory.id);
 
-      // NFC 태그에 세부 카테고리용 URL을 쓴다
+      // NFC 태그에 세부 스토리지용 URL을 쓴다
       await writeNFCUrl(subcategory.id, subcategory.name);
 
-      // 세부 카테고리 테이블에 UID 및 등록 여부 반영
+      // 세부 스토리지 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategory.id, uid);
 
       toast({
         title: 'NFC 등록 완료',
-        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+        description: 'NFC에 세부 스토리지가 등록되었습니다.',
       });
 
       // 상태 초기화
@@ -324,7 +326,7 @@ export function SubcategoryDetail() {
 
       toast({
         title: '수정 완료',
-        description: '세부 카테고리가 수정되었습니다.',
+        description: '세부 스토리지가 수정되었습니다.',
       });
 
       setEditDialogOpen(false);
@@ -737,7 +739,7 @@ export function SubcategoryDetail() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             돌아가기
           </Button>
-          <p className="text-slate-500">세부 카테고리를 찾을 수 없습니다.</p>
+          <p className="text-slate-500">세부 스토리지를 찾을 수 없습니다.</p>
         </div>
       </DashboardLayout>
     );
@@ -863,14 +865,14 @@ export function SubcategoryDetail() {
             <div>
               <CardTitle>문서 목록</CardTitle>
               <CardDescription className="mt-1">
-                이 세부 카테고리에 속한 문서입니다.
+                이 세부 스토리지에 속한 문서입니다.
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             {subcategoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 세부 카테고리에 문서가 없습니다.
+                이 세부 스토리지에 문서가 없습니다.
               </div>
             ) : (
               <div className="space-y-3">
@@ -912,14 +914,14 @@ export function SubcategoryDetail() {
                         size="icon"
                         onClick={() => handleDownloadDocument(doc.id)}
                       >
-                        ⬇️
+                        <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenShareDialog(doc.id)}
                       >
-                        📤
+                        <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
@@ -927,7 +929,7 @@ export function SubcategoryDetail() {
                         className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => handleDeleteDocumentClick(doc.id)}
                       >
-                        <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -941,7 +943,7 @@ export function SubcategoryDetail() {
           <CardHeader>
             <CardTitle>문서 업로드</CardTitle>
             <CardDescription>
-              이 세부 카테고리에 새 문서를 업로드합니다.
+              이 세부 스토리지에 새 문서를 업로드합니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -978,14 +980,14 @@ export function SubcategoryDetail() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>세부 카테고리 수정</DialogTitle>
+              <DialogTitle>세부 스토리지 수정</DialogTitle>
               <DialogDescription>
-                이 세부 카테고리 정보를 수정합니다.
+                이 세부 스토리지 정보를 수정합니다.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>세부 카테고리 이름</Label>
+                <Label>세부 스토리지 이름</Label>
                 <Input
                   value={editForm.name}
                   onChange={(e) =>
@@ -1007,7 +1009,7 @@ export function SubcategoryDetail() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 카테고리 설명"
+                  placeholder="세부 스토리지 설명"
                 />
               </div>
               <div className="space-y-2">
@@ -1137,7 +1139,7 @@ export function SubcategoryDetail() {
                       onClick={() => handleDownloadDocument(previewDoc.id)}
                       title="다운로드"
                     >
-                      ⬇️
+                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
                     </Button>
 
                     <Button

@@ -44,7 +44,7 @@ export interface Document {
   category_id?: string;
   /** 상위 대분류 카테고리 ID */
   parent_category_id: string;
-  /** 세부 카테고리 ID */
+  /** 세부 스토리지 ID */
   subcategory_id: string;
   department_id: string;
   title: string;
@@ -65,7 +65,7 @@ export type ParentCategory = {
   created_at: string;
 };
 
-// 세부 카테고리 (신규 subcategories 테이블)
+// 세부 스토리지 (신규 subcategories 테이블)
 export type Subcategory = {
   id: string;
   name: string;

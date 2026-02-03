@@ -155,10 +155,10 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
  
 /**
  * NFC 태그에 URL 쓰기 (iOS/Android 호환)
- * 현재 구현에서는 세부 카테고리(subcategory)를 대상으로 동작하며,
+ * 현재 구현에서는 세부 스토리지(subcategory)를 대상으로 동작하며,
  * 태그에 /nfc-redirect?subcategoryId=... 형태의 URL을 기록합니다.
- * @param subcategoryId 세부 카테고리 ID
- * @param _subcategoryName 세부 카테고리 이름 (현재는 로깅/확장용으로만 사용)
+ * @param subcategoryId 세부 스토리지 ID
+ * @param _subcategoryName 세부 스토리지 이름 (현재는 로깅/확장용으로만 사용)
  * @returns 쓰기 성공 여부
  */
 export async function writeNFCUrl(
@@ -171,7 +171,7 @@ export async function writeNFCUrl(
       throw new Error('NFC가 지원되지 않는 브라우저입니다.');
     }
 
-    // URL 생성: 세부 카테고리로 연결되는 리다이렉트 엔드포인트
+    // URL 생성: 세부 스토리지로 연결되는 리다이렉트 엔드포인트
     const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
 
     console.log('NFC URL 쓰기 시작:', uploadUrl);

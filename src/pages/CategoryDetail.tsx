@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
+import downloadIcon from '@/assets/download.svg';
+import shareIcon from '@/assets/share.svg';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -326,7 +328,7 @@ export function CategoryDetail() {
 
     if (!targetSubcategory) {
       setUploadError(
-        '이 카테고리에 연결된 세부 카테고리가 없어 업로드할 수 없습니다.',
+        '이 카테고리에 연결된 세부 스토리지가 없어 업로드할 수 없습니다.',
       );
       return;
     }
@@ -1178,21 +1180,21 @@ export function CategoryDetail() {
                         size="icon"
                         onClick={() => handleDownloadDocument(doc.id)}
                       >
-                        ⬇️
+                        <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenShareDialog(doc.id)}
                       >
-                        📤
+                        <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenDeleteDialog(doc.id)}
                       >
-                        <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -1434,7 +1436,7 @@ export function CategoryDetail() {
                       onClick={() => handleDownloadDocument(previewDoc.id)}
                       title="다운로드"
                     >
-                      ⬇️
+                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
                     </Button>
 
                     <Button

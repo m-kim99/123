@@ -127,7 +127,7 @@ export function SubcategoryManagement() {
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
   const [expiredSubcategory, setExpiredSubcategory] = useState<Subcategory | null>(null);
 
-  // 세부 카테고리 삭제 확인 다이얼로그 상태
+  // 세부 스토리지 삭제 확인 다이얼로그 상태
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSubcategory, setDeletingSubcategory] = useState<Subcategory | null>(null);
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
@@ -198,7 +198,7 @@ export function SubcategoryManagement() {
   const filteredSubcategories = useMemo(
     () =>
       subcategories.filter((sub) => {
-        // 먼저 권한 있는 부서의 세부 카테고리만 필터링
+        // 먼저 권한 있는 부서의 세부 스토리지만 필터링
         if (!accessibleDepartmentIds.includes(sub.departmentId)) {
           return false;
         }
@@ -257,15 +257,15 @@ export function SubcategoryManagement() {
 
       toast({
         title: '삭제 완료',
-        description: '세부 카테고리가 삭제되었습니다.',
+        description: '세부 스토리지가 삭제되었습니다.',
       });
 
       handleCloseDeleteDialog();
     } catch (error) {
-      console.error('세부 카테고리 삭제 실패:', error);
+      console.error('세부 스토리지 삭제 실패:', error);
       toast({
         title: '삭제 실패',
-        description: '세부 카테고리를 삭제하는 중 오류가 발생했습니다.',
+        description: '세부 스토리지를 삭제하는 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setIsDeletingSubcategory(false);
@@ -306,11 +306,11 @@ export function SubcategoryManagement() {
 
       await fetchSubcategories();
       toast({
-        title: '세부 카테고리 등록 완료',
-        description: '세부 카테고리가 성공적으로 추가되었습니다.',
+        title: '세부 스토리지 등록 완료',
+        description: '세부 스토리지가 성공적으로 추가되었습니다.',
       });
     } catch (error) {
-      console.error('세부 카테고리 추가 실패:', error);
+      console.error('세부 스토리지 추가 실패:', error);
     } finally {
       setIsSaving(false);
     }
@@ -342,8 +342,8 @@ export function SubcategoryManagement() {
 
       if (!created) {
         toast({
-          title: '세부 카테고리 생성 실패',
-          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          title: '세부 스토리지 생성 실패',
+          description: '세부 스토리지를 생성하지 못해 NFC를 등록할 수 없습니다.',
           variant: 'destructive',
         });
         return;
@@ -381,11 +381,11 @@ export function SubcategoryManagement() {
       });
     } catch (error: any) {
       scanToast.dismiss();
-      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
       toast({
         title: 'NFC 등록 실패',
         description:
-          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+          error?.message || '세부 스토리지 생성 또는 NFC 등록 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setNfcMode('idle'); // 에러 시 모드 초기화
@@ -398,19 +398,19 @@ export function SubcategoryManagement() {
     try {
       const targetSub = subcategories.find((s) => s.id === subcategoryId);
 
-      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      // 기존에 이 UID를 쓰던 모든 세부 스토리지에서 NFC 정보 해제
       await clearNfcByUid(uid, subcategoryId);
 
-      // NFC 태그에 세부 카테고리용 URL을 쓴다
+      // NFC 태그에 세부 스토리지용 URL을 쓴다
       const subName = targetSub?.name || subcategoryId;
       await writeNFCUrl(subcategoryId, subName);
 
-      // 세부 카테고리 테이블에 UID 및 등록 여부 반영
+      // 세부 스토리지 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategoryId, uid);
 
       toast({
         title: 'NFC 등록 완료',
-        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+        description: 'NFC에 세부 스토리지가 등록되었습니다.',
       });
 
       await fetchSubcategories();
@@ -508,14 +508,14 @@ export function SubcategoryManagement() {
       <div className="space-y-6 max-w-6xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">세부 카테고리 관리</h1>
+            <h1 className="text-3xl font-bold">세부 스토리지 관리</h1>
             <p className="text-slate-500 mt-1">
-              부서와 대분류별로 세부 카테고리를 조회하고 관리합니다.
+              부서와 대분류별로 세부 스토리지를 조회하고 관리합니다.
             </p>
           </div>
           <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            세부 카테고리 추가
+            세부 스토리지 추가
           </Button>
         </div>
 
@@ -523,7 +523,7 @@ export function SubcategoryManagement() {
           <CardHeader>
             <CardTitle>필터</CardTitle>
             <CardDescription>
-              부서와 대분류를 선택하여 세부 카테고리 목록을 좁힐 수 있습니다.
+              부서와 대분류를 선택하여 세부 스토리지 목록을 좁힐 수 있습니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -570,9 +570,9 @@ export function SubcategoryManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>세부 카테고리 목록</CardTitle>
+            <CardTitle>세부 스토리지 목록</CardTitle>
             <CardDescription>
-              목록에서 세부 카테고리를 선택하여 상세 페이지로 이동하거나 삭제할 수 있습니다.
+              목록에서 세부 스토리지를 선택하여 상세 페이지로 이동하거나 삭제할 수 있습니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -580,7 +580,7 @@ export function SubcategoryManagement() {
               <p className="text-slate-500">로딩 중...</p>
             ) : filteredSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                조건에 해당하는 세부 카테고리가 없습니다.
+                조건에 해당하는 세부 스토리지가 없습니다.
               </div>
             ) : (
               <>
@@ -656,7 +656,7 @@ export function SubcategoryManagement() {
                           size="icon"
                           onClick={() => handleOpenEditDialog(sub)}
                         >
-                          <img src={penIcon} alt="수정" className="w-4 h-4" />
+                          <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
                         </Button>
                         <Button
                           variant="outline"
@@ -664,7 +664,7 @@ export function SubcategoryManagement() {
                           onClick={() => handleDelete(sub.id)}
                           className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         >
-                          <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                          <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                         </Button>
                       </div>
                     </div>
@@ -735,9 +735,9 @@ export function SubcategoryManagement() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent className="max-h-[85vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>새 세부 카테고리 추가</DialogTitle>
+              <DialogTitle>새 세부 스토리지 추가</DialogTitle>
               <DialogDescription>
-                부서와 대분류를 선택하여 세부 카테고리를 생성합니다.
+                부서와 대분류를 선택하여 세부 스토리지를 생성합니다.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 overflow-y-auto flex-1 pr-2">
@@ -786,7 +786,7 @@ export function SubcategoryManagement() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label>세부 카테고리 이름</Label>
+                <Label>세부 스토리지 이름</Label>
                 <Input
                   value={form.name}
                   onChange={(e) =>
@@ -805,7 +805,7 @@ export function SubcategoryManagement() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 카테고리 설명"
+                  placeholder="세부 스토리지 설명"
                 />
               </div>
               <div className="space-y-2">
@@ -1042,7 +1042,7 @@ export function SubcategoryManagement() {
                   !form.parentCategoryId
                 }
               >
-                세부 카테고리만 추가
+                세부 스토리지만 추가
               </Button>
               <Button
                 type="button"
@@ -1079,14 +1079,14 @@ export function SubcategoryManagement() {
         >
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>세부 카테고리 수정</DialogTitle>
+              <DialogTitle>세부 스토리지 수정</DialogTitle>
               <DialogDescription>
-                선택한 세부 카테고리 정보를 수정합니다.
+                선택한 세부 스토리지 정보를 수정합니다.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>세부 카테고리 이름</Label>
+                <Label>세부 스토리지 이름</Label>
                 <Input
                   value={editForm.name}
                   onChange={(e) =>
@@ -1108,7 +1108,7 @@ export function SubcategoryManagement() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 카테고리 설명"
+                  placeholder="세부 스토리지 설명"
                 />
               </div>
               <div className="space-y-2">
@@ -1400,13 +1400,13 @@ export function SubcategoryManagement() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>세부 카테고리 삭제</AlertDialogTitle>
+              <AlertDialogTitle>세부 스토리지 삭제</AlertDialogTitle>
               <AlertDialogDescription>
                 <p>
                   "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
                 </p>
                 <p className="mt-1">
-                  이 세부 카테고리에 속한 문서 {deletingSubcategory?.documentCount ?? 0}개도 함께 삭제됩니다.
+                  이 세부 스토리지에 속한 문서 {deletingSubcategory?.documentCount ?? 0}개도 함께 삭제됩니다.
                 </p>
                 <p className="mt-3 text-sm font-medium text-red-600">
                   삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.

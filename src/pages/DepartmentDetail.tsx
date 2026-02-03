@@ -241,7 +241,7 @@ export function DepartmentDetail() {
 
           <Button
             variant="ghost"
-            className="mb-4 text-white"
+            className="mb-4 text-slate-700 hover:text-slate-900"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -270,7 +270,7 @@ export function DepartmentDetail() {
                   setIsEditDialogOpen(true);
                 }}
               >
-                <img src={penIcon} alt="수정" className="w-4 h-4" />
+                <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
               </Button>
 
               <Button
@@ -279,7 +279,7 @@ export function DepartmentDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
               </Button>
             </div>
           </div>
@@ -351,7 +351,7 @@ export function DepartmentDetail() {
                     <CardContent>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 카테고리</span>
+                          <span className="text-slate-500">세부 스토리지</span>
                           <span className="font-medium">{pc.subcategoryCount}개</span>
                         </div>
                         <div className="flex items-center justify-between">

@@ -180,8 +180,8 @@ export function ParentCategoryDetail() {
         expiryDate: null,
       });
       toast({
-        title: '세부 카테고리 등록 완료',
-        description: '세부 카테고리가 성공적으로 추가되었습니다.',
+        title: '세부 스토리지 등록 완료',
+        description: '세부 스토리지가 성공적으로 추가되었습니다.',
       });
     } finally {
       setIsSaving(false);
@@ -214,8 +214,8 @@ export function ParentCategoryDetail() {
 
       if (!created) {
         toast({
-          title: '세부 카테고리 생성 실패',
-          description: '세부 카테고리를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          title: '세부 스토리지 생성 실패',
+          description: '세부 스토리지를 생성하지 못해 NFC를 등록할 수 없습니다.',
           variant: 'destructive',
         });
         return;
@@ -251,11 +251,11 @@ export function ParentCategoryDetail() {
       });
     } catch (error: any) {
       scanToast.dismiss();
-      console.error('세부 카테고리 생성 및 NFC 등록 실패:', error);
+      console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
       toast({
         title: 'NFC 등록 실패',
         description:
-          error?.message || '세부 카테고리 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+          error?.message || '세부 스토리지 생성 또는 NFC 등록 중 오류가 발생했습니다.',
         variant: 'destructive',
       });
       setNfcMode('idle'); // 에러 시 모드 초기화
@@ -268,19 +268,19 @@ export function ParentCategoryDetail() {
     try {
       const targetSub = subcategories.find((s) => s.id === subcategoryId);
 
-      // 기존에 이 UID를 쓰던 모든 세부 카테고리에서 NFC 정보 해제
+      // 기존에 이 UID를 쓰던 모든 세부 스토리지에서 NFC 정보 해제
       await clearNfcByUid(uid, subcategoryId);
 
-      // NFC 태그에 세부 카테고리용 URL을 쓴다
+      // NFC 태그에 세부 스토리지용 URL을 쓴다
       const subName = targetSub?.name || subcategoryId;
       await writeNFCUrl(subcategoryId, subName);
 
-      // 세부 카테고리 테이블에 UID 및 등록 여부 반영
+      // 세부 스토리지 테이블에 UID 및 등록 여부 반영
       await registerNfcTag(subcategoryId, uid);
 
       toast({
         title: 'NFC 등록 완료',
-        description: 'NFC에 세부 카테고리가 등록되었습니다.',
+        description: 'NFC에 세부 스토리지가 등록되었습니다.',
       });
 
       // 상태 초기화
@@ -454,7 +454,7 @@ export function ParentCategoryDetail() {
 
           <Button
             variant="ghost"
-            className="mb-4 text-white"
+            className="mb-4 text-slate-700 hover:text-slate-900"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -480,7 +480,7 @@ export function ParentCategoryDetail() {
                 size="icon"
                 onClick={handleOpenEditDialog}
               >
-                <img src={penIcon} alt="수정" className="w-4 h-4" />
+                <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
               </Button>
               <Button
                 variant="outline"
@@ -488,7 +488,7 @@ export function ParentCategoryDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
               </Button>
             </div>
           </div>
@@ -497,7 +497,7 @@ export function ParentCategoryDetail() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">세부 카테고리 수</p>
+              <p className="text-sm font-medium text-slate-500">세부 스토리지 수</p>
               <p className="text-2xl font-bold mt-2">{childSubcategories.length}</p>
             </CardContent>
           </Card>
@@ -509,7 +509,7 @@ export function ParentCategoryDetail() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">NFC 등록 세부 카테고리</p>
+              <p className="text-sm font-medium text-slate-500">NFC 등록 세부 스토리지</p>
               <p className="text-2xl font-bold mt-2">
                 {childSubcategories.filter((s) => s.nfcRegistered).length}개
               </p>
@@ -520,9 +520,9 @@ export function ParentCategoryDetail() {
         <Card>
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle>세부 카테고리</CardTitle>
+              <CardTitle>세부 스토리지</CardTitle>
               <CardDescription className="mt-1">
-                이 대분류에 속한 세부 카테고리 목록입니다.
+                이 대분류에 속한 세부 스토리지 목록입니다.
               </CardDescription>
             </div>
             <Button 
@@ -530,10 +530,10 @@ export function ParentCategoryDetail() {
               className="hidden md:inline-flex"
             >
               <Plus className="h-4 w-4 mr-2" />
-              세부 카테고리 추가
+              세부 스토리지 추가
             </Button>
           </CardHeader>
-          {/* 모바일용 세부 카테고리 추가 버튼 */}
+          {/* 모바일용 세부 스토리지 추가 버튼 */}
           <div className="md:hidden px-6 pb-4">
             <Button 
               onClick={() => setAddDialogOpen(true)}
@@ -541,13 +541,13 @@ export function ParentCategoryDetail() {
               variant="outline"
             >
               <Plus className="h-4 w-4 mr-2" />
-              세부 카테고리 추가
+              세부 스토리지 추가
             </Button>
           </div>
           <CardContent>
             {childSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                등록된 세부 카테고리가 없습니다.
+                등록된 세부 스토리지가 없습니다.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -652,14 +652,14 @@ export function ParentCategoryDetail() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 세부 카테고리 추가</DialogTitle>
+              <DialogTitle>새 세부 스토리지 추가</DialogTitle>
               <DialogDescription>
-                {parentCategory.name} 대분류에 속한 세부 카테고리를 생성합니다.
+                {parentCategory.name} 대분류에 속한 세부 스토리지를 생성합니다.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>세부 카테고리 이름</Label>
+                <Label>세부 스토리지 이름</Label>
                 <Input
                   value={form.name}
                   onChange={(e) =>
@@ -678,7 +678,7 @@ export function ParentCategoryDetail() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 카테고리 설명"
+                  placeholder="세부 스토리지 설명"
                 />
               </div>
               <div className="space-y-2">
@@ -910,7 +910,7 @@ export function ParentCategoryDetail() {
                 variant="outline"
                 disabled={isSaving || !form.name.trim()}
               >
-                세부 카테고리만 추가
+                세부 스토리지만 추가
               </Button>
               <Button
                 type="button"
@@ -948,7 +948,7 @@ export function ParentCategoryDetail() {
               <AlertDialogDescription>
                 <p>"{parentCategory.name}" 대분류를 정말 삭제하시겠습니까?</p>
                 <p className="mt-1">
-                  이 대분류에 속한 세부 카테고리 및 문서에 영향이 있을 수 있습니다.
+                  이 대분류에 속한 세부 스토리지 및 문서에 영향이 있을 수 있습니다.
                 </p>
                 <p className="mt-3 text-sm font-medium text-red-600">
                   삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.

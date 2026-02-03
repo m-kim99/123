@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
+import downloadIcon from '@/assets/download.svg';
 import {
   Card,
   CardContent,
@@ -399,7 +400,7 @@ export function SharedDocuments() {
                       onClick={() => handleDownload(previewDoc.id)}
                       title="다운로드"
                     >
-                      ⬇️
+                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
                     </Button>
 
                     <Button

@@ -349,7 +349,7 @@ async function getExpiringSubcategories(): Promise<{ text: string; docs: ChatSea
     }
 
     if (!subcategories?.length) {
-      return { text: '3개월 이내 만기 임박한 세부 카테고리가 없습니다. ✅', docs: [] };
+      return { text: '3개월 이내 만기 임박한 세부 스토리지가 없습니다. ✅', docs: [] };
     }
 
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
@@ -375,7 +375,7 @@ async function getExpiringSubcategories(): Promise<{ text: string; docs: ChatSea
     }
 
     // 텍스트 생성 (링크 없이)
-    const lines: string[] = ['만기 임박한 세부 카테고리를 찾았습니다:'];
+    const lines: string[] = ['만기 임박한 세부 스토리지를 찾았습니다:'];
 
     if (urgent.length > 0) {
       lines.push('\n🚨 [1주일 이내]');
@@ -544,7 +544,7 @@ async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] 
     }
 
     if (!subcategories?.length) {
-      return { text: '세부 카테고리가 없습니다.', docs: [] };
+      return { text: '세부 스토리지가 없습니다.', docs: [] };
     }
 
     const registered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => s.nfc_uid || s.nfc_registered);
