@@ -141,15 +141,42 @@ export function SubcategoryDetail() {
     [documents, subcategoryId]
   );
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setSelectedFile(file);
-    if (file) {
-      setUploadTitle(file.name);
-    } else {
-      setUploadTitle('');
+  // 새 문서 업로드용 dropzone
+  const handleNewFileDrop = useCallback((acceptedFiles: File[]) => {
+    if (!acceptedFiles || acceptedFiles.length === 0) return;
+    const file = acceptedFiles[0];
+    const lowerName = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+    const isImage =
+      file.type.startsWith('image/') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.png');
+
+    if (!isPdf && !isImage) {
+      toast({
+        title: '파일 형식 오류',
+        description: 'PDF, JPG, PNG 파일만 업로드 가능합니다.',
+        variant: 'destructive',
+      });
+      return;
     }
-  };
+    setSelectedFile(file);
+    setUploadTitle(file.name.replace(/\.[^/.]+$/, ''));
+  }, []);
+
+  const {
+    getRootProps: getNewFileRootProps,
+    getInputProps: getNewFileInputProps,
+    isDragActive: isNewFileDragActive,
+  } = useDropzone({
+    onDrop: handleNewFileDrop,
+    accept: {
+      'image/*': ['.jpg', '.jpeg', '.png'],
+      'application/pdf': ['.pdf'],
+    },
+    multiple: false,
+  });
 
   const handleToggleFavorite = async () => {
     if (!subcategoryId) return;
@@ -1061,28 +1088,70 @@ export function SubcategoryDetail() {
               이 세부 스토리지에 새 문서를 업로드합니다.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>파일</Label>
-                <Input type="file" accept="application/pdf,image/*" onChange={handleFileChange} />
-              </div>
-              <div className="space-y-2">
-                <Label>문서 제목</Label>
-                <Input
-                  value={uploadTitle}
-                  onChange={(e) => setUploadTitle(e.target.value)}
-                  placeholder="파일 이름이 기본값으로 사용됩니다."
-                />
-              </div>
-              <Button
-                onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
+          <CardContent className="space-y-6">
+            {/* 파일 업로드 영역 */}
+            <div className="space-y-2">
+              <Label className="font-medium">파일 업로드</Label>
+              <div
+                {...getNewFileRootProps()}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                  isNewFileDragActive
+                    ? 'border-blue-500 bg-blue-50'
+                    : selectedFile
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-slate-300 hover:border-slate-400'
+                }`}
               >
-                <Upload className="h-4 w-4 mr-2" />
-                {isUploading ? '업로드 중...' : '업로드'}
-              </Button>
+                <input {...getNewFileInputProps()} />
+                {selectedFile ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="h-10 w-10 text-green-500" />
+                    <p className="text-sm font-medium text-green-700">{selectedFile.name}</p>
+                    <p className="text-xs text-slate-500">다른 파일을 선택하려면 클릭하세요</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-10 w-10 text-slate-400" />
+                    <p className="text-sm font-medium text-slate-600">
+                      {isNewFileDragActive ? '파일을 놓으세요' : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                    </p>
+                    <p className="text-xs text-slate-400">PDF, JPG, PNG 파일 업로드 가능 (여러 파일 선택 가능)</p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* 문서 제목 */}
+            <div className="space-y-2">
+              <Label className="font-medium">문서 제목</Label>
+              <Input
+                value={uploadTitle}
+                onChange={(e) => setUploadTitle(e.target.value)}
+                placeholder="파일 이름이 기본값으로 사용됩니다."
+              />
+            </div>
+
+            {/* 업로드 가이드라인 */}
+            <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+              <h4 className="font-medium text-slate-700">업로드 가이드라인</h4>
+              <ul className="text-sm text-slate-600 space-y-1">
+                <li>• PDF, JPG, PNG 파일 형식을 지원합니다</li>
+                <li>• 문서명은 명확하게 작성해주세요</li>
+                <li>• 기밀 문서는 별도로 표시해주세요</li>
+                <li>• 민감한 정보가 담긴 서류는 마스킹 처리를 해주세요</li>
+                <li>• 기밀 문서는 원칙적으로 업로드 금지이며, 민감한 부분이 제외된 일부 내용만 업로드 해주세요</li>
+              </ul>
+            </div>
+
+            {/* 업로드 버튼 */}
+            <Button
+              onClick={handleUpload}
+              disabled={!selectedFile || isUploading}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isUploading ? '업로드 중...' : '업로드'}
+            </Button>
           </CardContent>
         </Card>
         <Dialog
