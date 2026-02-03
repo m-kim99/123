@@ -584,7 +584,7 @@ export function LoginPage() {
             </CardTitle>
             <CardDescription>
               <br />
-              우리 회사 문서, AI로 스마트하게 관리하세요.
+              쓰기 쉬운 AI 문서정리 솔루션
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -651,7 +651,7 @@ export function LoginPage() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-white hover:text-white/80 px-4 h-auto"
+                      className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('admin');
@@ -784,7 +784,7 @@ export function LoginPage() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-white hover:text-white/80 px-4 h-auto"
+                      className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('team');
