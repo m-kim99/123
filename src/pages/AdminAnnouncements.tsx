@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import type { Announcement, AnnouncementComment } from '@/types/announcement';
+import { BackButton } from '@/components/BackButton';
 
 export function AdminAnnouncements() {
   const user = useAuthStore((state) => state.user);
@@ -302,6 +303,7 @@ export function AdminAnnouncements() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">공지사항 관리</h1>

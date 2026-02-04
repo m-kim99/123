@@ -43,6 +43,7 @@ import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { PdfViewer } from '@/components/PdfViewer';
+import { BackButton } from '@/components/BackButton';
 
 export function SharedDocuments() {
   const { sharedDocuments, fetchSharedDocuments, unshareDocument } =
@@ -192,6 +193,7 @@ export function SharedDocuments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div>
           <h1 className="text-3xl font-bold text-slate-900">공유받은 문서함</h1>
           <p className="text-slate-500 mt-1">

@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/BackButton';
 
 export function DepartmentManagement() {
   // Selector 최적화: 상태값은 개별 selector로
@@ -184,6 +185,7 @@ export function DepartmentManagement() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between md:mb-6">
           <div>
             <h1 className="text-3xl font-bold">부서 관리</h1>

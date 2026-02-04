@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
+import { BackButton } from '@/components/BackButton';
 
 export function Statistics() {
   const user = useAuthStore((state) => state.user);
@@ -137,6 +138,7 @@ export function Statistics() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div>
           <h1 className="text-3xl font-bold text-slate-900">통계</h1>
           <p className="text-slate-500 mt-1">문서 관리 현황을 분석합니다</p>

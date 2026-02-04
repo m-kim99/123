@@ -6,6 +6,7 @@ import { Building2, FileText, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useDocumentStore } from '@/store/documentStore';
+import { BackButton } from '@/components/BackButton';
 
 interface Department {
   id: string;
@@ -109,6 +110,7 @@ export function TeamDepartments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div>
           <h1 className="text-3xl font-bold text-slate-900">전체 부서 보기</h1>
           <p className="text-slate-500 mt-1">접근 가능한 부서 목록입니다</p>

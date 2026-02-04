@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { BackButton } from '@/components/BackButton';
 
 export function ParentCategoryList() {
   const navigate = useNavigate();
@@ -132,6 +133,7 @@ export function ParentCategoryList() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">대분류 관리</h1>

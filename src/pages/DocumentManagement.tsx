@@ -70,6 +70,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, formatDateTimeSimple } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { BackButton } from '@/components/BackButton';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -2001,6 +2002,8 @@ export function DocumentManagement() {
             },
           ]}
         />
+
+        <BackButton className="mb-4" />
 
         <div>
           <h1 className="text-3xl font-bold text-slate-900">문서 관리</h1>

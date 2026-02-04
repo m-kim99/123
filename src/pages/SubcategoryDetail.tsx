@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { ArrowLeft, FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
@@ -26,13 +26,13 @@ import { supabase } from '@/lib/supabase';
 import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
+import { BackButton } from '@/components/BackButton';
 
 export function SubcategoryDetail() {
   const { parentCategoryId, subcategoryId } = useParams<{
     parentCategoryId: string;
     subcategoryId: string;
   }>();
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   
   // Selector 최적화: 상태값은 개별 selector로
@@ -870,10 +870,7 @@ export function SubcategoryDetail() {
     return (
       <DashboardLayout>
         <div className="space-y-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton />
           <p className="text-slate-500">세부 스토리지를 찾을 수 없습니다.</p>
         </div>
       </DashboardLayout>
@@ -917,14 +914,7 @@ export function SubcategoryDetail() {
             className="mb-2"
           />
 
-          <Button
-            variant="ghost"
-            className="mb-4 bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton className="mb-4" />
 
           <div className="flex items-start justify-between">
             <div>

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
 import shareIcon from '@/assets/share.svg';
@@ -38,6 +38,7 @@ import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
+import { BackButton } from '@/components/BackButton';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -87,7 +88,6 @@ function readFileAsDataURL(file: File): Promise<string> {
 
 export function CategoryDetail() {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const navigate = useNavigate();
   
   // Selector 최적화: 상태값은 개별 selector로
   const categories = useDocumentStore((state) => state.categories);
@@ -151,14 +151,8 @@ export function CategoryDetail() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
+          <BackButton className="mb-4" />
           <p className="text-slate-500">카테고리를 찾을 수 없습니다</p>
-          <Button
-            className="mt-4"
-            onClick={() => navigate(-1)}
-            style={{ backgroundColor: primaryColor }}
-          >
-            돌아가기
-          </Button>
         </div>
       </DashboardLayout>
     );
@@ -1069,14 +1063,7 @@ export function CategoryDetail() {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <div>
-          <Button
-            variant="ghost"
-            className="mb-4 text-white"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton className="mb-4" />
 
           <div className="flex items-start justify-between">
             <div>

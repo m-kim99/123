@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import type { Announcement, AnnouncementComment } from '@/types/announcement';
+import { BackButton } from '@/components/BackButton';
 
 export function TeamAnnouncements() {
   const user = useAuthStore((state) => state.user);
@@ -215,6 +216,7 @@ export function TeamAnnouncements() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div>
           <h1 className="text-3xl font-bold text-slate-900">공지사항</h1>
           <p className="text-slate-500 mt-1">회사 공지사항을 확인합니다</p>

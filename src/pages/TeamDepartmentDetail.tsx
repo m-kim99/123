@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
+import { BackButton } from '@/components/BackButton';
 
 export function TeamDepartmentDetail() {
   const { departmentId } = useParams<{ departmentId: string }>();
@@ -59,10 +58,7 @@ export function TeamDepartmentDetail() {
     return (
       <DashboardLayout>
         <div className="space-y-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton />
           <p className="text-slate-500">부서를 찾을 수 없습니다</p>
         </div>
       </DashboardLayout>
@@ -87,14 +83,7 @@ export function TeamDepartmentDetail() {
             className="mb-2"
           />
 
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton className="mb-4" />
 
           <div className="flex items-start justify-between mb-6">
             <div>

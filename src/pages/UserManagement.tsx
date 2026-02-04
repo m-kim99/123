@@ -16,6 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
+import { BackButton } from '@/components/BackButton';
 
 interface User {
   id: string;
@@ -202,6 +203,7 @@ export function UserManagement() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BackButton className="mb-4" />
         <div>
           <h1 className="text-3xl font-bold text-slate-900">팀원 관리</h1>
           <p className="text-slate-500 mt-1">팀원별 부서 접근 권한을 관리합니다</p>

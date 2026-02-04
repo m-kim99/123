@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Smartphone, CalendarIcon } from 'lucide-react';
+import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
@@ -38,6 +38,7 @@ import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { BackButton } from '@/components/BackButton';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
@@ -415,10 +416,7 @@ export function ParentCategoryDetail() {
     return (
       <DashboardLayout>
         <div className="space-y-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton />
           <p className="text-slate-500">대분류를 찾을 수 없습니다.</p>
         </div>
       </DashboardLayout>
@@ -452,14 +450,7 @@ export function ParentCategoryDetail() {
             className="mb-2"
           />
 
-          <Button
-            variant="ghost"
-            className="mb-4 text-slate-700 hover:text-slate-900"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            돌아가기
-          </Button>
+          <BackButton className="mb-4" />
 
           <div className="flex items-start justify-between mb-6">
             <div>

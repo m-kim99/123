@@ -39,6 +39,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/BackButton';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
@@ -509,6 +510,7 @@ export function SubcategoryManagement() {
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
+        <BackButton className="mb-4" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">세부 스토리지 관리</h1>
