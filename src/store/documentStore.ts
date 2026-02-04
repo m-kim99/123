@@ -70,6 +70,7 @@ export interface Subcategory {
   managementNumber?: string;
   defaultExpiryDays?: number | null;
   expiryDate?: string | null;
+  colorLabel?: string | null;
   documentCount: number;
 }
 
@@ -468,6 +469,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 managementNumber: (sub as any).management_number || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
                 expiryDate: (sub as any).expiry_date || null,
+                colorLabel: (sub as any).color_label || null,
                 documentCount: count || 0,
               };
             } catch {
@@ -483,6 +485,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
                 managementNumber: (sub as any).management_number || undefined,
                 defaultExpiryDays: (sub as any).default_expiry_days || null,
                 expiryDate: (sub as any).expiry_date || null,
+                colorLabel: (sub as any).color_label || null,
                 documentCount: 0,
               };
             }
@@ -736,6 +739,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           storage_location: subcategory.storageLocation || null,
           default_expiry_days: subcategory.defaultExpiryDays || null,
           expiry_date: computedExpiryDate,
+          color_label: subcategory.colorLabel || null,
         })
         .select()
         .single();
@@ -757,6 +761,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         storageLocation: data.storage_location || undefined,
         defaultExpiryDays: data.default_expiry_days || null,
         expiryDate: data.expiry_date || null,
+        colorLabel: data.color_label || null,
         documentCount: 0,
       };
 
@@ -807,6 +812,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           (subcategory.defaultExpiryDays != null
             ? addDays(new Date(), subcategory.defaultExpiryDays).toISOString()
             : null),
+        colorLabel: subcategory.colorLabel || null,
         documentCount: 0,
       };
       set((state) => ({
@@ -856,6 +862,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         updateData.default_expiry_days = normalizedUpdates.defaultExpiryDays;
       if (normalizedUpdates.expiryDate !== undefined)
         updateData.expiry_date = normalizedUpdates.expiryDate;
+      if (normalizedUpdates.colorLabel !== undefined)
+        updateData.color_label = normalizedUpdates.colorLabel;
 
       const { error } = await supabase
         .from('subcategories')

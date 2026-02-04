@@ -71,6 +71,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn, formatDateTimeSimple } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
+import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -185,6 +186,7 @@ export function DocumentManagement() {
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
+    colorLabel: null as string | null,
   });
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -196,6 +198,7 @@ export function DocumentManagement() {
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
+    colorLabel: null as string | null,
   });
   const [editCategoryNameError, setEditCategoryNameError] = useState('');
   const [isSavingCategory, setIsSavingCategory] = useState(false);
@@ -651,6 +654,7 @@ export function DocumentManagement() {
       nfcUid: null,
       defaultExpiryDays: newCategory.defaultExpiryDays,
       expiryDate: newCategory.expiryDate,
+      colorLabel: newCategory.colorLabel,
     }).then(() => {
       fetchSubcategories();
     });
@@ -664,6 +668,7 @@ export function DocumentManagement() {
       managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
+      colorLabel: null,
     });
     toast({
       title: '세부 스토리지 등록 완료',
@@ -692,6 +697,7 @@ export function DocumentManagement() {
         nfcUid: null,
         defaultExpiryDays: newCategory.defaultExpiryDays,
         expiryDate: newCategory.expiryDate,
+        colorLabel: newCategory.colorLabel,
       });
 
       if (!created) {
@@ -735,6 +741,7 @@ export function DocumentManagement() {
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+        colorLabel: null,
       });
     } catch (error: any) {
       scanToast?.dismiss();
@@ -811,6 +818,7 @@ export function DocumentManagement() {
       managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
+      colorLabel: null,
     });
   };
 
@@ -831,6 +839,7 @@ export function DocumentManagement() {
       managementNumber: subcategory.managementNumber || '',
       defaultExpiryDays: subcategory.defaultExpiryDays || null,
       expiryDate: subcategory.expiryDate || null,
+      colorLabel: subcategory.colorLabel || null,
     });
     setEditCategoryNameError('');
     setEditDialogOpen(true);
@@ -864,6 +873,7 @@ export function DocumentManagement() {
         managementNumber: editCategoryForm.managementNumber,
         defaultExpiryDays: editCategoryForm.defaultExpiryDays,
         expiryDate: editCategoryForm.expiryDate,
+        colorLabel: editCategoryForm.colorLabel,
       });
 
       toast({
@@ -2177,6 +2187,15 @@ export function DocumentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label>컬러라벨(선택)</Label>
+                      <ColorLabelPicker
+                        value={newCategory.colorLabel}
+                        onChange={(value) =>
+                          setNewCategory((prev) => ({ ...prev, colorLabel: value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label>보관위치(선택)</Label>
                       <Input
                         value={newCategory.storageLocation}
@@ -2479,6 +2498,15 @@ export function DocumentManagement() {
                         }))
                       }
                       placeholder="카테고리 설명"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>컬러라벨(선택)</Label>
+                    <ColorLabelPicker
+                      value={editCategoryForm.colorLabel}
+                      onChange={(value) =>
+                        setEditCategoryForm((prev) => ({ ...prev, colorLabel: value }))
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -2880,12 +2908,15 @@ export function DocumentManagement() {
                                 </CardDescription>
                               </div>
                               <div className="flex flex-col gap-1 items-end">
-                                {subcategory.nfcRegistered && (
-                                  <Badge variant="outline" className="ml-2">
-                                    <Smartphone className="h-3 w-3 mr-1" />
-                                    NFC
-                                  </Badge>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {subcategory.nfcRegistered && (
+                                    <Badge variant="outline">
+                                      <Smartphone className="h-3 w-3 mr-1" />
+                                      NFC
+                                    </Badge>
+                                  )}
+                                  <ColorLabelBadge colorLabel={subcategory.colorLabel} />
+                                </div>
                                 {expiryStatus.label && (
                                   <Badge
                                     variant={

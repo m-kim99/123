@@ -39,6 +39,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { BackButton } from '@/components/BackButton';
+import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
+import { Edit, Trash2 } from 'lucide-react';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
@@ -81,6 +83,8 @@ export function ParentCategoryDetail() {
     fetchSubcategories,
     fetchDocuments,
     addSubcategory,
+    updateSubcategory,
+    deleteSubcategory,
     registerNfcTag,
     findSubcategoryByNfcUid,
     clearNfcByUid,
@@ -95,6 +99,7 @@ export function ParentCategoryDetail() {
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
+    colorLabel: null as string | null,
   });
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -114,6 +119,24 @@ export function ParentCategoryDetail() {
   // 만료된 카테고리 안내 다이얼로그 상태
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
   const [expiredSubcategory, setExpiredSubcategory] = useState<any>(null);
+
+  // 세부 스토리지 수정/삭제 다이얼로그 상태
+  const [subEditDialogOpen, setSubEditDialogOpen] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<any>(null);
+  const [subEditForm, setSubEditForm] = useState({
+    name: '',
+    description: '',
+    storageLocation: '',
+    managementNumber: '',
+    defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
+    colorLabel: null as string | null,
+  });
+  const [subEditNameError, setSubEditNameError] = useState('');
+  const [isSavingSubEdit, setIsSavingSubEdit] = useState(false);
+  const [subDeleteDialogOpen, setSubDeleteDialogOpen] = useState(false);
+  const [deletingSubcategory, setDeletingSubcategory] = useState<any>(null);
+  const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -170,6 +193,7 @@ export function ParentCategoryDetail() {
         storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
+        colorLabel: form.colorLabel,
       });
       setAddDialogOpen(false);
       setForm({
@@ -179,6 +203,7 @@ export function ParentCategoryDetail() {
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+        colorLabel: null,
       });
       toast({
         title: '세부 스토리지 등록 완료',
@@ -211,6 +236,7 @@ export function ParentCategoryDetail() {
         storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
+        colorLabel: form.colorLabel,
       });
 
       if (!created) {
@@ -249,6 +275,7 @@ export function ParentCategoryDetail() {
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+        colorLabel: null,
       });
     } catch (error: any) {
       scanToast.dismiss();
@@ -313,6 +340,7 @@ export function ParentCategoryDetail() {
       managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
+      colorLabel: null,
     });
   };
 
@@ -405,6 +433,100 @@ export function ParentCategoryDetail() {
         variant: 'destructive',
       });
       setIsDeleting(false);
+    }
+  };
+
+  // 세부 스토리지 수정/삭제 핸들러
+  const handleOpenSubEditDialog = (sub: any) => {
+    setEditingSubcategory(sub);
+    setSubEditForm({
+      name: sub.name || '',
+      description: sub.description || '',
+      storageLocation: sub.storageLocation || '',
+      managementNumber: sub.managementNumber || '',
+      defaultExpiryDays: sub.defaultExpiryDays || null,
+      expiryDate: sub.expiryDate || null,
+      colorLabel: sub.colorLabel || null,
+    });
+    setSubEditNameError('');
+    setSubEditDialogOpen(true);
+  };
+
+  const handleCloseSubEditDialog = () => {
+    setSubEditDialogOpen(false);
+    setEditingSubcategory(null);
+    setSubEditNameError('');
+  };
+
+  const handleSaveSubcategory = async () => {
+    if (!editingSubcategory) return;
+
+    const trimmedName = subEditForm.name.trim();
+    if (!trimmedName) {
+      setSubEditNameError('이름을 입력하세요');
+      return;
+    }
+
+    setIsSavingSubEdit(true);
+    setSubEditNameError('');
+
+    try {
+      await updateSubcategory(editingSubcategory.id, {
+        name: trimmedName,
+        description: subEditForm.description,
+        storageLocation: subEditForm.storageLocation,
+        managementNumber: subEditForm.managementNumber,
+        defaultExpiryDays: subEditForm.defaultExpiryDays,
+        expiryDate: subEditForm.expiryDate,
+        colorLabel: subEditForm.colorLabel,
+      });
+
+      toast({
+        title: '수정 완료',
+        description: '세부 스토리지가 성공적으로 수정되었습니다.',
+      });
+
+      handleCloseSubEditDialog();
+    } catch (error) {
+      console.error('세부 스토리지 수정 실패:', error);
+      toast({
+        title: '수정 실패',
+        description: '세부 스토리지를 수정하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingSubEdit(false);
+    }
+  };
+
+  const handleOpenSubDeleteDialog = (sub: any) => {
+    setDeletingSubcategory(sub);
+    setSubDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDeleteSubcategory = async () => {
+    if (!deletingSubcategory) return;
+
+    setIsDeletingSubcategory(true);
+    try {
+      await deleteSubcategory(deletingSubcategory.id);
+
+      toast({
+        title: '삭제 완료',
+        description: '세부 스토리지가 삭제되었습니다.',
+      });
+
+      setSubDeleteDialogOpen(false);
+      setDeletingSubcategory(null);
+    } catch (error) {
+      console.error('세부 스토리지 삭제 실패:', error);
+      toast({
+        title: '삭제 실패',
+        description: '세부 스토리지를 삭제하는 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingSubcategory(false);
     }
   };
 
@@ -563,75 +685,111 @@ export function ParentCategoryDetail() {
                   <Card
                     key={sub.id}
                     className={cn(
-                      "hover:shadow-lg transition-shadow cursor-pointer",
+                      "hover:shadow-lg transition-shadow cursor-pointer flex flex-col",
                       expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300",
                       expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
                       expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
                     )}
-                    onClick={handleClick}
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
-                          <CardDescription className="mt-1 truncate">
-                            {sub.description || '설명이 없습니다.'}
-                          </CardDescription>
-                        </div>
-                        <div className="flex flex-col gap-1 items-end">
-                          {sub.nfcRegistered && (
-                            <Badge variant="outline" className="ml-2">
-                              <Smartphone className="h-3 w-3 mr-1" />
-                              NFC
-                            </Badge>
-                          )}
-                          {expiryStatus.label && (
-                            <Badge
-                              variant={
-                                expiryStatus.status === 'expired' ? 'destructive' :
-                                expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
-                              }
-                              className={cn(
-                                expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
-                                expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                    <div className="flex flex-col h-full" onClick={handleClick}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
+                            <CardDescription className="mt-1 truncate">
+                              {sub.description || '설명이 없습니다.'}
+                            </CardDescription>
+                          </div>
+                          <div className="flex flex-col gap-1 items-end">
+                            <div className="flex items-center gap-2">
+                              {sub.nfcRegistered && (
+                                <Badge variant="outline">
+                                  <Smartphone className="h-3 w-3 mr-1" />
+                                  NFC
+                                </Badge>
                               )}
-                            >
-                              {expiryStatus.label}
-                            </Badge>
-                          )}
+                              <ColorLabelBadge colorLabel={sub.colorLabel} />
+                            </div>
+                            {expiryStatus.label && (
+                              <Badge
+                                variant={
+                                  expiryStatus.status === 'expired' ? 'destructive' :
+                                  expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
+                                }
+                                className={cn(
+                                  expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
+                                  expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                                )}
+                              >
+                                {expiryStatus.label}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">{sub.documentCount}개</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">부서</span>
-                          <span className="font-medium">
-                            {department?.name ?? sub.departmentId}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">보관 위치</span>
-                          <span className="font-medium text-xs">
-                            {sub.storageLocation || '미지정'}
-                          </span>
-                        </div>
-                        {sub.defaultExpiryDays && (
+                      </CardHeader>
+                      <CardContent className="flex flex-col justify-between flex-1">
+                        <div className="space-y-2 text-sm">
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500">보관 만료일</span>
+                            <span className="text-slate-500">부서</span>
                             <span className="font-medium">
-                              {sub.expiryDate
-                                ? format(new Date(sub.expiryDate), 'yyyy.MM.dd')
-                                : format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}
+                              {department?.name ?? sub.departmentId}
                             </span>
                           </div>
-                        )}
-                      </div>
-                    </CardContent>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">대분류</span>
+                            <span className="font-medium">{parentCategory.name}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">문서 수</span>
+                            <span className="font-medium">{sub.documentCount}개</span>
+                          </div>
+                          {sub.storageLocation && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">보관 위치</span>
+                              <span className="font-medium text-xs">
+                                {sub.storageLocation}
+                              </span>
+                            </div>
+                          )}
+                          {sub.expiryDate ? (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">보관 만료일</span>
+                              <span className="font-medium">
+                                {format(new Date(sub.expiryDate), 'yyyy.MM.dd')}
+                              </span>
+                            </div>
+                          ) : sub.defaultExpiryDays ? (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">보관 만료일</span>
+                              <span className="font-medium">
+                                {format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div
+                          className="flex gap-2 mt-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleOpenSubEditDialog(sub)}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            수정
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenSubDeleteDialog(sub)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </div>
                   </Card>
                   );
                 })}
@@ -670,6 +828,15 @@ export function ParentCategoryDetail() {
                     }))
                   }
                   placeholder="세부 스토리지 설명"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>컬러라벨(선택)</Label>
+                <ColorLabelPicker
+                  value={form.colorLabel}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, colorLabel: value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1066,6 +1233,263 @@ export function ParentCategoryDetail() {
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
                 확인
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 세부 스토리지 수정 다이얼로그 */}
+        <Dialog
+          open={subEditDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) handleCloseSubEditDialog();
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>세부 스토리지 수정</DialogTitle>
+              <DialogDescription>
+                선택한 세부 스토리지 정보를 수정합니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>세부 스토리지 이름</Label>
+                <Input
+                  value={subEditForm.name}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder="예: 채용 서류 보관함"
+                />
+                {subEditNameError && (
+                  <p className="text-xs text-red-500 mt-1">{subEditNameError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>설명</Label>
+                <Textarea
+                  value={subEditForm.description}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder="세부 스토리지 설명"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>컬러라벨(선택)</Label>
+                <ColorLabelPicker
+                  value={subEditForm.colorLabel}
+                  onChange={(value) =>
+                    setSubEditForm((prev) => ({ ...prev, colorLabel: value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>보관위치(선택)</Label>
+                <Input
+                  value={subEditForm.storageLocation}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      storageLocation: e.target.value,
+                    }))
+                  }
+                  placeholder="예: A동 2층 캐비닛 3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>관리번호(선택)</Label>
+                <Input
+                  value={subEditForm.managementNumber}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="예: MGT-2024-001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>기본 보관 만료일 (선택)</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const target = addMonths(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    3개월
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const target = addYears(new Date(), 1);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    1년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const target = addYears(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    3년
+                  </Button>
+                  {subEditForm.defaultExpiryDays && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setSubEditForm((prev) => ({
+                          ...prev,
+                          defaultExpiryDays: null,
+                          expiryDate: null,
+                        }))
+                      }
+                    >
+                      초기화
+                    </Button>
+                  )}
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !subEditForm.expiryDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {subEditForm.expiryDate
+                        ? format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })
+                        : '달력에서 보관 만료일 선택'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      captionLayout="dropdown"
+                      fromYear={2020}
+                      toYear={2040}
+                      selected={subEditForm.expiryDate ? new Date(subEditForm.expiryDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffTime = date.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setSubEditForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: date.toISOString(),
+                          }));
+                        }
+                      }}
+                      initialFocus
+                      className="bg-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-slate-500">
+                  보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                  {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseSubEditDialog}
+                disabled={isSavingSubEdit}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveSubcategory}
+                disabled={isSavingSubEdit}
+              >
+                {isSavingSubEdit ? '저장 중...' : '저장'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 세부 스토리지 삭제 확인 다이얼로그 */}
+        <AlertDialog open={subDeleteDialogOpen} onOpenChange={setSubDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>세부 스토리지 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deletingSubcategory && (
+                  <>
+                    <p className="mb-2">
+                      "{deletingSubcategory.name}" 세부 스토리지를 삭제하시겠습니까?
+                    </p>
+                    <p className="text-red-500">
+                      이 작업은 되돌릴 수 없으며, 포함된 모든 문서({deletingSubcategory.documentCount}개)도 함께 삭제됩니다.
+                    </p>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingSubcategory}>취소</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteSubcategory}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeletingSubcategory}
+              >
+                {isDeletingSubcategory ? '삭제 중...' : '삭제'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

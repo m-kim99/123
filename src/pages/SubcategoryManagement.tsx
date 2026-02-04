@@ -40,6 +40,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/BackButton';
+import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
@@ -101,6 +102,7 @@ export function SubcategoryManagement() {
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
+    colorLabel: null as string | null,
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(
@@ -113,6 +115,7 @@ export function SubcategoryManagement() {
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
+    colorLabel: null as string | null,
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -292,6 +295,7 @@ export function SubcategoryManagement() {
         nfcUid: null,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
+        colorLabel: form.colorLabel,
       });
 
       setAddDialogOpen(false);
@@ -304,6 +308,7 @@ export function SubcategoryManagement() {
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+        colorLabel: null,
       });
 
       await fetchSubcategories();
@@ -340,6 +345,7 @@ export function SubcategoryManagement() {
         nfcUid: null,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
+        colorLabel: form.colorLabel,
       });
 
       if (!created) {
@@ -380,6 +386,7 @@ export function SubcategoryManagement() {
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
+        colorLabel: null,
       });
     } catch (error: any) {
       scanToast.dismiss();
@@ -448,6 +455,7 @@ export function SubcategoryManagement() {
       managementNumber: '',
       defaultExpiryDays: null,
       expiryDate: null,
+      colorLabel: null,
     });
   };
 
@@ -469,6 +477,7 @@ export function SubcategoryManagement() {
       managementNumber: sub.managementNumber || '',
       defaultExpiryDays: sub.defaultExpiryDays || null,
       expiryDate: sub.expiryDate || null,
+      colorLabel: sub.colorLabel || null,
     });
     setEditNameError('');
     setEditDialogOpen(true);
@@ -499,6 +508,7 @@ export function SubcategoryManagement() {
         managementNumber: editForm.managementNumber,
         defaultExpiryDays: editForm.defaultExpiryDays,
         expiryDate: editForm.expiryDate,
+        colorLabel: editForm.colorLabel,
       });
       await fetchSubcategories();
       setEditDialogOpen(false);
@@ -656,6 +666,13 @@ export function SubcategoryManagement() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
+                        {sub.nfcRegistered && (
+                          <Badge variant="outline" className="flex-shrink-0">
+                            <Smartphone className="h-3 w-3 mr-1" />
+                            NFC
+                          </Badge>
+                        )}
+                        <ColorLabelBadge colorLabel={sub.colorLabel} />
                         <Button
                           variant="outline"
                           size="icon"
@@ -811,6 +828,15 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="세부 스토리지 설명"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>컬러라벨(선택)</Label>
+                <ColorLabelPicker
+                  value={form.colorLabel}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, colorLabel: value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1114,6 +1140,15 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="세부 스토리지 설명"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>컬러라벨(선택)</Label>
+                <ColorLabelPicker
+                  value={editForm.colorLabel}
+                  onChange={(value) =>
+                    setEditForm((prev) => ({ ...prev, colorLabel: value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
