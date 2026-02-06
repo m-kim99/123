@@ -958,7 +958,7 @@ export function SubcategoryDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
               <p className="text-sm font-medium text-slate-500">문서 수</p>
@@ -980,6 +980,14 @@ export function SubcategoryDetail() {
               <p className="text-sm font-medium text-slate-500">보관 위치</p>
               <p className="text-sm font-bold mt-2">
                 {subcategory.storageLocation || '미지정'}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">관리번호</p>
+              <p className="text-sm font-bold mt-2">
+                {subcategory.managementNumber || '미지정'}
               </p>
             </CardContent>
           </Card>
