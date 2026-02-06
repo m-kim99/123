@@ -751,6 +751,14 @@ export function ParentCategoryDetail() {
                               </span>
                             </div>
                           )}
+                          {sub.managementNumber && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">관리번호</span>
+                              <span className="font-medium text-xs">
+                                {sub.managementNumber}
+                              </span>
+                            </div>
+                          )}
                           {sub.expiryDate ? (
                             <div className="flex items-center justify-between">
                               <span className="text-slate-500">보관 만료일</span>
