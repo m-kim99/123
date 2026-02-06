@@ -2961,6 +2961,14 @@ export function DocumentManagement() {
                                   </span>
                                 </div>
                               )}
+                              {subcategory.managementNumber && (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-slate-500">관리번호</span>
+                                  <span className="font-medium text-xs">
+                                    {subcategory.managementNumber}
+                                  </span>
+                                </div>
+                              )}
                               {subcategory.expiryDate ? (
                                 <div className="flex items-center justify-between text-sm">
                                   <span className="text-slate-500">보관 만료일</span>
