@@ -265,6 +265,7 @@ export function DocumentManagement() {
   const [isReplacingFile, setIsReplacingFile] = useState(false);
   const [replaceOcrText, setReplaceOcrText] = useState('');
   const [isExtractingReplaceOcr, setIsExtractingReplaceOcr] = useState(false);
+  const [isEditingReplaceOcr, setIsEditingReplaceOcr] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1348,6 +1349,7 @@ export function DocumentManagement() {
     setReplaceFile(null);
     setReplaceOcrText('');
     setIsExtractingReplaceOcr(false);
+    setIsEditingReplaceOcr(false);
   };
 
   // 파일 교체용 파일 선택 핸들러
@@ -4129,8 +4131,8 @@ export function DocumentManagement() {
                 )}
               </div>
 
-              {/* OCR 추출 텍스트 편집 */}
-              {replaceOcrText !== undefined && replaceOcrText !== '' && (
+              {/* OCR 추출 텍스트 */}
+              {replaceFile && !isExtractingReplaceOcr && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>OCR 추출 텍스트</Label>
@@ -4141,20 +4143,30 @@ export function DocumentManagement() {
                   <Textarea
                     value={replaceOcrText}
                     onChange={(e) => setReplaceOcrText(e.target.value)}
-                    className="min-h-[128px] max-h-48 text-sm font-mono"
-                    placeholder="OCR 텍스트를 편집하세요..."
+                    readOnly={!isEditingReplaceOcr}
+                    className={`min-h-[128px] max-h-48 text-sm font-mono ${
+                      !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
+                    }`}
+                    placeholder={replaceOcrText ? undefined : 'OCR 텍스트 없음'}
                   />
                 </div>
               )}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
               >
                 취소
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
+                disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
+              >
+                {isEditingReplaceOcr ? '편집 완료' : '편집'}
               </Button>
               <Button
                 onClick={handleReplaceFile}
@@ -4164,13 +4176,10 @@ export function DocumentManagement() {
                 {isReplacingFile ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    교체 중...
+                    저장 중...
                   </>
                 ) : (
-                  <>
-                    <img src={changeIcon} alt="파일 교체" className="w-4 h-4 mr-2" />
-                    파일 교체
-                  </>
+                  '저장'
                 )}
               </Button>
             </DialogFooter>

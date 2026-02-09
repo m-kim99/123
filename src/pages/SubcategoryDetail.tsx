@@ -107,6 +107,7 @@ export function SubcategoryDetail() {
   const [isReplacingFile, setIsReplacingFile] = useState(false);
   const [replaceOcrText, setReplaceOcrText] = useState('');
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
+  const [isEditingReplaceOcr, setIsEditingReplaceOcr] = useState(false);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -784,6 +785,7 @@ export function SubcategoryDetail() {
     setReplaceFile(null);
     setReplaceOcrText('');
     setIsExtractingOcr(false);
+    setIsEditingReplaceOcr(false);
   };
 
   // 파일 교체용 파일 선택 핸들러
@@ -1664,8 +1666,8 @@ export function SubcategoryDetail() {
                 )}
               </div>
 
-              {/* OCR 추출 텍스트 편집 */}
-              {replaceOcrText !== undefined && replaceOcrText !== '' && (
+              {/* OCR 추출 텍스트 */}
+              {replaceFile && !isExtractingOcr && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>OCR 추출 텍스트</Label>
@@ -1676,20 +1678,30 @@ export function SubcategoryDetail() {
                   <Textarea
                     value={replaceOcrText}
                     onChange={(e) => setReplaceOcrText(e.target.value)}
-                    className="min-h-[128px] max-h-48 text-sm font-mono"
-                    placeholder="OCR 텍스트를 편집하세요..."
+                    readOnly={!isEditingReplaceOcr}
+                    className={`min-h-[128px] max-h-48 text-sm font-mono ${
+                      !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
+                    }`}
+                    placeholder={replaceOcrText ? undefined : 'OCR 텍스트 없음'}
                   />
                 </div>
               )}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
               >
                 취소
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
+                disabled={!replaceFile || isReplacingFile || isExtractingOcr}
+              >
+                {isEditingReplaceOcr ? '편집 완료' : '편집'}
               </Button>
               <Button
                 onClick={handleReplaceFile}
@@ -1699,13 +1711,10 @@ export function SubcategoryDetail() {
                 {isReplacingFile ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    교체 중...
+                    저장 중...
                   </>
                 ) : (
-                  <>
-                    <img src={changeIcon} alt="파일 교체" className="w-4 h-4 mr-2" />
-                    파일 교체
-                  </>
+                  '저장'
                 )}
               </Button>
             </DialogFooter>
