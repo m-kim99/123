@@ -26,17 +26,6 @@ async function sha256Hex(input: string): Promise<string> {
     .join('');
 }
 
-function parseQueryString(text: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const part of text.split('&')) {
-    if (!part) continue;
-    const [k, v] = part.split('=');
-    if (!k) continue;
-    out[decodeURIComponent(k)] = decodeURIComponent(v || '');
-  }
-  return out;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -99,15 +88,16 @@ serve(async (req) => {
       throw new Error('OTP 저장 실패');
     }
 
-    const SMSCEO_USERKEY = Deno.env.get('SMSCEO_USERKEY');
-    const SMSCEO_USERID = Deno.env.get('SMSCEO_USERID');
-    const SMSCEO_CALLBACK = Deno.env.get('SMSCEO_CALLBACK');
+    // 쏘다(SSODAA) SMS API 환경변수
+    const SSODAA_TOKEN_KEY = Deno.env.get('SSODAA_TOKEN_KEY');
+    const SSODAA_API_KEY = Deno.env.get('SSODAA_API_KEY');
+    const SSODAA_SEND_PHONE = Deno.env.get('SSODAA_SEND_PHONE');
 
-    if (!SMSCEO_USERKEY || !SMSCEO_USERID || !SMSCEO_CALLBACK) {
+    if (!SSODAA_TOKEN_KEY || !SSODAA_API_KEY || !SSODAA_SEND_PHONE) {
       return json(
         {
           success: false,
-          error: 'SMS 설정이 필요합니다. (SMSCEO_USERKEY/SMSCEO_USERID/SMSCEO_CALLBACK)',
+          error: 'SMS 설정이 필요합니다. (SSODAA_TOKEN_KEY/SSODAA_API_KEY/SSODAA_SEND_PHONE)',
         },
         { status: 500 }
       );
@@ -115,26 +105,42 @@ serve(async (req) => {
 
     const msg = `[TrayStorage CONNECT] 인증번호는 ${code} 입니다. (5분 유효)`;
 
-    const url =
-      `http://link.smsceo.co.kr/sendsms_utf8.php?userkey=${encodeURIComponent(SMSCEO_USERKEY)}` +
-      `&userid=${encodeURIComponent(SMSCEO_USERID)}` +
-      `&phone=${encodeURIComponent(normalizedPhone)}` +
-      `&callback=${encodeURIComponent(SMSCEO_CALLBACK)}` +
-      `&msg=${encodeURIComponent(msg)}`;
+    // 쏘다 API 호출
+    const resp = await fetch('https://apis.ssodaa.com/sms/send/sms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'x-api-key': SSODAA_API_KEY,
+      },
+      body: JSON.stringify({
+        token_key: SSODAA_TOKEN_KEY,
+        msg_type: 'sms',
+        dest_phone: normalizedPhone,
+        send_phone: SSODAA_SEND_PHONE,
+        msg_body: msg,
+      }),
+    });
 
-    const resp = await fetch(url, { method: 'GET' });
-    const text = (await resp.text()).trim();
-    const parsed = parseQueryString(text);
-
-    const resultCode = parsed.result_code;
-
-    if (!resp.ok || resultCode !== '1') {
-      console.error('SMSCEO send failed:', { status: resp.status, text, parsed });
+    if (!resp.ok) {
+      console.error('SSODAA HTTP error:', { status: resp.status });
       return json(
         {
           success: false,
           error: '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
-          provider: { result_code: resultCode, result_msg: parsed.result_msg },
+        },
+        { status: 502 }
+      );
+    }
+
+    const smsResult = await resp.json();
+
+    if (smsResult.code !== '200') {
+      console.error('SSODAA send failed:', smsResult);
+      return json(
+        {
+          success: false,
+          error: smsResult.error || '문자 발송에 실패했습니다.',
+          provider: { code: smsResult.code, error: smsResult.error },
         },
         { status: 502 }
       );
