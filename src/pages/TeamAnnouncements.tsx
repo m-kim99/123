@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { MessageSquare, Send, Edit, Trash2 } from 'lucide-react';
+import { MessageSquare, Send } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -295,22 +297,23 @@ export function TeamAnnouncements() {
                                   <div className="flex gap-1">
                                     {comment.userId === user?.id && (
                                       <Button
-                                        variant="ghost"
-                                        size="sm"
+                                        variant="outline"
+                                        size="icon"
                                         onClick={() => {
                                           setEditingCommentId(comment.id);
                                           setEditingCommentContent(comment.content);
                                         }}
                                       >
-                                        <Edit className="h-3 w-3" />
+                                        <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
                                       </Button>
                                     )}
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="outline"
+                                      size="icon"
+                                      className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                       onClick={() => handleDeleteComment(comment.id, announcement.id)}
                                     >
-                                      <Trash2 className="h-3 w-3 text-red-600" />
+                                      <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                                     </Button>
                                   </div>
                                 )}

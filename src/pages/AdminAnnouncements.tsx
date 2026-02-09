@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -405,19 +407,18 @@ export function AdminAnnouncements() {
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="bg-white hover:bg-slate-50"
+                        size="icon"
                         onClick={() => openEditDialog(announcement)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="bg-white hover:bg-slate-50"
+                        size="icon"
+                        className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => openDeleteDialog(announcement.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -446,11 +447,11 @@ export function AdminAnnouncements() {
                           </div>
                           <Button
                             variant="outline"
-                            size="sm"
-                            className="bg-white hover:bg-slate-50"
+                            size="icon"
+                            className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                             onClick={() => handleDeleteComment(comment.id, announcement.id)}
                           >
-                            <Trash2 className="h-3 w-3 text-red-600" />
+                            <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
                           </Button>
                         </div>
                       ))}
