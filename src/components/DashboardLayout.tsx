@@ -14,6 +14,9 @@ import {
   User,
   Search,
   Share2,
+  FolderOpen,
+  Archive,
+  Megaphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,6 +87,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const FAQIcon = ({ className }: { className?: string }) => (
     <MessageSquare className={className} />
   );
+
 
   // 새 비밀번호 실시간 검증
   useEffect(() => {
@@ -475,12 +479,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     {
       name: '대분류 관리',
       href: `${basePath}/parent-categories`,
-      icon: FileText,
+      icon: FolderOpen,
     },
     {
       name: '세부 스토리지 관리',
       href: `${basePath}/subcategories`,
-      icon: FileText,
+      icon: Archive,
     },
     ...(isAdmin
       ? [{ name: '팀원 관리', href: `${basePath}/users`, icon: Users }]
@@ -489,7 +493,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [{ name: '공유받은 문서함', href: `${basePath}/shared`, icon: Share2 }]
       : []),
     { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
-    { name: '공지사항', href: `${basePath}/announcements`, icon: MessageSquare },
+    { name: '공지사항', href: `${basePath}/announcements`, icon: Megaphone },
     ...(isAdmin
       ? [
           {

@@ -106,6 +106,13 @@ serve(async (req) => {
     const msg = `[TrayStorage CONNECT] 인증번호는 ${code} 입니다. (5분 유효)`;
 
     // 쏘다 API 호출
+    console.log('=== 쏘다 API 호출 시작 ===');
+    console.log('SSODAA_API_KEY:', SSODAA_API_KEY ? '설정됨' : '없음');
+    console.log('SSODAA_TOKEN_KEY:', SSODAA_TOKEN_KEY ? '설정됨' : '없음');
+    console.log('SSODAA_SEND_PHONE:', SSODAA_SEND_PHONE ? '설정됨' : '없음');
+    console.log('dest_phone:', normalizedPhone);
+    console.log('msg_body:', msg);
+
     const resp = await fetch('https://apis.ssodaa.com/sms/send/sms', {
       method: 'POST',
       headers: {
@@ -121,18 +128,23 @@ serve(async (req) => {
       }),
     });
 
+    console.log('=== 쏘다 API 응답 ===');
+    console.log('HTTP Status:', resp.status);
+    console.log('Response OK:', resp.ok);
+
+    const smsResult = await resp.json();
+    console.log('Response Body:', JSON.stringify(smsResult, null, 2));
+
     if (!resp.ok) {
-      console.error('SSODAA HTTP error:', { status: resp.status });
+      console.error('SSODAA HTTP error:', { status: resp.status, body: smsResult });
       return json(
         {
           success: false,
-          error: '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+          error: smsResult?.error || '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
         },
         { status: 502 }
       );
     }
-
-    const smsResult = await resp.json();
 
     if (smsResult.code !== '200') {
       console.error('SSODAA send failed:', smsResult);

@@ -285,7 +285,12 @@ export function LoginPage() {
       console.log('send-phone-otp response:', { data, fnError });
 
       if (fnError) {
-        throw new Error(fnError.message || '문자 발송 실패');
+        let errMsg = fnError.message || '문자 발송 실패';
+        try {
+          const errBody = await fnError.context?.json();
+          if (errBody?.error) errMsg = errBody.error;
+        } catch {}
+        throw new Error(errMsg);
       }
 
       if (!data?.success) {
