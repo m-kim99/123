@@ -4127,14 +4127,21 @@ export function DocumentManagement() {
                 )}
               </div>
 
-              {/* OCR 결과 미리보기 */}
-              {replaceOcrText && (
+              {/* OCR 추출 텍스트 편집 */}
+              {replaceOcrText !== undefined && replaceOcrText !== '' && (
                 <div className="space-y-2">
-                  <Label>OCR 추출 텍스트 미리보기</Label>
-                  <div className="border rounded-md p-3 max-h-32 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
-                    {replaceOcrText.slice(0, 500)}
-                    {replaceOcrText.length > 500 && '...'}
+                  <div className="flex items-center justify-between">
+                    <Label>OCR 추출 텍스트</Label>
+                    <span className="text-xs text-slate-500">
+                      {replaceOcrText.length.toLocaleString()}자
+                    </span>
                   </div>
+                  <Textarea
+                    value={replaceOcrText}
+                    onChange={(e) => setReplaceOcrText(e.target.value)}
+                    className="min-h-[128px] max-h-48 text-sm font-mono"
+                    placeholder="OCR 텍스트를 편집하세요..."
+                  />
                 </div>
               )}
             </div>
