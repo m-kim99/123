@@ -1,22 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="_레이어_1" data-name="레이어 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: none;
-      }
-
-      .cls-2 {
-        fill: #2563eb;
-      }
-    </style>
-  </defs>
-  <rect class="cls-1" width="25" height="25" rx="5" ry="5"/>
-  <rect class="cls-1" width="25" height="25" rx="5" ry="5"/>
-  <g>
-    <path class="cls-2" d="M8,14s0,0,0,0l-2-2-2,2s0,0,0,0c0,0,0,0,0,0l2-2s0,0,0,0l2,2s0,0,0,0c0,0,0,0,0,0h0Z"/>
-    <path class="cls-2" d="M12,2c-2,0-4,0-5-2-1-1-2-3-2-5,0,0,0,0,0,0h0s0,0,0,0c0,2,0,3,2,4s3,2,4,2,4-1,5-3c0,0,0,0,0,0,0,0,0,0,0,0-1,2-4,4-6,4h0Z"/>
-    <path class="cls-2" d="M19,13s0,0,0,0c0-3-3-6-6-6-2,0-4,1-5,3,0,0,0,0,0,0,0,0,0,0,0,0,1-2,4-4,6-4,4,0,8,3,8,8s0,0,0,0h0Z"/>
-    <path class="cls-2" d="M19,14s0,0,0,0l-2-2s0,0,0,0c0,0,0,0,0,0l2,2,2-2s0,0,0,0c0,0,0,0,0,0l-2,2s0,0,0,0h0Z"/>
-  </g>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M21 10C21 10 18.995 7.26822 17.3662 5.63824C15.7373 4.00827 13.4864 3 11 3C6.02944 3 2 7.02944 2 12C2 16.9706 6.02944 21 11 21C15.1031 21 18.5649 18.2543 19.6482 14.5" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M21 10V4M21 10H15" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

@@ -1,23 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="_레이어_1" data-name="레이어 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: none;
-      }
-
-      .cls-2 {
-        fill: #2563eb;
-      }
-    </style>
-  </defs>
-  <rect class="cls-1" y="0" width="25" height="25" rx="5" ry="5"/>
-  <rect class="cls-1" y="0" width="25" height="25" rx="5" ry="5"/>
-  <g>
-    <g>
-      <path class="cls-2" d="M14,19s0,0,0,0v-4s0,0,0,0h4s0,0,0,0,0,0,0,0h-4v4s0,0,0,0h0Z"/>
-      <path class="cls-2" d="M14,2h-7s0,0,0,0V6s0,0,0,0h1s0,0,0,0v9s0,0,0,0l-4,4s0,0,0,0h0ZM8,18h6l3-3V7H8v12h0Z"/>
-    </g>
-    <path class="cls-2" d="M12,13s0,0,0,0h-2c0-2,0-2,0-2,0,0,0,0,0,0h1c0,0,3-2,3-2,0,0,0,0,0,0,0,0,0,0,0,0l-3,4s0,0,0,0c0,0,0,0,0,0h0Z"/>
-  </g>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="9" y="3" width="6" height="4" rx="1" stroke="#3B82F6" stroke-width="2"/>
+  <path d="M9 12L11 14L15 10" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="9" y1="17" x2="15" y2="17" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
 </svg>
