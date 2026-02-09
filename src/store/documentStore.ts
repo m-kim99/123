@@ -10,7 +10,6 @@ import {
 } from '@/lib/supabase';
 import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
-import { generateEmbedding } from '@/lib/embedding';
 import { createDocumentNotification, createShareNotification, deleteShareNotification } from '@/lib/notifications';
 import { SharedDocument } from '@/types/document';
 import { trackEvent } from '@/lib/analytics';
@@ -1214,28 +1213,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         throw storageError;
       }
 
-      let embedding: number[] | null = null;
-
-      try {
-        // 재시도 로직이 포함된 generateEmbedding 호출
-        embedding = await generateEmbedding(
-          `${document.name} ${document.ocrText || ''}`,
-          3,    // 최대 3번 재시도
-          1000  // 첫 재시도 1초 대기
-        );
-      } catch (embeddingError) {
-        console.error('Failed to generate embedding after retries:', embeddingError);
-        
-        // 재시도해도 실패한 경우 사용자에게 알림
-        toast({
-          title: '임베딩 생성 실패',
-          description: `문서 "${document.name}"의 AI 검색 인덱스 생성에 실패했습니다. 키워드 검색은 가능하지만 AI 검색 품질이 저하될 수 있습니다.`,
-          variant: 'destructive',
-        });
-        
-        embedding = null;
-      }
-
       const { data, error } = await supabase
         .from('documents')
         .insert({
@@ -1248,7 +1225,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           ocr_text: document.ocrText || null, // OCR 텍스트
           uploaded_by: null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
-          embedding: embedding,
           uploaded_at: new Date().toISOString(), // 클라이언트 현재 시간을 ISO 형식으로 전송 (타임존 정보 포함)
         })
         .select()
@@ -1336,7 +1312,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           file_size: document.file.size,
           file_ext: fileExt,
           has_ocr_text: !!document.ocrText,
-          embedding_created: !!embedding,
         });
       }
     } catch (err) {
@@ -1490,21 +1465,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         throw storageError;
       }
 
-      // 4. 임베딩 재생성 (OCR 텍스트가 있는 경우)
-      let embedding: number[] | null = null;
-      if (ocrText) {
-        try {
-          embedding = await generateEmbedding(
-            `${existingDoc.title} ${ocrText}`,
-            3,
-            1000
-          );
-        } catch (embeddingError) {
-          console.error('Failed to generate embedding:', embeddingError);
-        }
-      }
-
-      // 5. DB 업데이트
+      // 4. DB 업데이트
       const updateData: any = {
         file_path: newFilePath,
         file_size: file.size,
@@ -1512,10 +1473,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (ocrText !== undefined) {
         updateData.ocr_text = ocrText;
-      }
-
-      if (embedding) {
-        updateData.embedding = embedding;
       }
 
       const { error: updateError } = await supabase

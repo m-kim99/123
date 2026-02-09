@@ -203,7 +203,7 @@ export function Statistics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" />
                   <YAxis allowDecimals={false} />
                   <Tooltip formatter={(value: number) => `${value}건`} />
