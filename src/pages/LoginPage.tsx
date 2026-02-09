@@ -267,15 +267,6 @@ export function LoginPage() {
   const handleSendAdminOtp = async () => {
     const phone = normalizePhone(adminPhone);
 
-    if (!companyCodeVerified) {
-      toast({
-        title: '회사 인증 필요',
-        description: '먼저 회사 정보를 인증해주세요.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     if (!phone || phone.length < 10 || phone.length > 11) {
       toast({
         title: '휴대폰 번호 입력',
@@ -291,12 +282,14 @@ export function LoginPage() {
         body: { phone, purpose: 'admin_signup' },
       });
 
+      console.log('send-phone-otp response:', { data, fnError });
+
       if (fnError) {
         throw new Error(fnError.message || '문자 발송 실패');
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || '문자 발송 실패');
+        throw new Error(data?.error || data?.message || '문자 발송 실패');
       }
 
       setAdminOtpSent(true);
@@ -1078,7 +1071,7 @@ export function LoginPage() {
                       type="button"
                       variant="outline"
                       onClick={handleSendAdminOtp}
-                      disabled={isLoading || isSendingAdminOtp || !companyCodeVerified || !adminPhone.trim()}
+                      disabled={isLoading || isSendingAdminOtp || !adminPhone.trim()}
                       className="shrink-0"
                     >
                       {isSendingAdminOtp
