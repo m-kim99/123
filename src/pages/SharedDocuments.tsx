@@ -35,7 +35,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Download, Eye, X, FileText, Search, Loader2 } from 'lucide-react';
+import { Download, X, FileText, Search, Loader2 } from 'lucide-react';
+import previewIcon from '@/assets/preview.svg';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -275,7 +276,7 @@ export function SharedDocuments() {
                             variant="outline"
                             onClick={() => handleView(share.documentId)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
                           </Button>
                           {share.permission === 'download' && (
                             <Button

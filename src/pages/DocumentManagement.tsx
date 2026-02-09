@@ -17,6 +17,8 @@ import {
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
 import shareIcon from '@/assets/share.svg';
+import previewIcon from '@/assets/preview.svg';
+import changeIcon from '@/assets/change.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -3248,19 +3250,19 @@ export function DocumentManagement() {
                             <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto flex-wrap">
                               <Button
                                 variant="outline"
-                                size="sm"
+                                size="icon"
                                 onClick={() => handleOpenPreviewDocument(doc.id)}
+                                title="미리보기"
                               >
-                                문서 보기
+                                <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
+                                size="icon"
                                 onClick={() => handleOpenFileReplaceDialog(doc.id)}
                                 title="파일 교체"
                               >
-                                <Upload className="h-4 w-4 mr-1" />
-                                파일 교체
+                                <img src={changeIcon} alt="파일 교체" className="w-full h-full p-1.5" />
                               </Button>
                               <Button
                                 variant="outline"
@@ -4166,7 +4168,7 @@ export function DocumentManagement() {
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <img src={changeIcon} alt="파일 교체" className="w-4 h-4 mr-2" />
                     파일 교체
                   </>
                 )}

@@ -4,6 +4,7 @@ import { FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
 import shareIcon from '@/assets/share.svg';
+import previewIcon from '@/assets/preview.svg';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1157,10 +1158,11 @@ export function CategoryDetail() {
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => handleOpenPreviewDocument(doc.id)}
+                        title="미리보기"
                       >
-                        미리 보기
+                        <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
