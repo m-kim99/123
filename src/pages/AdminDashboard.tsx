@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Users, FileText, Building2, TrendingUp, Star, Clock } from 'lucide-react';
+import { FileText, Building2, Star, Clock, FolderOpen, Archive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -45,13 +45,13 @@ export function AdminDashboard() {
     {
       title: '총 대분류',
       value: parentCategories.length,
-      icon: Users,
+      icon: FolderOpen,
       color: '#3b82f6',
     },
     {
       title: '총 세부 스토리지',
       value: subcategories.length,
-      icon: TrendingUp,
+      icon: Archive,
       color: '#8B5CF6',
     },
   ];
@@ -183,7 +183,7 @@ export function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+                <Building2 className="h-5 w-5 text-blue-500" />
                 많이 사용하는 부서
               </CardTitle>
             </CardHeader>

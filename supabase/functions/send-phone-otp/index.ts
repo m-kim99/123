@@ -49,20 +49,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    const { data: latest } = await supabase
-      .from('phone_verifications')
-      .select('id, last_sent_at, send_count, verified_at')
-      .eq('phone', normalizedPhone)
-      .eq('purpose', resolvedPurpose)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const lastSentAtMs = latest?.last_sent_at ? new Date(latest.last_sent_at).getTime() : 0;
-    if (lastSentAtMs && Date.now() - lastSentAtMs < 60_000) {
-      return json({ success: false, error: '잠시 후 다시 시도해주세요.' }, { status: 429 });
-    }
-
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const otpHash = await sha256Hex(code);
 
@@ -76,7 +62,7 @@ serve(async (req) => {
         otp_hash: otpHash,
         expires_at: expiresAt.toISOString(),
         attempts: 0,
-        send_count: (latest?.send_count ?? 0) + 1,
+        send_count: 1,
         last_sent_at: new Date().toISOString(),
         verified_at: null,
       })
