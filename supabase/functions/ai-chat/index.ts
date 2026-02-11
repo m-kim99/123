@@ -455,12 +455,48 @@ serve(async (req) => {
       const functionResults = [];
       for (const fc of functionCalls) { const { name, args } = fc.functionCall; console.log(`Executing function: ${name}`, args); const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); }
       const finalContents = [...contents, { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, { role: 'user', parts: functionResults }];
-      const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
-      if (!finalResponse.ok) { const errBody = await finalResponse.text(); console.error('Final Gemini error:', finalResponse.status, errBody); throw new Error('Final Gemini API request failed'); }
-      const finalData = await finalResponse.json();
-      console.log('Final Gemini response:', JSON.stringify(finalData.candidates?.[0]?.content?.parts?.map((p: any) => ({ thought: p.thought, hasText: !!p.text, textLen: p.text?.length }))));
-      const allParts = finalData.candidates?.[0]?.content?.parts || [];
-      const finalText = allParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || allParts.filter((p: any) => p.text).map((p: any) => p.text).join('') || '응답을 생성할 수 없습니다.';
+      let finalText = '';
+      try {
+        const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } }) });
+        if (finalResponse.ok) {
+          const finalData = await finalResponse.json();
+          console.log('Final Gemini parts:', JSON.stringify(finalData.candidates?.[0]?.content?.parts?.map((p: any) => ({ thought: p.thought, hasText: !!p.text, textLen: p.text?.length }))));
+          const allParts = finalData.candidates?.[0]?.content?.parts || [];
+          finalText = allParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || allParts.filter((p: any) => p.text).map((p: any) => p.text).join('');
+        } else { console.error('Final Gemini error:', finalResponse.status); }
+      } catch (e) { console.error('Final Gemini call failed:', e); }
+      // Gemini가 텍스트를 생성하지 못하면 함수 결과로 직접 응답 구성
+      if (!finalText) {
+        console.log('Gemini produced no text, building fallback from function results');
+        const lines: string[] = [];
+        for (const fr of functionResults) {
+          const fn = fr.functionResponse?.name;
+          const res = fr.functionResponse?.response?.result;
+          if (fn === 'unified_search' && res?.results?.length > 0) {
+            lines.push('검색 결과입니다:\n');
+            const typeLabels: any = { department: '📁 부서', parent_category: '📂 대분류', subcategory: '📋 세부카테고리', document: '📄 문서' };
+            for (const r of res.results) {
+              lines.push(`**${typeLabels[r.type] || r.type}**: ${r.name}`);
+              if (r.path) lines.push(`  경로: ${r.path}`);
+              if (r.link) lines.push(`  → ${r.link}`);
+              lines.push('');
+            }
+          } else if (fn === 'search_documents' && res?.documents?.length > 0) {
+            lines.push(`문서 ${res.count}건을 찾았습니다:\n`);
+            for (const d of res.documents.slice(0, 5)) { lines.push(`- **${d.title}** (${d.department} → ${d.parent_category} → ${d.subcategory})`); }
+          } else if (fn === 'search_by_keyword' && res?.results?.length > 0) {
+            lines.push(`${res.count}건을 찾았습니다:\n`);
+            for (const r of res.results) { lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); }
+          } else if (res?.error) {
+            lines.push(res.error);
+          } else if (res?.path) {
+            lines.push(`경로: ${res.path}${res.link ? `\n→ ${res.link}` : ''}`);
+          } else if (res?.name) {
+            lines.push(`${res.name}${res.storage_location ? ` - 보관 위치: ${res.storage_location}` : ''}`);
+          }
+        }
+        finalText = lines.length > 0 ? lines.join('\n') : '검색 결과를 정리하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+      }
       // 검색 함수 실행 결과에서 문서 메타데이터 추출
       let docsMetadata: any[] = [];
       for (const fr of functionResults) {
