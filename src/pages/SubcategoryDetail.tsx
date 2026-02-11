@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2 } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit } from 'lucide-react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
@@ -54,6 +54,7 @@ export function SubcategoryDetail() {
     shareDocument,
     unshareDocument,
     updateDocumentFile,
+    updateDocumentOcrText,
   } = useDocumentStore();
 
   const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
@@ -61,6 +62,14 @@ export function SubcategoryDetail() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isExtractingUploadOcr, setIsExtractingUploadOcr] = useState(false);
+  const [uploadOcrText, setUploadOcrText] = useState('');
+  const [uploadOcrPreview, setUploadOcrPreview] = useState('');
+  const [isEditingUploadOcr, setIsEditingUploadOcr] = useState(false);
+  const [editedUploadOcrText, setEditedUploadOcrText] = useState('');
+  const [uploadOcrStatus, setUploadOcrStatus] = useState('');
+  const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
+  const [isSavingUploadOcr, setIsSavingUploadOcr] = useState(false);
   const [isRegisteringNfc, setIsRegisteringNfc] = useState(false);
   const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
   const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
@@ -146,7 +155,7 @@ export function SubcategoryDetail() {
   );
 
   // 새 문서 업로드용 dropzone
-  const handleNewFileDrop = useCallback((acceptedFiles: File[]) => {
+  const handleNewFileDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!acceptedFiles || acceptedFiles.length === 0) return;
     const file = acceptedFiles[0];
     const lowerName = file.name.toLowerCase();
@@ -167,6 +176,27 @@ export function SubcategoryDetail() {
     }
     setSelectedFile(file);
     setUploadTitle(file.name.replace(/\.[^/.]+$/, ''));
+    setUploadOcrText('');
+    setUploadOcrPreview('');
+    setIsEditingUploadOcr(false);
+    setEditedUploadOcrText('');
+    setLastUploadedDocId(null);
+
+    // OCR 추출 시작
+    setIsExtractingUploadOcr(true);
+    setUploadOcrStatus('OCR 텍스트 추출 중...');
+
+    try {
+      const ocrText = await extractText(file);
+      setUploadOcrText(ocrText);
+      setUploadOcrPreview(ocrText);
+      setUploadOcrStatus('OCR 추출 완료. 업로드 버튼을 눌러 업로드하세요.');
+    } catch (error) {
+      console.error('OCR 추출 오류:', error);
+      setUploadOcrStatus('OCR 추출 실패. 텍스트 없이 업로드됩니다.');
+    } finally {
+      setIsExtractingUploadOcr(false);
+    }
   }, []);
 
   const {
@@ -192,12 +222,62 @@ export function SubcategoryDetail() {
     }
   };
 
+  // OCR 텍스트 편집 핸들러
+  const handleEditUploadOcr = () => {
+    setEditedUploadOcrText(uploadOcrPreview);
+    setIsEditingUploadOcr(true);
+  };
+
+  const handleCancelEditUploadOcr = () => {
+    setIsEditingUploadOcr(false);
+    setEditedUploadOcrText('');
+  };
+
+  const handleApplyUploadOcrEdit = () => {
+    setUploadOcrText(editedUploadOcrText);
+    setUploadOcrPreview(editedUploadOcrText);
+    setIsEditingUploadOcr(false);
+    setEditedUploadOcrText('');
+  };
+
+  const handleSaveUploadOcrText = async () => {
+    if (!lastUploadedDocId) return;
+    setIsSavingUploadOcr(true);
+    try {
+      await updateDocumentOcrText(lastUploadedDocId, editedUploadOcrText);
+      setUploadOcrText(editedUploadOcrText);
+      setUploadOcrPreview(editedUploadOcrText);
+      setIsEditingUploadOcr(false);
+      setEditedUploadOcrText('');
+    } catch (error) {
+      console.error('OCR 텍스트 저장 오류:', error);
+    } finally {
+      setIsSavingUploadOcr(false);
+    }
+  };
+
+  const handleCopyUploadOcrText = () => {
+    const text = isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview;
+    navigator.clipboard.writeText(text);
+    toast({ title: '복사 완료', description: 'OCR 텍스트가 클립보드에 복사되었습니다.' });
+  };
+
   const handleUpload = async () => {
     if (!selectedFile || !subcategory || !parentCategoryId) {
       return;
     }
 
+    if (isExtractingUploadOcr) {
+      toast({
+        title: 'OCR 추출 중',
+        description: 'OCR 추출이 완료될 때까지 기다려주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const title = uploadTitle.trim() || selectedFile.name;
+    const finalOcrText = isEditingUploadOcr ? editedUploadOcrText : uploadOcrText;
 
     setIsUploading(true);
     try {
@@ -211,7 +291,7 @@ export function SubcategoryDetail() {
         uploader: user?.name || user?.email || 'Unknown',
         classified: false,
         file: selectedFile,
-        ocrText: undefined,
+        ocrText: finalOcrText || undefined,
       });
 
       toast({
@@ -221,6 +301,11 @@ export function SubcategoryDetail() {
 
       setSelectedFile(null);
       setUploadTitle('');
+      setUploadOcrText('');
+      setUploadOcrPreview('');
+      setIsEditingUploadOcr(false);
+      setEditedUploadOcrText('');
+      setUploadOcrStatus('');
     } catch (error) {
       console.error('문서 업로드 실패:', error);
       toast({
@@ -1125,6 +1210,17 @@ export function SubcategoryDetail() {
               </div>
             </div>
 
+            {/* OCR 추출 상태 */}
+            {uploadOcrStatus && selectedFile && (
+              <div className="flex items-center gap-2 text-sm">
+                {isExtractingUploadOcr && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                {!isExtractingUploadOcr && uploadOcrPreview && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                <span className={isExtractingUploadOcr ? 'text-blue-600' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
+                  {uploadOcrStatus}
+                </span>
+              </div>
+            )}
+
             {/* 문서 제목 */}
             <div className="space-y-2">
               <Label className="font-medium">문서 제목</Label>
@@ -1134,6 +1230,88 @@ export function SubcategoryDetail() {
                 placeholder="파일 이름이 기본값으로 사용됩니다."
               />
             </div>
+
+            {/* OCR 추출 텍스트 미리보기/편집 */}
+            {uploadOcrPreview && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">OCR 추출 텍스트</CardTitle>
+                  <CardDescription>
+                    {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}자 {isEditingUploadOcr ? '(편집 중)' : '추출됨'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500">
+                      {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}자 {isEditingUploadOcr ? '(편집 중)' : '추출됨'}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyUploadOcrText}
+                      >
+                        복사
+                      </Button>
+                      {isEditingUploadOcr ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEditUploadOcr}
+                            disabled={isSavingUploadOcr}
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={lastUploadedDocId ? handleSaveUploadOcrText : handleApplyUploadOcrEdit}
+                            disabled={isSavingUploadOcr}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            {isSavingUploadOcr ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                저장 중...
+                              </>
+                            ) : lastUploadedDocId ? (
+                              '저장'
+                            ) : (
+                              '적용'
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEditUploadOcr}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          편집
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {isEditingUploadOcr ? (
+                    <Textarea
+                      value={editedUploadOcrText}
+                      onChange={(e) => setEditedUploadOcrText(e.target.value)}
+                      className="min-h-64 text-sm font-mono"
+                      placeholder="OCR 텍스트를 편집하세요..."
+                    />
+                  ) : (
+                    <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                      {uploadOcrPreview}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* 업로드 가이드라인 */}
             <div className="bg-slate-50 rounded-lg p-4 space-y-2">
@@ -1150,11 +1328,15 @@ export function SubcategoryDetail() {
             {/* 업로드 버튼 */}
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
+              disabled={!selectedFile || isUploading || isExtractingUploadOcr}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              {isUploading ? '업로드 중...' : '업로드'}
+              {isExtractingUploadOcr ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              {isExtractingUploadOcr ? 'OCR 추출 중...' : isUploading ? '업로드 중...' : '업로드'}
             </Button>
           </CardContent>
         </Card>
