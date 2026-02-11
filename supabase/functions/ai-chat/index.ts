@@ -46,6 +46,31 @@ async function getDeptIds(supabase: any, companyId: string) {
   return data?.map((d: any) => d.id) || [];
 }
 
+function extractKeywords(message: string): string {
+  let text = message.trim();
+  text = text.replace(/(어딨어|어딨니|어딨나|어디야|어디에\s*있|찾아줘|찾아봐|보여줘|알려줘|검색해줘|검색해|해줘)/g, '');
+  const stops = new Set(['어디', '관련', '문서', '위치', '경로', '검색', '에', '에서', '좀', '있어', '있나', '뭐야', '몇', '개', '수는', '해', '은', '는', '이', '가', '을', '를', '의', '요', '줘']);
+  return text.split(/\s+/).filter(w => w && !stops.has(w)).join(' ').trim();
+}
+
+async function preSearch(supabase: any, companyId: string, deptIds: string[], keyword: string): Promise<any> {
+  if (!keyword || keyword.length < 1 || !deptIds.length) return null;
+  try {
+    const [deptR, catR, subR, docR] = await Promise.all([
+      supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`).limit(5),
+      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(5),
+      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(5),
+      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(5)
+    ]);
+    const results: any[] = [];
+    for (const d of deptR.data || []) results.push({ type: '부서', name: d.name, path: d.name, link: `/admin/department/${d.id}` });
+    for (const c of catR.data || []) results.push({ type: '대분류', name: c.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` });
+    for (const s of subR.data || []) results.push({ type: '세부카테고리', name: s.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location });
+    for (const d of docR.data || []) results.push({ type: '문서', name: d.title, path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: d.subcategory?.storage_location, ocr_snippet: d.ocr_text?.substring(0, 150), uploaded_at: d.uploaded_at });
+    return results.length > 0 ? { keyword, results } : null;
+  } catch (e) { console.error('preSearch error:', e); return null; }
+}
+
 async function executeFunction(name: string, args: any, supabase: any, companyId: string, userId: string): Promise<string> {
   const deptIds = await getDeptIds(supabase, companyId);
   try {
@@ -385,65 +410,39 @@ serve(async (req) => {
     const { data: userData } = await supabase.from('users').select('company_id').eq('id', userId).single();
     if (!userData?.company_id) throw new Error('User company not found');
     const userCompanyId = userData.company_id;
+
+    // ★ Phase 1: 서버 사이드 프리서치 - Gemini 호출 전 자동 검색
+    const deptIds = await getDeptIds(supabase, userCompanyId);
+    const keywords = extractKeywords(message);
+    const searchContext = keywords ? await preSearch(supabase, userCompanyId, deptIds, keywords) : null;
+    console.log(`PreSearch: keywords="${keywords}", results=${searchContext?.results?.length || 0}`);
+
+    // 프리서치 결과를 시스템 프롬프트에 포함 (간소화된 프롬프트)
+    const searchDataBlock = searchContext
+      ? `\n## 사전 검색 결과 (키워드: "${searchContext.keyword}")\n아래는 사용자 메시지에서 자동 검색한 결과입니다. 검색/찾기/위치 질문이면 이 데이터로 바로 답변하세요 (함수 호출 불필요).\n${JSON.stringify(searchContext.results, null, 1)}`
+      : '';
+
     const systemInstruction = `당신은 문서 관리 시스템(DMS)의 AI 어시스턴트 '트로이'입니다.
 
 ## 시스템 구조
-이 DMS는 4단 계층 구조입니다: **부서 → 대분류 → 세부카테고리(세부 스토리지) → 문서**
-사용자가 검색하는 키워드는 이 4단 계층 중 어디에든 해당할 수 있습니다.
+4단 계층: 부서 → 대분류 → 세부카테고리(세부 스토리지) → 문서
 
 ## 필수 규칙
 1. 반드시 한국어로만 답변하세요.
-2. 함수 이름이나 사용법을 사용자에게 설명하지 마세요. 내부 동작을 노출하지 마세요.
-3. "~함수를 사용할 수 있습니다", "~를 호출해볼까요?" 같은 답변은 절대 하지 마세요.
+2. 함수 이름이나 내부 동작을 사용자에게 절대 노출하지 마세요.
+${searchDataBlock}
 
-## 함수 호출 기준
-
-### ⭐ 위치/검색 질문 시 최우선: unified_search
-사용자가 "~어디", "~어딨어", "~찾아줘", "~위치", "~있어?" 등으로 특정 항목을 찾을 때는 **반드시 unified_search를 먼저 호출**하세요.
-- unified_search는 부서, 대분류, 세부카테고리, 문서를 한 번에 검색합니다.
-- 결과에 전체 경로(path)와 이동 링크(link)가 포함됩니다.
-- 결과의 type 필드로 어떤 계층인지 구분됩니다 (department, parent_category, subcategory, document).
-- 예: "근로계약서 어딨어" → unified_search(keyword: "근로계약서") → 대분류로 발견되면 "인사팀 > 근로계약서(2024년)" 경로와 링크 안내
-
-### 함수를 호출해야 하는 경우 (반드시 호출 후 결과로 답변):
-- 부서, 대분류, 세부카테고리, 문서에 대한 질문
-- 사용자/팀원 정보 질문 (예: "김철수 어디 소속?", "인사팀에 누가 있어?")
-- 문서 검색, 위치, 경로 질문 (OCR 본문 내용 검색 포함)
-- 통계, 개수, 순위 질문
-- NFC, 만료, 공유 관련 질문
-- "내 정보", "내 부서" 등 본인 정보 질문
-
-### 함수 호출 없이 직접 답변하는 경우:
-- 인사 (안녕, 안녕하세요, 반가워 등)
-- 감사 (고마워, 감사합니다 등)
-- 일반 대화 (뭐해?, 심심해 등)
-- DMS와 무관한 질문 (날씨, 뉴스 등)
-- 사용법 질문 (어떻게 써?, 뭘 물어볼 수 있어?)
+## 답변 기준
+- **사전 검색 결과가 있고 검색/찾기/위치 질문이면**: 사전 검색 결과를 바탕으로 바로 답변. 경로(path)와 이동 링크(link)를 안내. 함수 호출 불필요.
+- **통계/개수/순위/사용자 정보/NFC/만료/공유 등**: 적절한 함수를 호출하여 답변.
+- **인사/감사/일반 대화/사용법 질문**: 직접 답변.
 
 ## 답변 형식
-- 검색 결과의 경로(path)를 자연스럽게 안내하세요.
-- 링크 포함 시: "→ /admin/..." 또는 "→ /team/..." 형식으로 이동 링크를 안내하세요.
-- 여러 계층에서 결과가 나오면 계층별로 구분해서 안내하세요.
-- 답변은 친절하고 간결하게
+- 경로: "부서 → 대분류 → 세부카테고리" 형식으로 자연스럽게 안내
+- 링크: "→ /admin/..." 형식
+- 문서가 OCR 본문에서 발견된 경우 해당 문서의 경로와 링크를 안내
+- 친절하고 간결하게`;
 
-## 예시
-사용자: "안녕"
-→ 직접 답변: "안녕하세요! 무엇을 도와드릴까요?"
-
-사용자: "근로계약서 어딨어"
-→ unified_search 호출 (keyword: "근로계약서") → "근로계약서 관련 항목을 찾았습니다:\n\n📁 **대분류**\n- 근로계약서(2024년): 인사팀 → 근로계약서(2024년)\n  → /admin/department/.../category/...\n- 근로계약서(2025년): 인사팀 → 근로계약서(2025년)\n  → /admin/department/.../category/..."
-
-사용자: "김철수는 어디 소속이야?"
-→ get_user_info 호출 → "김철수 님은 인사팀 소속입니다."
-
-사용자: "문서 몇 개야?"
-→ get_total_counts 호출 → "현재 총 42개의 문서가 등록되어 있습니다."
-
-사용자: "계약서 내용에 '갱신' 이라는 단어가 있는 문서 찾아줘"
-→ search_documents 호출 (keyword: "갱신") → OCR 텍스트에서 검색 후 결과 안내
-
-사용자: "뭘 물어볼 수 있어?"
-→ 직접 답변: "부서/문서/카테고리 정보, 문서 검색, 팀원 정보, NFC 현황, 만료 임박 문서 등을 물어보실 수 있어요!"`;
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
     const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
     if (!initialResponse.ok) { const errorText = await initialResponse.text(); console.error('Gemini API error:', errorText); throw new Error('Gemini API request failed'); }
@@ -451,6 +450,17 @@ serve(async (req) => {
     const candidate = initialData.candidates?.[0];
     if (!candidate) throw new Error('No response from Gemini');
     const functionCalls = candidate.content?.parts?.filter((p: any) => p.functionCall) || [];
+
+    // 프리서치 결과로 docsMetadata 생성 (Gemini가 함수를 호출하든 안 하든)
+    let docsMetadata: any[] = [];
+    if (searchContext?.results?.length > 0) {
+      docsMetadata = searchContext.results.map((r: any) => ({
+        id: r.link || '', title: r.name || '', categoryName: r.parent_category || '', departmentName: r.department || '',
+        storageLocation: r.storage_location || null, uploadDate: r.uploaded_at || '', subcategoryId: '', parentCategoryId: '',
+        type: r.type || '', path: r.path || '', link: r.link || ''
+      }));
+    }
+
     if (functionCalls.length > 0) {
       const functionResults = [];
       for (const fc of functionCalls) { const { name, args } = fc.functionCall; console.log(`Executing function: ${name}`, args); const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); }
@@ -460,83 +470,37 @@ serve(async (req) => {
         const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } }) });
         if (finalResponse.ok) {
           const finalData = await finalResponse.json();
-          console.log('Final Gemini parts:', JSON.stringify(finalData.candidates?.[0]?.content?.parts?.map((p: any) => ({ thought: p.thought, hasText: !!p.text, textLen: p.text?.length }))));
           const allParts = finalData.candidates?.[0]?.content?.parts || [];
           finalText = allParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || allParts.filter((p: any) => p.text).map((p: any) => p.text).join('');
         } else { console.error('Final Gemini error:', finalResponse.status); }
       } catch (e) { console.error('Final Gemini call failed:', e); }
-      // Gemini가 텍스트를 생성하지 못하면 함수 결과로 직접 응답 구성
+      // Gemini 실패 시 함수 결과로 직접 응답
       if (!finalText) {
-        console.log('Gemini produced no text, building fallback from function results');
         const lines: string[] = [];
         for (const fr of functionResults) {
-          const fn = fr.functionResponse?.name;
           const res = fr.functionResponse?.response?.result;
-          if (fn === 'unified_search' && res?.results?.length > 0) {
-            lines.push('검색 결과입니다:\n');
-            const typeLabels: any = { department: '📁 부서', parent_category: '📂 대분류', subcategory: '📋 세부카테고리', document: '📄 문서' };
-            for (const r of res.results) {
-              lines.push(`**${typeLabels[r.type] || r.type}**: ${r.name}`);
-              if (r.path) lines.push(`  경로: ${r.path}`);
-              if (r.link) lines.push(`  → ${r.link}`);
-              lines.push('');
-            }
-          } else if (fn === 'search_documents' && res?.documents?.length > 0) {
-            lines.push(`문서 ${res.count}건을 찾았습니다:\n`);
-            for (const d of res.documents.slice(0, 5)) { lines.push(`- **${d.title}** (${d.department} → ${d.parent_category} → ${d.subcategory})`); }
-          } else if (fn === 'search_by_keyword' && res?.results?.length > 0) {
-            lines.push(`${res.count}건을 찾았습니다:\n`);
-            for (const r of res.results) { lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); }
-          } else if (res?.error) {
-            lines.push(res.error);
-          } else if (res?.path) {
-            lines.push(`경로: ${res.path}${res.link ? `\n→ ${res.link}` : ''}`);
-          } else if (res?.name) {
-            lines.push(`${res.name}${res.storage_location ? ` - 보관 위치: ${res.storage_location}` : ''}`);
-          }
+          if (res?.results?.length > 0) { for (const r of res.results) { lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); } }
+          else if (res?.documents?.length > 0) { for (const d of res.documents.slice(0, 5)) { lines.push(`- **${d.title}** (${d.department} → ${d.parent_category})`); } }
+          else if (res?.error) { lines.push(res.error); }
+          else if (res && typeof res === 'object') { lines.push(JSON.stringify(res)); }
         }
-        finalText = lines.length > 0 ? lines.join('\n') : '검색 결과를 정리하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+        finalText = lines.length > 0 ? lines.join('\n') : '결과를 정리하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
       }
-      // 검색 함수 실행 결과에서 문서 메타데이터 추출
-      let docsMetadata: any[] = [];
+      // 함수 결과에서도 docsMetadata 보강
       for (const fr of functionResults) {
-        const funcName = fr.functionResponse?.name;
-        const result = fr.functionResponse?.response?.result;
-        if (funcName === 'search_documents' && result?.documents?.length > 0) {
-          docsMetadata = result.documents.map((d: any) => ({
-            id: d.id || '',
-            title: d.title || '',
-            categoryName: d.parent_category || '',
-            departmentName: d.department || '',
-            storageLocation: d.storage_location || null,
-            uploadDate: d.uploaded_at || '',
-            subcategoryId: d.subcategory_id || '',
-            parentCategoryId: d.parent_category_id || ''
-          }));
-        }
-        if (funcName === 'unified_search' && result?.results?.length > 0) {
-          docsMetadata = result.results.map((r: any) => ({
-            id: r.link || '',
-            title: r.name || '',
-            categoryName: r.parent_category || r.name || '',
-            departmentName: r.department || '',
-            storageLocation: r.storage_location || null,
-            uploadDate: r.uploaded_at || '',
-            subcategoryId: '',
-            parentCategoryId: '',
-            type: r.type || '',
-            path: r.path || '',
-            link: r.link || ''
-          }));
+        const fn = fr.functionResponse?.name; const res = fr.functionResponse?.response?.result;
+        if (fn === 'search_documents' && res?.documents?.length > 0) {
+          docsMetadata = res.documents.map((d: any) => ({ id: d.id || '', title: d.title || '', categoryName: d.parent_category || '', departmentName: d.department || '', storageLocation: d.storage_location || null, uploadDate: d.uploaded_at || '', subcategoryId: d.subcategory_id || '', parentCategoryId: d.parent_category_id || '' }));
         }
       }
-      // 문서 메타데이터가 있으면 ---DOCS--- 구분자로 추가
       const responseWithDocs = docsMetadata.length > 0 ? `${finalText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` : finalText;
       return new Response(responseWithDocs, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     } else {
+      // Gemini가 함수 호출 없이 직접 응답 (프리서치 데이터 활용)
       const nfParts = candidate.content?.parts || [];
       const responseText = nfParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || nfParts.filter((p: any) => p.text).map((p: any) => p.text).join('') || '응답을 생성할 수 없습니다.';
-      return new Response(responseText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
+      const responseWithDocs = docsMetadata.length > 0 ? `${responseText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` : responseText;
+      return new Response(responseWithDocs, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     }
   } catch (error) { console.error('Error:', error); const message = error instanceof Error ? error.message : 'Unknown error'; return new Response(JSON.stringify({ error: message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }); }
 });
