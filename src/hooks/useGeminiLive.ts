@@ -217,8 +217,11 @@ export function useGeminiLive({
     }
   }, [onError]);
 
-  // 스트리밍 중단
+  // 스트리밍 중단 - 실제 스트리밍 중일 때만 동작
   const stopStreaming = useCallback(() => {
+    const hasActiveResources = workletNodeRef.current || audioContextRef.current || mediaStreamRef.current;
+    if (!hasActiveResources) return;
+
     if (workletNodeRef.current) {
       workletNodeRef.current.disconnect();
       workletNodeRef.current = null;
@@ -238,10 +241,14 @@ export function useGeminiLive({
     console.log('⏹️ 스트리밍 중단');
   }, []);
 
-  // 연결 종료
+  // 연결 종료 - 실제 연결되어 있을 때만 동작
   const disconnect = useCallback(() => {
+    const hasConnection = wsRef.current || workletNodeRef.current || audioContextRef.current || mediaStreamRef.current;
+    if (!hasConnection) return;
+
     stopStreaming();
     if (wsRef.current) {
+      console.log('🔌 연결 종료');
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -251,7 +258,6 @@ export function useGeminiLive({
   // 텍스트를 Gemini에 보내서 음성 응답 받기
   const sendText = useCallback((text: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket 연결되지 않음');
       return;
     }
 

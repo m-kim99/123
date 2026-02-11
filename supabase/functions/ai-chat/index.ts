@@ -14,7 +14,7 @@ const functionDeclarations = [
   { name: 'get_ranking', description: '문서가 가장 많은/적은 부서, 대분류, 세부카테고리 순위를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, order: { type: 'string', enum: ['most', 'least'] }, limit: { type: 'number' } }, required: ['entity_type', 'order'] } },
   { name: 'get_empty_entities', description: '문서가 없는 세부카테고리, 세부카테고리가 없는 대분류, 대분류가 없는 부서 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['entity_type'] } },
   { name: 'check_exists', description: '특정 이름의 부서/대분류/세부카테고리/문서가 존재하는지 확인합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
-  { name: 'search_documents', description: '키워드로 문서를 검색합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['keyword'] } },
+  { name: 'search_documents', description: '키워드로 문서를 검색합니다. 문서 제목뿐 아니라 OCR로 추출된 본문 텍스트에서도 검색합니다. 사용자가 문서 내용, OCR 텍스트, 본문 내용으로 검색할 때 이 함수를 사용하세요.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색 키워드 (제목 또는 OCR 본문 내용)' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['keyword'] } },
   { name: 'search_by_keyword', description: '키워드로 부서/대분류/세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['keyword', 'entity_type'] } },
   { name: 'get_hierarchy_path', description: '문서나 세부카테고리의 전체 계층 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'get_parent_info', description: '특정 항목의 상위 항목 정보를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory', 'parent_category'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
@@ -132,10 +132,10 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'search_documents': {
         const { keyword, department_name, limit = 10 } = args;
-        let query = supabase.from('documents').select('id, title, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ id: d.id, title: d.title, subcategory: d.subcategory?.name, subcategory_id: d.subcategory_id || d.subcategory?.id, parent_category: d.parent_category?.name, parent_category_id: d.parent_category_id || d.parent_category?.id, department: d.department?.name, department_id: d.department?.id, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
+        return JSON.stringify({ documents: (data || []).map((d: any) => ({ id: d.id, title: d.title, ocr_snippet: d.ocr_text ? d.ocr_text.substring(0, 200) : null, subcategory: d.subcategory?.name, subcategory_id: d.subcategory_id || d.subcategory?.id, parent_category: d.parent_category?.name, parent_category_id: d.parent_category_id || d.parent_category?.id, department: d.department?.name, department_id: d.department?.id, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
       }
       case 'search_by_keyword': {
         const { keyword, entity_type } = args;
@@ -339,7 +339,7 @@ serve(async (req) => {
 ### 함수를 호출해야 하는 경우 (반드시 호출 후 결과로 답변):
 - 부서, 대분류, 세부카테고리, 문서에 대한 질문
 - 사용자/팀원 정보 질문 (예: "김철수 어디 소속?", "인사팀에 누가 있어?")
-- 문서 검색, 위치, 경로 질문
+- 문서 검색, 위치, 경로 질문 (OCR 본문 내용 검색 포함)
 - 통계, 개수, 순위 질문
 - NFC, 만료, 공유 관련 질문
 - "내 정보", "내 부서" 등 본인 정보 질문
@@ -365,10 +365,13 @@ serve(async (req) => {
 사용자: "문서 몇 개야?"
 → get_total_counts 호출 → "현재 총 42개의 문서가 등록되어 있습니다."
 
+사용자: "계약서 내용에 '갱신' 이라는 단어가 있는 문서 찾아줘"
+→ search_documents 호출 (keyword: "갱신") → OCR 텍스트에서 검색 후 결과 안내
+
 사용자: "뭘 물어볼 수 있어?"
 → 직접 답변: "부서/문서/카테고리 정보, 문서 검색, 팀원 정보, NFC 현황, 만료 임박 문서 등을 물어보실 수 있어요!"`;
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
-    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-native-audio-preview-12-2025:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
+    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
     if (!initialResponse.ok) { const errorText = await initialResponse.text(); console.error('Gemini API error:', errorText); throw new Error('Gemini API request failed'); }
     const initialData = await initialResponse.json();
     const candidate = initialData.candidates?.[0];
@@ -378,7 +381,7 @@ serve(async (req) => {
       const functionResults = [];
       for (const fc of functionCalls) { const { name, args } = fc.functionCall; console.log(`Executing function: ${name}`, args); const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); }
       const finalContents = [...contents, { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, { role: 'user', parts: functionResults }];
-      const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-native-audio-preview-12-2025:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
+      const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
       if (!finalResponse.ok) throw new Error('Final Gemini API request failed');
       const finalData = await finalResponse.json();
       const finalText = finalData.candidates?.[0]?.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';

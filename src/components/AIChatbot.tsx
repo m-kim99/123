@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
-import { useGeminiLive } from '@/hooks/useGeminiLive';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuthStore } from '@/store/authStore';
 import expandIcon from '@/assets/expand.svg';
@@ -126,58 +124,86 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
-  // Gemini Live 모드 (TTS용)
+  // 음성 모드 상태
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const isVoiceModeRef = useRef(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
-  
-  // TTS 재생 완료 시 STT 재시작 (에코 방지)
-  const handlePlaybackComplete = useCallback(() => {
-    console.log('🔊 TTS 재생 완료, STT 재시작');
-    // 음성 모드가 활성화되어 있으면 STT 재시작 (약간의 딜레이로 에코 방지)
-    if (isVoiceModeRef.current && speechRecognitionRef.current) {
-      setTimeout(() => {
-        if (isVoiceModeRef.current) {
-          speechRecognitionRef.current?.startListening();
-        }
-      }, 300);
-    }
-  }, []);
-  
-  const audioPlayer = useAudioPlayer({ onPlaybackComplete: handlePlaybackComplete });
-  const geminiLiveRef = useRef<{ sendText: (text: string) => void; isConnected: boolean } | null>(null);
 
   // 음성 중복 처리 방지용 ref
   const lastProcessedTranscriptRef = useRef<string>('');
   const isProcessingSpeechRef = useRef<boolean>(false);
 
-  // Live 모드용 시스템 프롬프트 - TTS 역할만 수행
-  const liveSystemPrompt = `당신은 한국어 음성 안내 도우미입니다. 반드시 모든 내용을 한국어로만 읽어주세요.
+  // 브라우저 TTS로 텍스트 읽기 (읽는 동안 STT 정지)
+  const speakText = useCallback((text: string) => {
+    if (!text || !window.speechSynthesis) return;
 
-중요 규칙:
-1. 모든 숫자는 반드시 한국어로 읽으세요. 절대 영어로 읽지 마세요.
-   - 연도: "2025"는 "이천이십오년", "2024"는 "이천이십사년"
-   - 일반 숫자: "123"은 "백이십삼", "45"는 "사십오"
-   - 날짜: "12월 25일"은 "십이월 이십오일"
-2. 마크다운 기호(**, -, →, 등)는 자연스럽게 생략하거나 말로 바꿔서 읽어주세요.
-3. 영어 단어가 있어도 한국어 발음으로 읽어주세요.
-4. 추가 설명이나 해석을 덧붙이지 말고, 전달받은 내용만 친절하게 읽어주세요.`;
+    // 마크다운 기호 정리
+    const cleanText = text
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/→\s*\/[^\s\n]+/g, '')
+      .replace(/문서:\s*\/[^\s\n]+/g, '')
+      .replace(/[-·•]/g, '')
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\n/g, '. ')
+      .trim();
 
-  // 사용자 음성 전사 처리 - generateResponse 호출 후 음성으로 읽어줌
+    if (!cleanText) return;
+
+    // TTS 시작 전 STT 정지
+    if (speechRecognitionRef.current?.isListening) {
+      speechRecognitionRef.current.stopListening();
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 1.1;
+    utterance.pitch = 1.0;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      // TTS 완료 후 음성모드면 STT 재시작
+      if (isVoiceModeRef.current && speechRecognitionRef.current) {
+        setTimeout(() => {
+          if (isVoiceModeRef.current) {
+            speechRecognitionRef.current?.startListening();
+          }
+        }, 300);
+      }
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      if (isVoiceModeRef.current && speechRecognitionRef.current) {
+        speechRecognitionRef.current?.startListening();
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  // 사용자 음성 전사 처리 - generateResponse 호출 후 TTS로 읽어줌
   const handleUserSpeech = useCallback(async (transcript: string) => {
     const trimmed = transcript.trim();
     if (!trimmed) return;
 
-    // 중복 처리 방지: 동일 transcript거나 이미 처리 중이면 무시
+    // 중복 처리 방지
     if (trimmed === lastProcessedTranscriptRef.current || isProcessingSpeechRef.current) {
-      console.log('🎤 중복 전사 무시:', trimmed);
       return;
     }
 
     lastProcessedTranscriptRef.current = trimmed;
     isProcessingSpeechRef.current = true;
-    
-    console.log('🎤 사용자 전사:', trimmed);
+
+    // STT 일시정지 (응답 생성 동안)
+    if (speechRecognitionRef.current?.isListening) {
+      speechRecognitionRef.current.stopListening();
+    }
     
     // 1. 사용자 메시지 + 빈 assistant 메시지 추가
     const userMessage: ChatMessage = {
@@ -200,7 +226,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     ]);
     setIsTyping(true);
     
-    // 2. generateResponse 호출 (콜백으로 스트리밍 + docs 업데이트)
+    // 2. generateResponse 호출
     let finalText = '';
     let firstChunkReceived = false;
     
@@ -232,17 +258,24 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         );
       });
       
-      // 3. 최종 응답을 Gemini Live로 음성 출력
-      if (finalText && geminiLiveRef.current?.isConnected) {
-        geminiLiveRef.current.sendText(finalText);
+      // 3. 최종 응답을 브라우저 TTS로 읽기
+      if (finalText && isVoiceModeRef.current) {
+        speakText(finalText);
+      } else if (isVoiceModeRef.current && speechRecognitionRef.current) {
+        // TTS 할 내용이 없으면 바로 STT 재시작
+        speechRecognitionRef.current.startListening();
       }
     } catch (error) {
       console.error('응답 생성 오류:', error);
+      // 에러 시에도 음성모드면 STT 재시작
+      if (isVoiceModeRef.current && speechRecognitionRef.current) {
+        speechRecognitionRef.current.startListening();
+      }
     } finally {
       setIsTyping(false);
       isProcessingSpeechRef.current = false;
     }
-  }, [messages]);
+  }, [messages, speakText]);
 
   // Web Speech API로 음성 인식 (STT)
   const speechRecognition = useSpeechRecognition({
@@ -257,55 +290,27 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
   });
 
-  // Gemini Live API (TTS용)
-  const geminiLive = useGeminiLive({
-    apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
-    systemPrompt: liveSystemPrompt,
-    onTranscript: () => {
-      // Gemini가 읽어주는 내용은 이미 채팅에 표시되었으므로 무시
-    },
-    onAudioData: (audioData) => {
-      // TTS 재생 중에는 STT 일시정지 (되먹임 방지)
-      if (speechRecognitionRef.current?.isListening) {
-        speechRecognitionRef.current.stopListening();
-      }
-      audioPlayer.play(audioData);
-    },
-    onError: (error) => {
-      console.error('Live API 오류:', error);
-    },
-  });
-
   // speechRecognition을 ref에 저장 (콜백에서 접근용)
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
 
-  // geminiLive를 ref에 저장
-  useEffect(() => {
-    geminiLiveRef.current = {
-      sendText: geminiLive.sendText,
-      isConnected: geminiLive.isConnected,
-    };
-  }, [geminiLive.sendText, geminiLive.isConnected]);
-
   // 음성 모드 토글
-  const toggleLiveVoice = useCallback(async () => {
+  const toggleLiveVoice = useCallback(() => {
     if (isVoiceMode) {
       // 음성 모드 종료
       isVoiceModeRef.current = false;
       speechRecognition.stopListening();
-      geminiLive.disconnect();
-      audioPlayer.stop();
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
       setIsVoiceMode(false);
     } else {
-      // 음성 모드 시작: Gemini Live 연결 (TTS용) + 음성 인식 시작 (STT용)
+      // 음성 모드 시작: STT 시작
       isVoiceModeRef.current = true;
-      await geminiLive.connect();
       speechRecognition.startListening();
       setIsVoiceMode(true);
     }
-  }, [isVoiceMode, speechRecognition, geminiLive, audioPlayer]);
+  }, [isVoiceMode, speechRecognition]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -619,7 +624,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 />
               </button>
             </form>
-            {audioPlayer.isPlaying && (
+            {isSpeaking && (
               <div className="text-xs text-green-600 animate-pulse text-center pb-2">🔊 AI가 답변 중...</div>
             )}
           </CardContent>
