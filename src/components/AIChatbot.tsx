@@ -287,6 +287,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
     onError: (error) => {
       console.error('음성 인식 오류:', error);
+      if (error === 'not-allowed') {
+        isVoiceModeRef.current = false;
+        setIsVoiceMode(false);
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-system`,
+          role: 'assistant' as const,
+          content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
+          timestamp: new Date(),
+        }]);
+      }
     },
   });
 
@@ -296,7 +306,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   }, [speechRecognition]);
 
   // 음성 모드 토글
-  const toggleLiveVoice = useCallback(() => {
+  const toggleLiveVoice = useCallback(async () => {
     if (isVoiceMode) {
       // 음성 모드 종료
       isVoiceModeRef.current = false;
@@ -305,10 +315,21 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       setIsSpeaking(false);
       setIsVoiceMode(false);
     } else {
-      // 음성 모드 시작: STT 시작
-      isVoiceModeRef.current = true;
-      speechRecognition.startListening();
-      setIsVoiceMode(true);
+      // 마이크 권한 확인 후 음성 모드 시작
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        isVoiceModeRef.current = true;
+        speechRecognition.startListening();
+        setIsVoiceMode(true);
+      } catch {
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-system`,
+          role: 'assistant' as const,
+          content: '🎤 마이크 권한이 필요합니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
+          timestamp: new Date(),
+        }]);
+      }
     }
   }, [isVoiceMode, speechRecognition]);
 
