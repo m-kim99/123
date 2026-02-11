@@ -74,16 +74,16 @@ serve(async (req) => {
       throw new Error('OTP 저장 실패');
     }
 
-    // 쏘다(SSODAA) SMS API 환경변수
-    const SSODAA_TOKEN_KEY = Deno.env.get('SSODAA_TOKEN_KEY');
-    const SSODAA_API_KEY = Deno.env.get('SSODAA_API_KEY');
-    const SSODAA_SEND_PHONE = Deno.env.get('SSODAA_SEND_PHONE');
+    // CoolSMS(solapi) API 환경변수
+    const COOLSMS_API_KEY = Deno.env.get('COOLSMS_API_KEY');
+    const COOLSMS_API_SECRET = Deno.env.get('COOLSMS_API_SECRET');
+    const COOLSMS_SEND_PHONE = Deno.env.get('COOLSMS_SEND_PHONE');
 
-    if (!SSODAA_TOKEN_KEY || !SSODAA_API_KEY || !SSODAA_SEND_PHONE) {
+    if (!COOLSMS_API_KEY || !COOLSMS_API_SECRET || !COOLSMS_SEND_PHONE) {
       return json(
         {
           success: false,
-          error: 'SMS 설정이 필요합니다. (SSODAA_TOKEN_KEY/SSODAA_API_KEY/SSODAA_SEND_PHONE)',
+          error: 'SMS 설정이 필요합니다. (COOLSMS_API_KEY/COOLSMS_API_SECRET/COOLSMS_SEND_PHONE)',
         },
         { status: 500 }
       );
@@ -91,54 +91,66 @@ serve(async (req) => {
 
     const msg = `[TrayStorage CONNECT] 인증번호는 ${code} 입니다. (5분 유효)`;
 
-    // 쏘다 API 호출
-    console.log('=== 쏘다 API 호출 시작 ===');
-    console.log('SSODAA_API_KEY:', SSODAA_API_KEY ? '설정됨' : '없음');
-    console.log('SSODAA_TOKEN_KEY:', SSODAA_TOKEN_KEY ? '설정됨' : '없음');
-    console.log('SSODAA_SEND_PHONE:', SSODAA_SEND_PHONE ? '설정됨' : '없음');
-    console.log('dest_phone:', normalizedPhone);
-    console.log('msg_body:', msg);
+    // CoolSMS(solapi) HMAC 인증 헤더 생성
+    const date = new Date().toISOString();
+    const salt = crypto.randomUUID();
+    const hmacKey = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(COOLSMS_API_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      hmacKey,
+      new TextEncoder().encode(date + salt)
+    );
+    const signature = Array.from(new Uint8Array(signatureBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
 
-    const resp = await fetch('https://apis.ssodaa.com/sms/send/sms', {
+    console.log('=== CoolSMS API 호출 시작 ===');
+    console.log('dest_phone:', normalizedPhone);
+
+    const resp = await fetch('https://api.solapi.com/messages/v4/send', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'x-api-key': SSODAA_API_KEY,
+        'Content-Type': 'application/json',
+        'Authorization': `HMAC-SHA256 apiKey=${COOLSMS_API_KEY}, date=${date}, salt=${salt}, signature=${signature}`,
       },
       body: JSON.stringify({
-        token_key: SSODAA_TOKEN_KEY,
-        msg_type: 'sms',
-        dest_phone: normalizedPhone,
-        send_phone: SSODAA_SEND_PHONE,
-        msg_body: msg,
+        message: {
+          to: normalizedPhone,
+          from: COOLSMS_SEND_PHONE,
+          text: msg,
+        },
       }),
     });
 
-    console.log('=== 쏘다 API 응답 ===');
+    console.log('=== CoolSMS API 응답 ===');
     console.log('HTTP Status:', resp.status);
-    console.log('Response OK:', resp.ok);
 
     const smsResult = await resp.json();
     console.log('Response Body:', JSON.stringify(smsResult, null, 2));
 
     if (!resp.ok) {
-      console.error('SSODAA HTTP error:', { status: resp.status, body: smsResult });
+      console.error('CoolSMS HTTP error:', { status: resp.status, body: smsResult });
       return json(
         {
           success: false,
-          error: smsResult?.error || '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+          error: smsResult?.errorMessage || '문자 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
         },
         { status: 502 }
       );
     }
 
-    if (smsResult.code !== '200') {
-      console.error('SSODAA send failed:', smsResult);
+    if (smsResult.statusCode && String(smsResult.statusCode) !== '2000') {
+      console.error('CoolSMS send failed:', smsResult);
       return json(
         {
           success: false,
-          error: smsResult.error || '문자 발송에 실패했습니다.',
-          provider: { code: smsResult.code, error: smsResult.error },
+          error: smsResult.errorMessage || '문자 발송에 실패했습니다.',
         },
         { status: 502 }
       );

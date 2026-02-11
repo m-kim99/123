@@ -15,15 +15,15 @@ const functionDeclarations = [
   { name: 'get_empty_entities', description: '문서가 없는 세부카테고리, 세부카테고리가 없는 대분류, 대분류가 없는 부서 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['entity_type'] } },
   { name: 'check_exists', description: '특정 이름의 부서/대분류/세부카테고리/문서가 존재하는지 확인합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'search_documents', description: '키워드로 문서를 검색합니다. 문서 제목뿐 아니라 OCR로 추출된 본문 텍스트에서도 검색합니다. 사용자가 문서 내용, OCR 텍스트, 본문 내용으로 검색할 때 이 함수를 사용하세요.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색 키워드 (제목 또는 OCR 본문 내용)' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['keyword'] } },
-  { name: 'search_by_keyword', description: '키워드로 부서/대분류/세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['keyword', 'entity_type'] } },
-  { name: 'get_hierarchy_path', description: '문서나 세부카테고리의 전체 계층 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'search_by_keyword', description: '키워드로 부서/대분류/세부카테고리를 검색합니다. 결과에 소속 부서, 상위 항목, 경로, 링크 정보가 포함됩니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['keyword', 'entity_type'] } },
+  { name: 'get_hierarchy_path', description: '부서/대분류/세부카테고리/문서의 전체 계층 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'document', 'subcategory'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'get_parent_info', description: '특정 항목의 상위 항목 정보를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory', 'parent_category'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'get_navigation_link', description: '특정 항목으로 이동하는 링크를 생성합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'list_all', description: '전체 부서/대분류/세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, limit: { type: 'number' } }, required: ['entity_type'] } },
   { name: 'list_children', description: '특정 항목의 하위 목록을 조회합니다.', parameters: { type: 'object', properties: { parent_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, parent_name: { type: 'string' }, limit: { type: 'number' } }, required: ['parent_type', 'parent_name'] } },
   { name: 'list_recent_documents', description: '최근 업로드된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { days: { type: 'number' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: [] } },
   { name: 'list_filtered', description: 'NFC 등록 여부, 만료 임박 여부 등으로 필터링된 세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { filter_type: { type: 'string', enum: ['nfc_registered', 'nfc_unregistered', 'expiring_soon', 'expired'] }, days: { type: 'number' } }, required: ['filter_type'] } },
-  { name: 'get_storage_location', description: '세부카테고리 또는 문서의 실제 저장 위치를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
+  { name: 'get_storage_location', description: '대분류/세부카테고리/문서의 실제 저장 위치를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'search_by_location', description: '저장 위치로 세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { location_keyword: { type: 'string' } }, required: ['location_keyword'] } },
   { name: 'get_nfc_status', description: 'NFC 등록 현황 요약 또는 특정 세부카테고리의 NFC 등록 여부를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string' } }, required: [] } },
   { name: 'get_department_members', description: '특정 부서의 소속 팀원 목록을 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string' } }, required: ['department_name'] } },
@@ -37,7 +37,8 @@ const functionDeclarations = [
   { name: 'get_document_share_info', description: '특정 문서의 공유 정보를 조회합니다.', parameters: { type: 'object', properties: { document_name: { type: 'string' } }, required: ['document_name'] } },
   { name: 'get_shares_with_user', description: '특정 사용자와 주고받은 공유 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
   { name: 'list_users_by_role', description: '역할(관리자, 팀원 등)별로 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { role: { type: 'string', description: '역할 (admin, manager, team 등)' } }, required: ['role'] } },
-  { name: 'list_all_users', description: '회사의 전체 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { limit: { type: 'number' } }, required: [] } }
+  { name: 'list_all_users', description: '회사의 전체 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { limit: { type: 'number' } }, required: [] } },
+  { name: 'unified_search', description: '키워드로 부서, 대분류, 세부카테고리, 문서를 한 번에 통합 검색합니다. 각 결과에 전체 계층 경로(부서→대분류→세부카테고리→문서)와 이동 링크가 포함됩니다. 사용자가 특정 항목의 위치, 경로, 어디에 있는지 물을 때 이 함수를 최우선으로 사용하세요.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색 키워드' }, limit: { type: 'number', description: '결과 수 제한 (기본 10)' } }, required: ['keyword'] } }
 ];
 
 async function getDeptIds(supabase: any, companyId: string) {
@@ -140,10 +141,17 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       case 'search_by_keyword': {
         const { keyword, entity_type } = args;
         let results: any[] = [];
-        if (entity_type === 'department') { const { data } = await supabase.from('departments').select('name').eq('company_id', companyId).ilike('name', `%${keyword}%`); results = data || []; }
-        else if (entity_type === 'parent_category') { const { data } = await supabase.from('categories').select('name').in('department_id', deptIds).ilike('name', `%${keyword}%`); results = data || []; }
-        else { const { data } = await supabase.from('subcategories').select('name').in('department_id', deptIds).ilike('name', `%${keyword}%`); results = data || []; }
-        return JSON.stringify({ results: results.map((r: any) => r.name), count: results.length });
+        if (entity_type === 'department') {
+          const { data } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`);
+          results = (data || []).map((d: any) => ({ name: d.name, path: d.name, link: `/admin/department/${d.id}` }));
+        } else if (entity_type === 'parent_category') {
+          const { data } = await supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`);
+          results = (data || []).map((c: any) => ({ name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` }));
+        } else {
+          const { data } = await supabase.from('subcategories').select('id, name, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`);
+          results = (data || []).map((s: any) => ({ name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}` }));
+        }
+        return JSON.stringify({ results, count: results.length });
       }
       case 'get_hierarchy_path': {
         const { entity_type, name: n } = args;
@@ -151,6 +159,14 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           const { data: doc } = await supabase.from('documents').select('title, subcategory:subcategories(name), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('title', `%${n}%`).single();
           if (!doc) return JSON.stringify({ error: `'${n}' 문서를 찾을 수 없습니다.` });
           return JSON.stringify({ path: `${doc.department?.name} → ${doc.parent_category?.name} → ${doc.subcategory?.name} → ${doc.title}`, department: doc.department?.name, parent_category: doc.parent_category?.name, subcategory: doc.subcategory?.name, document: doc.title });
+        } else if (entity_type === 'parent_category') {
+          const { data: cat } = await supabase.from('categories').select('id, name, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${n}%`).limit(1).single();
+          if (!cat) return JSON.stringify({ error: `'${n}' 대분류를 찾을 수 없습니다.` });
+          return JSON.stringify({ path: `${cat.department?.name} → ${cat.name}`, department: cat.department?.name, parent_category: cat.name, link: `/admin/department/${cat.department?.id}/category/${cat.id}` });
+        } else if (entity_type === 'department') {
+          const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${n}%`).single();
+          if (!dept) return JSON.stringify({ error: `'${n}' 부서를 찾을 수 없습니다.` });
+          return JSON.stringify({ path: dept.name, department: dept.name, link: `/admin/department/${dept.id}` });
         } else {
           const { data: sub } = await supabase.from('subcategories').select('name, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('name', `%${n}%`).single();
           if (!sub) return JSON.stringify({ error: `'${n}' 세부카테고리를 찾을 수 없습니다.` });
@@ -205,7 +221,14 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_storage_location': {
         const { entity_type, name: n } = args;
-        if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('name, storage_location').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ name: data?.name, storage_location: data?.storage_location || '미지정' }); }
+        if (entity_type === 'parent_category') {
+          const { data: cat } = await supabase.from('categories').select('id, name, department:departments(name)').in('department_id', deptIds).ilike('name', `%${n}%`).limit(1).single();
+          if (!cat) return JSON.stringify({ error: `'${n}' 대분류를 찾을 수 없습니다.` });
+          const { data: subs } = await supabase.from('subcategories').select('name, storage_location').eq('parent_category_id', cat.id);
+          const locations = (subs || []).map((s: any) => ({ name: s.name, storage_location: s.storage_location || '미지정' }));
+          return JSON.stringify({ name: cat.name, department: cat.department?.name, type: 'parent_category', subcategory_locations: locations });
+        }
+        else if (entity_type === 'subcategory') { const { data } = await supabase.from('subcategories').select('name, storage_location').in('department_id', deptIds).ilike('name', `%${n}%`).single(); return JSON.stringify({ name: data?.name, storage_location: data?.storage_location || '미지정' }); }
         else { const { data } = await supabase.from('documents').select('title, subcategory:subcategories(storage_location)').in('department_id', deptIds).ilike('title', `%${n}%`).single(); return JSON.stringify({ name: data?.title, storage_location: data?.subcategory?.storage_location || '미지정' }); }
       }
       case 'search_by_location': {
@@ -309,6 +332,41 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         ]);
         return JSON.stringify({ user: targetUser.name, shared_by_me: (sharedByMe.data || []).map((s: any) => s.document?.title), shared_to_me: (sharedToMe.data || []).map((s: any) => s.document?.title) });
       }
+      case 'unified_search': {
+        const { keyword, limit: searchLimit = 10 } = args;
+        const allResults: any[] = [];
+
+        // 1) 부서 검색
+        const { data: depts } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`);
+        for (const d of depts || []) {
+          const { count: catCount } = await supabase.from('categories').select('id', { count: 'exact' }).eq('department_id', d.id);
+          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('department_id', d.id);
+          allResults.push({ type: 'department', name: d.name, path: d.name, link: `/admin/department/${d.id}`, parent_category_count: catCount || 0, document_count: docCount || 0 });
+        }
+
+        // 2) 대분류 검색
+        const { data: cats } = await supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`);
+        for (const c of cats || []) {
+          const { count: subCount } = await supabase.from('subcategories').select('id', { count: 'exact' }).eq('parent_category_id', c.id);
+          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('parent_category_id', c.id);
+          allResults.push({ type: 'parent_category', name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}`, subcategory_count: subCount || 0, document_count: docCount || 0 });
+        }
+
+        // 3) 세부카테고리 검색
+        const { data: subs } = await supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit);
+        for (const s of subs || []) {
+          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('subcategory_id', s.id);
+          allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정', document_count: docCount || 0 });
+        }
+
+        // 4) 문서 검색 (제목 + OCR)
+        const { data: docs } = await supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit);
+        for (const d of docs || []) {
+          allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: d.subcategory?.name, path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: d.subcategory?.storage_location || '미지정', uploaded_at: d.uploaded_at });
+        }
+
+        return JSON.stringify({ results: allResults.slice(0, searchLimit), total_count: allResults.length, breakdown: { departments: (depts || []).length, parent_categories: (cats || []).length, subcategories: (subs || []).length, documents: (docs || []).length } });
+      }
       default: return JSON.stringify({ error: `알 수 없는 함수: ${name}` });
     }
   } catch (error) { console.error(`Function ${name} error:`, error); return JSON.stringify({ error: `함수 실행 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }); }
@@ -329,12 +387,23 @@ serve(async (req) => {
     const userCompanyId = userData.company_id;
     const systemInstruction = `당신은 문서 관리 시스템(DMS)의 AI 어시스턴트 '트로이'입니다.
 
+## 시스템 구조
+이 DMS는 4단 계층 구조입니다: **부서 → 대분류 → 세부카테고리(세부 스토리지) → 문서**
+사용자가 검색하는 키워드는 이 4단 계층 중 어디에든 해당할 수 있습니다.
+
 ## 필수 규칙
 1. 반드시 한국어로만 답변하세요.
 2. 함수 이름이나 사용법을 사용자에게 설명하지 마세요. 내부 동작을 노출하지 마세요.
 3. "~함수를 사용할 수 있습니다", "~를 호출해볼까요?" 같은 답변은 절대 하지 마세요.
 
 ## 함수 호출 기준
+
+### ⭐ 위치/검색 질문 시 최우선: unified_search
+사용자가 "~어디", "~어딨어", "~찾아줘", "~위치", "~있어?" 등으로 특정 항목을 찾을 때는 **반드시 unified_search를 먼저 호출**하세요.
+- unified_search는 부서, 대분류, 세부카테고리, 문서를 한 번에 검색합니다.
+- 결과에 전체 경로(path)와 이동 링크(link)가 포함됩니다.
+- 결과의 type 필드로 어떤 계층인지 구분됩니다 (department, parent_category, subcategory, document).
+- 예: "근로계약서 어딨어" → unified_search(keyword: "근로계약서") → 대분류로 발견되면 "인사팀 > 근로계약서(2024년)" 경로와 링크 안내
 
 ### 함수를 호출해야 하는 경우 (반드시 호출 후 결과로 답변):
 - 부서, 대분류, 세부카테고리, 문서에 대한 질문
@@ -352,12 +421,17 @@ serve(async (req) => {
 - 사용법 질문 (어떻게 써?, 뭘 물어볼 수 있어?)
 
 ## 답변 형식
-- 링크 포함 시: "→ /admin/..." 또는 "→ /team/..." 형식
+- 검색 결과의 경로(path)를 자연스럽게 안내하세요.
+- 링크 포함 시: "→ /admin/..." 또는 "→ /team/..." 형식으로 이동 링크를 안내하세요.
+- 여러 계층에서 결과가 나오면 계층별로 구분해서 안내하세요.
 - 답변은 친절하고 간결하게
 
 ## 예시
 사용자: "안녕"
 → 직접 답변: "안녕하세요! 무엇을 도와드릴까요?"
+
+사용자: "근로계약서 어딨어"
+→ unified_search 호출 (keyword: "근로계약서") → "근로계약서 관련 항목을 찾았습니다:\n\n📁 **대분류**\n- 근로계약서(2024년): 인사팀 → 근로계약서(2024년)\n  → /admin/department/.../category/...\n- 근로계약서(2025년): 인사팀 → 근로계약서(2025년)\n  → /admin/department/.../category/..."
 
 사용자: "김철수는 어디 소속이야?"
 → get_user_info 호출 → "김철수 님은 인사팀 소속입니다."
@@ -400,6 +474,21 @@ serve(async (req) => {
             uploadDate: d.uploaded_at || '',
             subcategoryId: d.subcategory_id || '',
             parentCategoryId: d.parent_category_id || ''
+          }));
+        }
+        if (funcName === 'unified_search' && result?.results?.length > 0) {
+          docsMetadata = result.results.map((r: any) => ({
+            id: r.link || '',
+            title: r.name || '',
+            categoryName: r.parent_category || r.name || '',
+            departmentName: r.department || '',
+            storageLocation: r.storage_location || null,
+            uploadDate: r.uploaded_at || '',
+            subcategoryId: '',
+            parentCategoryId: '',
+            type: r.type || '',
+            path: r.path || '',
+            link: r.link || ''
           }));
         }
       }

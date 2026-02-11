@@ -617,22 +617,57 @@ function generateFallbackResponse(message: string): string {
     }
   }
 
-  // 1. 위치 질문: "어디" 포함 시
+  // 1. 위치 질문: "어디" 포함 시 — 4단 계층 전체 검색
   if (text.includes('어디')) {
-    const results = searchDocuments(text);
+    const keyword = text.replace(/어디|어딨|있어|찾아|위치|줘|요|\?/g, '').trim().toLowerCase();
+    const { parentCategories, subcategories } = store;
+    const allLines: string[] = [];
 
-    if (results.length === 0) {
-      return '해당 키워드와 관련된 문서를 찾지 못했어요. 다른 키워드로 다시 검색해 주세요.';
+    // 대분류 검색
+    const matchedParentCats = parentCategories.filter((pc) =>
+      pc.name.toLowerCase().includes(keyword)
+    );
+    if (matchedParentCats.length > 0) {
+      allLines.push('📁 **대분류**에서 찾았습니다:');
+      for (const pc of matchedParentCats.slice(0, 5)) {
+        const dept = departments.find((d) => d.id === pc.departmentId);
+        allLines.push(`- ${pc.name}\n  · 부서: ${dept?.name || '부서 정보 없음'}\n  · 세부 스토리지: ${pc.subcategoryCount}개\n  · 문서 수: ${pc.documentCount}건`);
+      }
     }
 
-    const lines = results.slice(0, 5).map((doc) => {
-      const location = doc.storageLocation || '위치 정보가 등록되지 않았습니다.';
-      const dept = doc.departmentName || '부서 정보 없음';
-      const category = doc.categoryName || '카테고리 정보 없음';
-      return `- 문서: ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 위치: ${location}`;
-    });
+    // 세부카테고리 검색
+    const matchedSubs = subcategories.filter((sc) =>
+      sc.name.toLowerCase().includes(keyword)
+    );
+    if (matchedSubs.length > 0) {
+      if (allLines.length > 0) allLines.push('');
+      allLines.push('📂 **세부 스토리지**에서 찾았습니다:');
+      for (const sc of matchedSubs.slice(0, 5)) {
+        const dept = departments.find((d) => d.id === sc.departmentId);
+        const parentCat = parentCategories.find((pc) => pc.id === sc.parentCategoryId);
+        const location = sc.storageLocation || '위치 미지정';
+        allLines.push(`- ${sc.name}\n  · 경로: ${dept?.name || ''} → ${parentCat?.name || ''} → ${sc.name}\n  · 보관 위치: ${location}\n  · 문서 수: ${sc.documentCount}건`);
+      }
+    }
 
-    return ['검색된 문서의 보관 위치입니다:', ...lines].join('\n');
+    // 문서 검색
+    const docResults = searchDocuments(text);
+    if (docResults.length > 0) {
+      if (allLines.length > 0) allLines.push('');
+      allLines.push('📄 **문서**에서 찾았습니다:');
+      for (const doc of docResults.slice(0, 5)) {
+        const location = doc.storageLocation || '위치 미지정';
+        const dept = doc.departmentName || '부서 정보 없음';
+        const category = doc.categoryName || '카테고리 정보 없음';
+        allLines.push(`- ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 위치: ${location}`);
+      }
+    }
+
+    if (allLines.length === 0) {
+      return '해당 키워드와 관련된 항목을 찾지 못했어요. 다른 키워드로 다시 검색해 주세요.';
+    }
+
+    return allLines.join('\n');
   }
 
   // 2. 문서 개수 질문: "문서 수" 또는 "몇 개" 포함 시
@@ -669,30 +704,60 @@ function generateFallbackResponse(message: string): string {
     return ['등록된 카테고리 목록입니다:', ...lines].join('\n');
   }
 
-  // 5. 기본: 검색 결과 또는 도움말
-  const results = searchDocuments(text);
+  // 5. 기본: 4단 계층 통합 검색 또는 도움말
+  const keyword = text.toLowerCase();
+  const { parentCategories, subcategories } = store;
+  const allLines: string[] = [];
 
-  if (results.length === 0) {
-    return [
-      '해당 키워드와 관련된 문서를 찾지 못했어요.',
-      '다음과 같이 질문해 보세요:',
-      '- "급여 명세 문서는 어디에 있어?"',
-      '- "전체 문서 수 알려줘"',
-      '- "부서별 문서 수 알려줘"',
-      '- "카테고리 목록 보여줘"',
-      '- "만기 임박 문서 알려줘"',
-      '- "공유한 문서 목록"',
-      '- "NFC 등록 현황"',
-    ].join('\n');
+  // 대분류 검색
+  const matchedPCs = parentCategories.filter((pc) => pc.name.toLowerCase().includes(keyword));
+  if (matchedPCs.length > 0) {
+    allLines.push('📁 **대분류**:');
+    for (const pc of matchedPCs.slice(0, 3)) {
+      const dept = departments.find((d) => d.id === pc.departmentId);
+      allLines.push(`- ${pc.name} (부서: ${dept?.name || '알 수 없음'}, 문서: ${pc.documentCount}건)`);
+    }
   }
 
-  const lines = results.slice(0, 5).map((doc) => {
-    const dept = doc.departmentName || '부서 정보 없음';
-    const category = doc.categoryName || '카테고리 정보 없음';
-    return `- 문서: ${doc.name} (부서: ${dept}, 카테고리: ${category})`;
-  });
+  // 세부카테고리 검색
+  const matchedSCs = subcategories.filter((sc) => sc.name.toLowerCase().includes(keyword));
+  if (matchedSCs.length > 0) {
+    if (allLines.length > 0) allLines.push('');
+    allLines.push('📂 **세부 스토리지**:');
+    for (const sc of matchedSCs.slice(0, 3)) {
+      const dept = departments.find((d) => d.id === sc.departmentId);
+      const parentCat = parentCategories.find((pc) => pc.id === sc.parentCategoryId);
+      allLines.push(`- ${sc.name} (${dept?.name || ''} → ${parentCat?.name || ''}, 문서: ${sc.documentCount}건)`);
+    }
+  }
 
-  return ['다음 문서를 찾았습니다:', ...lines].join('\n');
+  // 문서 검색
+  const results = searchDocuments(text);
+  if (results.length > 0) {
+    if (allLines.length > 0) allLines.push('');
+    allLines.push('📄 **문서**:');
+    for (const doc of results.slice(0, 5)) {
+      const dept = doc.departmentName || '부서 정보 없음';
+      const category = doc.categoryName || '카테고리 정보 없음';
+      allLines.push(`- ${doc.name} (부서: ${dept}, 카테고리: ${category})`);
+    }
+  }
+
+  if (allLines.length > 0) {
+    return ['다음 항목을 찾았습니다:', ...allLines].join('\n');
+  }
+
+  return [
+    '해당 키워드와 관련된 항목을 찾지 못했어요.',
+    '다음과 같이 질문해 보세요:',
+    '- "급여 명세 문서는 어디에 있어?"',
+    '- "전체 문서 수 알려줘"',
+    '- "부서별 문서 수 알려줘"',
+    '- "카테고리 목록 보여줘"',
+    '- "만기 임박 문서 알려줘"',
+    '- "공유한 문서 목록"',
+    '- "NFC 등록 현황"',
+  ].join('\n');
 }
 
 // 비동기 폴백 응답 생성 (만기, 공유, NFC 조회용)
