@@ -106,22 +106,45 @@ interface AIChatbotProps {
   primaryColor: string;
 }
 
+const CHAT_STORAGE_KEY = 'troy_chat_messages';
+const CHAT_OPEN_KEY = 'troy_chat_open';
+
+const defaultMessage: ChatMessage = {
+  id: '1',
+  role: 'assistant',
+  content: '안녕하세요! 저는 TrayStorage의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
+  timestamp: new Date(Date.now() - 60000),
+};
+
+function loadMessages(): ChatMessage[] {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+    }
+  } catch { /* ignore */ }
+  return [defaultMessage];
+}
+
 export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: '안녕하세요! 저는 TrayStorage의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
-      timestamp: new Date(Date.now() - 60000),
-    },
-  ]);
+  const [isOpen, setIsOpen] = useState(() => sessionStorage.getItem(CHAT_OPEN_KEY) === 'true');
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 대화 내용을 sessionStorage에 저장 (페이지 이동 시 유지)
+  useEffect(() => {
+    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    sessionStorage.setItem(CHAT_OPEN_KEY, String(isOpen));
+  }, [isOpen]);
 
 
   // 음성 모드 상태
