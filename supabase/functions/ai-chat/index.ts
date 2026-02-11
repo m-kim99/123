@@ -48,22 +48,24 @@ function extractKeywords(message: string): string {
     .join(' ').trim();
 }
 
-async function preSearch(supabase: any, companyId: string, deptIds: string[], keyword: string): Promise<any> {
-  if (!keyword || keyword.length < 1 || !deptIds.length) return null;
+async function preSearch(supabase: any, companyId: string, _deptIds: string[], keyword: string): Promise<any> {
+  if (!keyword || keyword.length < 1) return null;
   try {
-    // 다중 키워드 지원: 각 단어별 OR 조건 생성
     const words = keyword.split(/\s+/).filter(w => w.length >= 2);
     if (words.length === 0) { const w = keyword.trim(); if (w.length > 0) words.push(w); else return null; }
-    const deptOr = words.map(w => `name.ilike.%${w}%`).join(',');
-    const catOr = words.map(w => `name.ilike.%${w}%`).join(',');
-    const subOr = words.map(w => `name.ilike.%${w}%`).join(',');
-    const docOr = words.flatMap(w => [`title.ilike.%${w}%`, `ocr_text.ilike.%${w}%`]).join(',');
+    const nameOr = words.map(w => `name.ilike.*${w}*`).join(',');
+    const docOr = words.flatMap(w => [`title.ilike.*${w}*`, `ocr_text.ilike.*${w}*`]).join(',');
+    console.log(`preSearch: words=${JSON.stringify(words)}, docOr=${docOr}`);
     const [deptR, catR, subR, docR] = await Promise.all([
-      supabase.from('departments').select('id, name').eq('company_id', companyId).or(deptOr).limit(5),
-      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).or(catOr).limit(5),
-      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(subOr).limit(5),
-      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(docOr).limit(5)
+      supabase.from('departments').select('id, name').eq('company_id', companyId).or(nameOr).limit(5),
+      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').eq('company_id', companyId).or(nameOr).limit(5),
+      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').eq('company_id', companyId).or(nameOr).limit(5),
+      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').eq('company_id', companyId).or(docOr).limit(5)
     ]);
+    if (deptR.error) console.error('preSearch dept error:', deptR.error);
+    if (catR.error) console.error('preSearch cat error:', catR.error);
+    if (subR.error) console.error('preSearch sub error:', subR.error);
+    if (docR.error) console.error('preSearch doc error:', docR.error);
     const results: any[] = [];
     for (const d of deptR.data || []) results.push({ type: '부서', name: d.name, path: d.name, link: `/admin/department/${d.id}` });
     for (const c of catR.data || []) results.push({ type: '대분류', name: c.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` });
@@ -417,7 +419,7 @@ serve(async (req) => {
     const deptIds = await getDeptIds(supabase, userCompanyId);
     const keywords = extractKeywords(message);
     const searchContext = keywords ? await preSearch(supabase, userCompanyId, deptIds, keywords) : null;
-    console.log(`PreSearch: keywords="${keywords}", results=${searchContext?.results?.length || 0}`);
+    console.log(`PreSearch: message="${message}", keywords="${keywords}", results=${searchContext?.results?.length || 0}, firstResult=${JSON.stringify(searchContext?.results?.[0]?.name || 'none')}`);
 
     // 프리서치 결과를 시스템 프롬프트에 포함 (간소화된 프롬프트)
     const searchDataBlock = searchContext
@@ -434,15 +436,15 @@ serve(async (req) => {
 2. 함수 이름이나 내부 동작을 사용자에게 절대 노출하지 마세요.
 ${searchDataBlock}
 
-## 답변 기준
-- **사전 검색 결과가 있고 검색/찾기/위치 질문이면**: 사전 검색 결과를 바탕으로 바로 답변. 경로(path)와 이동 링크(link)를 안내. 함수 호출 불필요.
-- **통계/개수/순위/사용자 정보/NFC/만료/공유 등**: 적절한 함수를 호출하여 답변.
-- **인사/감사/일반 대화/사용법 질문**: 직접 답변.
+## 답변 기준 (우선순위)
+1. **사전 검색 결과가 있으면**: 반드시 해당 결과를 안내하세요. 사용자가 키워드만 입력해도 검색 의도로 간주합니다. 경로(path)와 이동 링크(link)를 함께 알려주세요. 함수 호출은 불필요합니다.
+2. **통계/개수/순위/사용자 정보/NFC/만료/공유 등**: 적절한 함수를 호출하여 답변.
+3. **인사/감사/일반 대화/사용법 질문**: 직접 답변.
 
 ## 답변 형식
 - 경로: "부서 → 대분류 → 세부카테고리" 형식으로 자연스럽게 안내
 - 링크: "→ /admin/..." 형식
-- 문서가 OCR 본문에서 발견된 경우 해당 문서의 경로와 링크를 안내
+- 문서가 OCR 본문에서 발견된 경우: OCR에서 발견된 내용 스니펫을 인용하고 해당 문서의 경로와 링크를 안내
 - 친절하고 간결하게`;
 
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
