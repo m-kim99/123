@@ -37,7 +37,18 @@ async function getDeptIds(supabase: any, companyId: string) {
   return data?.map((d: any) => d.id) || [];
 }
 
+const skipPatterns = new Set([
+  'hi', 'hello', 'hey', 'ok', 'yes', 'no', 'thanks', 'thank', 'bye',
+  '안녕', '안녕하세요', '안녕하십니까', '하이', '헬로', '반가워', '반갑습니다',
+  '감사', '감사합니다', '고마워', '고맙습니다', '수고', '수고하세요',
+  '네', '응', '아니', '아니요', '아니오', '좋아', '알겠어', '알겠습니다',
+  '됐어', '그래', '오케이', 'ㅎㅇ', 'ㅎㅎ', 'ㅋㅋ', 'ㅋ', 'ㅎ', 'ㄱㅅ',
+  '뭐해', '뭐하니', '잘자', '굿', '바이', '또봐',
+]);
+
 function extractKeywords(message: string): string {
+  const trimmed = message.trim().toLowerCase().replace(/[?!.,;~]+$/g, '');
+  if (skipPatterns.has(trimmed)) return '';
   let text = message.trim();
   text = text.replace(/(어딨어|어딨니|어딨나|어디야|어디에\s*있\S*|찾아줘|찾아봐|보여줘|알려줘|검색해줘|검색해|해줘|있나요|있어요|있나|있어|인가요|인가)/g, '');
   const stops = new Set(['어디', '관련', '문서', '위치', '경로', '검색', '에', '에서', '좀', '있어', '있나', '뭐야', '몇', '개', '수', '수는', '해', '은', '는', '이', '가', '을', '를', '의', '요', '줘', '뭐', '거', '건', '것', '좀', '나', '내']);
