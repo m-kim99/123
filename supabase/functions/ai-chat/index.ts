@@ -13,18 +13,10 @@ const functionDeclarations = [
   { name: 'get_subcategory_stats', description: '특정 세부카테고리의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string', description: '세부카테고리명' } }, required: ['subcategory_name'] } },
   { name: 'get_ranking', description: '문서가 가장 많은/적은 부서, 대분류, 세부카테고리 순위를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, order: { type: 'string', enum: ['most', 'least'] }, limit: { type: 'number' } }, required: ['entity_type', 'order'] } },
   { name: 'get_empty_entities', description: '문서가 없는 세부카테고리, 세부카테고리가 없는 대분류, 대분류가 없는 부서 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['entity_type'] } },
-  { name: 'check_exists', description: '특정 이름의 부서/대분류/세부카테고리/문서가 존재하는지 확인합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
-  { name: 'search_documents', description: '키워드로 문서를 검색합니다. 문서 제목뿐 아니라 OCR로 추출된 본문 텍스트에서도 검색합니다. 사용자가 문서 내용, OCR 텍스트, 본문 내용으로 검색할 때 이 함수를 사용하세요.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색 키워드 (제목 또는 OCR 본문 내용)' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: ['keyword'] } },
-  { name: 'search_by_keyword', description: '키워드로 부서/대분류/세부카테고리를 검색합니다. 결과에 소속 부서, 상위 항목, 경로, 링크 정보가 포함됩니다.', parameters: { type: 'object', properties: { keyword: { type: 'string' }, entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] } }, required: ['keyword', 'entity_type'] } },
-  { name: 'get_hierarchy_path', description: '부서/대분류/세부카테고리/문서의 전체 계층 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'document', 'subcategory'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
-  { name: 'get_parent_info', description: '특정 항목의 상위 항목 정보를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['document', 'subcategory', 'parent_category'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
-  { name: 'get_navigation_link', description: '특정 항목으로 이동하는 링크를 생성합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'list_all', description: '전체 부서/대분류/세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, limit: { type: 'number' } }, required: ['entity_type'] } },
   { name: 'list_children', description: '특정 항목의 하위 목록을 조회합니다.', parameters: { type: 'object', properties: { parent_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory'] }, parent_name: { type: 'string' }, limit: { type: 'number' } }, required: ['parent_type', 'parent_name'] } },
   { name: 'list_recent_documents', description: '최근 업로드된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { days: { type: 'number' }, department_name: { type: 'string' }, limit: { type: 'number' } }, required: [] } },
   { name: 'list_filtered', description: 'NFC 등록 여부, 만료 임박 여부 등으로 필터링된 세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { filter_type: { type: 'string', enum: ['nfc_registered', 'nfc_unregistered', 'expiring_soon', 'expired'] }, days: { type: 'number' } }, required: ['filter_type'] } },
-  { name: 'get_storage_location', description: '대분류/세부카테고리/문서의 실제 저장 위치를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
-  { name: 'search_by_location', description: '저장 위치로 세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { location_keyword: { type: 'string' } }, required: ['location_keyword'] } },
   { name: 'get_nfc_status', description: 'NFC 등록 현황 요약 또는 특정 세부카테고리의 NFC 등록 여부를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string' } }, required: [] } },
   { name: 'get_department_members', description: '특정 부서의 소속 팀원 목록을 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string' } }, required: ['department_name'] } },
   { name: 'get_user_info', description: '특정 사용자의 정보를 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
@@ -38,7 +30,6 @@ const functionDeclarations = [
   { name: 'get_shares_with_user', description: '특정 사용자와 주고받은 공유 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
   { name: 'list_users_by_role', description: '역할(관리자, 팀원 등)별로 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { role: { type: 'string', description: '역할 (admin, manager, team 등)' } }, required: ['role'] } },
   { name: 'list_all_users', description: '회사의 전체 사용자 목록을 조회합니다.', parameters: { type: 'object', properties: { limit: { type: 'number' } }, required: [] } },
-  { name: 'unified_search', description: '키워드로 부서, 대분류, 세부카테고리, 문서를 한 번에 통합 검색합니다. 각 결과에 전체 계층 경로(부서→대분류→세부카테고리→문서)와 이동 링크가 포함됩니다. 사용자가 특정 항목의 위치, 경로, 어디에 있는지 물을 때 이 함수를 최우선으로 사용하세요.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색 키워드' }, limit: { type: 'number', description: '결과 수 제한 (기본 10)' } }, required: ['keyword'] } }
 ];
 
 async function getDeptIds(supabase: any, companyId: string) {
@@ -444,7 +435,7 @@ ${searchDataBlock}
 - 친절하고 간결하게`;
 
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
-    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
+    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
     if (!initialResponse.ok) { const errorText = await initialResponse.text(); console.error('Gemini API error:', errorText); throw new Error('Gemini API request failed'); }
     const initialData = await initialResponse.json();
     const candidate = initialData.candidates?.[0];
@@ -467,11 +458,11 @@ ${searchDataBlock}
       const finalContents = [...contents, { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, { role: 'user', parts: functionResults }];
       let finalText = '';
       try {
-        const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } }) });
+        const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
         if (finalResponse.ok) {
           const finalData = await finalResponse.json();
           const allParts = finalData.candidates?.[0]?.content?.parts || [];
-          finalText = allParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || allParts.filter((p: any) => p.text).map((p: any) => p.text).join('');
+          finalText = allParts.map((p: any) => p.text).filter(Boolean).join('');
         } else { console.error('Final Gemini error:', finalResponse.status); }
       } catch (e) { console.error('Final Gemini call failed:', e); }
       // Gemini 실패 시 함수 결과로 직접 응답
@@ -498,7 +489,7 @@ ${searchDataBlock}
     } else {
       // Gemini가 함수 호출 없이 직접 응답 (프리서치 데이터 활용)
       const nfParts = candidate.content?.parts || [];
-      const responseText = nfParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || nfParts.filter((p: any) => p.text).map((p: any) => p.text).join('') || '응답을 생성할 수 없습니다.';
+      const responseText = nfParts.map((p: any) => p.text).filter(Boolean).join('') || '응답을 생성할 수 없습니다.';
       const responseWithDocs = docsMetadata.length > 0 ? `${responseText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` : responseText;
       return new Response(responseWithDocs, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     }
