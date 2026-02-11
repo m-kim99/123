@@ -636,20 +636,6 @@ export function SubcategoryManagement() {
                       >
                         <div className="flex items-center gap-2 overflow-hidden">
                           <p className="font-medium truncate flex-1 min-w-0">{sub.name}</p>
-                          {expiryStatus.label && (
-                            <Badge
-                              variant={
-                                expiryStatus.status === 'expired' ? 'destructive' :
-                                expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
-                              }
-                              className={cn(
-                                expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
-                                expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
-                              )}
-                            >
-                              {expiryStatus.label}
-                            </Badge>
-                          )}
                         </div>
                         <p className="text-sm text-slate-500 truncate">
                           {parent ? `${parent.name} · ` : ''}
@@ -666,6 +652,21 @@ export function SubcategoryManagement() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-3">
+                        {expiryStatus.label && (
+                          <Badge
+                            variant={
+                              expiryStatus.status === 'expired' ? 'destructive' :
+                              expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
+                            }
+                            className={cn(
+                              "flex-shrink-0",
+                              expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
+                              expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                            )}
+                          >
+                            {expiryStatus.label}
+                          </Badge>
+                        )}
                         {sub.nfcRegistered && (
                           <Badge variant="outline" className="flex-shrink-0">
                             <Smartphone className="h-3 w-3 mr-1" />
