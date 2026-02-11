@@ -872,6 +872,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addMonths(new Date(), 3);
                       const today = new Date();
@@ -893,6 +894,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 1);
                       const today = new Date();
@@ -914,6 +916,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 3);
                       const today = new Date();
@@ -935,6 +938,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 5);
                       const today = new Date();
@@ -956,6 +960,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 7);
                       const today = new Date();
@@ -977,6 +982,7 @@ export function SubcategoryManagement() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 10);
                       const today = new Date();

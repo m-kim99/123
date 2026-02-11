@@ -880,6 +880,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addMonths(new Date(), 3);
                       const today = new Date();
@@ -901,6 +902,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 1);
                       const today = new Date();
@@ -922,6 +924,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 3);
                       const today = new Date();
@@ -943,6 +946,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 5);
                       const today = new Date();
@@ -964,6 +968,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 7);
                       const today = new Date();
@@ -985,6 +990,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 10);
                       const today = new Date();
@@ -1329,6 +1335,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addMonths(new Date(), 3);
                       const today = new Date();
@@ -1350,6 +1357,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 1);
                       const today = new Date();
@@ -1371,6 +1379,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 3);
                       const today = new Date();
@@ -1388,6 +1397,72 @@ export function ParentCategoryDetail() {
                   >
                     3년
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 5);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    5년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 7);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    7년
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 10);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    10년
+                  </Button>
                   {subEditForm.defaultExpiryDays && (
                     <Button
                       type="button"
@@ -1400,6 +1475,7 @@ export function ParentCategoryDetail() {
                           expiryDate: null,
                         }))
                       }
+                      className="bg-white text-slate-600 hover:bg-slate-100"
                     >
                       초기화
                     </Button>
