@@ -39,19 +39,30 @@ async function getDeptIds(supabase: any, companyId: string) {
 
 function extractKeywords(message: string): string {
   let text = message.trim();
-  text = text.replace(/(어딨어|어딨니|어딨나|어디야|어디에\s*있|찾아줘|찾아봐|보여줘|알려줘|검색해줘|검색해|해줘)/g, '');
-  const stops = new Set(['어디', '관련', '문서', '위치', '경로', '검색', '에', '에서', '좀', '있어', '있나', '뭐야', '몇', '개', '수는', '해', '은', '는', '이', '가', '을', '를', '의', '요', '줘']);
-  return text.split(/\s+/).filter(w => w && !stops.has(w)).join(' ').trim();
+  text = text.replace(/(어딨어|어딨니|어딨나|어디야|어디에\s*있\S*|찾아줘|찾아봐|보여줘|알려줘|검색해줘|검색해|해줘|있나요|있어요|있나|있어|인가요|인가)/g, '');
+  const stops = new Set(['어디', '관련', '문서', '위치', '경로', '검색', '에', '에서', '좀', '있어', '있나', '뭐야', '몇', '개', '수', '수는', '해', '은', '는', '이', '가', '을', '를', '의', '요', '줘', '뭐', '거', '건', '것', '좀', '나', '내']);
+  const particleRegex = /(?:에서|으로|이랑|에게|한테|부터|까지|처럼|만큼|보다|라고|이라|라는|라서|니까|는데|지만|거든|든지|이든|대로|마다|밖에|조차|마저|이나|나|는|은|이|가|을|를|의|로|도|만|와|과|랑|요|야|죠|지)+[?!.,;~]*$/;
+  return text.split(/\s+/)
+    .map(w => w.replace(/[?!.,;~]+$/g, '').replace(particleRegex, ''))
+    .filter(w => w.length > 0 && !stops.has(w))
+    .join(' ').trim();
 }
 
 async function preSearch(supabase: any, companyId: string, deptIds: string[], keyword: string): Promise<any> {
   if (!keyword || keyword.length < 1 || !deptIds.length) return null;
   try {
+    // 다중 키워드 지원: 각 단어별 OR 조건 생성
+    const words = keyword.split(/\s+/).filter(w => w.length >= 2);
+    if (words.length === 0) { const w = keyword.trim(); if (w.length > 0) words.push(w); else return null; }
+    const deptOr = words.map(w => `name.ilike.%${w}%`).join(',');
+    const catOr = words.map(w => `name.ilike.%${w}%`).join(',');
+    const subOr = words.map(w => `name.ilike.%${w}%`).join(',');
+    const docOr = words.flatMap(w => [`title.ilike.%${w}%`, `ocr_text.ilike.%${w}%`]).join(',');
     const [deptR, catR, subR, docR] = await Promise.all([
-      supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`).limit(5),
-      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(5),
-      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(5),
-      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(5)
+      supabase.from('departments').select('id, name').eq('company_id', companyId).or(deptOr).limit(5),
+      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).or(catOr).limit(5),
+      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(subOr).limit(5),
+      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(docOr).limit(5)
     ]);
     const results: any[] = [];
     for (const d of deptR.data || []) results.push({ type: '부서', name: d.name, path: d.name, link: `/admin/department/${d.id}` });
