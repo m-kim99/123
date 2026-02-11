@@ -582,10 +582,6 @@ export function LoginPage() {
                 BETA
               </span>
             </CardTitle>
-            <CardDescription>
-              <br />
-              쓰기 쉬운 AI 문서정리 솔루션
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="admin" className="w-full">
