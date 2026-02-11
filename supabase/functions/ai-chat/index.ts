@@ -334,38 +334,38 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'unified_search': {
         const { keyword, limit: searchLimit = 10 } = args;
+        console.log(`unified_search called with keyword: "${keyword}"`);
+
+        // 4개 검색을 병렬 실행 (타임아웃 방지)
+        const [deptResult, catResult, subResult, docResult] = await Promise.all([
+          supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`).limit(searchLimit),
+          supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
+          supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
+          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit)
+        ]);
+
+        const depts = deptResult.data || [];
+        const cats = catResult.data || [];
+        const subs = subResult.data || [];
+        const docs = docResult.data || [];
+        console.log(`unified_search results: depts=${depts.length}, cats=${cats.length}, subs=${subs.length}, docs=${docs.length}`);
+
         const allResults: any[] = [];
 
-        // 1) 부서 검색
-        const { data: depts } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`);
-        for (const d of depts || []) {
-          const { count: catCount } = await supabase.from('categories').select('id', { count: 'exact' }).eq('department_id', d.id);
-          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('department_id', d.id);
-          allResults.push({ type: 'department', name: d.name, path: d.name, link: `/admin/department/${d.id}`, parent_category_count: catCount || 0, document_count: docCount || 0 });
+        for (const d of depts) {
+          allResults.push({ type: 'department', name: d.name, path: d.name, link: `/admin/department/${d.id}` });
         }
-
-        // 2) 대분류 검색
-        const { data: cats } = await supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`);
-        for (const c of cats || []) {
-          const { count: subCount } = await supabase.from('subcategories').select('id', { count: 'exact' }).eq('parent_category_id', c.id);
-          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('parent_category_id', c.id);
-          allResults.push({ type: 'parent_category', name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}`, subcategory_count: subCount || 0, document_count: docCount || 0 });
+        for (const c of cats) {
+          allResults.push({ type: 'parent_category', name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` });
         }
-
-        // 3) 세부카테고리 검색
-        const { data: subs } = await supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit);
-        for (const s of subs || []) {
-          const { count: docCount } = await supabase.from('documents').select('id', { count: 'exact' }).eq('subcategory_id', s.id);
-          allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정', document_count: docCount || 0 });
+        for (const s of subs) {
+          allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정' });
         }
-
-        // 4) 문서 검색 (제목 + OCR)
-        const { data: docs } = await supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit);
-        for (const d of docs || []) {
+        for (const d of docs) {
           allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: d.subcategory?.name, path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: d.subcategory?.storage_location || '미지정', uploaded_at: d.uploaded_at });
         }
 
-        return JSON.stringify({ results: allResults.slice(0, searchLimit), total_count: allResults.length, breakdown: { departments: (depts || []).length, parent_categories: (cats || []).length, subcategories: (subs || []).length, documents: (docs || []).length } });
+        return JSON.stringify({ results: allResults.slice(0, searchLimit), total_count: allResults.length, breakdown: { departments: depts.length, parent_categories: cats.length, subcategories: subs.length, documents: docs.length } });
       }
       default: return JSON.stringify({ error: `알 수 없는 함수: ${name}` });
     }
@@ -456,9 +456,11 @@ serve(async (req) => {
       for (const fc of functionCalls) { const { name, args } = fc.functionCall; console.log(`Executing function: ${name}`, args); const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); }
       const finalContents = [...contents, { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, { role: 'user', parts: functionResults }];
       const finalResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: finalContents }) });
-      if (!finalResponse.ok) throw new Error('Final Gemini API request failed');
+      if (!finalResponse.ok) { const errBody = await finalResponse.text(); console.error('Final Gemini error:', finalResponse.status, errBody); throw new Error('Final Gemini API request failed'); }
       const finalData = await finalResponse.json();
-      const finalText = finalData.candidates?.[0]?.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
+      console.log('Final Gemini response:', JSON.stringify(finalData.candidates?.[0]?.content?.parts?.map((p: any) => ({ thought: p.thought, hasText: !!p.text, textLen: p.text?.length }))));
+      const allParts = finalData.candidates?.[0]?.content?.parts || [];
+      const finalText = allParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || allParts.filter((p: any) => p.text).map((p: any) => p.text).join('') || '응답을 생성할 수 없습니다.';
       // 검색 함수 실행 결과에서 문서 메타데이터 추출
       let docsMetadata: any[] = [];
       for (const fr of functionResults) {
@@ -496,7 +498,8 @@ serve(async (req) => {
       const responseWithDocs = docsMetadata.length > 0 ? `${finalText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` : finalText;
       return new Response(responseWithDocs, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     } else {
-      const responseText = candidate.content?.parts?.[0]?.text || '응답을 생성할 수 없습니다.';
+      const nfParts = candidate.content?.parts || [];
+      const responseText = nfParts.filter((p: any) => p.text && !p.thought).map((p: any) => p.text).join('') || nfParts.filter((p: any) => p.text).map((p: any) => p.text).join('') || '응답을 생성할 수 없습니다.';
       return new Response(responseText, { headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } });
     }
   } catch (error) { console.error('Error:', error); const message = error instanceof Error ? error.message : 'Unknown error'; return new Response(JSON.stringify({ error: message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }); }
