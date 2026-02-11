@@ -98,7 +98,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         return JSON.stringify({ category_name: cat.name, department_name: dept?.name || '알 수 없음', subcategory_count: subs.count || 0, document_count: docs.count || 0 });
       }
       case 'get_subcategory_stats': {
-        const { data: sub } = await supabase.from('subcategories').select('id, name, parent_category_id, department_id, storage_location, nfc_uid, nfc_registered, expiry_date').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single();
+        const { data: sub } = await supabase.from('subcategories').select('id, name, parent_category_id, department_id, storage_location, nfc_tag_id, nfc_registered, expiry_date').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single();
         if (!sub) return JSON.stringify({ error: `'${args.subcategory_name}' 세부카테고리를 찾을 수 없습니다.` });
         const [cat, dept, docs] = await Promise.all([
           supabase.from('categories').select('name').eq('id', sub.parent_category_id).single(),
@@ -252,7 +252,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, storage_location: s.storage_location, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0 });
       }
       case 'get_nfc_status': {
-        if (args.subcategory_name) { const { data } = await supabase.from('subcategories').select('name, nfc_registered, nfc_uid').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single(); return JSON.stringify({ name: data?.name, nfc_registered: data?.nfc_registered || false, nfc_uid: data?.nfc_uid }); }
+        if (args.subcategory_name) { const { data } = await supabase.from('subcategories').select('name, nfc_registered, nfc_tag_id').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single(); return JSON.stringify({ name: data?.name, nfc_registered: data?.nfc_registered || false, nfc_tag_id: data?.nfc_tag_id }); }
         const [reg, unreg] = await Promise.all([supabase.from('subcategories').select('id', { count: 'exact' }).in('department_id', deptIds).eq('nfc_registered', true), supabase.from('subcategories').select('id', { count: 'exact' }).in('department_id', deptIds).or('nfc_registered.is.null,nfc_registered.eq.false')]);
         return JSON.stringify({ registered_count: reg.count || 0, unregistered_count: unreg.count || 0, total: (reg.count || 0) + (unreg.count || 0) });
       }

@@ -535,7 +535,7 @@ async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] 
     // 세부카테고리 조회
     const { data: subcategories, error: subError } = await supabase
       .from('subcategories')
-      .select('id, name, nfc_uid, nfc_registered, parent_category_id')
+      .select('id, name, nfc_tag_id, nfc_registered, parent_category_id')
       .in('parent_category_id', parentCategoryIds2);
 
     if (subError) {
@@ -547,8 +547,8 @@ async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] 
       return { text: '세부 스토리지가 없습니다.', docs: [] };
     }
 
-    const registered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => s.nfc_uid || s.nfc_registered);
-    const unregistered = subcategories.filter((s: { nfc_uid: string | null; nfc_registered: boolean }) => !s.nfc_uid && !s.nfc_registered);
+    const registered = subcategories.filter((s: { nfc_tag_id: string | null; nfc_registered: boolean }) => s.nfc_tag_id || s.nfc_registered);
+    const unregistered = subcategories.filter((s: { nfc_tag_id: string | null; nfc_registered: boolean }) => !s.nfc_tag_id && !s.nfc_registered);
 
     const lines: string[] = ['NFC 등록 현황:'];
     lines.push(`\n✅ NFC 등록됨: ${registered.length}개`);
@@ -560,13 +560,13 @@ async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] 
     const docs: ChatSearchResult[] = allSubs.map((sub: any) => {
       const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
       const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
-      const isRegistered = sub.nfc_uid || sub.nfc_registered;
+      const isRegistered = sub.nfc_tag_id || sub.nfc_registered;
       return {
         id: sub.id,
         name: `${isRegistered ? '✅' : '❌'} ${sub.name}`,
         categoryName: parentCat?.name || '',
         departmentName: dept?.name || '',
-        storageLocation: isRegistered ? `NFC: ${sub.nfc_uid || '등록됨'}` : 'NFC 미등록',
+        storageLocation: isRegistered ? `NFC: ${sub.nfc_tag_id || '등록됨'}` : 'NFC 미등록',
         uploadDate: '',
         subcategoryId: sub.id,
         parentCategoryId: sub.parent_category_id,
