@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Building2, FileText, Users, Plus } from 'lucide-react';
+import { Building2, FileText, FolderOpen, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -321,10 +321,10 @@ export function DepartmentManagement() {
                       </div>
                       <div className="bg-slate-50 p-4 rounded-lg">
                         <div className="flex items-center gap-2 mb-1 h-12">
-                          <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <FolderOpen className="h-4 w-4 text-slate-500 flex-shrink-0" />
                           <span className="text-xs text-slate-500 leading-tight">
-                            <span className="md:hidden">카테<br/>고리</span>
-                            <span className="hidden md:inline">카테고리</span>
+                            <span className="md:hidden">대분<br/>류</span>
+                            <span className="hidden md:inline">대분류</span>
                           </span>
                         </div>
                         <p className="text-2xl font-bold">{deptCategories.length}</p>
@@ -340,7 +340,7 @@ export function DepartmentManagement() {
 
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-slate-700">
-                        주요 카테고리
+                        주요 대분류
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {deptCategories.slice(0, 3).map((cat) => (

@@ -285,7 +285,7 @@ export function DepartmentDetail() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">카테고리 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
               <p className="text-2xl font-bold mt-2">{departmentParentCategories.length}</p>
             </CardContent>
           </Card>
