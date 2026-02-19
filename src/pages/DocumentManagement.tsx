@@ -74,6 +74,7 @@ import { cn, formatDateTimeSimple } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
+import { hasPermission, type Role, type Action } from '@/lib/permissions';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -159,6 +160,8 @@ export function DocumentManagement() {
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(true);
   // 팀원용: 권한 있는 부서 ID 목록
   const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
+  // 부서별 권한 매핑 (departmentId -> Role)
+  const [departmentPermissions, setDepartmentPermissions] = useState<Map<string, Role>>(new Map());
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
     addSubcategory,
@@ -533,32 +536,45 @@ export function DocumentManagement() {
     });
   }, []);
 
-  // 팀원용: 권한 있는 부서 목록 조회
+  // 팀원용: 권한 있는 부서 목록 조회 + 권한 레벨 매핑
   useEffect(() => {
     const fetchAccessibleDepartments = async () => {
       if (isAdmin || !user?.id) {
-        // 관리자는 모든 부서 접근 가능
+        // 관리자는 모든 부서에 manager 권한
         setAccessibleDepartmentIds(departments.map((d) => d.id));
+        const adminPerms = new Map<string, Role>();
+        departments.forEach(d => adminPerms.set(d.id, 'manager'));
+        setDepartmentPermissions(adminPerms);
         return;
       }
 
-      // 1. 소속 부서는 자동 접근 가능
+      const permissions = new Map<string, Role>();
+      const deptIds = new Set<string>();
+
+      // 1. 소속 부서는 자동 manager 권한
       const ownDeptId = user.departmentId;
+      if (ownDeptId) {
+        deptIds.add(ownDeptId);
+        permissions.set(ownDeptId, 'manager');
+      }
 
       // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
       const { data: permissionData } = await supabase
         .from('user_permissions')
-        .select('department_id')
+        .select('department_id, role')
         .eq('user_id', user.id)
         .neq('role', 'none');
 
-      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
-      const allIds = new Set<string>([
-        ...(ownDeptId ? [ownDeptId] : []),
-        ...permDeptIds,
-      ]);
+      permissionData?.forEach((p: any) => {
+        deptIds.add(p.department_id);
+        // 소속 부서가 아닌 경우에만 권한 설정 (소속 부서는 이미 manager)
+        if (p.department_id !== ownDeptId) {
+          permissions.set(p.department_id, p.role as Role);
+        }
+      });
 
-      setAccessibleDepartmentIds(Array.from(allIds));
+      setAccessibleDepartmentIds(Array.from(deptIds));
+      setDepartmentPermissions(permissions);
     };
 
     fetchAccessibleDepartments();
@@ -577,6 +593,22 @@ export function DocumentManagement() {
   useEffect(() => {
     setDocumentsPage(1);
   }, [searchQuery, dateFilter, sortBy]);
+
+  // 권한 체크 함수
+  const canPerformAction = (departmentId: string, action: Action): boolean => {
+    // 관리자는 모든 권한
+    if (isAdmin) return true;
+    
+    const role = departmentPermissions.get(departmentId);
+    if (!role) return false;
+    
+    return hasPermission(role, action);
+  };
+
+  // 문서별 권한 체크
+  const canPerformDocumentAction = (doc: { departmentId: string }, action: Action): boolean => {
+    return canPerformAction(doc.departmentId, action);
+  };
  
   useEffect(() => {
     // URL 파라미터에서 카테고리/세부 스토리지 정보 읽기 (레거시 및 호환용)
@@ -1045,10 +1077,21 @@ export function DocumentManagement() {
   };
 
   const handleDeleteDocumentClick = async (documentId: string) => {
+    const targetDoc = documents.find((d) => d.id === documentId);
+    if (!targetDoc) return;
+
+    // 권한 체크
+    if (!canPerformDocumentAction(targetDoc, 'delete')) {
+      toast({
+        title: '권한 없음',
+        description: '이 문서를 삭제할 권한이 없습니다.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const confirmed = window.confirm('정말 삭제하시겠습니까?');
     if (!confirmed) return;
-
-    const targetDoc = documents.find((d) => d.id === documentId);
 
     try {
       trackEvent('document_delete', {
@@ -1134,6 +1177,19 @@ export function DocumentManagement() {
 
   // 공유 다이얼로그 열기
   const handleOpenShareDialog = async (documentId: string) => {
+    const doc = documents.find((d) => d.id === documentId);
+    if (!doc) return;
+
+    // 권한 체크 - share 권한 필요 (manager만)
+    if (!canPerformDocumentAction(doc, 'share')) {
+      toast({
+        title: '권한 없음',
+        description: '이 문서를 공유할 권한이 없습니다.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     trackEvent('share_dialog_open', {
       document_id: documentId,
       share_context: 'document_management',
@@ -1336,9 +1392,20 @@ export function DocumentManagement() {
 
   // 파일 교체 다이얼로그 열기
   const handleOpenFileReplaceDialog = (documentId: string) => {
+    const doc = documents.find((d) => d.id === documentId);
+    if (!doc) return;
+
+    // 권한 체크 - write 권한 필요 (editor 이상)
+    if (!canPerformDocumentAction(doc, 'write')) {
+      toast({
+        title: '권한 없음',
+        description: '이 문서를 수정할 권한이 없습니다.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setReplacingDocumentId(documentId);
-    setReplaceFile(null);
-    setReplaceOcrText('');
     setFileReplaceDialogOpen(true);
   };
 
@@ -3256,44 +3323,62 @@ export function DocumentManagement() {
                               </div>
                             </div>
                             <div className="flex gap-2 mt-3 sm:mt-0 self-end sm:self-auto flex-wrap">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleOpenPreviewDocument(doc.id)}
-                                title="미리보기"
-                              >
-                                <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleOpenFileReplaceDialog(doc.id)}
-                                title="파일 교체"
-                              >
-                                <img src={changeIcon} alt="파일 교체" className="w-full h-full p-1.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleDownloadDocument(doc.id)}
-                              >
-                                <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleOpenShareDialog(doc.id)}
-                              >
-                                <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                                onClick={() => handleDeleteDocumentClick(doc.id)}
-                              >
-                                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
-                              </Button>
+                              {/* 미리보기 - read 권한 (viewer 이상) */}
+                              {canPerformDocumentAction(doc, 'read') && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleOpenPreviewDocument(doc.id)}
+                                  title="미리보기"
+                                >
+                                  <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
+                                </Button>
+                              )}
+                              {/* 파일 교체 - write 권한 (editor 이상) */}
+                              {canPerformDocumentAction(doc, 'write') && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleOpenFileReplaceDialog(doc.id)}
+                                  title="파일 교체"
+                                >
+                                  <img src={changeIcon} alt="파일 교체" className="w-full h-full p-1.5" />
+                                </Button>
+                              )}
+                              {/* 다운로드 - download 권한 (viewer 이상) */}
+                              {canPerformDocumentAction(doc, 'download') && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleDownloadDocument(doc.id)}
+                                  title="다운로드"
+                                >
+                                  <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
+                                </Button>
+                              )}
+                              {/* 공유 - share 권한 (manager만) */}
+                              {canPerformDocumentAction(doc, 'share') && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleOpenShareDialog(doc.id)}
+                                  title="공유"
+                                >
+                                  <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
+                                </Button>
+                              )}
+                              {/* 삭제 - delete 권한 (manager만) */}
+                              {canPerformDocumentAction(doc, 'delete') && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                                  onClick={() => handleDeleteDocumentClick(doc.id)}
+                                  title="삭제"
+                                >
+                                  <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );
