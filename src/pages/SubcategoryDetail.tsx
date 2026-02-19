@@ -1392,7 +1392,8 @@ export function SubcategoryDetail() {
                       storageLocation: e.target.value,
                     }))
                   }
-                  placeholder="예: A동 2층 캐비닛 3"
+                  placeholder="예: A동 2층 캐비넷 3"
+                  maxLength={30}
                 />
               </div>
               <div className="space-y-2">
@@ -1406,6 +1407,7 @@ export function SubcategoryDetail() {
                     }))
                   }
                   placeholder="예: MGT-2024-001"
+                  maxLength={30}
                 />
               </div>
               {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,

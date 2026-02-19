@@ -851,6 +851,7 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                  maxLength={30}
                 />
               </div>
               <div className="space-y-2">
@@ -864,6 +865,7 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: MGT-2024-001"
+                  maxLength={30}
                 />
               </div>
               <div className="space-y-2">
@@ -1169,6 +1171,7 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: A동 2층 캐비닛 3"
+                  maxLength={30}
                 />
               </div>
               <div className="space-y-2">
@@ -1182,6 +1185,7 @@ export function SubcategoryManagement() {
                     }))
                   }
                   placeholder="예: MGT-2024-001"
+                  maxLength={30}
                 />
               </div>
               <div className="space-y-2">
