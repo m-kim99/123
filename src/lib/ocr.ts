@@ -62,7 +62,7 @@ async function convertPDFPageToImage(
 
 
 /**
- * PDF 파일에서 텍스트 추출 (OCR 사용)
+ * PDF 파일에서 텍스트 추출 (텍스트 레이어 우선, 없으면 OCR)
  * @param file PDF 파일
  * @param onProgress 진행 상황 콜백 함수 (선택사항)
  * @returns 추출된 텍스트
@@ -77,7 +77,7 @@ export async function extractTextFromPDF(
       throw new Error('PDF 파일만 처리할 수 있습니다.');
     }
 
-    console.log('PDF 파일 로딩 시작:', file.name);
+    console.log('📝 PDF 파일 로딩 시작:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
 
     // PDF 파일 로드하여 페이지 수 확인
     const pdfLib = await loadPDFLib();
@@ -86,14 +86,50 @@ export async function extractTextFromPDF(
     const pdf = await loadingTask.promise;
     const totalPages = pdf.numPages;
 
-    console.log(`총 ${totalPages}페이지 발견`);
+    console.log(`📚 총 ${totalPages}페이지 발견`);
 
     const extractedTexts: string[] = [];
+    let textLayerPageCount = 0;
+    let ocrPageCount = 0;
 
     // 각 페이지 처리
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
       try {
-        console.log(`페이지 ${pageNum}/${totalPages} 처리 중...`);
+        console.log(`📄 페이지 ${pageNum}/${totalPages} 처리 시작...`);
+        onProgress?.({
+          page: pageNum,
+          totalPages,
+          percent: Math.round(((pageNum - 1) / totalPages) * 100),
+          status: `페이지 ${pageNum}/${totalPages} 분석 중...`,
+        });
+
+        const page = await pdf.getPage(pageNum);
+        
+        // 1단계: 텍스트 레이어에서 텍스트 추출 시도 (문자 PDF)
+        const textContent = await page.getTextContent();
+        const textLayerText = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ')
+          .trim();
+
+        if (textLayerText.length > 50) {
+          // 텍스트가 충분히 있으면 OCR 불필요
+          console.log(`✅ 페이지 ${pageNum}: 텍스트 레이어 발견 (${textLayerText.length}자)`);
+          extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${textLayerText}\n`);
+          textLayerPageCount++;
+          
+          onProgress?.({
+            page: pageNum,
+            totalPages,
+            percent: Math.round((pageNum / totalPages) * 100),
+            status: `페이지 ${pageNum}/${totalPages} 완료 (텍스트 추출)`,
+          });
+          continue;
+        }
+
+        // 2단계: 텍스트 레이어가 없으면 OCR 사용 (이미지 PDF)
+        console.log(`🖼️ 페이지 ${pageNum}: 텍스트 레이어 없음, OCR 실행...`);
+        
         onProgress?.({
           page: pageNum,
           totalPages,
@@ -101,52 +137,34 @@ export async function extractTextFromPDF(
           status: `페이지 ${pageNum}/${totalPages} 이미지 변환 중...`,
         });
 
-        // PDF 페이지를 이미지로 변환 후 base64 Data URL 생성
+        // PDF 페이지를 이미지로 변환
         const canvas = await convertPDFPageToImage(file, pageNum, 2.0);
+        
+        // 이미지 크기 확인 (네이버 OCR 제한: 5MB)
         const dataUrl = canvas.toDataURL('image/png');
-
-        console.log(`페이지 ${pageNum} OCR 처리 중...`);
-        onProgress?.({
-          page: pageNum,
-          totalPages,
-          percent: Math.round(((pageNum - 1) / totalPages) * 100),
-          status: `페이지 ${pageNum}/${totalPages} OCR 처리 중...`,
-        });
-
-        // Edge Function을 통해 네이버 클로바 OCR 호출
-        const { data, error } = await supabase.functions.invoke('naver-ocr', {
-          body: {
-            imageBase64: dataUrl,
-            mimeType: 'image/png',
-            page: pageNum,
-          },
-        });
-
-        if (error) {
-          console.error('네이버 OCR Edge Function 호출 오류:', error);
-          throw new Error(
-            error.message || `페이지 ${pageNum} OCR 처리 중 오류가 발생했습니다.`,
-          );
-        }
-
-        const text = (data as any)?.text as string | undefined;
-
-        if (text && text.trim()) {
-          extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${text.trim()}\n`);
-          console.log(`페이지 ${pageNum} 텍스트 추출 완료 (${text.length}자)`);
+        const imageSizeMB = (dataUrl.length * 3) / 4 / 1024 / 1024;
+        
+        if (imageSizeMB > 4.5) {
+          console.warn(`⚠️ 페이지 ${pageNum}: 이미지 크기 초과 (${imageSizeMB.toFixed(2)}MB), 해상도 낮춤`);
+          // 해상도를 낮춰서 다시 변환
+          const smallerCanvas = await convertPDFPageToImage(file, pageNum, 1.5);
+          const smallerDataUrl = smallerCanvas.toDataURL('image/jpeg', 0.85);
+          const smallerSizeMB = (smallerDataUrl.length * 3) / 4 / 1024 / 1024;
+          console.log(`🔄 해상도 조정 후: ${smallerSizeMB.toFixed(2)}MB`);
+          
+          if (smallerSizeMB > 4.5) {
+            throw new Error(`페이지 ${pageNum} 이미지 크기가 너무 큽니다 (${smallerSizeMB.toFixed(2)}MB). OCR 처리를 건너뜁니다.`);
+          }
+          
+          await performOCR(smallerDataUrl, pageNum, totalPages, extractedTexts, onProgress);
         } else {
-          console.warn(`페이지 ${pageNum}에서 텍스트를 찾을 수 없습니다.`);
-          extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n(텍스트 없음)\n`);
+          console.log(`📊 페이지 ${pageNum} 이미지 크기: ${imageSizeMB.toFixed(2)}MB`);
+          await performOCR(dataUrl, pageNum, totalPages, extractedTexts, onProgress);
         }
-
-        onProgress?.({
-          page: pageNum,
-          totalPages,
-          percent: Math.round((pageNum / totalPages) * 100),
-          status: `페이지 ${pageNum}/${totalPages} 완료`,
-        });
+        
+        ocrPageCount++;
       } catch (pageError) {
-        console.error(`페이지 ${pageNum} 처리 오류:`, pageError);
+        console.error(`❌ 페이지 ${pageNum} 처리 오류:`, pageError);
         extractedTexts.push(
           `\n--- 페이지 ${pageNum} ---\n(처리 오류: ${
             pageError instanceof Error ? pageError.message : String(pageError)
@@ -158,23 +176,84 @@ export async function extractTextFromPDF(
 
     // 모든 페이지 텍스트 합치기
     const fullText = extractedTexts.join('\n');
-    console.log(`텍스트 추출 완료: 총 ${fullText.length}자`);
+    console.log(`✅ 텍스트 추출 완료: 총 ${fullText.length}자`);
+    console.log(`📊 처리 통계: 텍스트 레이어 ${textLayerPageCount}페이지, OCR ${ocrPageCount}페이지`);
 
     onProgress?.({
       page: totalPages,
       totalPages,
       percent: 100,
-      status: '완료',
+      status: `완료 (텍스트 ${textLayerPageCount}p, OCR ${ocrPageCount}p)`,
     });
 
     return fullText.trim();
   } catch (error) {
-    console.error('PDF 텍스트 추출 오류:', error);
+    console.error('❌ PDF 텍스트 추출 오류:', error);
     throw new Error(
       `PDF 텍스트 추출 중 오류가 발생했습니다: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
+  }
+}
+
+/**
+ * OCR 처리 헬퍼 함수 (타임아웃 및 에러 핸들링)
+ */
+async function performOCR(
+  dataUrl: string,
+  pageNum: number,
+  totalPages: number,
+  extractedTexts: string[],
+  onProgress?: (progress: { page: number; totalPages: number; percent: number; status: string }) => void
+): Promise<void> {
+  onProgress?.({
+    page: pageNum,
+    totalPages,
+    percent: Math.round(((pageNum - 1) / totalPages) * 100),
+    status: `페이지 ${pageNum}/${totalPages} OCR 처리 중...`,
+  });
+
+  // 타임아웃 처리 (60초)
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('OCR 처리 시간 초과 (60초)')), 60000);
+  });
+
+  const ocrPromise = supabase.functions.invoke('naver-ocr', {
+    body: {
+      imageBase64: dataUrl,
+      mimeType: dataUrl.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png',
+      page: pageNum,
+    },
+  });
+
+  try {
+    const { data, error } = await Promise.race([ocrPromise, timeoutPromise]);
+
+    if (error) {
+      console.error(`❌ 페이지 ${pageNum} OCR 오류:`, error);
+      throw new Error(error.message || 'OCR 처리 중 오류가 발생했습니다.');
+    }
+
+    const text = (data as any)?.text as string | undefined;
+
+    if (text && text.trim()) {
+      extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${text.trim()}\n`);
+      console.log(`✅ 페이지 ${pageNum} OCR 완료 (${text.length}자)`);
+    } else {
+      console.warn(`⚠️ 페이지 ${pageNum}: OCR 결과 텍스트 없음`);
+      extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n(텍스트 없음)\n`);
+    }
+
+    onProgress?.({
+      page: pageNum,
+      totalPages,
+      percent: Math.round((pageNum / totalPages) * 100),
+      status: `페이지 ${pageNum}/${totalPages} 완료 (OCR)`,
+    });
+  } catch (ocrError) {
+    console.error(`❌ 페이지 ${pageNum} OCR 실패:`, ocrError);
+    throw ocrError;
   }
 }
 
@@ -195,6 +274,7 @@ export async function extractTextFromImage(
       throw new Error('JPG, PNG 이미지 파일만 처리할 수 있습니다.');
     }
 
+    console.log('🖼️ 이미지 OCR 시작:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     onProgress?.({ percent: 0, status: '이미지 준비 중...' });
 
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -212,17 +292,32 @@ export async function extractTextFromImage(
       reader.readAsDataURL(file);
     });
     
+    // 이미지 크기 확인
+    const imageSizeMB = (dataUrl.length * 3) / 4 / 1024 / 1024;
+    console.log(`📊 이미지 크기: ${imageSizeMB.toFixed(2)}MB`);
+    
+    if (imageSizeMB > 4.5) {
+      throw new Error(`이미지 크기가 너무 큽니다 (${imageSizeMB.toFixed(2)}MB). 5MB 이하로 줄여주세요.`);
+    }
+    
     onProgress?.({ percent: 30, status: 'OCR 요청 중...' });
 
-    const { data, error } = await supabase.functions.invoke('naver-ocr', {
+    // 타임아웃 처리 (60초)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('OCR 처리 시간 초과 (60초)')), 60000);
+    });
+
+    const ocrPromise = supabase.functions.invoke('naver-ocr', {
       body: {
         imageBase64: dataUrl,
         mimeType: mimeType || 'image/jpeg',
       },
     });
 
+    const { data, error } = await Promise.race([ocrPromise, timeoutPromise]);
+
     if (error) {
-      console.error('네이버 OCR Edge Function 호출 오류:', error);
+      console.error('❌ 네이버 OCR 오류:', error);
       throw new Error(error.message || '이미지 OCR 처리 중 오류가 발생했습니다.');
     }
 
@@ -230,14 +325,16 @@ export async function extractTextFromImage(
     const result = (text || '').trim();
 
     if (!result) {
-      console.warn('이미지에서 텍스트를 찾을 수 없습니다.');
+      console.warn('⚠️ 이미지에서 텍스트를 찾을 수 없습니다.');
+    } else {
+      console.log(`✅ 이미지 OCR 완료 (${result.length}자)`);
     }
 
     onProgress?.({ percent: 100, status: 'OCR 처리 완료' });
 
     return result;
   } catch (error) {
-    console.error('이미지 텍스트 추출 오류:', error);
+    console.error('❌ 이미지 텍스트 추출 오류:', error);
     throw new Error(
       `이미지 텍스트 추출 중 오류가 발생했습니다: ${
         error instanceof Error ? error.message : String(error)
