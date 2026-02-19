@@ -827,8 +827,9 @@ function generateFallbackResponse(message: string): string {
     return `현재 시스템에 등록된 문서는 총 ${total}개입니다.`;
   }
 
-  // 3. 부서별 통계: "부서" 포함 시
-  if (text.includes('부서')) {
+  // 3. 부서별 통계: "부서" 포함 시 (단, 팀원/사람 관련 질문은 제외 - Edge Function에서 처리)
+  const needsUserQuery = text.includes('팀원') || text.includes('멤버') || text.includes('사람') || text.includes('직원') || text.includes('사용자') || text.includes('누구');
+  if (text.includes('부서') && !needsUserQuery) {
     if (!departments.length) {
       return '부서 정보가 없습니다.';
     }
@@ -964,7 +965,13 @@ export async function generateResponse(
   const hasStatus = t.includes('현황') || t.includes('통계') || t.includes('상태');
   const hasNfc = t.includes('nfc');
   
-  const isFastReply = hasNfc || hasStatus || (hasEntity && (hasCount || hasList));
+  // DB 조회가 필요한 질문들 → Edge Function으로 넘김
+  const needsDbQuery = 
+    t.includes('팀원') || t.includes('멤버') || t.includes('사람') || t.includes('직원') || t.includes('사용자') || t.includes('누구') ||
+    // OCR 텍스트 검색 (내용 검색)
+    t.includes('내용') || t.includes('포함') || t.includes('들어있') || t.includes('있는 문서') || t.includes('찾아');
+  
+  const isFastReply = !needsDbQuery && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
   
   if (isFastReply) {
     console.log('[Chatbot] Fast reply 사용:', text);

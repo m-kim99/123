@@ -6,9 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 핵심 함수만 유지 (로컬 fallback으로 처리 가능한 것 제외, 14개 → 9개)
-// 제거된 함수: get_total_counts, list_all, get_nfc_status (로컬에서 빠르게 처리)
+// 핵심 함수 (OCR 문서 검색 포함)
 const functionDeclarations = [
+  { name: 'search_documents', description: '문서 제목 또는 OCR 텍스트 내용으로 문서를 검색합니다. 특정 내용이 포함된 문서를 찾을 때 사용합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '검색할 키워드 (문서 제목 또는 OCR 텍스트 내용)' }, department_name: { type: 'string', description: '특정 부서로 필터링 (선택)' }, limit: { type: 'number', description: '결과 개수 제한' } }, required: ['keyword'] } },
   { name: 'get_department_stats', description: '특정 부서의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string', description: '부서명' } }, required: ['department_name'] } },
   { name: 'get_parent_category_stats', description: '특정 대분류의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { category_name: { type: 'string', description: '대분류명' } }, required: ['category_name'] } },
   { name: 'get_subcategory_stats', description: '특정 세부카테고리의 상세 정보를 조회합니다.', parameters: { type: 'object', properties: { subcategory_name: { type: 'string', description: '세부카테고리명' } }, required: ['subcategory_name'] } },
@@ -123,7 +123,26 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
-        return JSON.stringify({ documents: (data || []).map((d: any) => ({ id: d.id, title: d.title, ocr_snippet: d.ocr_text ? d.ocr_text.substring(0, 200) : null, subcategory: d.subcategory?.name, subcategory_id: d.subcategory_id || d.subcategory?.id, parent_category: d.parent_category?.name, parent_category_id: d.parent_category_id || d.parent_category?.id, department: d.department?.name, department_id: d.department?.id, storage_location: d.subcategory?.storage_location, uploaded_at: d.uploaded_at, uploader: d.uploader?.name || '알 수 없음' })), count: data?.length || 0 });
+        return JSON.stringify({ 
+          documents: (data || []).map((d: any) => ({ 
+            id: d.id, 
+            title: d.title, 
+            ocr_snippet: d.ocr_text ? d.ocr_text.substring(0, 200) : null, 
+            subcategory: d.subcategory?.name, 
+            subcategory_id: d.subcategory_id || d.subcategory?.id, 
+            parent_category: d.parent_category?.name, 
+            parent_category_id: d.parent_category_id || d.parent_category?.id, 
+            department: d.department?.name, 
+            department_id: d.department?.id, 
+            storage_location: d.subcategory?.storage_location, 
+            uploaded_at: d.uploaded_at, 
+            uploader: d.uploader?.name || '알 수 없음',
+            // 문서 링크 추가
+            link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null,
+            path: `${d.department?.name || ''} → ${d.parent_category?.name || ''} → ${d.subcategory?.name || ''}`
+          })), 
+          count: data?.length || 0 
+        });
       }
       case 'search_by_keyword': {
         const { keyword, entity_type } = args;
@@ -353,7 +372,13 @@ ${searchDataBlock}
           const fn = fr.functionResponse?.name;
           const res = fr.functionResponse?.response?.result;
           if (res?.results?.length > 0) { for (const r of res.results) { lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); } }
-          else if (res?.documents?.length > 0) { for (const d of res.documents.slice(0, 5)) { lines.push(`- **${d.title}** (${d.department} → ${d.parent_category})`); } }
+          else if (res?.documents?.length > 0) { 
+            lines.push(`**${res.count}개의 문서**를 찾았습니다:`);
+            for (const d of res.documents.slice(0, 5)) { 
+              lines.push(`- **${d.title}**\n  · 경로: ${d.path || `${d.department} → ${d.parent_category} → ${d.subcategory}`}${d.link ? `\n  · 문서: ${d.link}` : ''}`); 
+            }
+            if (res.count > 5) lines.push(`\n외 ${res.count - 5}개 문서`);
+          }
           else if (res?.error) { lines.push(res.error); }
           else if (res && typeof res === 'object') {
             // JSON을 자연어로 변환
