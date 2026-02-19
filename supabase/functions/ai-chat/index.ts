@@ -489,15 +489,56 @@ ${searchDataBlock}
           finalText = allParts.map((p: any) => p.text).filter(Boolean).join('');
         } else { console.error('Final Gemini error:', finalResponse.status); }
       } catch (e) { console.error('Final Gemini call failed:', e); }
-      // Gemini 실패 시 함수 결과로 직접 응답
+      // Gemini 실패 시 함수 결과로 직접 응답 (자연어 변환)
       if (!finalText) {
         const lines: string[] = [];
         for (const fr of functionResults) {
+          const fn = fr.functionResponse?.name;
           const res = fr.functionResponse?.response?.result;
           if (res?.results?.length > 0) { for (const r of res.results) { lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); } }
           else if (res?.documents?.length > 0) { for (const d of res.documents.slice(0, 5)) { lines.push(`- **${d.title}** (${d.department} → ${d.parent_category})`); } }
           else if (res?.error) { lines.push(res.error); }
-          else if (res && typeof res === 'object') { lines.push(JSON.stringify(res)); }
+          else if (res && typeof res === 'object') {
+            // JSON을 자연어로 변환
+            if (fn === 'get_total_counts') {
+              lines.push(`현재 시스템 현황입니다:\n- 부서: ${res.departments || 0}개\n- 대분류: ${res.parent_categories || 0}개\n- 세부카테고리: ${res.subcategories || 0}개\n- 문서: ${res.documents || 0}개\n- 사용자: ${res.users || 0}명`);
+            } else if (fn === 'list_all' && res.items) {
+              const entityName = res.items.length > 0 ? '항목' : '항목';
+              lines.push(`총 ${res.count || res.items.length}개의 ${entityName}이 있습니다.`);
+              if (res.items.length > 0 && res.items.length <= 10) {
+                lines.push(`목록: ${res.items.join(', ')}`);
+              } else if (res.items.length > 10) {
+                lines.push(`목록 (일부): ${res.items.slice(0, 10).join(', ')} 외 ${res.items.length - 10}개`);
+              }
+            } else if (res.count !== undefined) {
+              lines.push(`총 ${res.count}개입니다.`);
+            } else if (res.ranking) {
+              lines.push(`순위:`);
+              for (const r of res.ranking.slice(0, 5)) { lines.push(`- ${r.name}: ${r.document_count}개 문서`); }
+            } else if (res.department_name) {
+              lines.push(`**${res.department_name}** 부서 정보:\n- 팀원: ${res.user_count || 0}명\n- 대분류: ${res.parent_category_count || 0}개\n- 세부카테고리: ${res.subcategory_count || 0}개\n- 문서: ${res.document_count || 0}개`);
+            } else if (res.category_name) {
+              lines.push(`**${res.category_name}** 대분류 정보:\n- 소속 부서: ${res.department_name || '알 수 없음'}\n- 세부카테고리: ${res.subcategory_count || 0}개\n- 문서: ${res.document_count || 0}개`);
+            } else if (res.subcategory_name) {
+              lines.push(`**${res.subcategory_name}** 세부카테고리 정보:\n- 대분류: ${res.parent_category_name || '알 수 없음'}\n- 부서: ${res.department_name || '알 수 없음'}\n- 보관위치: ${res.storage_location || '미지정'}\n- 문서: ${res.document_count || 0}개`);
+            } else if (res.empty_items) {
+              lines.push(`비어있는 항목 ${res.count}개: ${res.empty_items.slice(0, 5).join(', ')}${res.count > 5 ? ` 외 ${res.count - 5}개` : ''}`);
+            } else if (res.children) {
+              lines.push(`**${res.parent}**의 하위 항목 ${res.count}개${res.count > 0 ? ': ' + res.children.slice(0, 5).join(', ') : ''}${res.count > 5 ? ` 외 ${res.count - 5}개` : ''}`);
+            } else if (res.members) {
+              lines.push(`**${res.department}** 부서 팀원 ${res.count}명${res.count > 0 ? ':\n' + res.members.slice(0, 5).map((m: any) => `- ${m.name} (${m.role})`).join('\n') : ''}${res.count > 5 ? `\n외 ${res.count - 5}명` : ''}`);
+            } else if (res.users) {
+              lines.push(`사용자 ${res.count}명${res.count > 0 ? ':\n' + res.users.slice(0, 5).map((u: any) => `- ${u.name} (${u.department || '미배정'})`).join('\n') : ''}${res.count > 5 ? `\n외 ${res.count - 5}명` : ''}`);
+            } else if (res.registered_count !== undefined) {
+              lines.push(`NFC 등록 현황:\n- 등록됨: ${res.registered_count}개\n- 미등록: ${res.unregistered_count}개\n- 전체: ${res.total}개`);
+            } else {
+              // 알 수 없는 형식은 간단히 요약
+              const keys = Object.keys(res).filter(k => res[k] !== null && res[k] !== undefined);
+              if (keys.length > 0) {
+                lines.push(`조회 결과: ${keys.map(k => `${k}: ${typeof res[k] === 'object' ? JSON.stringify(res[k]).substring(0, 50) : res[k]}`).join(', ')}`);
+              }
+            }
+          }
         }
         finalText = lines.length > 0 ? lines.join('\n') : '결과를 정리하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
       }

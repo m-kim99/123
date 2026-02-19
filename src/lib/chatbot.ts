@@ -223,16 +223,50 @@ export function searchDocuments(query: string): ChatSearchResult[] {
     });
 }
 
-// JSON 응답 정리 함수 (raw JSON이 노출되는 것을 방지)
+// JSON 응답 정리 함수 (raw JSON이 노출되는 것을 방지하고 자연어로 변환)
 function cleanJsonResponse(text: string): string {
   // JSON 객체나 배열 패턴 감지 (중괄호나 대괄호로 시작)
   const jsonPattern = /^[\s]*[{[\]]/;
   if (jsonPattern.test(text.trim())) {
     try {
       const parsed = JSON.parse(text.trim());
-      // JSON 파싱 성공 시 읽기 쉬운 텍스트로 변환
+      // JSON 파싱 성공 시 자연어로 변환
       if (typeof parsed === 'object' && parsed !== null) {
-        return '요청하신 정보를 처리했습니다. 자세한 내용은 아래를 참고해주세요.';
+        // items 배열이 있는 경우 (list_all 결과)
+        if (parsed.items && Array.isArray(parsed.items)) {
+          const count = parsed.count || parsed.items.length;
+          if (parsed.items.length === 0) {
+            return '조회된 항목이 없습니다.';
+          }
+          const itemList = parsed.items.length <= 10 
+            ? parsed.items.join(', ')
+            : `${parsed.items.slice(0, 10).join(', ')} 외 ${parsed.items.length - 10}개`;
+          return `총 ${count}개의 항목이 있습니다.\n목록: ${itemList}`;
+        }
+        // 통계 정보 (get_total_counts 결과)
+        if (parsed.departments !== undefined || parsed.parent_categories !== undefined) {
+          const lines = ['현재 시스템 현황입니다:'];
+          if (parsed.departments !== undefined) lines.push(`- 부서: ${parsed.departments}개`);
+          if (parsed.parent_categories !== undefined) lines.push(`- 대분류: ${parsed.parent_categories}개`);
+          if (parsed.subcategories !== undefined) lines.push(`- 세부카테고리: ${parsed.subcategories}개`);
+          if (parsed.documents !== undefined) lines.push(`- 문서: ${parsed.documents}개`);
+          if (parsed.users !== undefined) lines.push(`- 사용자: ${parsed.users}명`);
+          return lines.join('\n');
+        }
+        // count만 있는 경우
+        if (parsed.count !== undefined && Object.keys(parsed).length <= 2) {
+          return `총 ${parsed.count}개입니다.`;
+        }
+        // 에러 메시지
+        if (parsed.error) {
+          return parsed.error;
+        }
+        // 기타 알 수 없는 JSON은 키-값 요약
+        const keys = Object.keys(parsed).filter(k => parsed[k] !== null && parsed[k] !== undefined);
+        if (keys.length > 0 && keys.length <= 5) {
+          return `조회 결과:\n${keys.map(k => `- ${k}: ${typeof parsed[k] === 'object' ? '(데이터)' : parsed[k]}`).join('\n')}`;
+        }
+        return '조회 결과를 처리했습니다.';
       }
     } catch {
       // JSON 파싱 실패는 무시
@@ -245,6 +279,7 @@ function cleanJsonResponse(text: string): string {
     .replace(/\{[^}]*"parent_categories"[^}]*\}/g, '')
     .replace(/\{[^}]*"subcategories"[^}]*\}/g, '')
     .replace(/\{[^}]*"documents"[^}]*\}/g, '')
+    .replace(/\{[^}]*"items"\s*:\s*\[[^\]]*\][^}]*\}/g, '')
     .replace(/\n{3,}/g, '\n\n') // 과도한 줄바꿈 제거
     .trim();
   
