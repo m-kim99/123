@@ -152,6 +152,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const isVoiceModeRef = useRef(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // 음성 중복 처리 방지용 ref
   const lastProcessedTranscriptRef = useRef<string>('');
@@ -328,23 +329,51 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
 
-  // 사운드 재생 헬퍼 함수
-  const playSound = useCallback((soundPath: string) => {
+  // 사운드 재생 헬퍼 함수 (PC/모바일 호환)
+  const playSound = useCallback((soundPath: string, label: string) => {
+    console.log(`🔊 ${label} 사운드 재생 시도:`, soundPath);
+    
+    // 이전 오디오 중단
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
+    
     try {
       const audio = new Audio(soundPath);
-      audio.volume = 0.5; // 볼륨 50%
-      audio.play().catch(err => {
-        console.warn('사운드 재생 실패:', err);
-      });
+      audio.volume = 0.5;
+      currentAudioRef.current = audio;
+      
+      audio.onended = () => {
+        console.log(`✔️ ${label} 사운드 재생 완료`);
+        currentAudioRef.current = null;
+      };
+      
+      // 모바일 대응: 즉시 play() 호출
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log(`✅ ${label} 사운드 재생 성공`);
+          })
+          .catch(err => {
+            console.error(`❌ ${label} 사운드 재생 실패:`, err);
+          });
+      }
     } catch (err) {
-      console.warn('사운드 로드 실패:', err);
+      console.error(`❌ ${label} 사운드 로드 실패:`, err);
     }
   }, []);
 
-  // 음성 모드 토글
+  // 음성 모드 토글 (PC/모바일 호환)
   const toggleLiveVoice = useCallback(async () => {
+    console.log('🎤 음성 모드 토글 - 현재 상태:', isVoiceMode ? '켜짐' : '꺼짐');
+    
     if (isVoiceMode) {
       // 음성 모드 종료
+      console.log('🔴 음성 모드 종료 시작');
       isVoiceModeRef.current = false;
       speechRecognition.stopListening();
       window.speechSynthesis.cancel();
@@ -352,24 +381,47 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       setIsVoiceMode(false);
       
       // 종료 사운드 재생
-      playSound('/sounds/end.wav');
+      playSound('/sounds/end.wav', '종료');
     } else {
-      // 마이크 권한 확인 후 음성 모드 시작
+      // 음성 모드 시작
+      console.log('🟢 음성 모드 시작 시도');
+      
+      // ⚠️ 모바일 대응: 사용자 제스처 컨텍스트 내에서 즉시 오디오 생성 및 재생
+      // 이전 오디오 중단
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+      }
+      
+      const audio = new Audio('/sounds/start.wav');
+      audio.volume = 0.5;
+      currentAudioRef.current = audio;
+      
+      audio.onended = () => {
+        console.log('✔️ 시작 사운드 재생 완료');
+        currentAudioRef.current = null;
+      };
+      
+      // 즉시 재생 (비동기 작업 전)
+      audio.play()
+        .then(() => console.log('✅ 시작 사운드 재생 성공'))
+        .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
+      
+      // 그 다음 비동기 작업
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ 마이크 권한 획득 성공');
         stream.getTracks().forEach(track => track.stop());
-        
-        // 시작 사운드 재생
-        playSound('/sounds/start.wav');
         
         // 사운드 재생 후 약간의 지연을 두고 음성 인식 시작
         setTimeout(() => {
           isVoiceModeRef.current = true;
           speechRecognition.startListening();
           setIsVoiceMode(true);
-        }, 100);
+          console.log('✅ 음성 인식 시작됨');
+        }, 300);
       } catch (err) {
-        console.error('마이크 권한 오류:', err);
+        console.error('❌ 마이크 권한 오류:', err);
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
           role: 'assistant' as const,
@@ -378,7 +430,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         }]);
       }
     }
-  }, [isVoiceMode, speechRecognition, playSound]);
+  }, [isVoiceMode, speechRecognition]);
 
   useEffect(() => {
     if (scrollRef.current) {
