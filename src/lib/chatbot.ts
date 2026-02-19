@@ -223,6 +223,34 @@ export function searchDocuments(query: string): ChatSearchResult[] {
     });
 }
 
+// JSON 응답 정리 함수 (raw JSON이 노출되는 것을 방지)
+function cleanJsonResponse(text: string): string {
+  // JSON 객체나 배열 패턴 감지 (중괄호나 대괄호로 시작)
+  const jsonPattern = /^[\s]*[{[\]]/;
+  if (jsonPattern.test(text.trim())) {
+    try {
+      const parsed = JSON.parse(text.trim());
+      // JSON 파싱 성공 시 읽기 쉬운 텍스트로 변환
+      if (typeof parsed === 'object' && parsed !== null) {
+        return '요청하신 정보를 처리했습니다. 자세한 내용은 아래를 참고해주세요.';
+      }
+    } catch {
+      // JSON 파싱 실패는 무시
+    }
+  }
+  
+  // 텍스트 중간에 JSON 블록이 있는 경우 제거
+  const cleanedText = text
+    .replace(/\{[^}]*"departments"[^}]*\}/g, '')
+    .replace(/\{[^}]*"parent_categories"[^}]*\}/g, '')
+    .replace(/\{[^}]*"subcategories"[^}]*\}/g, '')
+    .replace(/\{[^}]*"documents"[^}]*\}/g, '')
+    .replace(/\n{3,}/g, '\n\n') // 과도한 줄바꿈 제거
+    .trim();
+  
+  return cleanedText || text;
+}
+
 // 기간 표현을 사람이 읽기 쉬운 형태로 변환
 function formatDateRangeDescription(text: string): string {
   if (text.includes('오늘')) return '오늘';
@@ -918,7 +946,8 @@ export async function generateResponse(
         if (onPartialUpdate) {
           // ---DOCS--- 구분자 전까지만 표시
           const displayText = fullText.split('\n---DOCS---\n')[0];
-          onPartialUpdate(displayText, []);
+          const cleanedText = cleanJsonResponse(displayText);
+          onPartialUpdate(cleanedText, []);
         }
 
         // 글자 단위보다 큰 청크 단위로 약간 더 긴 딜레이를 주어 전체 시간을 단축
@@ -957,12 +986,15 @@ export async function generateResponse(
       }
     }
 
+    // JSON 응답 정리
+    const cleanedResponseText = cleanJsonResponse(responseText);
+    
     // 최종 콜백으로 문서 정보 전달
     if (onPartialUpdate) {
-      onPartialUpdate(responseText, parsedDocs);
+      onPartialUpdate(cleanedResponseText, parsedDocs);
     }
 
-    return { text: responseText, docs: parsedDocs };
+    return { text: cleanedResponseText, docs: parsedDocs };
   } catch (error) {
     console.error('AI response error:', error);
     return emitFallback();
