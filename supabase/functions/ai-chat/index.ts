@@ -459,7 +459,7 @@ ${searchDataBlock}
 - 친절하고 간결하게`;
 
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
-    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
+    const initialResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents, tools: [{ function_declarations: functionDeclarations }], tool_config: { function_calling_config: { mode: 'AUTO' } } }) });
     if (!initialResponse.ok) { const errorText = await initialResponse.text(); console.error('Gemini API error:', errorText); throw new Error('Gemini API request failed'); }
     const initialData = await initialResponse.json();
     const candidate = initialData.candidates?.[0];
