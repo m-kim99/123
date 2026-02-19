@@ -1067,7 +1067,7 @@ export function SubcategoryDetail() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm font-medium text-slate-500">보관 위치</p>
-              <p className="text-sm font-bold mt-2">
+              <p className="text-2xl font-bold mt-2">
                 {subcategory.storageLocation || '미지정'}
               </p>
             </CardContent>
@@ -1075,7 +1075,7 @@ export function SubcategoryDetail() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm font-medium text-slate-500">관리번호</p>
-              <p className="text-sm font-bold mt-2">
+              <p className="text-2xl font-bold mt-2">
                 {subcategory.managementNumber || '미지정'}
               </p>
             </CardContent>
