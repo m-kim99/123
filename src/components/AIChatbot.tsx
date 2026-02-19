@@ -328,6 +328,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
 
+  // 사운드 재생 헬퍼 함수
+  const playSound = useCallback((soundPath: string) => {
+    try {
+      const audio = new Audio(soundPath);
+      audio.volume = 0.5; // 볼륨 50%
+      audio.play().catch(err => {
+        console.warn('사운드 재생 실패:', err);
+      });
+    } catch (err) {
+      console.warn('사운드 로드 실패:', err);
+    }
+  }, []);
+
   // 음성 모드 토글
   const toggleLiveVoice = useCallback(async () => {
     if (isVoiceMode) {
@@ -337,6 +350,9 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setIsVoiceMode(false);
+      
+      // 종료 사운드 재생
+      playSound('/sounds/end.wav');
     } else {
       // 마이크 권한 확인 후 음성 모드 시작
       try {
@@ -345,6 +361,9 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         isVoiceModeRef.current = true;
         speechRecognition.startListening();
         setIsVoiceMode(true);
+        
+        // 시작 사운드 재생
+        playSound('/sounds/start.wav');
       } catch {
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
@@ -354,7 +373,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         }]);
       }
     }
-  }, [isVoiceMode, speechRecognition]);
+  }, [isVoiceMode, speechRecognition, playSound]);
 
   useEffect(() => {
     if (scrollRef.current) {
