@@ -1375,7 +1375,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (error) throw error;
 
-      // Supabase에서 삭제 성공 시 로컬 상태에서도 제거
+      // DB 삭제 성공 시에만 로컬 상태에서 제거
       set((state) => ({
         documents: state.documents.filter((doc) => doc.id !== id),
       }));
@@ -1383,20 +1383,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       trackEvent('document_delete', {
         document_id: id,
       });
+
+      toast({
+        title: '문서 삭제 완료',
+        description: '문서가 성공적으로 삭제되었습니다.',
+      });
     } catch (err) {
       console.error('Failed to delete document from Supabase:', err);
 
-
-      // Supabase 실패 시에도 로컬 상태에서는 제거 (사용자 경험 개선)
-      set((state) => ({
-        documents: state.documents.filter((doc) => doc.id !== id),
-        error: 'Failed to delete document from Supabase, removed locally only',
-      }));
+      // DB 삭제 실패 시 로컬 상태는 유지
       toast({
         title: '문서 삭제 실패',
-        description: '네트워크 오류로 인해 문서를 완전히 삭제하지 못했습니다.',
+        description: '네트워크 오류로 인해 문서를 삭제하지 못했습니다. 다시 시도해주세요.',
         variant: 'destructive',
       });
+      
+      throw err;
     }
   },
 
