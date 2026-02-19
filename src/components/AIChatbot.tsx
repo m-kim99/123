@@ -358,13 +358,18 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(track => track.stop());
-        isVoiceModeRef.current = true;
-        speechRecognition.startListening();
-        setIsVoiceMode(true);
         
         // 시작 사운드 재생
         playSound('/sounds/start.wav');
-      } catch {
+        
+        // 사운드 재생 후 약간의 지연을 두고 음성 인식 시작
+        setTimeout(() => {
+          isVoiceModeRef.current = true;
+          speechRecognition.startListening();
+          setIsVoiceMode(true);
+        }, 100);
+      } catch (err) {
+        console.error('마이크 권한 오류:', err);
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
           role: 'assistant' as const,
