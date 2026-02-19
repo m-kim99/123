@@ -654,10 +654,13 @@ function generateFallbackResponse(message: string): string {
     return '질문을 입력해 주세요. 예: "급여 명세 문서는 어디에 있어?", "전체 문서 수 알려줘"';
   }
 
-  // ========== 빠른 통계 응답 (로컬 데이터 기반) ==========
+  // ========== 빠른 통계 응답 (로컬 데이터 기반 - 단순 includes 체크) ==========
+  const t = text.toLowerCase();
+  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수');
+  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려');
   
   // 전체 현황/통계 요청
-  if (/^(전체|총|시스템|현재)\s*(현황|상태|통계)/.test(text) || /몇\s*개씩/.test(text)) {
+  if (t.includes('현황') || t.includes('통계') || t.includes('상태')) {
     return [
       '현재 시스템 현황입니다:',
       `- 부서: ${departments.length}개`,
@@ -667,33 +670,28 @@ function generateFallbackResponse(message: string): string {
     ].join('\n');
   }
 
-  // 문서 수 질문 ("문서 수는?" "문서 몇개?" "문서 갯수" 등)
-  if (/(문서).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(문서)/.test(text)) {
-    console.log('문서 수 질문 매칭:', text);
-    return `현재 시스템에 등록된 문서는 총 ${documents.length}개입니다.`;
-  }
-
-  // 대분류 수 질문 ("대분류 수는?" "대분류 몇개?" "대분류 갯수" 등)
-  if (/(대분류).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(대분류)/.test(text)) {
-    console.log('대분류 수 질문 매칭:', text);
+  // 대분류 수 질문
+  if (t.includes('대분류') && hasCount) {
     return `현재 시스템에 등록된 대분류는 총 ${parentCategories.length}개입니다.`;
   }
 
-  // 세부 스토리지/세부카테고리 수 질문
-  if (/(세부|스토리지|세부카테고리|세부\s*스토리지).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(세부|스토리지)/.test(text)) {
-    console.log('세부 스토리지 수 질문 매칭:', text);
+  // 문서 수 질문
+  if (t.includes('문서') && hasCount) {
+    return `현재 시스템에 등록된 문서는 총 ${documents.length}개입니다.`;
+  }
+
+  // 세부 스토리지 수 질문
+  if ((t.includes('세부') || t.includes('스토리지')) && hasCount) {
     return `현재 시스템에 등록된 세부 스토리지는 총 ${subcategories.length}개입니다.`;
   }
 
   // 부서 수 질문
-  if (/(부서).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(부서)/.test(text)) {
-    console.log('부서 수 질문 매칭:', text);
+  if (t.includes('부서') && hasCount) {
     return `현재 시스템에 등록된 부서는 총 ${departments.length}개입니다.`;
   }
 
-  // 카테고리 수 질문 (대분류 + 세부 합계 또는 대분류만)
-  if (/(카테고리).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(카테고리)/.test(text)) {
-    console.log('카테고리 수 질문 매칭:', text);
+  // 카테고리 수 질문
+  if (t.includes('카테고리') && hasCount) {
     return [
       '현재 시스템에 등록된 카테고리 현황:',
       `- 대분류: ${parentCategories.length}개`,
@@ -701,8 +699,8 @@ function generateFallbackResponse(message: string): string {
     ].join('\n');
   }
 
-  // NFC 등록 현황 (간단 버전)
-  if (/nfc.*(현황|등록|수|몇|개)/i.test(text) || /(현황|등록|수|몇|개).*nfc/i.test(text)) {
+  // NFC 등록 현황
+  if (t.includes('nfc')) {
     const registered = subcategories.filter(s => s.nfcRegistered).length;
     const unregistered = subcategories.length - registered;
     return [
@@ -714,7 +712,7 @@ function generateFallbackResponse(message: string): string {
   }
 
   // 대분류 목록
-  if (/(대분류).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(대분류)/.test(text)) {
+  if (t.includes('대분류') && hasList) {
     if (parentCategories.length === 0) return '등록된 대분류가 없습니다.';
     const items = parentCategories.slice(0, 15).map(pc => {
       const dept = departments.find(d => d.id === pc.departmentId);
@@ -725,7 +723,7 @@ function generateFallbackResponse(message: string): string {
   }
 
   // 세부 스토리지 목록
-  if (/(세부|스토리지).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(세부|스토리지)/.test(text)) {
+  if ((t.includes('세부') || t.includes('스토리지')) && hasList) {
     if (subcategories.length === 0) return '등록된 세부 스토리지가 없습니다.';
     const items = subcategories.slice(0, 15).map(sc => {
       const dept = departments.find(d => d.id === sc.departmentId);
@@ -737,7 +735,7 @@ function generateFallbackResponse(message: string): string {
   }
 
   // 부서 목록
-  if (/(부서).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(부서)/.test(text)) {
+  if (t.includes('부서') && hasList) {
     if (departments.length === 0) return '등록된 부서가 없습니다.';
     const items = departments.map(d => `- ${d.name} (문서 ${d.documentCount}건)`);
     return [`부서 목록 (총 ${departments.length}개):`, ...items].join('\n');
@@ -958,34 +956,20 @@ export async function generateResponse(
     return emitFallback();
   }
 
-  // 빠른 답변이 필요한 질문들 (즉시 fallback 처리 - 패턴 매칭)
-  const fastReplyPatterns = [
-    // 전체 통계
-    /^(전체|총|현재)\s*(문서|부서|대분류|세부|스토리지|카테고리).*(수|몇|개)/i,
-    /(문서|부서|대분류|세부|스토리지|카테고리).*(수는?|몇|개수|갯수)/i,
-    /(수는?|몇|개수|갯수).*(문서|부서|대분류|세부|스토리지|카테고리)/i,
-    // 목록 요청
-    /(카테고리|대분류|세부|부서).*(목록|리스트)/i,
-    /(목록|리스트).*(카테고리|대분류|세부|부서|보여|알려)/i,
-    // 통계 요약
-    /^(시스템|현재|전체|총).*(현황|상태|통계)/i,
-    // NFC 관련
-    /nfc.*(현황|등록|수)/i,
-  ];
-
-  console.log('[Chatbot] 질문:', text);
-  const isFastReply = fastReplyPatterns.some(pattern => {
-    const matched = pattern.test(text);
-    if (matched) console.log('[Chatbot] Fast reply 패턴 매칭:', pattern);
-    return matched;
-  });
+  // 빠른 답변이 필요한 질문들 (즉시 fallback 처리 - 단순 includes 체크)
+  const t = text.toLowerCase();
+  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수');
+  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려');
+  const hasEntity = t.includes('문서') || t.includes('부서') || t.includes('대분류') || t.includes('세부') || t.includes('스토리지') || t.includes('카테고리');
+  const hasStatus = t.includes('현황') || t.includes('통계') || t.includes('상태');
+  const hasNfc = t.includes('nfc');
+  
+  const isFastReply = hasNfc || hasStatus || (hasEntity && (hasCount || hasList));
   
   if (isFastReply) {
-    console.log('[Chatbot] Fast reply 사용 - fallback 호출');
+    console.log('[Chatbot] Fast reply 사용:', text);
     return emitFallback();
   }
-  
-  console.log('[Chatbot] Fast reply 패턴 매칭 실패 - Edge Function 호출');
 
   // 만기, 공유, NFC 조회는 비동기 폴백으로 처리
   const asyncFallback = await generateAsyncFallbackResponse(text);
