@@ -1,4 +1,4 @@
-import { FileText, Calendar, Building2, ChevronDown } from 'lucide-react';
+import { FileText, Building2, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
   BarChart,
@@ -90,9 +90,9 @@ export function Statistics() {
       color: '#2563eb',
     },
     {
-      title: '이번 달',
+      title: '이번 달 업로드 문서',
       value: thisMonthCount,
-      icon: Calendar,
+      icon: FileText,
       color: '#3B82F6',
     },
     {
