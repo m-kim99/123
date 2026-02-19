@@ -648,11 +648,102 @@ function generateFallbackResponse(message: string): string {
   console.log('fallback 로직 사용');
   const text = message.trim();
   const store = useDocumentStore.getState();
-  const { documents, categories, departments } = store;
+  const { documents, categories, departments, parentCategories, subcategories } = store;
 
   if (!text) {
     return '질문을 입력해 주세요. 예: "급여 명세 문서는 어디에 있어?", "전체 문서 수 알려줘"';
   }
+
+  // ========== 빠른 통계 응답 (로컬 데이터 기반) ==========
+  
+  // 전체 현황/통계 요청
+  if (/^(전체|총|시스템|현재)\s*(현황|상태|통계)/.test(text) || /몇\s*개씩/.test(text)) {
+    return [
+      '현재 시스템 현황입니다:',
+      `- 부서: ${departments.length}개`,
+      `- 대분류: ${parentCategories.length}개`,
+      `- 세부 스토리지: ${subcategories.length}개`,
+      `- 문서: ${documents.length}개`,
+    ].join('\n');
+  }
+
+  // 문서 수 질문 ("문서 수는?" "문서 몇개?" "문서 갯수" 등)
+  if (/(문서).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(문서)/.test(text)) {
+    console.log('문서 수 질문 매칭:', text);
+    return `현재 시스템에 등록된 문서는 총 ${documents.length}개입니다.`;
+  }
+
+  // 대분류 수 질문 ("대분류 수는?" "대분류 몇개?" "대분류 갯수" 등)
+  if (/(대분류).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(대분류)/.test(text)) {
+    console.log('대분류 수 질문 매칭:', text);
+    return `현재 시스템에 등록된 대분류는 총 ${parentCategories.length}개입니다.`;
+  }
+
+  // 세부 스토리지/세부카테고리 수 질문
+  if (/(세부|스토리지|세부카테고리|세부\s*스토리지).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(세부|스토리지)/.test(text)) {
+    console.log('세부 스토리지 수 질문 매칭:', text);
+    return `현재 시스템에 등록된 세부 스토리지는 총 ${subcategories.length}개입니다.`;
+  }
+
+  // 부서 수 질문
+  if (/(부서).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(부서)/.test(text)) {
+    console.log('부서 수 질문 매칭:', text);
+    return `현재 시스템에 등록된 부서는 총 ${departments.length}개입니다.`;
+  }
+
+  // 카테고리 수 질문 (대분류 + 세부 합계 또는 대분류만)
+  if (/(카테고리).*(수는?|몇|갯수|개수)/.test(text) || /(수는?|몇|갯수|개수).*(카테고리)/.test(text)) {
+    console.log('카테고리 수 질문 매칭:', text);
+    return [
+      '현재 시스템에 등록된 카테고리 현황:',
+      `- 대분류: ${parentCategories.length}개`,
+      `- 세부 스토리지: ${subcategories.length}개`,
+    ].join('\n');
+  }
+
+  // NFC 등록 현황 (간단 버전)
+  if (/nfc.*(현황|등록|수|몇|개)/i.test(text) || /(현황|등록|수|몇|개).*nfc/i.test(text)) {
+    const registered = subcategories.filter(s => s.nfcRegistered).length;
+    const unregistered = subcategories.length - registered;
+    return [
+      'NFC 등록 현황:',
+      `- 등록됨: ${registered}개`,
+      `- 미등록: ${unregistered}개`,
+      `- 전체: ${subcategories.length}개`,
+    ].join('\n');
+  }
+
+  // 대분류 목록
+  if (/(대분류).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(대분류)/.test(text)) {
+    if (parentCategories.length === 0) return '등록된 대분류가 없습니다.';
+    const items = parentCategories.slice(0, 15).map(pc => {
+      const dept = departments.find(d => d.id === pc.departmentId);
+      return `- ${pc.name} (${dept?.name || '부서 정보 없음'}, 문서 ${pc.documentCount}건)`;
+    });
+    const header = `대분류 목록 (총 ${parentCategories.length}개${parentCategories.length > 15 ? ', 상위 15개 표시' : ''}):`;
+    return [header, ...items].join('\n');
+  }
+
+  // 세부 스토리지 목록
+  if (/(세부|스토리지).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(세부|스토리지)/.test(text)) {
+    if (subcategories.length === 0) return '등록된 세부 스토리지가 없습니다.';
+    const items = subcategories.slice(0, 15).map(sc => {
+      const dept = departments.find(d => d.id === sc.departmentId);
+      const pc = parentCategories.find(p => p.id === sc.parentCategoryId);
+      return `- ${sc.name} (${dept?.name || ''} → ${pc?.name || ''}, 문서 ${sc.documentCount}건)`;
+    });
+    const header = `세부 스토리지 목록 (총 ${subcategories.length}개${subcategories.length > 15 ? ', 상위 15개 표시' : ''}):`;
+    return [header, ...items].join('\n');
+  }
+
+  // 부서 목록
+  if (/(부서).*(목록|리스트|보여|알려)/.test(text) || /(목록|리스트).*(부서)/.test(text)) {
+    if (departments.length === 0) return '등록된 부서가 없습니다.';
+    const items = departments.map(d => `- ${d.name} (문서 ${d.documentCount}건)`);
+    return [`부서 목록 (총 ${departments.length}개):`, ...items].join('\n');
+  }
+
+  // ========== 기존 로직 ==========
 
   // 0. 기간 기반 문서 검색: 날짜/기간 표현 + 문서 관련 키워드 포함 시
   if (isDateSearchIntent(text)) {
@@ -682,55 +773,54 @@ function generateFallbackResponse(message: string): string {
 
   // 1. 위치 질문: "어디" 포함 시 — 4단 계층 전체 검색
   if (text.includes('어디')) {
-    const keyword = text.replace(/어디|어딨|있어|찾아|위치|줘|요|\?/g, '').trim().toLowerCase();
-    const { parentCategories, subcategories } = store;
-    const allLines: string[] = [];
+    const searchKeyword = text.replace(/어디|어딨|있어|찾아|위치|줘|요|\?/g, '').trim().toLowerCase();
+    const locationLines: string[] = [];
 
     // 대분류 검색
     const matchedParentCats = parentCategories.filter((pc) =>
-      pc.name.toLowerCase().includes(keyword)
+      pc.name.toLowerCase().includes(searchKeyword)
     );
     if (matchedParentCats.length > 0) {
-      allLines.push('📁 **대분류**에서 찾았습니다:');
+      locationLines.push('📁 **대분류**에서 찾았습니다:');
       for (const pc of matchedParentCats.slice(0, 5)) {
         const dept = departments.find((d) => d.id === pc.departmentId);
-        allLines.push(`- ${pc.name}\n  · 부서: ${dept?.name || '부서 정보 없음'}\n  · 세부 스토리지: ${pc.subcategoryCount}개\n  · 문서 수: ${pc.documentCount}건`);
+        locationLines.push(`- ${pc.name}\n  · 부서: ${dept?.name || '부서 정보 없음'}\n  · 세부 스토리지: ${pc.subcategoryCount}개\n  · 문서 수: ${pc.documentCount}건`);
       }
     }
 
     // 세부카테고리 검색
     const matchedSubs = subcategories.filter((sc) =>
-      sc.name.toLowerCase().includes(keyword)
+      sc.name.toLowerCase().includes(searchKeyword)
     );
     if (matchedSubs.length > 0) {
-      if (allLines.length > 0) allLines.push('');
-      allLines.push('📂 **세부 스토리지**에서 찾았습니다:');
+      if (locationLines.length > 0) locationLines.push('');
+      locationLines.push('📂 **세부 스토리지**에서 찾았습니다:');
       for (const sc of matchedSubs.slice(0, 5)) {
         const dept = departments.find((d) => d.id === sc.departmentId);
         const parentCat = parentCategories.find((pc) => pc.id === sc.parentCategoryId);
         const location = sc.storageLocation || '위치 미지정';
-        allLines.push(`- ${sc.name}\n  · 경로: ${dept?.name || ''} → ${parentCat?.name || ''} → ${sc.name}\n  · 보관 위치: ${location}\n  · 문서 수: ${sc.documentCount}건`);
+        locationLines.push(`- ${sc.name}\n  · 경로: ${dept?.name || ''} → ${parentCat?.name || ''} → ${sc.name}\n  · 보관 위치: ${location}\n  · 문서 수: ${sc.documentCount}건`);
       }
     }
 
     // 문서 검색
     const docResults = searchDocuments(text);
     if (docResults.length > 0) {
-      if (allLines.length > 0) allLines.push('');
-      allLines.push('📄 **문서**에서 찾았습니다:');
+      if (locationLines.length > 0) locationLines.push('');
+      locationLines.push('📄 **문서**에서 찾았습니다:');
       for (const doc of docResults.slice(0, 5)) {
         const location = doc.storageLocation || '위치 미지정';
         const dept = doc.departmentName || '부서 정보 없음';
         const category = doc.categoryName || '카테고리 정보 없음';
-        allLines.push(`- ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 위치: ${location}`);
+        locationLines.push(`- ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 위치: ${location}`);
       }
     }
 
-    if (allLines.length === 0) {
+    if (locationLines.length === 0) {
       return '해당 키워드와 관련된 항목을 찾지 못했어요. 다른 키워드로 다시 검색해 주세요.';
     }
 
-    return allLines.join('\n');
+    return locationLines.join('\n');
   }
 
   // 2. 문서 개수 질문: "문서 수" 또는 "몇 개" 포함 시
@@ -769,7 +859,6 @@ function generateFallbackResponse(message: string): string {
 
   // 5. 기본: 4단 계층 통합 검색 또는 도움말
   const keyword = text.toLowerCase();
-  const { parentCategories, subcategories } = store;
   const allLines: string[] = [];
 
   // 대분류 검색
@@ -869,16 +958,34 @@ export async function generateResponse(
     return emitFallback();
   }
 
-  // 빠른 답변이 필요한 질문들 (즉시 fallback 처리)
-  const fastReplyQuestions = [
-    '카테고리 목록 보여줘',
-    '전체 문서 수는?',
-    '부서별 문서 수 알려줘',
+  // 빠른 답변이 필요한 질문들 (즉시 fallback 처리 - 패턴 매칭)
+  const fastReplyPatterns = [
+    // 전체 통계
+    /^(전체|총|현재)\s*(문서|부서|대분류|세부|스토리지|카테고리).*(수|몇|개)/i,
+    /(문서|부서|대분류|세부|스토리지|카테고리).*(수는?|몇|개수|갯수)/i,
+    /(수는?|몇|개수|갯수).*(문서|부서|대분류|세부|스토리지|카테고리)/i,
+    // 목록 요청
+    /(카테고리|대분류|세부|부서).*(목록|리스트)/i,
+    /(목록|리스트).*(카테고리|대분류|세부|부서|보여|알려)/i,
+    // 통계 요약
+    /^(시스템|현재|전체|총).*(현황|상태|통계)/i,
+    // NFC 관련
+    /nfc.*(현황|등록|수)/i,
   ];
 
-  if (fastReplyQuestions.includes(text)) {
+  console.log('[Chatbot] 질문:', text);
+  const isFastReply = fastReplyPatterns.some(pattern => {
+    const matched = pattern.test(text);
+    if (matched) console.log('[Chatbot] Fast reply 패턴 매칭:', pattern);
+    return matched;
+  });
+  
+  if (isFastReply) {
+    console.log('[Chatbot] Fast reply 사용 - fallback 호출');
     return emitFallback();
   }
+  
+  console.log('[Chatbot] Fast reply 패턴 매칭 실패 - Edge Function 호출');
 
   // 만기, 공유, NFC 조회는 비동기 폴백으로 처리
   const asyncFallback = await generateAsyncFallbackResponse(text);
