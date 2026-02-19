@@ -26,19 +26,51 @@ export function TeamDashboard() {
   // 함수는 한 번에 가져오기 (참조 안정적)
   const { fetchFavorites, fetchRecentVisits, fetchParentCategoryStats } = useFavoriteStore();
 
+  // 권한 있는 부서 ID 목록
+  const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
+
   useEffect(() => {
     fetchFavorites();
     fetchRecentVisits(5);
     fetchParentCategoryStats();
   }, [fetchFavorites, fetchRecentVisits, fetchParentCategoryStats]);
 
+  // 권한 있는 부서 목록 조회
+  useEffect(() => {
+    const fetchAccessibleDepartments = async () => {
+      if (!user?.id) {
+        setAccessibleDepartmentIds([]);
+        return;
+      }
+
+      const ownDeptId = user.departmentId;
+      
+      // 추가 권한 부여된 부서 조회
+      const { data: permissionData } = await supabase
+        .from('user_permissions')
+        .select('department_id')
+        .eq('user_id', user.id)
+        .neq('role', 'none');
+
+      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
+      const allIds = new Set<string>([
+        ...(ownDeptId ? [ownDeptId] : []),
+        ...permDeptIds,
+      ]);
+
+      setAccessibleDepartmentIds(Array.from(allIds));
+    };
+
+    fetchAccessibleDepartments();
+  }, [user?.id, user?.departmentId]);
+
   const userDepartment = departments.find((d) => d.id === user?.departmentId);
-  const userDocuments = documents.filter((d) => d.departmentId === user?.departmentId);
+  const userDocuments = documents.filter((d) => accessibleDepartmentIds.includes(d.departmentId));
   const userParentCategories = parentCategories.filter(
-    (pc) => pc.departmentId === user?.departmentId,
+    (pc) => accessibleDepartmentIds.includes(pc.departmentId),
   );
   const userSubcategories = subcategories.filter(
-    (sc) => sc.departmentId === user?.departmentId,
+    (sc) => accessibleDepartmentIds.includes(sc.departmentId),
   );
 
   const [memberCount, setMemberCount] = useState(0);
@@ -57,19 +89,19 @@ export function TeamDashboard() {
 
   const stats = [
     {
-      title: '내 부서 문서',
+      title: '접근 가능한 문서',
       value: userDocuments.length,
       icon: FileText,
       color: '#2563eb',
     },
     {
-      title: '내 부서 대분류',
+      title: '접근 가능한 대분류',
       value: userParentCategories.length,
       icon: Building2,
       color: '#3B82F6',
     },
     {
-      title: '내 부서 세부 스토리지',
+      title: '접근 가능한 세부 스토리지',
       value: userSubcategories.length,
       icon: TrendingUp,
       color: '#8B5CF6',
