@@ -34,6 +34,7 @@ const skipPatterns = new Set([
   '뭐해', '뭐하니', '잘자', '굿', '바이', '또봐',
 ]);
 
+// 기존 extractKeywords 함수는 폴백용으로 유지
 function extractKeywords(message: string): string {
   const trimmed = message.trim().toLowerCase().replace(/[?!.,;~]+$/g, '');
   if (skipPatterns.has(trimmed)) return '';
@@ -47,31 +48,168 @@ function extractKeywords(message: string): string {
     .join(' ').trim();
 }
 
+async function extractKeywordsWithGemini(
+  message: string, 
+  GEMINI_API_KEY: string
+): Promise<string> {
+  const trimmed = message.trim().toLowerCase().replace(/[?!.,;~]+$/g, '');
+  if (skipPatterns.has(trimmed)) return '';
+  
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `다음 사용자 메시지에서 문서 검색에 필요한 핵심 키워드만 추출하세요.
+
+규칙:
+1. 명사/핵심어만 추출 (불용어 제거)
+2. 띄어쓰기 제거하여 붙여쓰기 (예: "급여 명세서" → "급여명세서")
+3. 여러 키워드는 공백으로 구분
+4. 키워드만 출력, 설명 금지
+
+입력: "${message}"
+키워드:`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 50
+          }
+        })
+      }
+    );
+    
+    const data = await response.json();
+    const extracted = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    console.log(`✅ Gemini 키워드 추출: "${message}" → "${extracted}"`);
+    return extracted;
+  } catch (error) {
+    console.error('⚠️ Gemini 키워드 추출 실패, 폴백:', error);
+    return extractKeywords(message); // 기존 함수로 폴백
+  }
+}
+
 async function preSearch(supabase: any, companyId: string, _deptIds: string[], keyword: string): Promise<any> {
   if (!keyword || keyword.length < 1) return null;
   try {
     const words = keyword.split(/\s+/).filter(w => w.length >= 2);
-    if (words.length === 0) { const w = keyword.trim(); if (w.length > 0) words.push(w); else return null; }
+    if (words.length === 0) { 
+      const w = keyword.trim(); 
+      if (w.length > 0) words.push(w); 
+      else return null; 
+    }
+    
+    console.log(`🔍 preSearch: keyword="${keyword}", words=${JSON.stringify(words)}`);
+    
+    // OR 조건 생성 (ilike + similarity 병행)
     const nameOr = words.map(w => `name.ilike.*${w}*`).join(',');
-    const docOr = words.flatMap(w => [`title.ilike.*${w}*`, `ocr_text.ilike.*${w}*`]).join(',');
-    console.log(`preSearch: words=${JSON.stringify(words)}, docOr=${docOr}`);
+    
+    // 문서 검색: title + ocr_text 모두 검색
+    const docOrConditions = words.flatMap(w => [
+      `title.ilike.*${w}*`,
+      `ocr_text.ilike.*${w}*` 
+    ]).join(',');
+    
+    console.log(`📊 문서 검색 조건: ${docOrConditions}`);
+    
     const [deptR, catR, subR, docR] = await Promise.all([
-      supabase.from('departments').select('id, name').eq('company_id', companyId).or(nameOr).limit(5),
-      supabase.from('categories').select('id, name, department_id, department:departments(id, name)').eq('company_id', companyId).or(nameOr).limit(5),
-      supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').eq('company_id', companyId).or(nameOr).limit(5),
-      supabase.from('documents').select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').eq('company_id', companyId).or(docOr).limit(5)
+      supabase.from('departments')
+        .select('id, name')
+        .eq('company_id', companyId)
+        .or(nameOr)
+        .limit(5),
+      supabase.from('categories')
+        .select('id, name, department_id, department:departments(id, name)')
+        .eq('company_id', companyId)
+        .or(nameOr)
+        .limit(5),
+      supabase.from('subcategories')
+        .select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)')
+        .eq('company_id', companyId)
+        .or(nameOr)
+        .limit(5),
+      supabase.from('documents')
+        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)')
+        .eq('company_id', companyId)
+        .or(docOrConditions)
+        .limit(10) // 문서는 더 많이 가져옴
     ]);
-    if (deptR.error) console.error('preSearch dept error:', deptR.error);
-    if (catR.error) console.error('preSearch cat error:', catR.error);
-    if (subR.error) console.error('preSearch sub error:', subR.error);
-    if (docR.error) console.error('preSearch doc error:', docR.error);
+    
+    if (deptR.error) console.error('❌ preSearch dept error:', deptR.error);
+    if (catR.error) console.error('❌ preSearch cat error:', catR.error);
+    if (subR.error) console.error('❌ preSearch sub error:', subR.error);
+    if (docR.error) console.error('❌ preSearch doc error:', docR.error);
+    
     const results: any[] = [];
-    for (const d of deptR.data || []) results.push({ type: '부서', name: d.name, path: d.name, link: `/admin/department/${d.id}` });
-    for (const c of catR.data || []) results.push({ type: '대분류', name: c.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` });
-    for (const s of subR.data || []) results.push({ type: '세부카테고리', name: s.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location });
-    for (const d of docR.data || []) results.push({ type: '문서', name: d.title, path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: d.subcategory?.storage_location, ocr_snippet: d.ocr_text?.substring(0, 150), uploaded_at: d.uploaded_at });
+    
+    for (const d of deptR.data || []) {
+      results.push({ 
+        type: '부서', 
+        name: d.name, 
+        path: d.name, 
+        link: `/admin/department/${d.id}` 
+      });
+    }
+    
+    for (const c of catR.data || []) {
+      results.push({ 
+        type: '대분류', 
+        name: c.name, 
+        path: `${c.department?.name} → ${c.name}`, 
+        link: `/admin/department/${c.department_id}/category/${c.id}` 
+      });
+    }
+    
+    for (const s of subR.data || []) {
+      results.push({ 
+        type: '세부카테고리', 
+        name: s.name, 
+        path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, 
+        link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, 
+        storage_location: s.storage_location 
+      });
+    }
+    
+    for (const d of docR.data || []) {
+      // OCR 텍스트 스니펫 생성 (키워드 주변 텍스트 추출)
+      let ocrSnippet = '';
+      if (d.ocr_text) {
+        const lowerOcr = d.ocr_text.toLowerCase();
+        const lowerKeyword = keyword.toLowerCase();
+        const keywordIndex = lowerOcr.indexOf(lowerKeyword);
+        
+        if (keywordIndex !== -1) {
+          const start = Math.max(0, keywordIndex - 50);
+          const end = Math.min(d.ocr_text.length, keywordIndex + keyword.length + 50);
+          ocrSnippet = '...' + d.ocr_text.substring(start, end).trim() + '...';
+        } else {
+          ocrSnippet = d.ocr_text.substring(0, 100);
+        }
+      }
+      
+      results.push({ 
+        type: '문서', 
+        name: d.title, 
+        path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, 
+        link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, 
+        storage_location: d.subcategory?.storage_location, 
+        ocr_snippet: ocrSnippet,
+        uploaded_at: d.uploaded_at 
+      });
+    }
+    
+    console.log(`✅ preSearch 결과: 총 ${results.length}건 (부서:${deptR.data?.length || 0}, 대분류:${catR.data?.length || 0}, 세부:${subR.data?.length || 0}, 문서:${docR.data?.length || 0})`);
+    
     return results.length > 0 ? { keyword, results } : null;
-  } catch (e) { console.error('preSearch error:', e); return null; }
+  } catch (e) { 
+    console.error('❌ preSearch error:', e); 
+    return null; 
+  }
 }
 
 async function executeFunction(name: string, args: any, supabase: any, companyId: string, userId: string): Promise<string> {
@@ -304,7 +442,7 @@ serve(async (req) => {
 
     // ★ Phase 1: 서버 사이드 프리서치 - Gemini 호출 전 자동 검색
     const deptIds = await getDeptIds(supabase, userCompanyId);
-    const keywords = extractKeywords(message);
+    const keywords = await extractKeywordsWithGemini(message, GEMINI_API_KEY);
     const searchContext = keywords ? await preSearch(supabase, userCompanyId, deptIds, keywords) : null;
     console.log(`PreSearch: message="${message}", keywords="${keywords}", results=${searchContext?.results?.length || 0}, firstResult=${JSON.stringify(searchContext?.results?.[0]?.name || 'none')}`);
 

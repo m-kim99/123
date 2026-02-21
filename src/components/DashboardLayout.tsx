@@ -175,11 +175,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .order('search_count', { ascending: false })
         .limit(5);
 
-      // 연관 검색어 (문서 제목에서, 입력값으로 필터링)
+      // 연관 검색어 (문서 제목 + OCR 텍스트에서 검색)
       const { data: relatedData } = await supabase
         .from('documents')
-        .select('title')
-        .ilike('title', `%${trimmed}%`)
+        .select('title, ocr_text')
+        .or(`title.ilike.%${trimmed}%,ocr_text.ilike.%${trimmed}%`)
         .limit(5);
 
       setSearchSuggestions({
