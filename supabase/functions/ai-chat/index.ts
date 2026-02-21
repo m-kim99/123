@@ -34,6 +34,30 @@ const skipPatterns = new Set([
   '뭐해', '뭐하니', '잘자', '굿', '바이', '또봐',
 ]);
 
+// 검색 의도 판별 함수
+function isSearchIntent(message: string): boolean {
+  const text = message.toLowerCase();
+  
+  // 검색 키워드
+  const searchKeywords = [
+    '찾', '검색', '어디', '위치', '있어', '있나', '보여', '알려', 
+    '내용', '포함', '들어', '관련'
+  ];
+  
+  // 통계/함수 호출 키워드 (검색 아님)
+  const statKeywords = [
+    '몇', '개', '수', '통계', '현황', '상태',
+    '팀원', '멤버', '사람', '직원', '사용자',
+    'nfc', '등록', '만기', '만료', '공유'
+  ];
+  
+  const hasSearchKeyword = searchKeywords.some(k => text.includes(k));
+  const hasStatKeyword = statKeywords.some(k => text.includes(k));
+  
+  // 검색 키워드 있고 + 통계 키워드 없으면 → 검색 의도
+  return hasSearchKeyword && !hasStatKeyword;
+}
+
 // 기존 extractKeywords 함수는 폴백용으로 유지
 function extractKeywords(message: string): string {
   const trimmed = message.trim().toLowerCase().replace(/[?!.,;~]+$/g, '');
@@ -57,40 +81,37 @@ async function extractKeywordsWithGemini(
   
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `다음 사용자 메시지에서 문서 검색에 필요한 핵심 키워드만 추출하세요.
+              text: `사용자 메시지에서 검색 키워드만 추출하세요.
 
 규칙:
-1. 명사/핵심어만 추출 (불용어 제거)
-2. 띄어쓰기 제거하여 붙여쓰기 (예: "급여 명세서" → "급여명세서")
-3. 여러 키워드는 공백으로 구분
-4. 키워드만 출력, 설명 금지
+- 검색에 필요한 명사만 추출
+- 띄어쓰기 제거 (예: "중소 기업" → "중소기업")
+- 여러 키워드는 공백으로 구분
+- 키워드만 출력 (설명 금지)
 
 입력: "${message}"
 키워드:`
             }]
           }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 50
-          }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 30 }
         })
       }
     );
     
     const data = await response.json();
     const extracted = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    console.log(`✅ Gemini 키워드 추출: "${message}" → "${extracted}"`);
-    return extracted;
+    console.log(`🔍 Gemini 키워드: "${message}" → "${extracted}"`);
+    return extracted || extractKeywords(message);
   } catch (error) {
-    console.error('⚠️ Gemini 키워드 추출 실패, 폴백:', error);
-    return extractKeywords(message); // 기존 함수로 폴백
+    console.error('⚠️ Gemini 실패, 폴백:', error);
+    return extractKeywords(message);
   }
 }
 
@@ -176,19 +197,14 @@ async function preSearch(supabase: any, companyId: string, _deptIds: string[], k
     }
     
     for (const d of docR.data || []) {
-      // OCR 텍스트 스니펫 생성 (키워드 주변 텍스트 추출)
+      // OCR 스니펫 생성
       let ocrSnippet = '';
-      if (d.ocr_text) {
-        const lowerOcr = d.ocr_text.toLowerCase();
-        const lowerKeyword = keyword.toLowerCase();
-        const keywordIndex = lowerOcr.indexOf(lowerKeyword);
-        
-        if (keywordIndex !== -1) {
-          const start = Math.max(0, keywordIndex - 50);
-          const end = Math.min(d.ocr_text.length, keywordIndex + keyword.length + 50);
-          ocrSnippet = '...' + d.ocr_text.substring(start, end).trim() + '...';
-        } else {
-          ocrSnippet = d.ocr_text.substring(0, 100);
+      if (d.ocr_text && keyword) {
+        const idx = d.ocr_text.toLowerCase().indexOf(keyword.toLowerCase());
+        if (idx !== -1) {
+          const start = Math.max(0, idx - 30);
+          const end = Math.min(d.ocr_text.length, idx + keyword.length + 30);
+          ocrSnippet = '...' + d.ocr_text.substring(start, end) + '...';
         }
       }
       
@@ -442,7 +458,19 @@ serve(async (req) => {
 
     // ★ Phase 1: 서버 사이드 프리서치 - Gemini 호출 전 자동 검색
     const deptIds = await getDeptIds(supabase, userCompanyId);
-    const keywords = await extractKeywordsWithGemini(message, GEMINI_API_KEY);
+
+    // 검색 의도 판별
+    let keywords = '';
+    if (isSearchIntent(message)) {
+      // 검색 의도 → Gemini로 키워드 추출
+      console.log('✅ 검색 의도 감지, Gemini 사용');
+      keywords = await extractKeywordsWithGemini(message, GEMINI_API_KEY);
+    } else {
+      // 통계/함수 호출 의도 → 기존 방식
+      console.log('📊 통계/함수 의도 감지, 기존 방식 사용');
+      keywords = extractKeywords(message);
+    }
+
     const searchContext = keywords ? await preSearch(supabase, userCompanyId, deptIds, keywords) : null;
     console.log(`PreSearch: message="${message}", keywords="${keywords}", results=${searchContext?.results?.length || 0}, firstResult=${JSON.stringify(searchContext?.results?.[0]?.name || 'none')}`);
 
