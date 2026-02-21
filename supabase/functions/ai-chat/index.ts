@@ -95,10 +95,9 @@ async function preSearch(supabase: any, companyId: string, _deptIds: string[], k
         .or(nameOr)
         .limit(5),
       supabase.from('documents')
-        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)')
-        .eq('company_id', companyId)
+        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, department_id')
         .or(docOrConditions)
-        .limit(10) // 문서는 더 많이 가져옴
+        .limit(10)
     ]);
     
     if (deptR.error) console.error('❌ preSearch dept error:', deptR.error);
@@ -159,9 +158,9 @@ async function preSearch(supabase: any, companyId: string, _deptIds: string[], k
       results.push({ 
         type: '문서', 
         name: d.title, 
-        path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, 
+        path: d.title, 
         link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, 
-        storage_location: d.subcategory?.storage_location, 
+        storage_location: null, 
         ocr_snippet: ocrSnippet,
         uploaded_at: d.uploaded_at 
       });
@@ -430,14 +429,14 @@ serve(async (req) => {
 ${searchDataBlock}
 
 ## 답변 기준 (우선순위)
-1. **사전 검색 결과가 있으면**: 반드시 해당 결과를 안내하세요. 사용자가 키워드만 입력해도 검색 의도로 간주합니다. 경로(path)와 이동 링크(link)를 함께 알려주세요. 함수 호출은 불필요합니다.
+1. **사전 검색 결과가 있으면**: 반드시 해당 결과를 안내하세요. 사용자가 키워드만 입력해도 검색 의도로 간주합니다. 함수 호출은 불필요합니다.
 2. **통계/개수/순위/사용자 정보/NFC/만료/공유 등**: 적절한 함수를 호출하여 답변.
 3. **인사/감사/일반 대화/사용법 질문**: 직접 답변.
 
 ## 답변 형식
-- 경로: "부서 → 대분류 → 세부카테고리" 형식으로 자연스럽게 안내
-- 링크: "→ /admin/..." 형식
-- 문서가 OCR 본문에서 발견된 경우: OCR에서 발견된 내용 스니펫을 인용하고 해당 문서의 경로와 링크를 안내
+- 문서명과 내용만 간단히 안내
+- **링크(link, path, /admin/...)는 절대 텍스트로 출력하지 마세요** - 카드 UI가 자동으로 처리합니다
+- OCR 본문에서 발견된 경우: 발견된 내용 스니펫만 간단히 인용
 - 친절하고 간결하게`;
 
     const contents = [...history.map((h: any) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })), { role: 'user', parts: [{ text: message }] }];
@@ -451,11 +450,25 @@ ${searchDataBlock}
     // 프리서치 결과로 docsMetadata 생성 (Gemini가 함수를 호출하든 안 하든)
     let docsMetadata: any[] = [];
     if (searchContext?.results?.length > 0) {
-      docsMetadata = searchContext.results.map((r: any) => ({
-        id: r.link || '', title: r.name || '', categoryName: r.parent_category || '', departmentName: r.department || '',
-        storageLocation: r.storage_location || null, uploadDate: r.uploaded_at || '', subcategoryId: '', parentCategoryId: '',
-        type: r.type || '', path: r.path || '', link: r.link || ''
-      }));
+      docsMetadata = searchContext.results.map((r: any) => {
+        // link에서 parentCategoryId와 subcategoryId 추출
+        // 형식: /admin/category/{parentCategoryId}/subcategory/{subcategoryId}
+        let parentCategoryId = '';
+        let subcategoryId = '';
+        if (r.link) {
+          const match = r.link.match(/\/category\/([^/]+)\/subcategory\/([^/]+)/);
+          if (match) {
+            parentCategoryId = match[1];
+            subcategoryId = match[2];
+          }
+        }
+        return {
+          id: r.link || '', title: r.name || '', categoryName: r.parent_category || '', departmentName: r.department || '',
+          storageLocation: r.storage_location || null, uploadDate: r.uploaded_at || '', 
+          subcategoryId, parentCategoryId,
+          type: r.type || '', path: r.path || '', link: r.link || ''
+        };
+      });
     }
 
     if (functionCalls.length > 0) {
