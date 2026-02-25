@@ -81,7 +81,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showDeletionView, setShowDeletionView] = useState(false);
   const [deletionPassword, setDeletionPassword] = useState('');
+  const [deletionConfirmText, setDeletionConfirmText] = useState('');
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
@@ -341,31 +343,51 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setProfileError(null);
     setShowDeletionView(false);
     setDeletionPassword('');
+    setDeletionConfirmText('');
     setProfileDialogOpen(true);
+
+    // OAuth 사용자 여부 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const provider = session.user.app_metadata?.provider;
+        setIsOAuthUser(provider && provider !== 'email');
+      }
+    });
   };
 
   const handleRequestDeletion = async () => {
     if (!user) return;
 
-    if (!deletionPassword.trim()) {
-      setProfileError('비밀번호를 입력해주세요.');
-      return;
+    // OAuth 사용자: "탈퇴" 텍스트 확인
+    if (isOAuthUser) {
+      if (deletionConfirmText !== '탈퇴') {
+        setProfileError('"탈퇴"를 정확히 입력해주세요.');
+        return;
+      }
+    } else {
+      // 일반 사용자: 비밀번호 확인
+      if (!deletionPassword.trim()) {
+        setProfileError('비밀번호를 입력해주세요.');
+        return;
+      }
     }
 
     setIsRequestingDeletion(true);
     setProfileError(null);
 
     try {
-      // 비밀번호 확인을 위해 재로그인 시도
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: deletionPassword,
-      });
+      // 일반 사용자만 비밀번호 확인
+      if (!isOAuthUser) {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: deletionPassword,
+        });
 
-      if (authError) {
-        setProfileError('비밀번호가 일치하지 않습니다.');
-        setIsRequestingDeletion(false);
-        return;
+        if (authError) {
+          setProfileError('비밀번호가 일치하지 않습니다.');
+          setIsRequestingDeletion(false);
+          return;
+        }
       }
 
       // 기존 pending 요청이 있는지 확인
@@ -1184,17 +1206,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <li>업로드한 문서 및 설정이 모두 삭제됩니다.</li>
                   </ul>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deletion-password">비밀번호 확인</Label>
-                  <Input
-                    id="deletion-password"
-                    type="password"
-                    placeholder="현재 비밀번호를 입력하세요"
-                    value={deletionPassword}
-                    onChange={(e) => setDeletionPassword(e.target.value)}
-                    disabled={isRequestingDeletion}
-                  />
-                </div>
+                {isOAuthUser ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="deletion-confirm">확인을 위해 "탈퇴"를 입력하세요</Label>
+                    <Input
+                      id="deletion-confirm"
+                      type="text"
+                      placeholder="탈퇴"
+                      value={deletionConfirmText}
+                      onChange={(e) => setDeletionConfirmText(e.target.value)}
+                      disabled={isRequestingDeletion}
+                    />
+                    <p className="text-xs text-slate-500">
+                      소셜 로그인 계정은 비밀번호 대신 "탈퇴" 입력으로 확인합니다.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="deletion-password">비밀번호 확인</Label>
+                    <Input
+                      id="deletion-password"
+                      type="password"
+                      placeholder="현재 비밀번호를 입력하세요"
+                      value={deletionPassword}
+                      onChange={(e) => setDeletionPassword(e.target.value)}
+                      disabled={isRequestingDeletion}
+                    />
+                  </div>
+                )}
                 {profileError && (
                   <p className="text-xs text-red-500">{profileError}</p>
                 )}
@@ -1206,6 +1245,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   onClick={() => {
                     setShowDeletionView(false);
                     setDeletionPassword('');
+                    setDeletionConfirmText('');
                     setProfileError(null);
                   }}
                   disabled={isRequestingDeletion}
@@ -1217,7 +1257,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="destructive"
                   onClick={handleRequestDeletion}
-                  disabled={isRequestingDeletion || !deletionPassword.trim()}
+                  disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== '탈퇴' : !deletionPassword.trim())}
                   className="w-full sm:w-auto"
                 >
                   {isRequestingDeletion ? '처리 중...' : '탈퇴 신청'}
