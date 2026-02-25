@@ -1,9 +1,12 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/hooks/use-toast';
 import { trackPageView } from '@/lib/analytics';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -137,6 +140,84 @@ function RouteAnalytics() {
   }, [location.pathname, location.search]);
 
   return null;
+}
+
+function DeletionWarningDialog() {
+  const { pendingDeletion, cancelDeletion, clearPendingDeletion, logout } = useAuthStore();
+  const [isCancelling, setIsCancelling] = useState(false);
+  const { toast } = useToast();
+
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    const result = await cancelDeletion();
+    setIsCancelling(false);
+
+    if (result.success) {
+      toast({
+        title: '탈퇴 취소 완료',
+        description: '회원 탈퇴가 취소되었습니다. 계속 서비스를 이용하실 수 있습니다.',
+      });
+    } else {
+      toast({
+        title: '탈퇴 취소 실패',
+        description: result.error || '다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    clearPendingDeletion();
+    await logout();
+  };
+
+  if (!pendingDeletion) return null;
+
+  return (
+    <Dialog open={!!pendingDeletion} onOpenChange={(open) => !open && handleLogout()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-red-600">⚠️ 탈퇴 신청된 계정</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800 font-medium mb-2">
+              이 계정은 탈퇴가 신청된 상태입니다.
+            </p>
+            <div className="text-sm text-amber-700 space-y-1">
+              <p>• 삭제 예정일: <strong>{pendingDeletion.scheduledDate}</strong></p>
+              <p>• 남은 기간: <strong>{pendingDeletion.remainingDays}일</strong></p>
+            </div>
+          </div>
+          
+          <p className="text-sm text-slate-600">
+            탈퇴를 취소하시면 계속 서비스를 이용하실 수 있습니다.
+            <br />
+            취소하지 않으시면 예정일에 계정이 삭제됩니다.
+          </p>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isCancelling}
+              className="flex-1"
+            >
+              로그아웃
+            </Button>
+            <Button
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isCancelling ? '처리 중...' : '탈퇴 취소'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function App() {
@@ -390,6 +471,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
       <Toaster />
+      <DeletionWarningDialog />
     </>
   );
 }

@@ -16,6 +16,13 @@ export interface User {
   companyName: string;
 }
 
+export interface PendingDeletion {
+  id: string;
+  userId: string;
+  scheduledDate: string;
+  remainingDays: number;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -23,7 +30,10 @@ interface AuthState {
   error: string | null;
   needsOnboarding: boolean;
   redirectAfterLogin: string | null;
+  pendingDeletion: PendingDeletion | null;
   setRedirectAfterLogin: (path: string | null) => void;
+  clearPendingDeletion: () => void;
+  cancelDeletion: () => Promise<{ success: boolean; error?: string }>;
   login: (
     email: string,
     password: string,
@@ -50,15 +60,42 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true, // 초기 로딩 true → checkSession 완료 후 false
   error: null,
   needsOnboarding: false,
   redirectAfterLogin: null,
+  pendingDeletion: null,
 
   setRedirectAfterLogin: (path) => set({ redirectAfterLogin: path }),
+
+  clearPendingDeletion: () => set({ pendingDeletion: null }),
+
+  cancelDeletion: async () => {
+    const { pendingDeletion } = get();
+    if (!pendingDeletion) return { success: false, error: '탈퇴 요청 정보가 없습니다.' };
+
+    try {
+      const { error } = await supabase
+        .from('account_deletion_requests')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq('id', pendingDeletion.id)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+
+      set({ pendingDeletion: null });
+      return { success: true };
+    } catch (error) {
+      console.error('탈퇴 취소 실패:', error);
+      return { success: false, error: '탈퇴 취소에 실패했습니다.' };
+    }
+  },
 
   login: async (email: string, password: string, role: UserRole) => {
     set({ isLoading: true, error: null });
@@ -344,6 +381,27 @@ export const useAuthStore = create<AuthState>((set) => ({
         const company = (userData as any).companies;
         const needsOnboarding = !userData.company_id;
 
+        // 탈퇴 신청 여부 확인
+        const { data: deletionRequest } = await supabase
+          .from('account_deletion_requests')
+          .select('id, scheduled_deletion_at')
+          .eq('user_id', userData.id)
+          .eq('status', 'pending')
+          .single();
+
+        let pendingDeletionInfo: PendingDeletion | null = null;
+        if (deletionRequest) {
+          const scheduledDate = new Date(deletionRequest.scheduled_deletion_at);
+          const now = new Date();
+          const remainingDays = Math.ceil((scheduledDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          pendingDeletionInfo = {
+            id: deletionRequest.id,
+            userId: userData.id,
+            scheduledDate: scheduledDate.toLocaleDateString('ko-KR'),
+            remainingDays: Math.max(0, remainingDays),
+          };
+        }
+
         set({
           user: {
             id: userData.id,
@@ -358,6 +416,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           isAuthenticated: !needsOnboarding,
           isLoading: false,
           needsOnboarding,
+          pendingDeletion: pendingDeletionInfo,
         });
 
       } else {
