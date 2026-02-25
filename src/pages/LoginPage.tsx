@@ -76,6 +76,19 @@ export function LoginPage() {
   const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
   const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
 
+  // 사업자 인증 관련 상태 (관리자 전용)
+  const [bizNo, setBizNo] = useState('');
+  const [isVerifyingBiz, setIsVerifyingBiz] = useState(false);
+  const [bizVerified, setBizVerified] = useState(false);
+  const [verifiedBizInfo, setVerifiedBizInfo] = useState<{
+    bizno: string;
+    entrnm: string;
+    repr: string;
+    tpyr_stsnm: string;
+    obz_date: string;
+    txvsbzdnm: string;
+  } | null>(null);
+
   // 비밀번호 실시간 검증
   useEffect(() => {
     if (signupForm.password) {
@@ -260,9 +273,99 @@ export function LoginPage() {
     setAdminOtpVerified(false);
     setIsSendingAdminOtp(false);
     setIsVerifyingAdminOtp(false);
+
+    // 사업자 인증 초기화
+    setBizNo('');
+    setIsVerifyingBiz(false);
+    setBizVerified(false);
+    setVerifiedBizInfo(null);
   };
 
   const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
+
+  // 사업자 인증 핸들러 (NICE BizAPI)
+  const handleVerifyBusiness = async () => {
+    const cleanBizNo = bizNo.replace(/\D/g, '');
+
+    if (!cleanBizNo || cleanBizNo.length !== 10) {
+      toast({
+        title: '사업자 등록번호 입력',
+        description: '사업자 등록번호 10자리를 정확히 입력해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifyingBiz(true);
+    try {
+      // Edge Function 호출 (NICE BizAPI)
+      const { data, error: fnError } = await supabase.functions.invoke('verify-business', {
+        body: { bizno: cleanBizNo },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || '사업자 인증 실패');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || '사업자 인증에 실패했습니다.');
+      }
+
+      const bizInfo = data.item;
+
+      // 휴폐업 체크
+      if (bizInfo.tpyrstscd === '03') {
+        toast({
+          title: '폐업 사업자',
+          description: '해당 사업자는 폐업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (bizInfo.tpyrstscd === '02') {
+        toast({
+          title: '휴업 사업자',
+          description: '해당 사업자는 휴업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // 인증 성공
+      setVerifiedBizInfo({
+        bizno: bizInfo.bizno,
+        entrnm: bizInfo.entrnm,
+        repr: bizInfo.repr,
+        tpyr_stsnm: bizInfo.tpyr_stsnm,
+        obz_date: bizInfo.obz_date,
+        txvsbzdnm: bizInfo.txvsbzdnm,
+      });
+      setBizVerified(true);
+
+      // 회사명 자동 입력
+      setSignupForm((prev) => ({
+        ...prev,
+        companyName: bizInfo.entrnm || prev.companyName,
+        companyCode: cleanBizNo, // 사업자등록번호를 회사코드로 사용
+      }));
+      setCompanyCodeVerified(true);
+
+      toast({
+        title: '사업자 인증 완료',
+        description: `${bizInfo.entrnm} (${bizInfo.tpyr_stsnm})`,
+      });
+    } catch (err: any) {
+      console.error('사업자 인증 오류:', err);
+      toast({
+        title: '사업자 인증 실패',
+        description: err?.message || '사업자 정보를 확인할 수 없습니다. 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingBiz(false);
+    }
+  };
 
   const handleSendAdminOtp = async () => {
     const phone = normalizePhone(adminPhone);
@@ -880,8 +983,8 @@ export function LoginPage() {
       </div>
 
       {signupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <Card className="w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+          <Card className="w-full max-w-md my-auto">
             <CardHeader>
               <CardTitle>회원가입</CardTitle>
               <CardDescription>새 계정을 생성합니다</CardDescription>
@@ -907,130 +1010,193 @@ export function LoginPage() {
                 </TabsList>
               </Tabs>
 
-              <div className="space-y-2">
-                <Label>회사 코드</Label>
-                <Input
-                  placeholder="예: COMPANY001"
-                  value={signupForm.companyCode}
-                  onChange={(e) => {
-                    setSignupForm((prev) => ({
-                      ...prev,
-                      companyCode: e.target.value,
-                    }));
-                    setCompanyCodeVerified(false);
-                  }}
-                />
-              </div>
+              {/* 관리자: 사업자 인증 */}
+              {signupRole === 'admin' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>사업자 등록번호</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="000-00-00000"
+                        value={bizNo}
+                        onChange={(e) => {
+                          // 숫자와 하이픈만 허용, 자동 포맷팅
+                          let value = e.target.value.replace(/[^\d-]/g, '');
+                          // 하이픈 제거 후 숫자만
+                          const numbers = value.replace(/-/g, '');
+                          // 자동 하이픈 포맷팅 (000-00-00000)
+                          if (numbers.length <= 3) {
+                            value = numbers;
+                          } else if (numbers.length <= 5) {
+                            value = `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+                          } else {
+                            value = `${numbers.slice(0, 3)}-${numbers.slice(3, 5)}-${numbers.slice(5, 10)}`;
+                          }
+                          setBizNo(value);
+                          setBizVerified(false);
+                          setVerifiedBizInfo(null);
+                          setCompanyCodeVerified(false);
+                        }}
+                        disabled={isVerifyingBiz}
+                        maxLength={12}
+                      />
+                      <Button
+                        type="button"
+                        variant={bizVerified ? 'default' : 'outline'}
+                        onClick={handleVerifyBusiness}
+                        disabled={isVerifyingBiz || bizNo.replace(/\D/g, '').length !== 10}
+                        className={`shrink-0 ${bizVerified ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      >
+                        {isVerifyingBiz ? '인증 중...' : bizVerified ? '✓ 인증됨' : '인증'}
+                      </Button>
+                    </div>
+                    {!bizVerified && (
+                      <p className="text-xs text-slate-400">
+                        사업자 등록번호 10자리를 입력하고 인증해주세요
+                      </p>
+                    )}
+                  </div>
 
-              <div className="space-y-2">
-                <Label>회사명</Label>
-                <Input
-                  placeholder="예: 삼성전자"
-                  value={signupForm.companyName}
-                  onChange={(e) => {
-                    setSignupForm((prev) => ({
-                      ...prev,
-                      companyName: e.target.value,
-                    }));
-                    setCompanyCodeVerified(false);
-                  }}
-                />
-              </div>
+                  {/* 인증된 사업자 정보 표시 */}
+                  {bizVerified && verifiedBizInfo && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
+                      <p className="text-sm font-semibold text-green-800">✓ 사업자 인증 완료</p>
+                      <div className="text-xs text-green-700 space-y-0.5">
+                        <p><span className="font-medium">회사명:</span> {verifiedBizInfo.entrnm}</p>
+                        <p><span className="font-medium">대표자:</span> {verifiedBizInfo.repr}</p>
+                        <p><span className="font-medium">사업상태:</span> {verifiedBizInfo.tpyr_stsnm}</p>
+                        <p><span className="font-medium">개업일:</span> {verifiedBizInfo.obz_date ? `${verifiedBizInfo.obz_date.slice(0,4)}-${verifiedBizInfo.obz_date.slice(4,6)}-${verifiedBizInfo.obz_date.slice(6,8)}` : '-'}</p>
+                        {verifiedBizInfo.txvsbzdnm && (
+                          <p><span className="font-medium">업태:</span> {verifiedBizInfo.txvsbzdnm.split('|').slice(0, 2).join(', ')}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
 
-              <div className="space-y-2">
-                <Button
-                  type="button"
-                  className={`w-full ${
-                    companyCodeVerified
-                      ? 'bg-green-600 hover:bg-green-600'
-                      : ''
-                  }`}
-                  onClick={async () => {
-                    if (
-                      signupForm.companyCode.trim() &&
-                      signupForm.companyName.trim()
-                    ) {
-                      setCompanyCodeVerified(true);
+              {/* 팀원: 회사 코드 + 회사명 */}
+              {signupRole === 'team' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>회사 코드 (사업자 등록번호)</Label>
+                    <Input
+                      placeholder="예: 1234567890"
+                      value={signupForm.companyCode}
+                      onChange={(e) => {
+                        setSignupForm((prev) => ({
+                          ...prev,
+                          companyCode: e.target.value,
+                        }));
+                        setCompanyCodeVerified(false);
+                      }}
+                    />
+                  </div>
 
-                      // 팀원인 경우 부서 목록 로드
-                      if (signupRole === 'team') {
-                        setIsLoadingDepartments(true);
-                        try {
-                          const { data: company } = await supabase
-                            .from('companies')
-                            .select('*')
-                            .eq('code', signupForm.companyCode.trim())
-                            .single();
+                  <div className="space-y-2">
+                    <Label>회사명</Label>
+                    <Input
+                      placeholder="예: 삼성전자"
+                      value={signupForm.companyName}
+                      onChange={(e) => {
+                        setSignupForm((prev) => ({
+                          ...prev,
+                          companyName: e.target.value,
+                        }));
+                        setCompanyCodeVerified(false);
+                      }}
+                    />
+                  </div>
 
-                          if (company) {
-                            const { data: departments, error: deptError } =
-                              await supabase
-                                .from('departments')
-                                .select('*')
-                                .eq('company_id', company.id)
-                                .order('name');
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      className={`w-full ${
+                        companyCodeVerified
+                          ? 'bg-green-600 hover:bg-green-600'
+                          : ''
+                      }`}
+                      onClick={async () => {
+                        if (
+                          signupForm.companyCode.trim() &&
+                          signupForm.companyName.trim()
+                        ) {
+                          setCompanyCodeVerified(true);
+                          setIsLoadingDepartments(true);
+                          try {
+                            const { data: company } = await supabase
+                              .from('companies')
+                              .select('*')
+                              .eq('code', signupForm.companyCode.trim())
+                              .single();
 
-                            if (!deptError && departments) {
-                              setAvailableDepartments(departments);
-                              toast({
-                                title: '인증 완료',
-                                description: `${departments.length}개 부서를 불러왔습니다.`,
-                              });
+                            if (company) {
+                              const { data: departments, error: deptError } =
+                                await supabase
+                                  .from('departments')
+                                  .select('*')
+                                  .eq('company_id', company.id)
+                                  .order('name');
+
+                              if (!deptError && departments) {
+                                setAvailableDepartments(departments);
+                                toast({
+                                  title: '인증 완료',
+                                  description: `${departments.length}개 부서를 불러왔습니다.`,
+                                });
+                              } else {
+                                setAvailableDepartments([]);
+                                toast({
+                                  title: '인증 완료',
+                                  description: '해당 회사에 부서가 없습니다.',
+                                });
+                              }
                             } else {
                               setAvailableDepartments([]);
                               toast({
-                                title: '인증 완료',
-                                description: '해당 회사에 부서가 없습니다.',
+                                title: '회사 없음',
+                                description: '해당 회사 코드로 등록된 회사가 없습니다. 관리자에게 문의하세요.',
+                                variant: 'destructive',
                               });
+                              setCompanyCodeVerified(false);
+                              return;
                             }
-                          } else {
+                          } catch (error) {
+                            console.error('부서 로드 실패:', error);
                             setAvailableDepartments([]);
-                            toast({
-                              title: '인증 완료',
-                              description: '새로운 회사입니다.',
-                            });
+                          } finally {
+                            setIsLoadingDepartments(false);
                           }
-                        } catch (error) {
-                          console.error('부서 로드 실패:', error);
-                          setAvailableDepartments([]);
-                        } finally {
-                          setIsLoadingDepartments(false);
+                        } else {
+                          toast({
+                            title: '회사 정보 입력',
+                            description:
+                              '회사 코드와 회사명을 모두 입력해주세요.',
+                            variant: 'destructive',
+                          });
                         }
-                      } else {
-                        // 관리자인 경우
-                        toast({
-                          title: '인증 완료',
-                          description: '회사 정보가 인증되었습니다.',
-                        });
+                      }}
+                      disabled={
+                        !signupForm.companyCode.trim() ||
+                        !signupForm.companyName.trim()
                       }
-                    } else {
-                      toast({
-                        title: '회사 정보 입력',
-                        description:
-                          '회사 코드와 회사명을 모두 입력해주세요.',
-                        variant: 'destructive',
-                      });
-                    }
-                  }}
-                  disabled={
-                    !signupForm.companyCode.trim() ||
-                    !signupForm.companyName.trim()
-                  }
-                  variant={companyCodeVerified ? 'default' : 'outline'}
-                >
-                  {companyCodeVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
-                </Button>
-                {!companyCodeVerified && (
-                  <p className="text-xs text-slate-400">
-                    회사 코드와 회사명을 입력하고 인증해주세요
-                  </p>
-                )}
-                {companyCodeVerified && (
-                  <p className="text-xs text-green-600">
-                    다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
-                  </p>
-                )}
-              </div>
+                      variant={companyCodeVerified ? 'default' : 'outline'}
+                    >
+                      {companyCodeVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
+                    </Button>
+                    {!companyCodeVerified && (
+                      <p className="text-xs text-slate-400">
+                        회사 코드와 회사명을 입력하고 인증해주세요
+                      </p>
+                    )}
+                    {companyCodeVerified && (
+                      <p className="text-xs text-green-600">
+                        다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
                 <Label>이름</Label>
@@ -1224,12 +1390,11 @@ export function LoginPage() {
                 className="w-full"
                 disabled={
                   isLoading ||
-                  !companyCodeVerified ||
                   !signupForm.email ||
                   !signupForm.password ||
                   !signupForm.name ||
-                  (signupRole === 'team' && !signupForm.departmentId) ||
-                  (signupRole === 'admin' && (!adminPhone.trim() || !adminOtpVerified))
+                  (signupRole === 'admin' && (!bizVerified || !adminPhone.trim() || !adminOtpVerified)) ||
+                  (signupRole === 'team' && (!companyCodeVerified || !signupForm.departmentId))
                 }
               >
                 {isLoading ? '가입 중...' : '회원가입'}
