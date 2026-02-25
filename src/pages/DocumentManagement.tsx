@@ -2267,7 +2267,7 @@ export function DocumentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>보관위치(선택)</Label>
+                      <Label>보관장소(선택)</Label>
                       <Input
                         value={newCategory.storageLocation}
                         onChange={(e) =>
@@ -2587,7 +2587,7 @@ export function DocumentManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>보관위치(선택)</Label>
+                    <Label>보관장소(선택)</Label>
                     <Input
                       value={editCategoryForm.storageLocation}
                       onChange={(e) =>
@@ -3032,7 +3032,7 @@ export function DocumentManagement() {
                               </div>
                               {subcategory.storageLocation && (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">보관 위치</span>
+                                  <span className="text-slate-500">보관 장소</span>
                                   <span className="font-medium text-xs">
                                     {subcategory.storageLocation}
                                   </span>

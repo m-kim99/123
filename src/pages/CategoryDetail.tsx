@@ -1096,7 +1096,7 @@ export function CategoryDetail() {
               <div className="flex items-start gap-2">
                 <MapPin className="h-5 w-5 text-slate-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-slate-500">보관 위치</p>
+                  <p className="text-sm font-medium text-slate-500">보관 장소</p>
                   <p className="text-sm font-bold mt-1">
                     {category.storageLocation || '미지정'}
                   </p>

@@ -769,9 +769,9 @@ function generateFallbackResponse(message: string): string {
     }
   }
 
-  // 1. 위치 질문: "어디" 포함 시 — 4단 계층 전체 검색
-  if (text.includes('어디')) {
-    const searchKeyword = text.replace(/어디|어딨|있어|찾아|위치|줘|요|\?/g, '').trim().toLowerCase();
+  // 1. 보관 장소 질문: "보관 장소", "보관장소", "어디" 포함 시 — 4단 계층 전체 검색
+  if (text.includes('보관 장소') || text.includes('보관장소') || text.includes('어디')) {
+    const searchKeyword = text.replace(/보관\s?장소|어디|어딨|있어|찾아|위치|줘|요|알려|\?/g, '').trim().toLowerCase();
     const locationLines: string[] = [];
 
     // 대분류 검색
@@ -797,7 +797,7 @@ function generateFallbackResponse(message: string): string {
         const dept = departments.find((d) => d.id === sc.departmentId);
         const parentCat = parentCategories.find((pc) => pc.id === sc.parentCategoryId);
         const location = sc.storageLocation || '위치 미지정';
-        locationLines.push(`- ${sc.name}\n  · 경로: ${dept?.name || ''} → ${parentCat?.name || ''} → ${sc.name}\n  · 보관 위치: ${location}\n  · 문서 수: ${sc.documentCount}건`);
+        locationLines.push(`- ${sc.name}\n  · 경로: ${dept?.name || ''} → ${parentCat?.name || ''} → ${sc.name}\n  · 보관 장소: ${location}\n  · 문서 수: ${sc.documentCount}건`);
       }
     }
 
@@ -810,7 +810,7 @@ function generateFallbackResponse(message: string): string {
         const location = doc.storageLocation || '위치 미지정';
         const dept = doc.departmentName || '부서 정보 없음';
         const category = doc.categoryName || '카테고리 정보 없음';
-        locationLines.push(`- ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 위치: ${location}`);
+        locationLines.push(`- ${doc.name}\n  · 부서: ${dept}\n  · 카테고리: ${category}\n  · 보관 장소: ${location}`);
       }
     }
 
@@ -850,7 +850,7 @@ function generateFallbackResponse(message: string): string {
 
     const lines = categories.map((cat) => {
       const location = cat.storageLocation || '위치 정보 없음';
-      return `- ${cat.name} (${cat.documentCount}건) - 보관 위치: ${location}`;
+      return `- ${cat.name} (${cat.documentCount}건) - 보관 장소: ${location}`;
     });
 
     return ['등록된 카테고리 목록입니다:', ...lines].join('\n');

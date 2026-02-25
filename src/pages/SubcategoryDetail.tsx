@@ -1066,7 +1066,7 @@ export function SubcategoryDetail() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">보관 위치</p>
+              <p className="text-sm font-medium text-slate-500">보관 장소</p>
               <p className="text-2xl font-bold mt-2">
                 {subcategory.storageLocation || '미지정'}
               </p>
@@ -1383,7 +1383,7 @@ export function SubcategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관위치(선택)</Label>
+                <Label>보관장소(선택)</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>

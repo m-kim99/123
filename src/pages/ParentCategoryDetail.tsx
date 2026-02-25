@@ -745,7 +745,7 @@ export function ParentCategoryDetail() {
                           </div>
                           {sub.storageLocation && (
                             <div className="flex items-center justify-between">
-                              <span className="text-slate-500">보관 위치</span>
+                              <span className="text-slate-500">보관 장소</span>
                               <span className="font-medium text-xs">
                                 {sub.storageLocation}
                               </span>
@@ -848,7 +848,7 @@ export function ParentCategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관위치(선택)</Label>
+                <Label>보관장소(선택)</Label>
                 <Input
                   value={form.storageLocation}
                   onChange={(e) =>
@@ -1305,7 +1305,7 @@ export function ParentCategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관위치(선택)</Label>
+                <Label>보관장소(선택)</Label>
                 <Input
                   value={subEditForm.storageLocation}
                   onChange={(e) =>

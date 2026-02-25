@@ -841,7 +841,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관위치(선택)</Label>
+                <Label>보관장소(선택)</Label>
                 <Input
                   value={form.storageLocation}
                   onChange={(e) =>
@@ -1161,7 +1161,7 @@ export function SubcategoryManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관위치(선택)</Label>
+                <Label>보관장소(선택)</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>

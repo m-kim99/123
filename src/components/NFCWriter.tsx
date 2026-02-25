@@ -138,7 +138,7 @@ export function NFCWriter({ category, categoryCode }: NFCWriterProps) {
           </div>
           {category.storageLocation && (
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600">보관 위치</span>
+              <span className="text-sm font-medium text-slate-600">보관 장소</span>
               <span className="text-sm text-slate-900">{category.storageLocation}</span>
             </div>
           )}
