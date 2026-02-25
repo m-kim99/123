@@ -79,6 +79,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showDeletionView, setShowDeletionView] = useState(false);
+  const [deletionPassword, setDeletionPassword] = useState('');
+  const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
@@ -336,7 +339,76 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setNewPassword('');
     setConfirmPassword('');
     setProfileError(null);
+    setShowDeletionView(false);
+    setDeletionPassword('');
     setProfileDialogOpen(true);
+  };
+
+  const handleRequestDeletion = async () => {
+    if (!user) return;
+
+    if (!deletionPassword.trim()) {
+      setProfileError('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setIsRequestingDeletion(true);
+    setProfileError(null);
+
+    try {
+      // 비밀번호 확인을 위해 재로그인 시도
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletionPassword,
+      });
+
+      if (authError) {
+        setProfileError('비밀번호가 일치하지 않습니다.');
+        setIsRequestingDeletion(false);
+        return;
+      }
+
+      // 기존 pending 요청이 있는지 확인
+      const { data: existingRequest } = await supabase
+        .from('account_deletion_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .single();
+
+      if (existingRequest) {
+        setProfileError('이미 탈퇴 신청이 진행 중입니다.');
+        setIsRequestingDeletion(false);
+        return;
+      }
+
+      // 탈퇴 요청 생성
+      const { error: insertError } = await supabase
+        .from('account_deletion_requests')
+        .insert({
+          user_id: user.id,
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast({
+        title: '탈퇴 신청 완료',
+        description: '2주 후 계정이 삭제됩니다. 이 기간 내 로그인하면 탈퇴를 취소할 수 있습니다.',
+      });
+
+      setProfileDialogOpen(false);
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('탈퇴 신청 실패:', error);
+      setProfileError(
+        error instanceof Error ? error.message : '탈퇴 신청 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setIsRequestingDeletion(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -1093,10 +1165,71 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>프로필 설정</DialogTitle>
-            <DialogDescription>사용자 정보를 수정합니다.</DialogDescription>
-          </DialogHeader>
+          {showDeletionView ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>회원 탈퇴</DialogTitle>
+                <DialogDescription>
+                  탈퇴를 진행하시면 2주 후 계정이 완전히 삭제됩니다.
+                  <br />
+                  이 기간 내에 다시 로그인하면 탈퇴를 취소할 수 있습니다.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 font-medium mb-2">⚠️ 주의사항</p>
+                  <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
+                    <li>탈퇴 후 모든 데이터가 삭제됩니다.</li>
+                    <li>삭제된 데이터는 복구할 수 없습니다.</li>
+                    <li>업로드한 문서 및 설정이 모두 삭제됩니다.</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deletion-password">비밀번호 확인</Label>
+                  <Input
+                    id="deletion-password"
+                    type="password"
+                    placeholder="현재 비밀번호를 입력하세요"
+                    value={deletionPassword}
+                    onChange={(e) => setDeletionPassword(e.target.value)}
+                    disabled={isRequestingDeletion}
+                  />
+                </div>
+                {profileError && (
+                  <p className="text-xs text-red-500">{profileError}</p>
+                )}
+              </div>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeletionView(false);
+                    setDeletionPassword('');
+                    setProfileError(null);
+                  }}
+                  disabled={isRequestingDeletion}
+                  className="w-full sm:w-auto"
+                >
+                  돌아가기
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleRequestDeletion}
+                  disabled={isRequestingDeletion || !deletionPassword.trim()}
+                  className="w-full sm:w-auto"
+                >
+                  {isRequestingDeletion ? '처리 중...' : '탈퇴 신청'}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>프로필 설정</DialogTitle>
+                <DialogDescription>사용자 정보를 수정합니다.</DialogDescription>
+              </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="profile-name">이름</Label>
@@ -1256,6 +1389,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {isSavingProfile ? '저장 중...' : '저장'}
             </Button>
           </DialogFooter>
+          <div className="pt-4 border-t mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setProfileError(null);
+                setShowDeletionView(true);
+              }}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              회원 탈퇴
+            </button>
+          </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 

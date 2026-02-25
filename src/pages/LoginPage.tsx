@@ -69,6 +69,16 @@ export function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
+  // 탈퇴 신청 경고 관련 상태
+  const [deletionWarningOpen, setDeletionWarningOpen] = useState(false);
+  const [deletionInfo, setDeletionInfo] = useState<{
+    userId: string;
+    scheduledDate: string;
+    remainingDays: number;
+  } | null>(null);
+  const [pendingLoginRole, setPendingLoginRole] = useState<'admin' | 'team' | null>(null);
+  const [isCancellingDeletion, setIsCancellingDeletion] = useState(false);
+
   const [adminPhone, setAdminPhone] = useState('');
   const [adminOtp, setAdminOtp] = useState('');
   const [adminOtpSent, setAdminOtpSent] = useState(false);
@@ -484,6 +494,59 @@ export function LoginPage() {
   const handleLogin = async (role: 'admin' | 'team') => {
     clearError();
 
+    // 먼저 로그인 시도
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      toast({
+        title: '로그인 실패',
+        description: authError.message || '다시 시도해주세요',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!authData.user) {
+      toast({
+        title: '로그인 실패',
+        description: '사용자 정보를 찾을 수 없습니다',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // 탈퇴 신청 여부 확인
+    const { data: deletionRequest } = await supabase
+      .from('account_deletion_requests')
+      .select('id, scheduled_deletion_at')
+      .eq('user_id', authData.user.id)
+      .eq('status', 'pending')
+      .single();
+
+    if (deletionRequest) {
+      // 탈퇴 신청이 있으면 경고 다이얼로그 표시
+      const scheduledDate = new Date(deletionRequest.scheduled_deletion_at);
+      const now = new Date();
+      const remainingDays = Math.ceil((scheduledDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      setDeletionInfo({
+        userId: authData.user.id,
+        scheduledDate: scheduledDate.toLocaleDateString('ko-KR'),
+        remainingDays: Math.max(0, remainingDays),
+      });
+      setPendingLoginRole(role);
+      setDeletionWarningOpen(true);
+      return;
+    }
+
+    // 탈퇴 신청이 없으면 정상 로그인 진행
+    await proceedWithLogin(role);
+  };
+
+  const proceedWithLogin = async (role: 'admin' | 'team') => {
     const result = await login(email, password, role);
 
     if (result.success) {
@@ -494,9 +557,7 @@ export function LoginPage() {
 
       const basePath = role === 'admin' ? '/admin' : '/team';
 
-      // 저장된 리다이렉트 경로가 있으면 우선 이동
       if (redirectAfterLogin) {
-        // 전체 경로가 저장되어 있으므로 그대로 사용
         navigate(redirectAfterLogin, { replace: true });
         setRedirectAfterLogin(null);
       } else {
@@ -508,6 +569,47 @@ export function LoginPage() {
         description: result.error || '다시 시도해주세요',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    if (!deletionInfo) return;
+
+    setIsCancellingDeletion(true);
+
+    try {
+      const { error } = await supabase
+        .from('account_deletion_requests')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq('user_id', deletionInfo.userId)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+
+      toast({
+        title: '탈퇴 취소 완료',
+        description: '회원 탈퇴가 취소되었습니다. 계속 서비스를 이용하실 수 있습니다.',
+      });
+
+      setDeletionWarningOpen(false);
+      setDeletionInfo(null);
+
+      // 탈퇴 취소 후 로그인 진행
+      if (pendingLoginRole) {
+        await proceedWithLogin(pendingLoginRole);
+      }
+    } catch (error) {
+      console.error('탈퇴 취소 실패:', error);
+      toast({
+        title: '탈퇴 취소 실패',
+        description: '다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancellingDeletion(false);
     }
   };
 
@@ -1472,6 +1574,66 @@ export function LoginPage() {
                 className="flex-1"
               >
                 {isResetting ? '전송 중...' : '재설정 링크 보내기'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 탈퇴 신청 경고 다이얼로그 */}
+      <Dialog open={deletionWarningOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeletionWarningOpen(false);
+          setDeletionInfo(null);
+          setPendingLoginRole(null);
+          // 다이얼로그 닫으면 로그아웃
+          supabase.auth.signOut();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">⚠️ 탈퇴 신청된 계정</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 font-medium mb-2">
+                이 계정은 탈퇴가 신청된 상태입니다.
+              </p>
+              {deletionInfo && (
+                <div className="text-sm text-amber-700 space-y-1">
+                  <p>• 삭제 예정일: <strong>{deletionInfo.scheduledDate}</strong></p>
+                  <p>• 남은 기간: <strong>{deletionInfo.remainingDays}일</strong></p>
+                </div>
+              )}
+            </div>
+            
+            <p className="text-sm text-slate-600">
+              탈퇴를 취소하시면 계속 서비스를 이용하실 수 있습니다.
+              <br />
+              취소하지 않으시면 예정일에 계정이 삭제됩니다.
+            </p>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeletionWarningOpen(false);
+                  setDeletionInfo(null);
+                  setPendingLoginRole(null);
+                  supabase.auth.signOut();
+                }}
+                disabled={isCancellingDeletion}
+                className="flex-1"
+              >
+                로그아웃
+              </Button>
+              <Button
+                onClick={handleCancelDeletion}
+                disabled={isCancellingDeletion}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {isCancellingDeletion ? '처리 중...' : '탈퇴 취소'}
               </Button>
             </div>
           </div>
