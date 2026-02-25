@@ -346,11 +346,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setDeletionConfirmText('');
     setProfileDialogOpen(true);
 
-    // OAuth 사용자 여부 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const provider = session.user.app_metadata?.provider;
-        setIsOAuthUser(provider && provider !== 'email');
+    // OAuth 사용자 여부 확인 (비밀번호 없는 소셜 로그인 계정)
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        const user = data.session.user;
+        // identities 배열에서 email provider가 없으면 OAuth 전용 계정
+        const identities = user.identities || [];
+        const hasEmailIdentity = identities.some(
+          (identity: { provider: string }) => identity.provider === 'email'
+        );
+        // email identity가 없으면 소셜 전용 계정
+        setIsOAuthUser(!hasEmailIdentity && identities.length > 0);
+        
+        console.log('OAuth 체크:', { 
+          provider: user.app_metadata?.provider,
+          identities: identities.map((i: { provider: string }) => i.provider),
+          isOAuthUser: !hasEmailIdentity && identities.length > 0
+        });
       }
     });
   };
