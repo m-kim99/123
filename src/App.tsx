@@ -144,6 +144,13 @@ function RouteAnalytics() {
 
 function DeletionWarningDialog() {
   const { pendingDeletion, cancelDeletion, clearPendingDeletion, logout } = useAuthStore();
+  const {
+    fetchDepartments,
+    fetchCategories,
+    fetchParentCategories,
+    fetchSubcategories,
+    fetchDocuments,
+  } = useDocumentStore();
   const [isCancelling, setIsCancelling] = useState(false);
   const { toast } = useToast();
 
@@ -157,6 +164,14 @@ function DeletionWarningDialog() {
         title: '탈퇴 취소 완료',
         description: '회원 탈퇴가 취소되었습니다. 계속 서비스를 이용하실 수 있습니다.',
       });
+      // 데이터 새로고침
+      await Promise.all([
+        fetchDepartments(),
+        fetchCategories(),
+        fetchParentCategories(),
+        fetchSubcategories(),
+        fetchDocuments(),
+      ]);
     } else {
       toast({
         title: '탈퇴 취소 실패',
