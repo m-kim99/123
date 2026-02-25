@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import downloadIcon from '@/assets/download.svg';
+import binIcon from '@/assets/bin.svg';
 import {
   Card,
   CardContent,
@@ -35,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Download, X, FileText, Search, Loader2 } from 'lucide-react';
+import { FileText, Search, Loader2 } from 'lucide-react';
 import previewIcon from '@/assets/preview.svg';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -272,30 +273,33 @@ export function SharedDocuments() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="outline"
+                            className="h-8 w-8"
                             onClick={() => handleView(share.documentId)}
                           >
-                            <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
+                            <img src={previewIcon} alt="미리보기" className="w-4 h-4" />
                           </Button>
                           {share.permission === 'download' && (
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="outline"
+                              className="h-8 w-8"
                               onClick={() => handleDownload(share.documentId)}
                             >
-                              <Download className="h-4 w-4" />
+                              <img src={downloadIcon} alt="다운로드" className="w-4 h-4" />
                             </Button>
                           )}
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="outline"
+                            className="h-8 w-8"
                             onClick={() => {
                               setDeletingShareId(share.id);
                               setDeleteDialogOpen(true);
                             }}
                           >
-                            <X className="h-4 w-4" />
+                            <img src={binIcon} alt="삭제" className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
