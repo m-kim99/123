@@ -1091,7 +1091,7 @@ export function LoginPage() {
       </div>
 
       {signupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card className="w-full max-w-md my-auto">
             <CardHeader>
               <CardTitle>회원가입</CardTitle>
