@@ -1092,12 +1092,12 @@ export function LoginPage() {
 
       {signupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <Card className="w-full max-w-md my-auto">
-            <CardHeader>
+          <Card className="w-full max-w-md my-auto flex flex-col max-h-[90vh]">
+            <CardHeader className="shrink-0">
               <CardTitle>회원가입</CardTitle>
               <CardDescription>새 계정을 생성합니다</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-[90vh] overflow-y-auto">
+            <CardContent className="space-y-4 flex-1 min-h-0 overflow-y-auto">
               <Tabs
                 value={signupRole}
                 onValueChange={(v) => setSignupRole(v as 'admin' | 'team')}
