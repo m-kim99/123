@@ -91,12 +91,11 @@ export function LoginPage() {
   const [isVerifyingBiz, setIsVerifyingBiz] = useState(false);
   const [bizVerified, setBizVerified] = useState(false);
   const [verifiedBizInfo, setVerifiedBizInfo] = useState<{
-    bizno: string;
-    entrnm: string;
-    repr: string;
-    tpyr_stsnm: string;
-    obz_date: string;
-    txvsbzdnm: string;
+    b_no: string;
+    b_stt: string;
+    b_stt_cd: string;
+    tax_type: string;
+    end_dt: string;
   } | null>(null);
 
   // 비밀번호 실시간 검증
@@ -293,7 +292,7 @@ export function LoginPage() {
 
   const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
 
-  // 사업자 인증 핸들러 (NICE BizAPI)
+  // 사업자 인증 핸들러 (국세청 상태조회 API)
   const handleVerifyBusiness = async () => {
     const cleanBizNo = bizNo.replace(/\D/g, '');
 
@@ -308,7 +307,7 @@ export function LoginPage() {
 
     setIsVerifyingBiz(true);
     try {
-      // Edge Function 호출 (NICE BizAPI)
+      // Edge Function 호출 (국세청 상태조회 API)
       const { data, error: fnError } = await supabase.functions.invoke('verify-business', {
         body: { bizno: cleanBizNo },
       });
@@ -324,7 +323,7 @@ export function LoginPage() {
       const bizInfo = data.item;
 
       // 휴폐업 체크
-      if (bizInfo.tpyrstscd === '03') {
+      if (bizInfo.b_stt_cd === '03') {
         toast({
           title: '폐업 사업자',
           description: '해당 사업자는 폐업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
@@ -333,7 +332,7 @@ export function LoginPage() {
         return;
       }
 
-      if (bizInfo.tpyrstscd === '02') {
+      if (bizInfo.b_stt_cd === '02') {
         toast({
           title: '휴업 사업자',
           description: '해당 사업자는 휴업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
@@ -344,26 +343,24 @@ export function LoginPage() {
 
       // 인증 성공
       setVerifiedBizInfo({
-        bizno: bizInfo.bizno,
-        entrnm: bizInfo.entrnm,
-        repr: bizInfo.repr,
-        tpyr_stsnm: bizInfo.tpyr_stsnm,
-        obz_date: bizInfo.obz_date,
-        txvsbzdnm: bizInfo.txvsbzdnm,
+        b_no: bizInfo.b_no,
+        b_stt: bizInfo.b_stt,
+        b_stt_cd: bizInfo.b_stt_cd,
+        tax_type: bizInfo.tax_type,
+        end_dt: bizInfo.end_dt,
       });
       setBizVerified(true);
 
-      // 회사명 자동 입력
+      // 사업자등록번호를 회사코드로 사용
       setSignupForm((prev) => ({
         ...prev,
-        companyName: bizInfo.entrnm || prev.companyName,
-        companyCode: cleanBizNo, // 사업자등록번호를 회사코드로 사용
+        companyCode: cleanBizNo,
       }));
       setCompanyCodeVerified(true);
 
       toast({
         title: '사업자 인증 완료',
-        description: `${bizInfo.entrnm} (${bizInfo.tpyr_stsnm})`,
+        description: `사업자번호 ${bizInfo.b_no} (${bizInfo.b_stt})`,
       });
     } catch (err: any) {
       console.error('사업자 인증 오류:', err);
@@ -1164,12 +1161,11 @@ export function LoginPage() {
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
                       <p className="text-sm font-semibold text-green-800">✓ 사업자 인증 완료</p>
                       <div className="text-xs text-green-700 space-y-0.5">
-                        <p><span className="font-medium">회사명:</span> {verifiedBizInfo.entrnm}</p>
-                        <p><span className="font-medium">대표자:</span> {verifiedBizInfo.repr}</p>
-                        <p><span className="font-medium">사업상태:</span> {verifiedBizInfo.tpyr_stsnm}</p>
-                        <p><span className="font-medium">개업일:</span> {verifiedBizInfo.obz_date ? `${verifiedBizInfo.obz_date.slice(0,4)}-${verifiedBizInfo.obz_date.slice(4,6)}-${verifiedBizInfo.obz_date.slice(6,8)}` : '-'}</p>
-                        {verifiedBizInfo.txvsbzdnm && (
-                          <p><span className="font-medium">업태:</span> {verifiedBizInfo.txvsbzdnm.split('|').slice(0, 2).join(', ')}</p>
+                        <p><span className="font-medium">사업자번호:</span> {verifiedBizInfo.b_no}</p>
+                        <p><span className="font-medium">사업상태:</span> {verifiedBizInfo.b_stt}</p>
+                        <p><span className="font-medium">과세유형:</span> {verifiedBizInfo.tax_type}</p>
+                        {verifiedBizInfo.end_dt && (
+                          <p><span className="font-medium">폐업일:</span> {verifiedBizInfo.end_dt.slice(0,4)}-{verifiedBizInfo.end_dt.slice(4,6)}-{verifiedBizInfo.end_dt.slice(6,8)}</p>
                         )}
                       </div>
                     </div>

@@ -29,34 +29,33 @@ serve(async (req) => {
       );
     }
 
-    // NICE BizAPI 인증 정보 (환경변수에서 가져옴)
-    const NICE_BIZ_CLIENT_ID = Deno.env.get('NICE_BIZ_CLIENT_ID');
-    const NICE_BIZ_CLIENT_SECRET = Deno.env.get('NICE_BIZ_CLIENT_SECRET');
+    // 국세청 사업자등록 상태조회 API 인증키 (환경변수에서 가져옴)
+    const NTS_SERVICE_KEY = Deno.env.get('NTS_SERVICE_KEY');
 
-    if (!NICE_BIZ_CLIENT_ID || !NICE_BIZ_CLIENT_SECRET) {
-      console.error('NICE BizAPI credentials not configured');
+    if (!NTS_SERVICE_KEY) {
+      console.error('국세청 API 서비스키가 설정되지 않았습니다.');
       return json(
-        { success: false, error: 'NICE BizAPI 설정이 필요합니다. 관리자에게 문의하세요.' },
+        { success: false, error: '국세청 API 설정이 필요합니다. 관리자에게 문의하세요.' },
         { status: 500 }
       );
     }
 
-    console.log('=== NICE BizAPI 사업자 인증 요청 ===');
+    console.log('=== 국세청 사업자등록 상태조회 요청 ===');
     console.log('bizno:', cleanBizNo);
 
-    // NICE BizAPI 호출
-    const apiUrl = `https://api.nicebizline.com/nice/sb/v1/api/biz-cert?bizno=${cleanBizNo}`;
+    // 국세청 상태조회 API 호출 (POST)
+    const apiUrl = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${encodeURIComponent(NTS_SERVICE_KEY)}`;
 
     const resp = await fetch(apiUrl, {
-      method: 'GET',
+      method: 'POST',
       headers: {
-        'accept': 'application/json',
-        'client-id': NICE_BIZ_CLIENT_ID,
-        'client-secret': NICE_BIZ_CLIENT_SECRET,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      body: JSON.stringify({ b_no: [cleanBizNo] }),
     });
 
-    console.log('=== NICE BizAPI 응답 ===');
+    console.log('=== 국세청 API 응답 ===');
     console.log('HTTP Status:', resp.status);
 
     const result = await resp.json();
@@ -70,40 +69,33 @@ serve(async (req) => {
           { status: 400 }
         );
       }
-      if (resp.status === 401) {
-        console.error('NICE BizAPI authentication failed');
+      if (resp.status === 413) {
         return json(
-          { success: false, error: 'API 인증 오류. 관리자에게 문의하세요.' },
-          { status: 500 }
-        );
-      }
-      if (resp.status === 429) {
-        return json(
-          { success: false, error: 'API 호출 한도 초과. 잠시 후 다시 시도해주세요.' },
-          { status: 429 }
+          { success: false, error: '요청이 너무 큽니다. 다시 시도해주세요.' },
+          { status: 413 }
         );
       }
       return json(
-        { success: false, error: result?.moreInformation?.errorMessage || '사업자 인증에 실패했습니다.' },
+        { success: false, error: result?.msg || '사업자 인증에 실패했습니다.' },
         { status: resp.status }
       );
     }
 
     // 응답 데이터 파싱
-    const items = result?.items;
-    if (!items || items.count === '0' || !items.item || items.item.length === 0) {
+    const data = result?.data;
+    if (!data || data.length === 0) {
       return json(
-        { success: false, error: '해당 사업자 등록번호로 등록된 사업자가 없습니다.' },
+        { success: false, error: '해당 사업자 등록번호로 조회된 결과가 없습니다.' },
         { status: 404 }
       );
     }
 
-    const bizInfo = items.item[0];
+    const bizInfo = data[0];
 
-    // 사업자 번호가 빈값이면 미등록 사업자
-    if (!bizInfo.bizno) {
+    // 국세청에 등록되지 않은 사업자 체크
+    if (!bizInfo.b_stt_cd || bizInfo.b_stt === '국세청에 등록되지 않은 사업자등록번호입니다.') {
       return json(
-        { success: false, error: '국세청에 등록되지 않은 사업자입니다.' },
+        { success: false, error: '국세청에 등록되지 않은 사업자등록번호입니다.' },
         { status: 404 }
       );
     }
@@ -112,17 +104,14 @@ serve(async (req) => {
     return json({
       success: true,
       item: {
-        bizno: bizInfo.bizno,
-        entrnm: bizInfo.entrnm, // 업체명
-        repr: bizInfo.repr, // 대표자명
-        tpyrstscd: bizInfo.tpyrstscd, // 휴폐업구분코드 (01: 계속사업자, 02: 휴업자, 03: 폐업자)
-        tpyr_stsnm: bizInfo.tpyr_stsnm, // 휴폐업구분코드명
-        obz_date: bizInfo.obz_date, // 개업일자
-        txvsbzdnm: bizInfo.txvsbzdnm, // 업태명
-        txvsitemnm: bizInfo.txvsitemnm, // 종목명
-        pscrp_divnm: bizInfo.pscrp_divnm, // 개인법인구분명
-        rdnm_koraddr: bizInfo.rdnm_koraddr, // 도로명주소
-        nolt_koraddr: bizInfo.nolt_koraddr, // 지번주소
+        b_no: bizInfo.b_no,             // 사업자등록번호
+        b_stt: bizInfo.b_stt,           // 사업자상태 (계속사업자, 휴업자, 폐업자)
+        b_stt_cd: bizInfo.b_stt_cd,     // 상태코드 (01: 계속사업자, 02: 휴업자, 03: 폐업자)
+        tax_type: bizInfo.tax_type,     // 과세유형 (부가가치세 일반과세자 등)
+        tax_type_cd: bizInfo.tax_type_cd, // 과세유형코드
+        end_dt: bizInfo.end_dt,         // 폐업일자
+        utcc_yn: bizInfo.utcc_yn,       // 단위과세전환폐업여부
+        invoice_apply_dt: bizInfo.invoice_apply_dt, // 세금계산서적용일자
       },
     });
   } catch (error) {
