@@ -158,6 +158,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const lastProcessedTranscriptRef = useRef<string>('');
   const isProcessingSpeechRef = useRef<boolean>(false);
 
+  // 음성 인식 디바운스용 ref (10초 대기)
+  const speechDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accumulatedTranscriptRef = useRef<string>('');
+
   // 브라우저 TTS로 텍스트 읽기 (읽는 동안 STT 정지)
   const speakText = useCallback((text: string) => {
     if (!text || !window.speechSynthesis) return;
@@ -307,7 +311,21 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     language: 'ko-KR',
     onResult: (transcript, isFinal) => {
       if (isFinal) {
-        handleUserSpeech(transcript);
+        // 최종 전사를 누적하고, 10초간 추가 음성이 없으면 처리
+        accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + transcript).trim();
+
+        if (speechDebounceTimerRef.current) {
+          clearTimeout(speechDebounceTimerRef.current);
+        }
+
+        speechDebounceTimerRef.current = setTimeout(() => {
+          const fullTranscript = accumulatedTranscriptRef.current;
+          accumulatedTranscriptRef.current = '';
+          speechDebounceTimerRef.current = null;
+          if (fullTranscript) {
+            handleUserSpeech(fullTranscript);
+          }
+        }, 10000);
       }
     },
     onError: (error) => {
@@ -380,6 +398,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setIsVoiceMode(false);
+      
+      // 디바운스 타이머 및 누적 전사 초기화
+      if (speechDebounceTimerRef.current) {
+        clearTimeout(speechDebounceTimerRef.current);
+        speechDebounceTimerRef.current = null;
+      }
+      accumulatedTranscriptRef.current = '';
       
       // 종료 사운드 재생
       playSound('/sounds/end.wav', '종료');
