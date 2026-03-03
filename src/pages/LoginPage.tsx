@@ -709,6 +709,15 @@ export function LoginPage() {
       return;
     }
 
+    if (signupRole === 'admin' && !signupForm.companyName.trim()) {
+      toast({
+        title: '회사명 입력',
+        description: '회사명을 입력해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (signupRole === 'admin') {
       const phone = normalizePhone(adminPhone);
       if (!phone) {
@@ -1109,9 +1118,23 @@ export function LoginPage() {
                 </TabsList>
               </Tabs>
 
-              {/* 관리자: 사업자 인증 */}
+              {/* 관리자: 회사명 + 사업자 인증 */}
               {signupRole === 'admin' && (
                 <>
+                  <div className="space-y-2">
+                    <Label>회사명</Label>
+                    <Input
+                      placeholder="예: 삼성전자"
+                      value={signupForm.companyName}
+                      onChange={(e) =>
+                        setSignupForm((prev) => ({
+                          ...prev,
+                          companyName: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label>사업자 등록번호</Label>
                     <div className="flex gap-2">
