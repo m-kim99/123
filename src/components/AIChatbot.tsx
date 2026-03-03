@@ -325,7 +325,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           if (fullTranscript) {
             handleUserSpeech(fullTranscript);
           }
-        }, 10000);
+        }, 5000);
       }
     },
     onError: (error) => {
