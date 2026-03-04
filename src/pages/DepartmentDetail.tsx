@@ -54,6 +54,7 @@ export function DepartmentDetail() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [editNameError, setEditNameError] = useState('');
   const [editCodeError, setEditCodeError] = useState('');
   const [teamMembersCount, setTeamMembersCount] = useState(0);
@@ -433,6 +434,7 @@ export function DepartmentDetail() {
             setIsDeleteDialogOpen(open);
             if (!open) {
               setIsDeleting(false);
+              setDeleteConfirmText('');
             }
           }}
         >
@@ -448,6 +450,17 @@ export function DepartmentDetail() {
                 <p className="mt-3 text-sm font-medium text-red-600">
                   삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
                 </p>
+                <div className="mt-4">
+                  <p className="text-sm text-slate-600 mb-2">
+                    정말 삭제하려면 아래에 <span className="font-bold text-red-600">삭제하겠습니다</span>를 입력하세요.
+                  </p>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="삭제하겠습니다"
+                    className="mt-1"
+                  />
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -455,7 +468,7 @@ export function DepartmentDetail() {
               <AlertDialogAction
                 onClick={handleConfirmDeleteDepartment}
                 className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={isDeleting}
+                disabled={isDeleting || deleteConfirmText !== '삭제하겠습니다'}
               >
                 {isDeleting ? '삭제 중...' : '삭제'}
               </AlertDialogAction>
