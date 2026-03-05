@@ -623,7 +623,7 @@ export function SubcategoryManagement() {
                     <div
                       key={sub.id}
                       className={cn(
-                        "flex items-center justify-between p-4 border rounded-lg transition-colors",
+                        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg transition-colors",
                         !isExpired && "hover:bg-slate-50 cursor-pointer",
                         expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300 cursor-not-allowed",
                         expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
@@ -651,7 +651,7 @@ export function SubcategoryManagement() {
                               : ''}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 ml-3">
+                      <div className="flex items-center gap-2 self-end sm:self-auto sm:ml-3 flex-wrap">
                         {expiryStatus.label && (
                           <Badge
                             variant={
