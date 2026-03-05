@@ -541,7 +541,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       {!isOpen && (
         <Button
           size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110"
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110"
           style={{ backgroundColor: primaryColor }}
           onClick={() => setIsOpen(true)}
         >
