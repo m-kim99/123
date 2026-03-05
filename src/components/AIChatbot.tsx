@@ -112,7 +112,7 @@ const CHAT_OPEN_KEY = 'troy_chat_open';
 const defaultMessage: ChatMessage = {
   id: '1',
   role: 'assistant',
-  content: '안녕하세요! 저는 TrayStorage의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
+  content: '안녕하세요! 저는 TrayStorage Connect의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
   timestamp: new Date(Date.now() - 60000),
 };
 
