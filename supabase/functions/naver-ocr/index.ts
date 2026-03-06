@@ -21,11 +21,11 @@ serve(async (req) => {
   }
 
   try {
-    const NAVER_CLOVA_OCR_API_URL = Deno.env.get('NAVER_CLOVA_OCR_API_URL');
-    const NAVER_CLOVA_OCR_SECRET_KEY = Deno.env.get('NAVER_CLOVA_OCR_SECRET_KEY');
+    const NHN_OCR_APP_KEY = Deno.env.get('NHN_OCR_APP_KEY');
+    const NHN_OCR_SECRET_KEY = Deno.env.get('NHN_OCR_SECRET_KEY');
 
-    if (!NAVER_CLOVA_OCR_API_URL || !NAVER_CLOVA_OCR_SECRET_KEY) {
-      throw new Error('네이버 클로바 OCR 환경 변수가 설정되지 않았습니다.');
+    if (!NHN_OCR_APP_KEY || !NHN_OCR_SECRET_KEY) {
+      throw new Error('NHN Cloud OCR 환경 변수가 설정되지 않았습니다.');
     }
 
     const body = await req.json().catch(() => null);
@@ -56,37 +56,34 @@ serve(async (req) => {
       format = mimeType.split('/')[1] || 'jpg';
     }
 
-    const payload = {
-      version: 'V2',
-      requestId:
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}`,
-      timestamp: Date.now(),
-      lang: 'ko',
-      images: [
-        {
-          format,
-          name: 'image',
-          data: base64Data,
-        },
-      ],
-    };
+    // base64 → Uint8Array 변환 (multipart/form-data 전송용)
+    const binaryStr = atob(base64Data);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
 
-    const ocrResponse = await fetch(NAVER_CLOVA_OCR_API_URL, {
+    const resolvedMime = mimeType || 'image/jpeg';
+    const ext = format === 'jpeg' ? 'jpg' : format;
+    const blob = new Blob([bytes], { type: resolvedMime });
+    const formData = new FormData();
+    formData.append('image', blob, `image.${ext}`);
+
+    const apiUrl = `https://ocr.api.nhncloudservice.com/v1.0/appkeys/${NHN_OCR_APP_KEY}/general`;
+
+    const ocrResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-OCR-SECRET': NAVER_CLOVA_OCR_SECRET_KEY,
+        'Authorization': NHN_OCR_SECRET_KEY,
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (!ocrResponse.ok) {
       const errorText = await ocrResponse.text();
-      console.error('NAVER OCR API error:', ocrResponse.status, errorText);
+      console.error('NHN Cloud OCR API error:', ocrResponse.status, errorText);
       return new Response(
-        JSON.stringify({ error: `네이버 OCR API 호출 실패: ${ocrResponse.status}` }),
+        JSON.stringify({ error: `NHN Cloud OCR API 호출 실패: ${ocrResponse.status} - ${errorText}` }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -96,30 +93,29 @@ serve(async (req) => {
 
     const ocrJson = await ocrResponse.json();
 
+    if (!ocrJson?.header?.isSuccessful) {
+      console.error('NHN Cloud OCR API 응답 오류:', JSON.stringify(ocrJson?.header));
+      return new Response(
+        JSON.stringify({ error: `NHN Cloud OCR 처리 실패: ${ocrJson?.header?.resultMessage ?? '알 수 없는 오류'}` }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
     const textPieces: string[] = [];
 
-    if (Array.isArray(ocrJson?.images)) {
-      for (const img of ocrJson.images) {
-        if (!Array.isArray(img?.fields)) continue;
-
-        let lineBuffer: string[] = [];
-
-        for (const field of img.fields) {
-          if (!field || typeof field.inferText !== 'string') continue;
-
-          const inferText: string = field.inferText;
-          const lineBreak: boolean = !!field.lineBreak;
-
-          lineBuffer.push(inferText);
-
-          if (lineBreak) {
-            textPieces.push(lineBuffer.join(' '));
-            lineBuffer = [];
+    if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
+      for (const line of ocrJson.result.listOfInferTexts) {
+        if (Array.isArray(line?.inferTexts)) {
+          const lineText = line.inferTexts
+            .filter((t: { value?: string }) => typeof t?.value === 'string' && t.value.trim())
+            .map((t: { value: string }) => t.value.trim())
+            .join(' ');
+          if (lineText) {
+            textPieces.push(lineText);
           }
-        }
-
-        if (lineBuffer.length > 0) {
-          textPieces.push(lineBuffer.join(' '));
         }
       }
     }
