@@ -366,12 +366,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     checkOAuthUser();
   }, [user]);
 
+  const openProfileDialogRef = useRef(openProfileDialog);
   useEffect(() => {
-    window.openProfileDialog = openProfileDialog;
+    openProfileDialogRef.current = openProfileDialog;
+  }, [openProfileDialog]);
+
+  useEffect(() => {
+    window.openProfileDialog = () => openProfileDialogRef.current();
     return () => {
       delete window.openProfileDialog;
     };
-  }, [openProfileDialog]);
+  }, []);
 
   const handleRequestDeletion = async () => {
     if (!user) return;
