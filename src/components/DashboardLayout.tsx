@@ -53,6 +53,12 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
+declare global {
+  interface Window {
+    openProfileDialog?: () => void;
+  }
+}
+
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Selector 최적화: 상태값은 개별 selector로, 함수는 한 번에
   const user = useAuthStore((state) => state.user);
@@ -331,7 +337,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setShowSuggestions(false);
   }, [searchQuery, user?.id, isAdmin, navigate]);
 
-  const openProfileDialog = () => {
+  const openProfileDialog = useCallback(() => {
     setProfileName(user?.name || '');
     setProfileEmail(user?.email || '');
     setProfileCompanyCode(user?.companyCode || '');
@@ -358,7 +364,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     };
     checkOAuthUser();
-  };
+  }, [user]);
+
+  useEffect(() => {
+    window.openProfileDialog = openProfileDialog;
+    return () => {
+      delete window.openProfileDialog;
+    };
+  }, [openProfileDialog]);
 
   const handleRequestDeletion = async () => {
     if (!user) return;
