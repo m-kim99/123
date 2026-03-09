@@ -937,13 +937,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     } catch (err) {
       console.error('Failed to delete subcategory from Supabase:', err);
-
-
-      set((state) => ({
-        subcategories: state.subcategories.filter((sub) => sub.id !== id),
-        documents: state.documents.filter((doc) => doc.subcategoryId !== id),
-        error: 'Failed to delete subcategory from Supabase, removed locally only',
-      }));
       toast({
         title: '세부 스토리지 삭제 실패',
         description: '네트워크 오류로 인해 세부 스토리지를 서버에서 삭제하지 못했습니다.',
@@ -1160,7 +1153,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Supabase에서 삭제 성공 시 로컬 상태에서도 제거
       set((state) => ({
         categories: state.categories.filter((cat) => cat.id !== id),
-        documents: state.documents.filter((doc) => doc.categoryId !== id),
+        parentCategories: state.parentCategories.filter((cat) => cat.id !== id),
+        subcategories: state.subcategories.filter((sub) => sub.parentCategoryId !== id),
+        documents: state.documents.filter((doc) => doc.parentCategoryId !== id),
       }));
 
       const { user } = useAuthStore.getState();
@@ -1181,14 +1176,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     } catch (err) {
       console.error('Failed to delete category from Supabase:', err);
-
-
-      // Supabase 실패 시에도 로컬 상태에서는 제거 (사용자 경험 개선)
-      set((state) => ({
-        categories: state.categories.filter((cat) => cat.id !== id),
-        documents: state.documents.filter((doc) => doc.categoryId !== id),
-        error: 'Failed to delete category from Supabase, removed locally only',
-      }));
       toast({
         title: '카테고리 삭제 실패',
         description: '네트워크 오류로 인해 카테고리를 서버에서 삭제하지 못했습니다.',

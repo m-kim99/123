@@ -354,9 +354,12 @@ export function DocumentManagement() {
 
   const filteredDocuments = useMemo(() => {
     const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+    const validSubcategoryIds = new Set(subcategories.map((s) => s.id));
 
     const companyFilteredDocuments = documents.filter((d) =>
-      allowedDepartmentIds.has(d.departmentId)
+      allowedDepartmentIds.has(d.departmentId) &&
+      !!d.subcategoryId &&
+      validSubcategoryIds.has(d.subcategoryId)
     );
 
     let result = isAdmin

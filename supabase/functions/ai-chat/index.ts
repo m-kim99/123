@@ -55,7 +55,7 @@ function extractKeywords(message: string): string {
   return keywords.join(' ').trim();
 }
 
-async function preSearch(supabase: any, companyId: string, _deptIds: string[], keyword: string): Promise<any> {
+async function preSearch(supabase: any, companyId: string, deptIds: string[], keyword: string): Promise<any> {
   if (!keyword || keyword.length < 1) return null;
   try {
     const words = keyword.split(/\s+/).filter(w => w.length >= 2);
@@ -95,7 +95,8 @@ async function preSearch(supabase: any, companyId: string, _deptIds: string[], k
         .or(nameOr)
         .limit(5),
       supabase.from('documents')
-        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, department_id')
+        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, department_id, subcategory:subcategories!inner(id)')
+        .in('department_id', deptIds)
         .or(docOrConditions)
         .limit(10)
     ]);
@@ -221,7 +222,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'search_documents': {
         const { keyword, department_name, limit = 10 } = args;
-        let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories!inner(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
         return JSON.stringify({ 
@@ -358,7 +359,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`).limit(searchLimit),
           supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
           supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
-          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit)
+          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories!inner(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit)
         ]);
 
         const depts = deptResult.data || [];

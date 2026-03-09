@@ -144,7 +144,7 @@ export function parseDateRange(text: string): { start: Date; end: Date } | null 
 
 // 기간 기반 문서 검색
 export function searchDocumentsByDate(dateRange: { start: Date; end: Date }): ChatSearchResult[] {
-  const { documents, categories, departments } = useDocumentStore.getState();
+  const { documents, categories, departments, subcategories } = useDocumentStore.getState();
   const { user } = useAuthStore.getState();
 
   if (!user?.companyId) {
@@ -152,10 +152,16 @@ export function searchDocumentsByDate(dateRange: { start: Date; end: Date }): Ch
   }
 
   const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+  const validSubcategoryIds = new Set(subcategories.map((s) => s.id));
 
   return documents
     .filter((doc) => {
       if (!allowedDepartmentIds.has(doc.departmentId)) {
+        return false;
+      }
+
+      // 삭제된(백업) 문서 제외: 세부 스토리지가 존재하지 않는 문서
+      if (!doc.subcategoryId || !validSubcategoryIds.has(doc.subcategoryId)) {
         return false;
       }
 
@@ -182,7 +188,7 @@ export function searchDocumentsByDate(dateRange: { start: Date; end: Date }): Ch
 
 // 키워드 기반 문서 검색 (제목 + OCR 텍스트)
 export function searchDocuments(query: string): ChatSearchResult[] {
-  const { documents, categories, departments } = useDocumentStore.getState();
+  const { documents, categories, departments, subcategories } = useDocumentStore.getState();
   const { user } = useAuthStore.getState();
   const keyword = query.trim().toLowerCase();
 
@@ -195,10 +201,16 @@ export function searchDocuments(query: string): ChatSearchResult[] {
   }
 
   const allowedDepartmentIds = new Set(departments.map((d) => d.id));
+  const validSubcategoryIds = new Set(subcategories.map((s) => s.id));
 
   return documents
     .filter((doc) => {
       if (!allowedDepartmentIds.has(doc.departmentId)) {
+        return false;
+      }
+
+      // 삭제된(백업) 문서 제외: 세부 스토리지가 존재하지 않는 문서
+      if (!doc.subcategoryId || !validSubcategoryIds.has(doc.subcategoryId)) {
         return false;
       }
 
@@ -1104,16 +1116,20 @@ export async function generateResponse(
       const docsJsonStr = fullText.slice(separatorIndex + docsSeparator.length);
       try {
         const rawDocs = JSON.parse(docsJsonStr);
-        parsedDocs = rawDocs.map((d: any) => ({
-          id: d.id ?? '',
-          name: d.title ?? '제목 없음',
-          categoryName: d.categoryName ?? '',
-          departmentName: d.departmentName ?? '',
-          storageLocation: d.storageLocation ?? null,
-          uploadDate: d.uploadDate ?? '',
-          subcategoryId: d.subcategoryId ?? '',
-          parentCategoryId: d.parentCategoryId ?? '',
-        }));
+        const { subcategories: storeSubcategories } = useDocumentStore.getState();
+        const validSubcategoryIds = new Set(storeSubcategories.map((s) => s.id));
+        parsedDocs = rawDocs
+          .map((d: any) => ({
+            id: d.id ?? '',
+            name: d.title ?? '제목 없음',
+            categoryName: d.categoryName ?? '',
+            departmentName: d.departmentName ?? '',
+            storageLocation: d.storageLocation ?? null,
+            uploadDate: d.uploadDate ?? '',
+            subcategoryId: d.subcategoryId ?? '',
+            parentCategoryId: d.parentCategoryId ?? '',
+          }))
+          .filter((d: ChatSearchResult) => d.subcategoryId && validSubcategoryIds.has(d.subcategoryId));
       } catch (parseErr) {
         console.error('Failed to parse docs JSON from stream:', parseErr);
       }
