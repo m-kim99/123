@@ -423,17 +423,26 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       audio.volume = 0.5;
       currentAudioRef.current = audio;
       
-      audio.onended = () => {
-        console.log('✔️ 시작 사운드 재생 완료');
-        currentAudioRef.current = null;
-      };
+      // 사운드 재생 완료까지 대기 (모바일: getUserMedia가 오디오 세션을 중단시키므로 순서 보장 필요)
+      await new Promise<void>((resolve) => {
+        audio.onended = () => {
+          console.log('✔️ 시작 사운드 재생 완료');
+          currentAudioRef.current = null;
+          resolve();
+        };
+        audio.onerror = () => {
+          console.error('❌ 시작 사운드 로드 오류');
+          resolve();
+        };
+        audio.play()
+          .then(() => console.log('✅ 시작 사운드 재생 성공'))
+          .catch(err => {
+            console.error('❌ 시작 사운드 재생 실패:', err);
+            resolve();
+          });
+      });
       
-      // 즉시 재생 (비동기 작업 전)
-      audio.play()
-        .then(() => console.log('✅ 시작 사운드 재생 성공'))
-        .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
-      
-      // 그 다음 비동기 작업
+      // 사운드 재생 완료 후 마이크 권한 요청 (모바일 오디오 세션 충돌 방지)
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         console.log('✅ 마이크 권한 획득 성공');
