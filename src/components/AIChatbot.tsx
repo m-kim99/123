@@ -605,7 +605,27 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               </button>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  // 음성 모드 종료 및 TTS 중단
+                  if (isVoiceMode) {
+                    isVoiceModeRef.current = false;
+                    speechRecognition.stopListening();
+                    setIsVoiceMode(false);
+                    setIsSpeaking(false);
+                    if (speechDebounceTimerRef.current) {
+                      clearTimeout(speechDebounceTimerRef.current);
+                      speechDebounceTimerRef.current = null;
+                    }
+                    accumulatedTranscriptRef.current = '';
+                  }
+                  window.speechSynthesis.cancel();
+                  if (currentAudioRef.current) {
+                    currentAudioRef.current.pause();
+                    currentAudioRef.current.currentTime = 0;
+                    currentAudioRef.current = null;
+                  }
+                  setIsOpen(false);
+                }}
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
