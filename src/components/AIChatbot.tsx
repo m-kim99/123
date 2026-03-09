@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
+import { isRunningInApp, requestNativeMicrophonePermission } from '@/lib/appBridge';
 
 // **텍스트** 패턴을 <strong>으로 변환하는 함수
 function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
@@ -333,12 +334,23 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       if (error === 'not-allowed') {
         isVoiceModeRef.current = false;
         setIsVoiceMode(false);
-        setMessages(prev => [...prev, {
-          id: `${Date.now()}-system`,
-          role: 'assistant' as const,
-          content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
-          timestamp: new Date(),
-        }]);
+        if (isRunningInApp()) {
+          // 앱 환경: 네이티브 마이크 권한 요청
+          requestNativeMicrophonePermission();
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: '🎤 마이크 권한이 거부되었습니다. 권한을 허용한 후 다시 시도해주세요.',
+            timestamp: new Date(),
+          }]);
+        } else {
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
+            timestamp: new Date(),
+          }]);
+        }
       }
     },
   });
@@ -457,12 +469,23 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         }, 300);
       } catch (err) {
         console.error('❌ 마이크 권한 오류:', err);
-        setMessages(prev => [...prev, {
-          id: `${Date.now()}-system`,
-          role: 'assistant' as const,
-          content: '🎤 마이크 권한이 필요합니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
-          timestamp: new Date(),
-        }]);
+        if (isRunningInApp()) {
+          // 앱 환경: 네이티브 마이크 권한 요청
+          requestNativeMicrophonePermission();
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: '🎤 마이크 권한이 필요합니다. 권한을 허용한 후 다시 시도해주세요.',
+            timestamp: new Date(),
+          }]);
+        } else {
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: '🎤 마이크 권한이 필요합니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
+            timestamp: new Date(),
+          }]);
+        }
       }
     }
   }, [isVoiceMode, speechRecognition]);

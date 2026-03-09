@@ -63,6 +63,7 @@ import type { Subcategory } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
+import { downloadFile } from '@/lib/appBridge';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { createDocumentNotification } from '@/lib/notifications';
@@ -1050,23 +1051,15 @@ export function DocumentManagement() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: fileData, error: downloadError } = await supabase.storage
+      const { data: publicData } = supabase.storage
         .from('123')
-        .download(data.file_path);
+        .getPublicUrl(data.file_path);
 
-      if (downloadError || !fileData) {
-        throw downloadError || new Error('파일을 다운로드할 수 없습니다.');
+      if (!publicData?.publicUrl) {
+        throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
-      const blob = fileData as Blob;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.title || 'document';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      await downloadFile(publicData.publicUrl, data.title || 'document');
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
 

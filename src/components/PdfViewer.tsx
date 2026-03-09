@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { downloadFile as appDownloadFile } from '@/lib/appBridge';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,17 +78,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
       onDownload();
     } else {
       try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = 'document.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
+        await appDownloadFile(url, 'document.pdf');
       } catch (error) {
         console.error('다운로드 실패:', error);
         const link = document.createElement('a');

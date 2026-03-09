@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isRunningInApp, requestNativeMicrophonePermission } from '@/lib/appBridge';
 
 interface UseGeminiLiveProps {
   apiKey: string;
@@ -213,6 +214,10 @@ export function useGeminiLive({
       console.log('🎤 스트리밍 시작');
     } catch (error) {
       console.error('스트리밍 시작 실패:', error);
+      if (isRunningInApp()) {
+        // 앱 환경: 네이티브 마이크 권한 요청
+        requestNativeMicrophonePermission();
+      }
       if (onError) onError(error as Error);
     }
   }, [onError]);

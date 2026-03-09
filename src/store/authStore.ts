@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { trackEvent } from '@/lib/analytics';
+import { requestPushId } from '@/lib/appBridge';
 
 export type UserRole = 'admin' | 'team';
 
@@ -150,6 +151,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       trackEvent('login', {
         method: 'password',
         selected_role: role,
+      });
+
+      // 앱 환경에서 푸시키 저장
+      requestPushId((pushId) => {
+        supabase
+          .from('users')
+          .update({ push_id: pushId })
+          .eq('id', userData.id)
+          .then(({ error: pushError }: { error: any }) => {
+            if (pushError) console.error('푸시키 저장 실패:', pushError);
+          });
       });
 
       return { success: true };
@@ -418,6 +430,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           needsOnboarding,
           pendingDeletion: pendingDeletionInfo,
         });
+
+        // 앱 환경에서 푸시키 저장 (세션 복원 시에도)
+        if (!needsOnboarding) {
+          requestPushId((pushId) => {
+            supabase
+              .from('users')
+              .update({ push_id: pushId })
+              .eq('id', userData.id)
+              .then(({ error: pushError }: { error: any }) => {
+                if (pushError) console.error('푸시키 저장 실패:', pushError);
+              });
+          });
+        }
 
       } else {
         set({

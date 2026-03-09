@@ -43,6 +43,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
+import { downloadFile } from '@/lib/appBridge';
 import { toast } from '@/hooks/use-toast';
 import { PdfViewer } from '@/components/PdfViewer';
 import { BackButton } from '@/components/BackButton';
@@ -101,22 +102,15 @@ export function SharedDocuments() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: fileData, error: downloadError } = await supabase.storage
+      const { data: publicData } = supabase.storage
         .from('123')
-        .download(data.file_path);
+        .getPublicUrl(data.file_path);
 
-      if (downloadError || !fileData) {
-        throw downloadError || new Error('파일을 다운로드할 수 없습니다.');
+      if (!publicData?.publicUrl) {
+        throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
-      const url = URL.createObjectURL(fileData);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.title || 'document';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      await downloadFile(publicData.publicUrl, data.title || 'document');
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
 
