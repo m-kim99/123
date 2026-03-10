@@ -435,6 +435,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         speechDebounceTimerRef.current = null;
       }
       accumulatedTranscriptRef.current = '';
+      isFinalPendingRef.current = false;
       
       // 종료 사운드 재생
       playSound('/sounds/end.wav', '종료');
@@ -640,6 +641,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                         speechDebounceTimerRef.current = null;
                       }
                       accumulatedTranscriptRef.current = '';
+                      isFinalPendingRef.current = false;
                     }
                     window.speechSynthesis?.cancel();
                     if (currentAudioRef.current) {
