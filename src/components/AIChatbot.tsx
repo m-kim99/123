@@ -161,6 +161,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 음성 중복 처리 방지용 ref
   const lastProcessedTranscriptRef = useRef<string>('');
@@ -193,17 +195,46 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       speechRecognitionRef.current.stopListening();
     }
 
-    window.speechSynthesis.cancel();
+    // 이전 keep-alive 타이머 정리
+    if (ttsKeepAliveRef.current) {
+      clearInterval(ttsKeepAliveRef.current);
+      ttsKeepAliveRef.current = null;
+    }
+
+    try { window.speechSynthesis.cancel(); } catch (_) {}
+
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'ko-KR';
     utterance.rate = 1.1;
     utterance.pitch = 1.0;
 
+    // Safari: utterance가 GC되면 TTS가 즉시 중단됨 → ref로 참조 유지
+    currentUtteranceRef.current = utterance;
+
+    const cleanupTts = () => {
+      currentUtteranceRef.current = null;
+      if (ttsKeepAliveRef.current) {
+        clearInterval(ttsKeepAliveRef.current);
+        ttsKeepAliveRef.current = null;
+      }
+    };
+
     utterance.onstart = () => {
       setIsSpeaking(true);
+      // Safari: 긴 텍스트 TTS가 ~15초 후 멈추는 버그 대응
+      // 주기적 pause/resume으로 활성 상태 유지
+      ttsKeepAliveRef.current = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          cleanupTts();
+        }
+      }, 10000);
     };
 
     utterance.onend = () => {
+      cleanupTts();
       setIsSpeaking(false);
       // TTS 완료 후 음성모드면 STT 재시작
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
@@ -216,13 +247,17 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     };
 
     utterance.onerror = () => {
+      cleanupTts();
       setIsSpeaking(false);
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
         speechRecognitionRef.current?.startListening();
       }
     };
 
-    window.speechSynthesis.speak(utterance);
+    // Safari: cancel() 직후 speak() 호출 시 무시되는 타이밍 버그 대응
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   }, []);
 
   // 사용자 음성 전사 처리 - generateResponse 호출 후 TTS로 읽어줌
