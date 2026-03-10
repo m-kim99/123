@@ -319,11 +319,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     language: 'ko-KR',
     onResult: (transcript, isFinal) => {
       if (isFinal) {
-        // 최종 전사를 누적하고, 10초간 추가 음성이 없으면 처리
         accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + transcript).trim();
 
         if (speechDebounceTimerRef.current) {
           clearTimeout(speechDebounceTimerRef.current);
+        }
+
+        // Android continuous 모드에서 동일 발화를 반복 인식하는 문제 방지:
+        // isFinal 수신 즉시 인식 중단 → 디바운스 후 처리, handleUserSpeech 내부에서 재시작
+        if (speechRecognitionRef.current?.isListening) {
+          speechRecognitionRef.current.stopListening();
         }
 
         speechDebounceTimerRef.current = setTimeout(() => {
@@ -333,7 +338,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           if (fullTranscript) {
             handleUserSpeech(fullTranscript);
           }
-        }, 3000);
+        }, 1000);
       }
     },
     onError: (error) => {
@@ -441,51 +446,55 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       const audio = new Audio('/sounds/start.wav');
       audio.volume = 0.5;
       currentAudioRef.current = audio;
-      
-      // 사운드 재생 완료까지 대기 (모바일: getUserMedia가 오디오 세션을 중단시키므로 순서 보장 필요)
-      await new Promise<void>((resolve) => {
-        audio.onended = () => {
-          console.log('✔️ 시작 사운드 재생 완료');
-          currentAudioRef.current = null;
-          resolve();
-        };
-        audio.onerror = () => {
-          console.error('❌ 시작 사운드 로드 오류');
-          resolve();
-        };
+
+      if (isRunningInApp()) {
+        // 앱 환경: 사운드 대기·getUserMedia 스킵
+        // - Android: 사운드 완료 대기 없이 즉시 시작 → 활성화 지연 해소
+        // - iOS: getUserMedia 후 트랙 종료 시 오디오 세션이 해제되어 SpeechRecognition 실패하는 문제 방지
+        audio.onended = () => { currentAudioRef.current = null; };
         audio.play()
           .then(() => console.log('✅ 시작 사운드 재생 성공'))
-          .catch(err => {
-            console.error('❌ 시작 사운드 재생 실패:', err);
-            resolve();
-          });
-      });
-      
-      // 사운드 재생 완료 후 마이크 권한 요청 (모바일 오디오 세션 충돌 방지)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('✅ 마이크 권한 획득 성공');
-        stream.getTracks().forEach(track => track.stop());
-        
-        // 사운드 재생 후 약간의 지연을 두고 음성 인식 시작
+          .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
+
         setTimeout(() => {
           isVoiceModeRef.current = true;
           speechRecognition.startListening();
           setIsVoiceMode(true);
-          console.log('✅ 음성 인식 시작됨');
+          console.log('✅ 음성 인식 시작됨 (앱)');
         }, 300);
-      } catch (err) {
-        console.error('❌ 마이크 권한 오류:', err);
-        if (isRunningInApp()) {
-          // 앱 환경: 네이티브 마이크 권한 요청
-          requestNativeMicrophonePermission();
-          setMessages(prev => [...prev, {
-            id: `${Date.now()}-system`,
-            role: 'assistant' as const,
-            content: '🎤 마이크 권한이 필요합니다. 권한을 허용한 후 다시 시도해주세요.',
-            timestamp: new Date(),
-          }]);
-        } else {
+      } else {
+        // 브라우저 환경: 사운드 완료 후 getUserMedia → 음성 인식 시작 (기존 로직)
+        await new Promise<void>((resolve) => {
+          audio.onended = () => {
+            console.log('✔️ 시작 사운드 재생 완료');
+            currentAudioRef.current = null;
+            resolve();
+          };
+          audio.onerror = () => {
+            console.error('❌ 시작 사운드 로드 오류');
+            resolve();
+          };
+          audio.play()
+            .then(() => console.log('✅ 시작 사운드 재생 성공'))
+            .catch(err => {
+              console.error('❌ 시작 사운드 재생 실패:', err);
+              resolve();
+            });
+        });
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          console.log('✅ 마이크 권한 획득 성공');
+          stream.getTracks().forEach(track => track.stop());
+
+          setTimeout(() => {
+            isVoiceModeRef.current = true;
+            speechRecognition.startListening();
+            setIsVoiceMode(true);
+            console.log('✅ 음성 인식 시작됨');
+          }, 300);
+        } catch (err) {
+          console.error('❌ 마이크 권한 오류:', err);
           setMessages(prev => [...prev, {
             id: `${Date.now()}-system`,
             role: 'assistant' as const,
@@ -607,7 +616,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 <img
                   src={isTall ? reduceIcon : expandIcon}
                   alt={isTall ? '축소' : '확장'}
-                  className="h-5 w-5 block object-contain"
+                  className="h-5 w-5 block object-contain pointer-events-none"
                 />
               </button>
               <button
@@ -636,7 +645,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                <img src={closeIcon} alt="닫기" className="h-5 w-5 block object-contain" />
+                <img src={closeIcon} alt="닫기" className="h-5 w-5 block object-contain pointer-events-none" />
               </button>
             </div>
           </CardHeader>
@@ -811,7 +820,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   style={{ backgroundColor: primaryColor }}
                   disabled={isVoiceMode}
                 >
-                  <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain" />
+                  <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
               </div>
               {/* 음성 대화 버튼 */}
@@ -825,7 +834,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 <img
                   src={isVoiceMode ? micOnIcon : micIcon}
                   alt={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
-                  className="h-5 w-5 block object-contain"
+                  className="h-5 w-5 block object-contain pointer-events-none"
                 />
               </button>
             </form>
