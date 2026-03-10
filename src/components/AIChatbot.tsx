@@ -147,6 +147,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     sessionStorage.setItem(CHAT_OPEN_KEY, String(isOpen));
   }, [isOpen]);
 
+  // 웹뷰 Pull-to-Refresh 방지
+  useEffect(() => {
+    if (isOpen) {
+      window.scrollTo(0, window.scrollY + 1);
+    }
+  }, [isOpen]);
+
 
   // 음성 모드 상태
   const [isVoiceMode, setIsVoiceMode] = useState(false);
