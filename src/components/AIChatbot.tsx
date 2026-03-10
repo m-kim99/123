@@ -166,9 +166,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const lastProcessedTranscriptRef = useRef<string>('');
   const isProcessingSpeechRef = useRef<boolean>(false);
 
-  // 음성 인식 디바운스용 ref (10초 대기)
+  // 음성 인식 디바운스용 ref
   const speechDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accumulatedTranscriptRef = useRef<string>('');
+  const isFinalPendingRef = useRef<boolean>(false);
 
   // 브라우저 TTS로 텍스트 읽기 (읽는 동안 STT 정지)
   const speakText = useCallback((text: string) => {
@@ -319,19 +320,24 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     language: 'ko-KR',
     onResult: (transcript, isFinal) => {
       if (isFinal) {
+        // Android: recognition.stop()은 비동기라 두 번째 onresult가 중단 전에 발생할 수 있음
+        // 가드 플래그로 중복 누적 차단
+        if (isFinalPendingRef.current) return;
+        isFinalPendingRef.current = true;
+
         accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + transcript).trim();
 
         if (speechDebounceTimerRef.current) {
           clearTimeout(speechDebounceTimerRef.current);
         }
 
-        // Android continuous 모드에서 동일 발화를 반복 인식하는 문제 방지:
-        // isFinal 수신 즉시 인식 중단 → 디바운스 후 처리, handleUserSpeech 내부에서 재시작
+        // 즉시 인식 중단 (연속 인식 반복 방지)
         if (speechRecognitionRef.current?.isListening) {
           speechRecognitionRef.current.stopListening();
         }
 
         speechDebounceTimerRef.current = setTimeout(() => {
+          isFinalPendingRef.current = false;
           const fullTranscript = accumulatedTranscriptRef.current;
           accumulatedTranscriptRef.current = '';
           speechDebounceTimerRef.current = null;
@@ -419,7 +425,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.log('🔴 음성 모드 종료 시작');
       isVoiceModeRef.current = false;
       speechRecognition.stopListening();
-      window.speechSynthesis.cancel();
+      try { window.speechSynthesis?.cancel(); } catch (_) { /* Android WebView 미지원 */ }
       setIsSpeaking(false);
       setIsVoiceMode(false);
       
@@ -622,23 +628,27 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               <button
                 type="button"
                 onClick={() => {
-                  // 음성 모드 종료 및 TTS 중단
-                  if (isVoiceMode) {
-                    isVoiceModeRef.current = false;
-                    speechRecognition.stopListening();
-                    setIsVoiceMode(false);
-                    setIsSpeaking(false);
-                    if (speechDebounceTimerRef.current) {
-                      clearTimeout(speechDebounceTimerRef.current);
-                      speechDebounceTimerRef.current = null;
+                  try {
+                    // 음성 모드 종료 및 TTS 중단
+                    if (isVoiceMode) {
+                      isVoiceModeRef.current = false;
+                      speechRecognition.stopListening();
+                      setIsVoiceMode(false);
+                      setIsSpeaking(false);
+                      if (speechDebounceTimerRef.current) {
+                        clearTimeout(speechDebounceTimerRef.current);
+                        speechDebounceTimerRef.current = null;
+                      }
+                      accumulatedTranscriptRef.current = '';
                     }
-                    accumulatedTranscriptRef.current = '';
-                  }
-                  window.speechSynthesis.cancel();
-                  if (currentAudioRef.current) {
-                    currentAudioRef.current.pause();
-                    currentAudioRef.current.currentTime = 0;
-                    currentAudioRef.current = null;
+                    window.speechSynthesis?.cancel();
+                    if (currentAudioRef.current) {
+                      currentAudioRef.current.pause();
+                      currentAudioRef.current.currentTime = 0;
+                      currentAudioRef.current = null;
+                    }
+                  } catch (e) {
+                    console.error('챗봇 닫기 클린업 오류:', e);
                   }
                   setIsOpen(false);
                 }}
