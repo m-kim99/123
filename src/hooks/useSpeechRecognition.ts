@@ -4,6 +4,7 @@ interface UseSpeechRecognitionProps {
   onResult?: (transcript: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
   language?: string;
+  onSilenceEnd?: () => void;
 }
 
 interface SpeechRecognitionEvent {
@@ -20,6 +21,7 @@ export function useSpeechRecognition({
   onResult,
   onError,
   language = 'ko-KR',
+  onSilenceEnd,
 }: UseSpeechRecognitionProps = {}) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -29,8 +31,10 @@ export function useSpeechRecognition({
   // Refs로 콜백 관리 (recognition 이벤트 핸들러의 stale closure 방지)
   const onResultRef = useRef(onResult);
   const onErrorRef = useRef(onError);
+  const onSilenceEndRef = useRef(onSilenceEnd);
   onResultRef.current = onResult;
   onErrorRef.current = onError;
+  onSilenceEndRef.current = onSilenceEnd;
 
   // 브라우저 지원 확인
   useEffect(() => {
@@ -96,6 +100,9 @@ export function useSpeechRecognition({
       if (pendingRestartRef.current) {
         pendingRestartRef.current = false;
         setTimeout(() => doStartRef.current(), 100);
+      } else {
+        // Safari silence timeout 자동 복구 콜백
+        onSilenceEndRef.current?.();
       }
     };
 

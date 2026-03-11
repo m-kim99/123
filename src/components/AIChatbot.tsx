@@ -350,12 +350,23 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     } finally {
       setIsTyping(false);
       isProcessingSpeechRef.current = false;
+      lastProcessedTranscriptRef.current = '';
     }
   }, [messages, speakText]);
 
   // Web Speech API로 음성 인식 (STT)
   const speechRecognition = useSpeechRecognition({
     language: 'ko-KR',
+    onSilenceEnd: () => {
+      // Safari silence timeout 자동 복구: 음성모드 활성 중이고 처리 중이 아닐 때만 재시작
+      if (isVoiceModeRef.current && !isProcessingSpeechRef.current) {
+        setTimeout(() => {
+          if (isVoiceModeRef.current) {
+            speechRecognitionRef.current?.startListening();
+          }
+        }, 100);
+      }
+    },
     onResult: (transcript, isFinal) => {
       if (isFinal) {
         // Android: recognition.stop()은 비동기라 두 번째 onresult가 중단 전에 발생할 수 있음
