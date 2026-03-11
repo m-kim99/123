@@ -1186,9 +1186,9 @@ export function SubcategoryDetail() {
               >
                 <input {...getNewFileInputProps()} />
                 {selectedFile ? (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-2 w-full overflow-hidden">
                     <FileText className="h-10 w-10 text-green-500" />
-                    <p className="text-sm font-medium text-green-700">{selectedFile.name}</p>
+                    <p className="text-sm font-medium text-green-700 truncate w-full text-center">{selectedFile.name}</p>
                     <p className="text-xs text-slate-500">다른 파일을 선택하려면 클릭하세요</p>
                   </div>
                 ) : (
@@ -1824,9 +1824,9 @@ export function SubcategoryDetail() {
                     <p className="text-sm text-blue-600">OCR 텍스트 추출 중...</p>
                   </div>
                 ) : replaceFile ? (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-2 w-full overflow-hidden">
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
-                    <p className="text-sm font-medium text-green-700">{replaceFile.name}</p>
+                    <p className="text-sm font-medium text-green-700 truncate w-full text-center">{replaceFile.name}</p>
                     <p className="text-xs text-slate-500">
                       {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}자 추출됨` : 'OCR 텍스트 없음'}
                     </p>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, TrendingUp, Building2, Star, Clock, Users } from 'lucide-react';
+import { FileText, FolderOpen, Archive, Star, Clock, Users, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -97,13 +97,13 @@ export function TeamDashboard() {
     {
       title: '접근 가능한 대분류',
       value: userParentCategories.length,
-      icon: Building2,
+      icon: FolderOpen,
       color: '#3B82F6',
     },
     {
       title: '접근 가능한 세부 스토리지',
       value: userSubcategories.length,
-      icon: TrendingUp,
+      icon: Archive,
       color: '#8B5CF6',
     },
     {
