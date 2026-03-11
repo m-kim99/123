@@ -168,6 +168,9 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const lastProcessedTranscriptRef = useRef<string>('');
   const isProcessingSpeechRef = useRef<boolean>(false);
 
+  // 브라우저 환경: getUserMedia 최초 1회만 호출 (track.stop()이 오디오 세션을 죽이는 문제 방지)
+  const hasMicPermissionRef = useRef(false);
+
   // 음성 인식 디바운스용 ref
   const speechDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accumulatedTranscriptRef = useRef<string>('');
@@ -471,6 +474,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       }
       accumulatedTranscriptRef.current = '';
       isFinalPendingRef.current = false;
+      lastProcessedTranscriptRef.current = '';
+      isProcessingSpeechRef.current = false;
       
       // 종료 사운드 재생
       playSound('/sounds/end.wav', '종료');
@@ -537,9 +542,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         });
 
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          console.log('✅ 마이크 권한 획득 성공');
-          stream.getTracks().forEach(track => track.stop());
+          if (!hasMicPermissionRef.current) {
+            // 최초 1회만 권한 확인 (track.stop()이 오디오 세션을 죽이므로 반복 호출 금지)
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('✅ 마이크 권한 획득 성공');
+            stream.getTracks().forEach(track => track.stop());
+            hasMicPermissionRef.current = true;
+          }
 
           setTimeout(() => {
             isVoiceModeRef.current = true;
@@ -689,6 +698,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                       }
                       accumulatedTranscriptRef.current = '';
                       isFinalPendingRef.current = false;
+                      lastProcessedTranscriptRef.current = '';
+                      isProcessingSpeechRef.current = false;
                     }
                     window.speechSynthesis?.cancel();
                     if (currentAudioRef.current) {
