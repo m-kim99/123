@@ -171,7 +171,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   // 음성 인식 디바운스용 ref
   const speechDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accumulatedTranscriptRef = useRef<string>('');
-  const isFinalPendingRef = useRef<boolean>(false);
+  const lastFinalTranscriptRef = useRef<string>('');
 
   // 브라우저 TTS로 텍스트 읽기 (읽는 동안 STT 정지)
   const speakText = useCallback((text: string) => {
@@ -366,10 +366,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
     onResult: (transcript, isFinal) => {
       if (isFinal) {
-        // Android: recognition.stop()은 비동기라 두 번째 onresult가 중단 전에 발생할 수 있음
-        // 가드 플래그로 중복 누적 차단
-        if (isFinalPendingRef.current) return;
-        isFinalPendingRef.current = true;
+        // stop() 비동기로 인한 동일 transcript 중복만 차단
+        // 다른 transcript는 통과 (Android 단어별/버퍼 finals 누적 허용)
+        if (transcript === lastFinalTranscriptRef.current) return;
+        lastFinalTranscriptRef.current = transcript;
 
         accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + transcript).trim();
 
@@ -383,7 +383,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         }
 
         speechDebounceTimerRef.current = setTimeout(() => {
-          isFinalPendingRef.current = false;
+          lastFinalTranscriptRef.current = '';
           const fullTranscript = accumulatedTranscriptRef.current;
           accumulatedTranscriptRef.current = '';
           speechDebounceTimerRef.current = null;
@@ -481,7 +481,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         speechDebounceTimerRef.current = null;
       }
       accumulatedTranscriptRef.current = '';
-      isFinalPendingRef.current = false;
+      lastFinalTranscriptRef.current = '';
       lastProcessedTranscriptRef.current = '';
       isProcessingSpeechRef.current = false;
       
@@ -674,7 +674,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                         speechDebounceTimerRef.current = null;
                       }
                       accumulatedTranscriptRef.current = '';
-                      isFinalPendingRef.current = false;
+                      lastFinalTranscriptRef.current = '';
                       lastProcessedTranscriptRef.current = '';
                       isProcessingSpeechRef.current = false;
                     }
