@@ -94,61 +94,63 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="flex flex-row justify-center items-center gap-2">
-            <img
-              src={logo}
-              alt="문서 관리 시스템 로고"
-              className="h-14 sm:h-16 w-auto object-contain"
-            />
-          </CardTitle>
-          <CardDescription className="mt-4">
-            새로운 비밀번호를 입력해주세요
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">새 비밀번호</Label>
-              <Input
-                id="new-password"
-                type="password"
-                placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isResetting}
-                required
+    <div className="min-h-screen w-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="flex-1 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="flex flex-row justify-center items-center gap-2">
+              <img
+                src={logo}
+                alt="문서 관리 시스템 로고"
+                className="h-14 sm:h-16 w-auto object-contain"
               />
-              {passwordValidation && !passwordValidation.isValid && newPassword && (
-                <p className="text-[11px] text-red-500 mt-1">
-                  ⚠️ {passwordValidation.errors.join(' / ')}
-                </p>
-              )}
-            </div>
+            </CardTitle>
+            <CardDescription className="mt-4">
+              새로운 비밀번호를 입력해주세요
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">새 비밀번호</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isResetting}
+                  required
+                />
+                {passwordValidation && !passwordValidation.isValid && newPassword && (
+                  <p className="text-[11px] text-red-500 mt-1">
+                    ⚠️ {passwordValidation.errors.join(' / ')}
+                  </p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">비밀번호 확인</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="비밀번호 재입력"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isResetting}
-                required
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">비밀번호 확인</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="비밀번호 재입력"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isResetting}
+                  required
+                />
+              </div>
 
-            <Button type="submit" className="w-full" disabled={isResetting}>
-              {isResetting ? '재설정 중...' : '비밀번호 재설정'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="w-full" disabled={isResetting}>
+                {isResetting ? '재설정 중...' : '비밀번호 재설정'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="mt-4 text-center absolute bottom-4">
+      <div className="text-center py-4">
         <p className="text-xs text-black">
           COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
         </p>
