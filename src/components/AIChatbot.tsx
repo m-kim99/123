@@ -168,9 +168,6 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const lastProcessedTranscriptRef = useRef<string>('');
   const isProcessingSpeechRef = useRef<boolean>(false);
 
-  // 브라우저 환경: getUserMedia 최초 1회만 호출 (track.stop()이 오디오 세션을 죽이는 문제 방지)
-  const hasMicPermissionRef = useRef(false);
-
   // 음성 인식 디바운스용 ref
   const speechDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accumulatedTranscriptRef = useRef<string>('');
@@ -533,49 +530,18 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           console.log('✅ 음성 인식 시작됨 (앱)');
         }, 300);
       } else {
-        // 브라우저 환경: 사운드 완료 후 getUserMedia → 음성 인식 시작 (기존 로직)
-        await new Promise<void>((resolve) => {
-          audio.onended = () => {
-            console.log('✔️ 시작 사운드 재생 완료');
-            currentAudioRef.current = null;
-            resolve();
-          };
-          audio.onerror = () => {
-            console.error('❌ 시작 사운드 로드 오류');
-            resolve();
-          };
-          audio.play()
-            .then(() => console.log('✅ 시작 사운드 재생 성공'))
-            .catch(err => {
-              console.error('❌ 시작 사운드 재생 실패:', err);
-              resolve();
-            });
-        });
+        // 브라우저 환경: gesture context 살아있는 동기 구간에서 STT 먼저 시작
+        // Safari macOS는 await 이후 gesture context가 소멸되어 SpeechRecognition.start()가 not-allowed 에러 발생
+        // → getUserMedia 제거, await 제거, STT를 동기적으로 즉시 시작
+        isVoiceModeRef.current = true;
+        setIsVoiceMode(true);
+        speechRecognition.startListening();
+        console.log('✅ 음성 인식 시작됨');
 
-        try {
-          if (!hasMicPermissionRef.current) {
-            // 최초 1회만 권한 확인 (track.stop()이 오디오 세션을 죽이므로 반복 호출 금지)
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('✅ 마이크 권한 획득 성공');
-            stream.getTracks().forEach(track => track.stop());
-            hasMicPermissionRef.current = true;
-          }
-
-          setTimeout(() => {
-            isVoiceModeRef.current = true;
-            speechRecognition.startListening();
-            setIsVoiceMode(true);
-            console.log('✅ 음성 인식 시작됨');
-          }, 300);
-        } catch (err) {
-          console.error('❌ 마이크 권한 오류:', err);
-          setMessages(prev => [...prev, {
-            id: `${Date.now()}-system`,
-            role: 'assistant' as const,
-            content: '🎤 마이크 권한이 필요합니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
-            timestamp: new Date(),
-          }]);
-        }
+        // 오디오는 병렬 재생 (await 안 함)
+        audio.onended = () => { currentAudioRef.current = null; };
+        audio.onerror = () => { currentAudioRef.current = null; };
+        audio.play().catch(() => {});
       }
     }
   }, [isVoiceMode, speechRecognition]);
