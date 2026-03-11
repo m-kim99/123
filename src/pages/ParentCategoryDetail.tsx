@@ -1274,14 +1274,14 @@ export function ParentCategoryDetail() {
             if (!open) handleCloseSubEditDialog();
           }}
         >
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>세부 스토리지 수정</DialogTitle>
               <DialogDescription>
                 선택한 세부 스토리지 정보를 수정합니다.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 px-2">
               <div className="space-y-2">
                 <Label>세부 스토리지 이름</Label>
                 <Input
