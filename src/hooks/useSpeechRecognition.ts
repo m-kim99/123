@@ -52,7 +52,7 @@ export function useSpeechRecognition({
 
     const recognition = new SpeechRecognition();
     recognition.lang = language;
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
 
     recognition.onstart = () => {

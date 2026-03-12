@@ -359,7 +359,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const speechRecognition = useSpeechRecognition({
     language: 'ko-KR',
     onSilenceEnd: () => {
-      // Safari silence timeout 자동 복구: 음성모드 활성 중이고 처리 중이 아닐 때만 재시작
+      // continuous=false: 침묵 시 onend 발생 → 음성모드 활성 중이고 처리 중이 아니면 자동 재시작
       if (isVoiceModeRef.current && !isProcessingSpeechRef.current) {
         setTimeout(() => {
           if (isVoiceModeRef.current) {
