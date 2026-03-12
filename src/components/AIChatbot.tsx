@@ -364,6 +364,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   // Web Speech API로 음성 인식 (STT)
   const speechRecognition = useSpeechRecognition({
     language: 'ko-KR',
+    onStart: () => {
+      // SYNCHRONOUS: onstart 핸들러 내부에서 바로 호출 → useEffect 타이밍 버그 없음
+      hasEverStartedRef.current = true;
+      notAllowedRetryCountRef.current = 0;
+    },
     onSilenceEnd: () => {
       // onend 발생 후 재시작: iOS 오디오세션 해제 대기 (100ms→1000ms)
       if (isVoiceModeRef.current && !isProcessingSpeechRef.current) {
@@ -405,6 +410,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
     onError: (error) => {
       console.error('음성 인식 오류:', error);
+
       if (error === 'not-allowed') {
         if (!hasEverStartedRef.current) {
           // 최초 권한 거부 (진짜 권한 문제)
@@ -422,17 +428,15 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
             setMessages(prev => [...prev, {
               id: `${Date.now()}-system`,
               role: 'assistant' as const,
-              content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창의 자물쇠 아이콘을 눌러 마이크 권한을 허용해주세요. (iPhone: 설정 → Safari → 마이크)',
+              content: '🎤 마이크 권한이 거부되었습니다. iPhone: 설정 → Safari → 마이크를 허용해주세요.',
               timestamp: new Date(),
             }]);
           }
         } else {
-          // 재시작 중 not-allowed = iOS 오디오세션 타이밍 문제
-          // voice mode 유지하고 onSilenceEnd가 재시도
+          // 재시작 중 not-allowed = iOS 오디오세션 타이밍 문제 → voice mode 유지, onSilenceEnd 재시도
           notAllowedRetryCountRef.current++;
           console.warn(`iOS not-allowed 재시도 ${notAllowedRetryCountRef.current}/3`);
           if (notAllowedRetryCountRef.current >= 3) {
-            // 3회 연속 실패 → 포기
             isVoiceModeRef.current = false;
             setIsVoiceMode(false);
             notAllowedRetryCountRef.current = 0;
@@ -444,6 +448,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
             }]);
           }
         }
+      } else if (error === 'audio-capture') {
+        // 마이크 하드웨어 접근 실패 (다른 앱이 점유 중)
+        isVoiceModeRef.current = false;
+        setIsVoiceMode(false);
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-system`,
+          role: 'assistant' as const,
+          content: '🎤 마이크에 접근할 수 없습니다. 다른 앱이 마이크를 사용 중인지 확인해주세요.',
+          timestamp: new Date(),
+        }]);
+      } else if (error === 'network' || error === 'service-not-available') {
+        // 일시적 네트워크/서비스 오류 → voice mode 유지, onSilenceEnd가 재시도
+        console.warn('STT 일시 오류 (재시도 예정):', error);
       }
     },
   });
@@ -452,14 +469,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
-
-  // iOS: recognition이 실제로 시작되면 hasEverStarted = true, retry 카운터 리셋
-  useEffect(() => {
-    if (speechRecognition.isListening) {
-      hasEverStartedRef.current = true;
-      notAllowedRetryCountRef.current = 0;
-    }
-  }, [speechRecognition.isListening]);
+  // 주: hasEverStartedRef는 onStart 콜백에서 동기적으로 설정 (useEffect 타이밍 버그 제거)
 
   // 사운드 재생 헬퍼 함수 (PC/모바일 호환)
   const playSound = useCallback((soundPath: string, label: string) => {
@@ -561,13 +571,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         // iOS: 재시작 추적 초기화
         hasEverStartedRef.current = false;
         notAllowedRetryCountRef.current = 0;
+
+        // 원인#3: TTS 오디오세션이 playback 모드이면 STT 시작 즉시 실패
+        try { window.speechSynthesis?.cancel(); } catch (_) {}
+
+        // 원인#6: user gesture context 최우선 확보 → startListening()을 setState보다 먼저 호출
+        // 원인#4: currentAudioRef 할당을 startListening() 이후로 이동 → 오디오 초기화가 STT 앞에 오는 것 방지
         isVoiceModeRef.current = true;
-        setIsVoiceMode(true);
         speechRecognition.startListening();
+        setIsVoiceMode(true);
         console.log('✅ 음성 인식 시작됨');
 
         // 오디오는 1500ms 후 재생 (iOS AVAudioSession: STT가 먼저 세션을 확보한 뒤 재생)
-        // 즉시 재생 시 STT 오디오세션을 빼앗아 recognition이 즉시 종료되는 버그 방지
+        currentAudioRef.current = audio;
         audio.onended = () => { currentAudioRef.current = null; };
         audio.onerror = () => { currentAudioRef.current = null; };
         setTimeout(() => { audio.play().catch(() => {}); }, 1500);

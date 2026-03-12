@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface UseSpeechRecognitionProps {
   onResult?: (transcript: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
+  onStart?: () => void;
   language?: string;
   onSilenceEnd?: () => void;
 }
@@ -20,6 +21,7 @@ interface SpeechRecognitionErrorEvent {
 export function useSpeechRecognition({
   onResult,
   onError,
+  onStart,
   language = 'ko-KR',
   onSilenceEnd,
 }: UseSpeechRecognitionProps = {}) {
@@ -33,9 +35,11 @@ export function useSpeechRecognition({
   // Refs로 콜백 관리 (recognition 이벤트 핸들러의 stale closure 방지)
   const onResultRef = useRef(onResult);
   const onErrorRef = useRef(onError);
+  const onStartRef = useRef(onStart);
   const onSilenceEndRef = useRef(onSilenceEnd);
   onResultRef.current = onResult;
   onErrorRef.current = onError;
+  onStartRef.current = onStart;
   onSilenceEndRef.current = onSilenceEnd;
 
   // 브라우저 지원 확인
@@ -51,9 +55,13 @@ export function useSpeechRecognition({
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
+    // iOS 17/18 회귀 버그: continuous=true면 발화 없을 때 1~2초 만에 onend 발화
+    // continuous=false로 설정하면 iOS가 발화를 기다리는 시간이 7~10초로 증가
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
     const recognition = new SpeechRecognition();
     recognition.lang = language;
-    recognition.continuous = true;
+    recognition.continuous = !isIOS;  // iOS: false, 그 외: true
     recognition.interimResults = true;
 
     // iOS Safari: continuous=true에서 stop() 호출 전까지 isFinal이 발생하지 않음
@@ -73,7 +81,10 @@ export function useSpeechRecognition({
     };
 
     recognition.onstart = () => {
-      console.log('🎤 음성 인식 시작');
+      console.log('🎤 음성 인식 시작 (continuous:', recognition.continuous, ', iOS:', isIOS, ')');
+      // onStart를 SYNCHRONOUSLY 호출 — useEffect 타이밍 버그 방지
+      // onerror가 onstart 직후 발화해도 이미 hasEverStartedRef=true가 설정됨
+      onStartRef.current?.();
       setIsListening(true);
       resetSilenceTimer(NO_SPEECH_TIMEOUT_MS);
     };
