@@ -467,7 +467,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   }, []);
 
   // 음성 모드 토글 (PC/모바일 호환)
-  const toggleLiveVoice = useCallback(async () => {
+  const toggleLiveVoice = useCallback(() => {
     console.log('🎤 음성 모드 토글 - 현재 상태:', isVoiceMode ? '켜짐' : '꺼짐');
     
     if (isVoiceMode) {

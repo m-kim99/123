@@ -28,6 +28,7 @@ export function useSpeechRecognition({
   const recognitionRef = useRef<any>(null);
   const pendingRestartRef = useRef(false);
   const intentionalStopRef = useRef(false);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Refs로 콜백 관리 (recognition 이벤트 핸들러의 stale closure 방지)
   const onResultRef = useRef(onResult);
@@ -52,15 +53,31 @@ export function useSpeechRecognition({
 
     const recognition = new SpeechRecognition();
     recognition.lang = language;
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
+
+    // iOS Safari: continuous=true에서 stop() 호출 전까지 isFinal이 발생하지 않음
+    // → 3초 침묵 감지 후 강제 stop()으로 isFinal 유도
+    // Chrome: isFinal이 자연 발생 → stopListening()이 타이머를 먼저 정리 → 간섭 없음
+    const SILENCE_MS = 3000;
+    const resetSilenceTimer = () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        silenceTimerRef.current = null;
+        if (recognitionRef.current === recognition) {
+          try { recognition.stop(); } catch (_) {}
+        }
+      }, SILENCE_MS);
+    };
 
     recognition.onstart = () => {
       console.log('🎤 음성 인식 시작');
       setIsListening(true);
+      resetSilenceTimer();
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      resetSilenceTimer();
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -94,6 +111,10 @@ export function useSpeechRecognition({
 
     recognition.onend = () => {
       console.log('🎤 음성 인식 종료 (intentional:', intentionalStopRef.current, ')');
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
       recognitionRef.current = null;
       setIsListening(false);
 
@@ -139,6 +160,10 @@ export function useSpeechRecognition({
   const stopListening = useCallback(() => {
     pendingRestartRef.current = false;
     intentionalStopRef.current = true;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (_) {}
       // Safari: ref를 여기서 null로 설정하지 않음
@@ -152,6 +177,10 @@ export function useSpeechRecognition({
     return () => {
       pendingRestartRef.current = false;
       intentionalStopRef.current = false;
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (_) {}
       }
