@@ -495,18 +495,6 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // 음성 모드 시작
       console.log('🟢 음성 모드 시작 시도');
 
-      // iOS Safari: speechSynthesis.speak()는 user gesture 컨텍스트에서 최초 1회 호출해야
-      // 이후 비동기 코드(API 응답 후 등)에서도 speak()가 동작함
-      // ※ 반드시 await 이전(동기 구간)에 실행해야 함
-      if (window.speechSynthesis) {
-        try {
-          const unlock = new SpeechSynthesisUtterance('\u200B');
-          unlock.volume = 0;
-          unlock.rate = 10;
-          window.speechSynthesis.speak(unlock);
-        } catch (_) {}
-      }
-
       // ⚠️ 모바일 대응: 사용자 제스처 컨텍스트 내에서 즉시 오디오 생성 및 재생
       // 이전 오디오 중단
       if (currentAudioRef.current) {
