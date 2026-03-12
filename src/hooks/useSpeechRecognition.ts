@@ -27,6 +27,7 @@ export function useSpeechRecognition({
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
   const pendingRestartRef = useRef(false);
+  const intentionalStopRef = useRef(false);
 
   // Refs로 콜백 관리 (recognition 이벤트 핸들러의 stale closure 방지)
   const onResultRef = useRef(onResult);
@@ -92,18 +93,21 @@ export function useSpeechRecognition({
     };
 
     recognition.onend = () => {
-      console.log('🎤 음성 인식 종료');
+      console.log('🎤 음성 인식 종료 (intentional:', intentionalStopRef.current, ')');
       recognitionRef.current = null;
       setIsListening(false);
 
       // Safari: 이전 세션이 완전히 해제된 후에만 재시작
       if (pendingRestartRef.current) {
         pendingRestartRef.current = false;
+        intentionalStopRef.current = false;
         setTimeout(() => doStartRef.current(), 100);
-      } else {
+      } else if (!intentionalStopRef.current) {
         // Safari silence timeout 자동 복구 콜백
+        // stopListening()으로 의도적 중단한 경우에는 호출하지 않음
         onSilenceEndRef.current?.();
       }
+      intentionalStopRef.current = false;
     };
 
     recognitionRef.current = recognition;
@@ -134,6 +138,7 @@ export function useSpeechRecognition({
   // 음성 인식 중단
   const stopListening = useCallback(() => {
     pendingRestartRef.current = false;
+    intentionalStopRef.current = true;
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (_) {}
       // Safari: ref를 여기서 null로 설정하지 않음
@@ -146,6 +151,7 @@ export function useSpeechRecognition({
   useEffect(() => {
     return () => {
       pendingRestartRef.current = false;
+      intentionalStopRef.current = false;
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (_) {}
       }

@@ -190,7 +190,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
     if (!cleanText) return;
 
-    // TTS 시작 전 STT 정지
+    // TTS 시작 전 STT 완전 정지 (Safari 오디오 세션 충돌 방지)
     if (speechRecognitionRef.current?.isListening) {
       speechRecognitionRef.current.stopListening();
     }
@@ -220,6 +220,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     };
 
     utterance.onstart = () => {
+      console.log('🔊 TTS 시작됨');
       setIsSpeaking(true);
       // Safari: 긴 텍스트 TTS가 ~15초 후 멈추는 버그 대응
       // 주기적 pause/resume으로 활성 상태 유지
@@ -234,6 +235,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     };
 
     utterance.onend = () => {
+      console.log('🔊 TTS 완료');
       cleanupTts();
       setIsSpeaking(false);
       // TTS 완료 후 음성모드면 STT 재시작
@@ -246,7 +248,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       }
     };
 
-    utterance.onerror = () => {
+    utterance.onerror = (e: any) => {
+      console.error('🔊 TTS 오류:', e?.error || e);
       cleanupTts();
       setIsSpeaking(false);
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
@@ -254,10 +257,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       }
     };
 
-    // Safari: cancel() 직후 speak() 호출 시 무시되는 타이밍 버그 대응
+    // Safari: cancel() 직후 speak() 시 무시됨 + STT 오디오 세션 해제 대기
+    console.log('🔊 TTS 예약 (150ms 후 speak)');
     setTimeout(() => {
       window.speechSynthesis.speak(utterance);
-    }, 50);
+    }, 150);
   }, []);
 
   // 사용자 음성 전사 처리 - generateResponse 호출 후 TTS로 읽어줌
