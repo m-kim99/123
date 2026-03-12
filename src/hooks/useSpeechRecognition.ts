@@ -57,27 +57,29 @@ export function useSpeechRecognition({
     recognition.interimResults = true;
 
     // iOS Safari: continuous=true에서 stop() 호출 전까지 isFinal이 발생하지 않음
-    // → 3초 침묵 감지 후 강제 stop()으로 isFinal 유도
+    // → 발화 감지 후 2.5초 침묵 시 강제 stop()으로 isFinal 유도
+    // 발화 없을 때는 8초 후 stop() (iOS 내부 타임아웃보다 넉넉히)
     // Chrome: isFinal이 자연 발생 → stopListening()이 타이머를 먼저 정리 → 간섭 없음
-    const SILENCE_MS = 3000;
-    const resetSilenceTimer = () => {
+    const NO_SPEECH_TIMEOUT_MS = 8000;   // 발화 전 최대 대기
+    const AFTER_SPEECH_SILENCE_MS = 2500; // 발화 후 침묵 감지
+    const resetSilenceTimer = (ms: number) => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = setTimeout(() => {
         silenceTimerRef.current = null;
         if (recognitionRef.current === recognition) {
           try { recognition.stop(); } catch (_) {}
         }
-      }, SILENCE_MS);
+      }, ms);
     };
 
     recognition.onstart = () => {
       console.log('🎤 음성 인식 시작');
       setIsListening(true);
-      resetSilenceTimer();
+      resetSilenceTimer(NO_SPEECH_TIMEOUT_MS);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      resetSilenceTimer();
+      resetSilenceTimer(AFTER_SPEECH_SILENCE_MS);
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -122,7 +124,7 @@ export function useSpeechRecognition({
       if (pendingRestartRef.current) {
         pendingRestartRef.current = false;
         intentionalStopRef.current = false;
-        setTimeout(() => doStartRef.current(), 100);
+        setTimeout(() => doStartRef.current(), 500);
       } else if (!intentionalStopRef.current) {
         // Safari silence timeout 자동 복구 콜백
         // stopListening()으로 의도적 중단한 경우에는 호출하지 않음

@@ -160,6 +160,9 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const isVoiceModeRef = useRef(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
+  // iOS Safari: not-allowed 에러가 재시작 타이밍 문제인지 실제 권한거부인지 구분
+  const hasEverStartedRef = useRef(false);
+  const notAllowedRetryCountRef = useRef(0);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -238,13 +241,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.log('🔊 TTS 완료');
       cleanupTts();
       setIsSpeaking(false);
-      // TTS 완료 후 음성모드면 STT 재시작
+      // TTS 완료 후 음성모드면 STT 재시작 (300ms→600ms: iOS TTS 오디오세션 해제 대기)
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
         setTimeout(() => {
           if (isVoiceModeRef.current) {
             speechRecognitionRef.current?.startListening();
           }
-        }, 300);
+        }, 600);
       }
     };
 
@@ -252,8 +255,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.error('🔊 TTS 오류:', e?.error || e);
       cleanupTts();
       setIsSpeaking(false);
+      // setTimeout 추가: async 컨텍스트에서 iOS recognition.start() 실패 방지
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
-        speechRecognitionRef.current?.startListening();
+        setTimeout(() => {
+          speechRecognitionRef.current?.startListening();
+        }, 500);
       }
     };
 
@@ -339,14 +345,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       if (finalText && isVoiceModeRef.current) {
         speakText(finalText);
       } else if (isVoiceModeRef.current && speechRecognitionRef.current) {
-        // TTS 할 내용이 없으면 바로 STT 재시작
-        speechRecognitionRef.current.startListening();
+        // TTS 할 내용이 없으면 STT 재시작 (await 이후 async context → 800ms 딜레이)
+        setTimeout(() => { speechRecognitionRef.current?.startListening(); }, 800);
       }
     } catch (error) {
       console.error('응답 생성 오류:', error);
-      // 에러 시에도 음성모드면 STT 재시작
+      // 에러 시에도 음성모드면 STT 재시작 (800ms 딜레이)
       if (isVoiceModeRef.current && speechRecognitionRef.current) {
-        speechRecognitionRef.current.startListening();
+        setTimeout(() => { speechRecognitionRef.current?.startListening(); }, 800);
       }
     } finally {
       setIsTyping(false);
@@ -359,13 +365,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const speechRecognition = useSpeechRecognition({
     language: 'ko-KR',
     onSilenceEnd: () => {
-      // continuous=false: 침묵 시 onend 발생 → 음성모드 활성 중이고 처리 중이 아니면 자동 재시작
+      // onend 발생 후 재시작: iOS 오디오세션 해제 대기 (100ms→1000ms)
       if (isVoiceModeRef.current && !isProcessingSpeechRef.current) {
         setTimeout(() => {
           if (isVoiceModeRef.current) {
             speechRecognitionRef.current?.startListening();
           }
-        }, 100);
+        }, 1000);
       }
     },
     onResult: (transcript, isFinal) => {
@@ -400,24 +406,43 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     onError: (error) => {
       console.error('음성 인식 오류:', error);
       if (error === 'not-allowed') {
-        isVoiceModeRef.current = false;
-        setIsVoiceMode(false);
-        if (isRunningInApp()) {
-          // 앱 환경: 네이티브 마이크 권한 요청
-          requestNativeMicrophonePermission();
-          setMessages(prev => [...prev, {
-            id: `${Date.now()}-system`,
-            role: 'assistant' as const,
-            content: '🎤 마이크 권한이 거부되었습니다. 권한을 허용한 후 다시 시도해주세요.',
-            timestamp: new Date(),
-          }]);
+        if (!hasEverStartedRef.current) {
+          // 최초 권한 거부 (진짜 권한 문제)
+          isVoiceModeRef.current = false;
+          setIsVoiceMode(false);
+          if (isRunningInApp()) {
+            requestNativeMicrophonePermission();
+            setMessages(prev => [...prev, {
+              id: `${Date.now()}-system`,
+              role: 'assistant' as const,
+              content: '🎤 마이크 권한이 거부되었습니다. 권한을 허용한 후 다시 시도해주세요.',
+              timestamp: new Date(),
+            }]);
+          } else {
+            setMessages(prev => [...prev, {
+              id: `${Date.now()}-system`,
+              role: 'assistant' as const,
+              content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창의 자물쇠 아이콘을 눌러 마이크 권한을 허용해주세요. (iPhone: 설정 → Safari → 마이크)',
+              timestamp: new Date(),
+            }]);
+          }
         } else {
-          setMessages(prev => [...prev, {
-            id: `${Date.now()}-system`,
-            role: 'assistant' as const,
-            content: '🎤 마이크 권한이 거부되었습니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 마이크 권한을 허용해주세요.',
-            timestamp: new Date(),
-          }]);
+          // 재시작 중 not-allowed = iOS 오디오세션 타이밍 문제
+          // voice mode 유지하고 onSilenceEnd가 재시도
+          notAllowedRetryCountRef.current++;
+          console.warn(`iOS not-allowed 재시도 ${notAllowedRetryCountRef.current}/3`);
+          if (notAllowedRetryCountRef.current >= 3) {
+            // 3회 연속 실패 → 포기
+            isVoiceModeRef.current = false;
+            setIsVoiceMode(false);
+            notAllowedRetryCountRef.current = 0;
+            setMessages(prev => [...prev, {
+              id: `${Date.now()}-system`,
+              role: 'assistant' as const,
+              content: '🎤 마이크가 비활성화되었습니다. 마이크 버튼을 다시 눌러주세요.',
+              timestamp: new Date(),
+            }]);
+          }
         }
       }
     },
@@ -427,6 +452,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
+
+  // iOS: recognition이 실제로 시작되면 hasEverStarted = true, retry 카운터 리셋
+  useEffect(() => {
+    if (speechRecognition.isListening) {
+      hasEverStartedRef.current = true;
+      notAllowedRetryCountRef.current = 0;
+    }
+  }, [speechRecognition.isListening]);
 
   // 사운드 재생 헬퍼 함수 (PC/모바일 호환)
   const playSound = useCallback((soundPath: string, label: string) => {
@@ -525,15 +558,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         // 브라우저 환경: gesture context 살아있는 동기 구간에서 STT 먼저 시작
         // Safari macOS는 await 이후 gesture context가 소멸되어 SpeechRecognition.start()가 not-allowed 에러 발생
         // → getUserMedia 제거, await 제거, STT를 동기적으로 즉시 시작
+        // iOS: 재시작 추적 초기화
+        hasEverStartedRef.current = false;
+        notAllowedRetryCountRef.current = 0;
         isVoiceModeRef.current = true;
         setIsVoiceMode(true);
         speechRecognition.startListening();
         console.log('✅ 음성 인식 시작됨');
 
-        // 오디오는 병렬 재생 (await 안 함)
+        // 오디오는 1500ms 후 재생 (iOS AVAudioSession: STT가 먼저 세션을 확보한 뒤 재생)
+        // 즉시 재생 시 STT 오디오세션을 빼앗아 recognition이 즉시 종료되는 버그 방지
         audio.onended = () => { currentAudioRef.current = null; };
         audio.onerror = () => { currentAudioRef.current = null; };
-        audio.play().catch(() => {});
+        setTimeout(() => { audio.play().catch(() => {}); }, 1500);
       }
     }
   }, [isVoiceMode, speechRecognition]);
