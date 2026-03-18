@@ -643,47 +643,34 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // 음성 모드 시작
       console.log('🟢 음성 모드 시작 시도');
 
-      // 이전 오디오 중단
+      // 재생 중인 종료음 등 이전 오디오 중단
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
         currentAudioRef.current.currentTime = 0;
       }
-
-      const audio = new Audio('/sounds/start.wav');
-      audio.volume = 0.5;
 
       // 네이티브 브릿지 존재 여부로 iOS 앱 vs 브라우저/Android 앱 분기
       const hasNativeBridge = isRunningInApp() && !!window.webkit?.messageHandlers?.cordova_iab;
 
       if (hasNativeBridge) {
         // iOS 앱: 네이티브 STT 사용 (앱케이크 WKWebView 브릿지)
-        currentAudioRef.current = audio;
-        audio.onended = () => { currentAudioRef.current = null; };
-        audio.onerror = () => { currentAudioRef.current = null; };
-        audio.play()
-          .then(() => console.log('✅ 시작 사운드 재생 성공'))
-          .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
-
-        setTimeout(() => {
-          startNativeSTT((text) => {
-            console.log('🎤 네이티브 STT 결과:', text);
-            // 인식 완료: 빨간(ON) → 파란(OFF) 전환 후 AI 응답 처리
-            // 전송 버튼으로 이미 종료된 경우 onNativeSTTResult = null이므로 여기 도달 안 함
-            isVoiceModeRef.current = false;
-            setIsVoiceMode(false);
-            handleUserSpeechRef.current?.(text);
-          });
-          isVoiceModeRef.current = true;
-          setIsVoiceMode(true);
-          console.log('✅ 네이티브 STT 시작됨 (iOS 앱)');
-        }, 300);
+        startNativeSTT((text) => {
+          console.log('🎤 네이티브 STT 결과:', text);
+          // 인식 완료: 빨간(ON) → 파란(OFF) 전환 후 AI 응답 처리
+          // 전송 버튼으로 이미 종료된 경우 onNativeSTTResult = null이므로 여기 도달 안 함
+          isVoiceModeRef.current = false;
+          setIsVoiceMode(false);
+          handleUserSpeechRef.current?.(text);
+        });
+        isVoiceModeRef.current = true;
+        setIsVoiceMode(true);
+        console.log('✅ 네이티브 STT 시작됨 (iOS 앱)');
       } else {
         // 브라우저 또는 Android 앱 폴백: Web Speech API 사용
 
         // Firefox 등 미지원 브라우저 조기 차단
         // (onError catch-all만으로는 React 배칭으로 인해 setIsVoiceMode(true)가 덮어씀)
         if (!speechRecognition.isSupported) {
-          currentAudioRef.current = null;
           isTogglingVoiceRef.current = false;
           setMessages(prev => [...prev, {
             id: `${Date.now()}-system`,
@@ -706,17 +693,6 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         speechRecognition.startListening();
         setIsVoiceMode(true);
         console.log('✅ 음성 인식 시작됨');
-
-        // currentAudioRef 할당을 startListening() 이후로 이동
-        // (오디오 초기화가 STT 앞에 오면 iOS AVAudioSession 간섭 가능)
-        currentAudioRef.current = audio;
-        audio.onended = () => { currentAudioRef.current = null; };
-        audio.onerror = () => { currentAudioRef.current = null; };
-        // 1500ms 후 재생: iOS AVAudioSession이 STT 세션 확보 후 재생해야 충돌 없음
-        // gesture context 이탈로 iOS Safari에서 차단될 수 있으나 시작음은 필수 UX 아님
-        setTimeout(() => {
-          audio.play().catch(err => console.warn('⚠️ 시작음 재생 차단 (gesture context 이탈):', err));
-        }, 1500);
       }
     }
   }, [isVoiceMode, speechRecognition]);
