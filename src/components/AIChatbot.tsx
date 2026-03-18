@@ -173,6 +173,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // iOS 앱 네이티브 STT 무한 대기 방지용 워치독 타이머
+  const nativeSTTWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 음성 중복 처리 방지용 ref
   const lastProcessedTranscriptRef = useRef<string>('');
@@ -239,7 +241,8 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // Safari: 긴 텍스트 TTS가 ~15초 후 멈추는 버그 대응
       // 주기적 pause/resume으로 활성 상태 유지
       ttsKeepAliveRef.current = setInterval(() => {
-        if (window.speechSynthesis.speaking) {
+        // 음성모드 OFF 또는 TTS 종료 시 인터벌 자체 정리
+        if (window.speechSynthesis.speaking && isVoiceModeRef.current) {
           window.speechSynthesis.pause();
           window.speechSynthesis.resume();
         } else {
@@ -258,9 +261,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
             // iOS 앱: 네이티브 STT 재시작 (voice mode ON 상태일 때만 — 연속 음성 요청 시)
-            startNativeSTT((text) => {
-              handleUserSpeechRef.current?.(text);
-            });
+            startNativeSTTWithWatchdog();
           } else {
             // 브라우저 또는 Android 앱 폴백
             speechRecognitionRef.current?.startListening();
@@ -277,9 +278,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-            startNativeSTT((text) => {
-              handleUserSpeechRef.current?.(text);
-            });
+            startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
           }
@@ -373,7 +372,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-            startNativeSTT((text) => { handleUserSpeechRef.current?.(text); });
+            startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
           }
@@ -386,7 +385,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-            startNativeSTT((text) => { handleUserSpeechRef.current?.(text); });
+            startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
           }
@@ -401,6 +400,39 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
   // speakText([] deps) closure에서 항상 최신 handleUserSpeech를 참조하도록 매 렌더마다 갱신
   handleUserSpeechRef.current = handleUserSpeech;
+
+  // iOS 앱 네이티브 STT 시작 + 30초 워치독 (침묵으로 onNativeSTTResult 미호출 시 음성모드 자동 종료)
+  // 모든 startNativeSTT 콜백이 동일 패턴이므로 단일 헬퍼로 통합
+  const startNativeSTTWithWatchdog = useCallback(() => {
+    // 이전 워치독 해제 (중복 호출 방어)
+    if (nativeSTTWatchdogRef.current) {
+      clearTimeout(nativeSTTWatchdogRef.current);
+      nativeSTTWatchdogRef.current = null;
+    }
+    startNativeSTT((text) => {
+      // 결과 수신 → 워치독 해제
+      if (nativeSTTWatchdogRef.current) {
+        clearTimeout(nativeSTTWatchdogRef.current);
+        nativeSTTWatchdogRef.current = null;
+      }
+      handleUserSpeechRef.current?.(text);
+    });
+    // 30초 이내 결과 없으면 음성모드 자동 종료
+    nativeSTTWatchdogRef.current = setTimeout(() => {
+      nativeSTTWatchdogRef.current = null;
+      if (isVoiceModeRef.current) {
+        console.warn('⏱ 네이티브 STT 타임아웃 (30초) — 음성 모드 종료');
+        isVoiceModeRef.current = false;
+        setIsVoiceMode(false);
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-system`,
+          role: 'assistant' as const,
+          content: '🎤 음성 인식 시간이 초과되었습니다. 마이크 버튼을 다시 눌러주세요.',
+          timestamp: new Date(),
+        }]);
+      }
+    }, 30000);
+  }, []);
 
   // Web Speech API로 음성 인식 (STT)
   const speechRecognition = useSpeechRecognition({
@@ -561,9 +593,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current || isProcessingSpeechRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-            startNativeSTT((text) => {
-              handleUserSpeechRef.current?.(text);
-            });
+            startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
           }
@@ -605,6 +635,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           })
           .catch(err => {
             console.error(`❌ ${label} 사운드 재생 실패:`, err);
+            currentAudioRef.current = null; // 실패한 Audio 객체 참조 해제
           });
       }
     } catch (err) {
@@ -625,6 +656,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // 음성 모드 종료
       console.log('🔴 음성 모드 종료 시작');
       isVoiceModeRef.current = false;
+      // 네이티브 STT 워치독 즉시 해제
+      if (nativeSTTWatchdogRef.current) {
+        clearTimeout(nativeSTTWatchdogRef.current);
+        nativeSTTWatchdogRef.current = null;
+      }
       // Android 앱은 window.webkit 없음 → stopNativeSTT() no-op → speechRecognition.stopListening() 필요
       if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
         stopNativeSTT();
@@ -667,12 +703,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
       if (hasNativeBridge) {
         // iOS 앱: 네이티브 STT 사용 (앱케이크 WKWebView 브릿지)
-        startNativeSTT((text) => {
-          console.log('🎤 네이티브 STT 결과:', text);
-          // isVoiceMode 유지: handleUserSpeech → speakText → utterance.onend → startNativeSTT 연속 사이클
-          // (voice mode OFF는 마이크 버튼 탭 또는 전송 버튼으로만 수행)
-          handleUserSpeechRef.current?.(text);
-        });
+        startNativeSTTWithWatchdog();
         isVoiceModeRef.current = true;
         setIsVoiceMode(true);
         console.log('✅ 네이티브 STT 시작됨 (iOS 앱)');
@@ -853,6 +884,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     // 음성 모드 종료 및 TTS 중단
                     if (isVoiceMode) {
                       isVoiceModeRef.current = false;
+                      // 네이티브 STT 워치독 해제
+                      if (nativeSTTWatchdogRef.current) {
+                        clearTimeout(nativeSTTWatchdogRef.current);
+                        nativeSTTWatchdogRef.current = null;
+                      }
                       if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
                         stopNativeSTT();
                       } else {
@@ -868,6 +904,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                       lastFinalTranscriptRef.current = '';
                       lastProcessedTranscriptRef.current = '';
                       isProcessingSpeechRef.current = false;
+                    }
+                    // TTS keep-alive 인터벌 정리 (음성모드 OFF 여부와 무관하게 클린업)
+                    if (ttsKeepAliveRef.current) {
+                      clearInterval(ttsKeepAliveRef.current);
+                      ttsKeepAliveRef.current = null;
                     }
                     window.speechSynthesis?.cancel();
                     if (currentAudioRef.current) {
