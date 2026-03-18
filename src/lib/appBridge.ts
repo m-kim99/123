@@ -78,8 +78,10 @@ export function requestNativeMicrophonePermission(): void {
 export function startNativeSTT(onResult: (text: string) => void): void {
   if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
 
+  console.log('[NativeSTT] 콜백 등록 + sttstart 전송');
   // 결과 콜백 등록 (앱에서 window.onNativeSTTResult("텍스트") 호출)
   window.onNativeSTTResult = (text: string) => {
+    console.log('[NativeSTT] onNativeSTTResult 호출됨, text=', text);
     if (text?.trim()) {
       onResult(text.trim());
     }
@@ -100,6 +102,7 @@ export function startNativeSTT(onResult: (text: string) => void): void {
 export function submitNativeSTT(): void {
   if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
 
+  console.log('[NativeSTT] sttenter 전송');
   window.webkit.messageHandlers.cordova_iab.postMessage(
     JSON.stringify({ action: 'sttenter' })
   );
@@ -113,10 +116,25 @@ export function submitNativeSTT(): void {
 export function stopNativeSTT(): void {
   if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
 
+  console.log('[NativeSTT] sttstop 전송 + 콜백 해제');
   window.webkit.messageHandlers.cordova_iab.postMessage(
     JSON.stringify({ action: 'sttstop' })
   );
   window.onNativeSTTResult = null;
+}
+
+/**
+ * 네이티브 STT 종료 (콜백 유지)
+ * sttstart 재시작 직전에 이전 세션을 정리하기 위해 사용
+ * 콜백은 startNativeSTT에서 새로 설정하므로 여기서 해제하지 않음
+ */
+export function stopNativeSTTSilent(): void {
+  if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
+
+  console.log('[NativeSTT] sttstop 전송 (콜백 유지, 재시작 준비)');
+  window.webkit.messageHandlers.cordova_iab.postMessage(
+    JSON.stringify({ action: 'sttstop' })
+  );
 }
 
 /**

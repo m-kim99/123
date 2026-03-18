@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, submitNativeSTT, stopNativeSTT } from '@/lib/appBridge';
+import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, submitNativeSTT, stopNativeSTT, stopNativeSTTSilent } from '@/lib/appBridge';
 
 // **텍스트** 패턴을 <strong>으로 변환하는 함수
 function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
@@ -261,6 +261,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
             // iOS 앱: 네이티브 STT 재시작 (voice mode ON 상태일 때만 — 연속 음성 요청 시)
+            console.log('[VoiceMode] TTS 완료 → 네이티브 STT 재시작');
             startNativeSTTWithWatchdog();
           } else {
             // 브라우저 또는 Android 앱 폴백
@@ -278,6 +279,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            console.log('[VoiceMode] TTS 오류 → 네이티브 STT 재시작');
             startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
@@ -372,6 +374,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            console.log('[VoiceMode] TTS 내용 없음 → 네이티브 STT 재시작');
             startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
@@ -385,6 +388,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setTimeout(() => {
           if (!isVoiceModeRef.current) return;
           if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            console.log('[VoiceMode] 응답 오류 → 네이티브 STT 재시작');
             startNativeSTTWithWatchdog();
           } else {
             speechRecognitionRef.current?.startListening();
@@ -404,12 +408,17 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   // iOS 앱 네이티브 STT 시작 + 30초 워치독 (침묵으로 onNativeSTTResult 미호출 시 음성모드 자동 종료)
   // 모든 startNativeSTT 콜백이 동일 패턴이므로 단일 헬퍼로 통합
   const startNativeSTTWithWatchdog = useCallback(() => {
+    console.log('[VoiceMode] startNativeSTTWithWatchdog 호출');
     // 이전 워치독 해제 (중복 호출 방어)
     if (nativeSTTWatchdogRef.current) {
       clearTimeout(nativeSTTWatchdogRef.current);
       nativeSTTWatchdogRef.current = null;
     }
+    // 이전 네이티브 STT 세션 정리 (sttstop 선행 전송)
+    // 네이티브가 연속 sttstart를 지원하지 않을 수 있으므로 깨끗한 상태에서 재시작
+    stopNativeSTTSilent();
     startNativeSTT((text) => {
+      console.log('[VoiceMode] STT 결과 수신:', text);
       // 결과 수신 → 워치독 해제
       if (nativeSTTWatchdogRef.current) {
         clearTimeout(nativeSTTWatchdogRef.current);
@@ -860,15 +869,32 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     // Android 앱은 Web Speech API 사용(hasNativeBridge=false) → 일반 전송 경로로 fall-through
     const hasNativeBridge = isRunningInApp() && !!window.webkit?.messageHandlers?.cordova_iab;
     if (hasNativeBridge && isVoiceMode) {
+      const savedInput = inputValue.trim();
+      let callbackReceived = false;
+
       // 기존 콜백을 교체: sttenter 응답으로 텍스트가 오면 전송 처리
       window.onNativeSTTResult = (text: string) => {
-        window.onNativeSTTResult = null; // 콜백 수신 후 해제
+        console.log('[VoiceSend] onNativeSTTResult 콜백 수신, text=', text);
+        callbackReceived = true;
+        window.onNativeSTTResult = null;
         if (text?.trim()) {
           sendMessage(text.trim());
         }
       };
       // sttenter 전송 (앱이 텍스트 확정 후 위 콜백 호출)
       submitNativeSTT();
+
+      // 콜백이 500ms 내에 안 오면 inputValue로 폴백 (앱이 콜백 미호출 시 대비)
+      setTimeout(() => {
+        if (!callbackReceived) {
+          console.warn('[VoiceSend] 콜백 미수신 (500ms) — inputValue 폴백:', savedInput);
+          window.onNativeSTTResult = null;
+          if (savedInput) {
+            sendMessage(savedInput);
+          }
+        }
+      }, 500);
+
       // 음성모드 종료 및 상태 초기화
       isVoiceModeRef.current = false;
       setIsVoiceMode(false);
