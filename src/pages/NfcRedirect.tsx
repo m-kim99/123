@@ -30,9 +30,9 @@ export function NfcRedirect() {
         const subcategoryId = searchParams.get('subcategoryId');
 
         if (!subcategoryId) {
-          // subcategoryId 없으면 홈으로
+          // subcategoryId 없으면 홈으로 (비로그인 시 로그인 페이지로)
           console.error('NFC Redirect: subcategoryId 없음');
-          navigate(user?.role === 'admin' ? '/admin' : '/team');
+          navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');
           return;
         }
 
@@ -45,7 +45,7 @@ export function NfcRedirect() {
 
         if (error || !data) {
           console.error('NFC Redirect: 세부 스토리지 조회 실패', error);
-          navigate(user?.role === 'admin' ? '/admin' : '/team');
+          navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');
           return;
         }
 
@@ -65,7 +65,7 @@ export function NfcRedirect() {
         navigate(`${basePath}${targetRelativePath}`, { replace: true });
       } catch (error) {
         console.error('NFC Redirect 오류:', error);
-        navigate(user?.role === 'admin' ? '/admin' : '/team');
+        navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');
       }
     };
 

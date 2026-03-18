@@ -81,6 +81,8 @@ interface DocumentState {
   documents: Document[];
   sharedDocuments: SharedDocument[];
   isLoading: boolean;
+  /** 동시 fetch 개수 추적 — isLoading은 이 값이 0보다 클 때 true (경쟁 조건 방지) */
+  _loadingCount: number;
   error: string | null;
   fetchDepartments: () => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -140,6 +142,19 @@ const sanitizeFileName = (originalName: string) => {
   return `${timestamp}.${ext}`;
 };
 
+/** isLoading을 카운터 기반으로 안전하게 증가/감소 */
+const startLoading = (set: any) =>
+  set((s: DocumentState) => {
+    const count = s._loadingCount + 1;
+    return { _loadingCount: count, isLoading: true };
+  });
+
+const endLoading = (set: any) =>
+  set((s: DocumentState) => {
+    const count = Math.max(0, s._loadingCount - 1);
+    return { _loadingCount: count, isLoading: count > 0 };
+  });
+
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   departments: [],
   categories: [],
@@ -148,18 +163,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   documents: [],
   sharedDocuments: [],
   isLoading: false,
+  _loadingCount: 0,
   error: null,
 
   fetchDepartments: async () => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ departments: [], isLoading: false });
+        set({ departments: [] });
         return;
       }
 
+      // 1. 부서 목록 (1 쿼리)
       const { data, error } = await supabase
         .from('departments')
         .select('*')
@@ -168,57 +186,58 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        // 문서 개수 계산 (categories를 통해 해당 부서의 문서 개수 계산)
-        const departments: Department[] = await Promise.all(
-          data.map(async (dept: SupabaseDepartment) => {
-            try {
-              // 해당 부서의 카테고리들 가져오기
-              const { data: categories } = await supabase
-                .from('categories')
-                .select('id')
-                .eq('department_id', dept.id);
-
-              if (!categories || categories.length === 0) {
-                return {
-                  id: dept.id,
-                  name: dept.name,
-                  code: dept.code,
-                  description: (dept as any).description ?? null,
-                  documentCount: 0,
-                };
-              }
-
-              // 해당 대분류(카테고리)를 parent_category_id로 참조하는 문서 개수 계산
-              const categoryIds = categories.map((cat: { id: string }) => cat.id);
-              const { count } = await supabase
-                .from('documents')
-                .select('*', { count: 'exact', head: true })
-                .in('parent_category_id', categoryIds);
-
-              return {
-                id: dept.id,
-                name: dept.name,
-                code: dept.code,
-                description: (dept as any).description ?? null,
-                documentCount: count || 0,
-              };
-            } catch {
-              // 개수 계산 실패 시 0으로 설정
-              return {
-                id: dept.id,
-                name: dept.name,
-                code: dept.code,
-                description: (dept as any).description ?? null,
-                documentCount: 0,
-              };
-            }
-          })
-        );
-        set({ departments });
-      } else {
+      if (!data || data.length === 0) {
         set({ departments: [] });
+        return;
       }
+
+      const deptIds = data.map((d: SupabaseDepartment) => d.id);
+
+      // 2. 모든 부서의 카테고리 한 번에 (N쿼리 → 1쿼리)
+      const { data: allCategories } = await supabase
+        .from('categories')
+        .select('id, department_id')
+        .in('department_id', deptIds);
+
+      const allCategoryIds = (allCategories || []).map((c: { id: string }) => c.id);
+
+      // 3. 전체 문서 parent_category_id 한 번에 조회 후 JS에서 집계 (N쿼리 → 1쿼리)
+      const docsByCategory: Record<string, number> = {};
+      if (allCategoryIds.length > 0) {
+        const { data: docData } = await supabase
+          .from('documents')
+          .select('parent_category_id')
+          .in('parent_category_id', allCategoryIds);
+
+        (docData || []).forEach((doc: { parent_category_id: string }) => {
+          docsByCategory[doc.parent_category_id] =
+            (docsByCategory[doc.parent_category_id] || 0) + 1;
+        });
+      }
+
+      // 부서별 카테고리 매핑
+      const catsByDept: Record<string, string[]> = {};
+      (allCategories || []).forEach((cat: { id: string; department_id: string }) => {
+        if (!catsByDept[cat.department_id]) catsByDept[cat.department_id] = [];
+        catsByDept[cat.department_id].push(cat.id);
+      });
+
+      const departments: Department[] = data.map((dept: SupabaseDepartment) => {
+        const deptCatIds = catsByDept[dept.id] || [];
+        const documentCount = deptCatIds.reduce(
+          (sum, catId) => sum + (docsByCategory[catId] || 0),
+          0
+        );
+        return {
+          id: dept.id,
+          name: dept.name,
+          code: dept.code,
+          description: (dept as any).description ?? null,
+          documentCount,
+        };
+      });
+
+      set({ departments });
     } catch (err) {
       console.error('Failed to fetch departments from Supabase:', err);
       toast({
@@ -228,21 +247,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ departments: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 
   fetchCategories: async () => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ categories: [], isLoading: false });
+        set({ categories: [] });
         return;
       }
 
-      // 현재 회사의 부서 ID 목록 조회
+      // 1. 부서 ID 목록 (1 쿼리)
       const { data: deptData, error: deptError } = await supabase
         .from('departments')
         .select('id')
@@ -253,10 +273,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const deptIds = (deptData || []).map((d: { id: string }) => d.id);
 
       if (deptIds.length === 0) {
-        set({ categories: [], isLoading: false });
+        set({ categories: [] });
         return;
       }
 
+      // 2. 카테고리 목록 (1 쿼리)
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -265,42 +286,37 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        // 각 카테고리의 문서 개수 계산
-        const categories: Category[] = await Promise.all(
-          data.map(async (cat: SupabaseCategory) => {
-            try {
-              const { count } = await supabase
-                .from('documents')
-                .select('*', { count: 'exact', head: true })
-                .eq('parent_category_id', cat.id);
-
-              return {
-                id: cat.id,
-                name: cat.name,
-                description: cat.description || '',
-                departmentId: cat.department_id,
-                documentCount: count || 0,
-                nfcRegistered: !!(cat as SupabaseCategory & { nfc_tag_id?: string }).nfc_tag_id,
-                storageLocation: (cat as SupabaseCategory & { storage_location?: string }).storage_location || undefined,
-              };
-            } catch {
-              return {
-                id: cat.id,
-                name: cat.name,
-                description: cat.description || '',
-                departmentId: cat.department_id,
-                documentCount: 0,
-                nfcRegistered: !!(cat as SupabaseCategory & { nfc_tag_id?: string }).nfc_tag_id,
-                storageLocation: (cat as SupabaseCategory & { storage_location?: string }).storage_location || undefined,
-              };
-            }
-          })
-        );
-        set({ categories });
-      } else {
+      if (!data || data.length === 0) {
         set({ categories: [] });
+        return;
       }
+
+      const categoryIds = data.map((cat: SupabaseCategory) => cat.id);
+
+      // 3. 문서 parent_category_id 전체 조회 후 JS에서 집계 (N쿼리 → 1쿼리)
+      const docsByCategory: Record<string, number> = {};
+      const { data: docData } = await supabase
+        .from('documents')
+        .select('parent_category_id')
+        .in('parent_category_id', categoryIds);
+
+      (docData || []).forEach((doc: { parent_category_id: string }) => {
+        docsByCategory[doc.parent_category_id] =
+          (docsByCategory[doc.parent_category_id] || 0) + 1;
+      });
+
+      const categories: Category[] = data.map((cat: SupabaseCategory) => ({
+        id: cat.id,
+        name: cat.name,
+        description: cat.description || '',
+        departmentId: cat.department_id,
+        documentCount: docsByCategory[cat.id] || 0,
+        nfcRegistered: !!(cat as SupabaseCategory & { nfc_tag_id?: string }).nfc_tag_id,
+        storageLocation:
+          (cat as SupabaseCategory & { storage_location?: string }).storage_location || undefined,
+      }));
+
+      set({ categories });
     } catch (err) {
       console.error('Failed to fetch categories from Supabase:', err);
       toast({
@@ -310,21 +326,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ categories: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 
   // 대분류(Parent Category) 목록 조회
   fetchParentCategories: async () => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ parentCategories: [], isLoading: false });
+        set({ parentCategories: [] });
         return;
       }
 
+      // 1. 부서 ID 목록 (1 쿼리)
       const { data: deptData, error: deptError } = await supabase
         .from('departments')
         .select('id')
@@ -335,10 +353,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const deptIds = (deptData || []).map((d: { id: string }) => d.id);
 
       if (deptIds.length === 0) {
-        set({ parentCategories: [], isLoading: false });
+        set({ parentCategories: [] });
         return;
       }
 
+      // 2. 대분류 카테고리 목록 (1 쿼리)
       const { data: catData, error: catError } = await supabase
         .from('categories')
         .select('*')
@@ -348,41 +367,44 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (catError) throw catError;
 
       if (!catData || catData.length === 0) {
-        set({ parentCategories: [], isLoading: false });
+        set({ parentCategories: [] });
         return;
       }
 
-      const parentCategories: ParentCategory[] = await Promise.all(
-        catData.map(async (cat: SupabaseParentCategory & { department_id: string }) => {
-          try {
-            const { count: subCount } = await supabase
-              .from('subcategories')
-              .select('*', { count: 'exact', head: true })
-              .eq('parent_category_id', cat.id);
+      const catIds = catData.map((c: any) => c.id);
 
-            const { count: docCount } = await supabase
-              .from('documents')
-              .select('*', { count: 'exact', head: true })
-              .eq('parent_category_id', cat.id);
+      // 3. 세부 스토리지 수 + 문서 수를 각각 1쿼리로 (2N쿼리 → 2쿼리)
+      const [subData, docData] = await Promise.all([
+        supabase
+          .from('subcategories')
+          .select('parent_category_id')
+          .in('parent_category_id', catIds),
+        supabase
+          .from('documents')
+          .select('parent_category_id')
+          .in('parent_category_id', catIds),
+      ]);
 
-            return {
-              id: cat.id,
-              name: cat.name,
-              description: (cat as any).description || '',
-              departmentId: cat.department_id,
-              subcategoryCount: subCount || 0,
-              documentCount: docCount || 0,
-            };
-          } catch {
-            return {
-              id: cat.id,
-              name: cat.name,
-              description: (cat as any).description || '',
-              departmentId: cat.department_id,
-              subcategoryCount: 0,
-              documentCount: 0,
-            };
-          }
+      const subCountByCategory: Record<string, number> = {};
+      (subData.data || []).forEach((s: { parent_category_id: string }) => {
+        subCountByCategory[s.parent_category_id] =
+          (subCountByCategory[s.parent_category_id] || 0) + 1;
+      });
+
+      const docCountByCategory: Record<string, number> = {};
+      (docData.data || []).forEach((d: { parent_category_id: string }) => {
+        docCountByCategory[d.parent_category_id] =
+          (docCountByCategory[d.parent_category_id] || 0) + 1;
+      });
+
+      const parentCategories: ParentCategory[] = catData.map(
+        (cat: SupabaseParentCategory & { department_id: string }) => ({
+          id: cat.id,
+          name: cat.name,
+          description: (cat as any).description || '',
+          departmentId: cat.department_id,
+          subcategoryCount: subCountByCategory[cat.id] || 0,
+          documentCount: docCountByCategory[cat.id] || 0,
         })
       );
 
@@ -396,18 +418,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ parentCategories: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 
   // 세부 스토리지(Subcategory) 목록 조회
   fetchSubcategories: async (parentCategoryId?: string) => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ subcategories: [], isLoading: false });
+        set({ subcategories: [] });
         return;
       }
 
@@ -421,7 +444,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const deptIds = (deptData || []).map((d: { id: string }) => d.id);
 
       if (deptIds.length === 0) {
-        set({ subcategories: [], isLoading: false });
+        set({ subcategories: [] });
         return;
       }
 
@@ -441,55 +464,38 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        set({ subcategories: [], isLoading: false });
+        set({ subcategories: [] });
         return;
       }
 
-      const subcategories: Subcategory[] = await Promise.all(
-        data.map(
-          async (
-            sub: SupabaseSubcategory & { department_id: string; parent_category_id: string }
-          ) => {
-            try {
-              const { count } = await supabase
-                .from('documents')
-                .select('*', { count: 'exact', head: true })
-                .eq('subcategory_id', sub.id);
+      // 세부 스토리지별 문서 수: N쿼리 → 1쿼리
+      const subIds = data.map((s: any) => s.id);
+      const { data: docData } = await supabase
+        .from('documents')
+        .select('subcategory_id')
+        .in('subcategory_id', subIds);
 
-              return {
-                id: sub.id,
-                name: sub.name,
-                description: sub.description || '',
-                parentCategoryId: sub.parent_category_id,
-                departmentId: sub.department_id,
-                nfcUid: sub.nfc_tag_id || null,
-                nfcRegistered: sub.nfc_registered,
-                storageLocation: sub.storage_location || undefined,
-                managementNumber: (sub as any).management_number || undefined,
-                defaultExpiryDays: (sub as any).default_expiry_days || null,
-                expiryDate: (sub as any).expiry_date || null,
-                colorLabel: (sub as any).color_label || null,
-                documentCount: count || 0,
-              };
-            } catch {
-              return {
-                id: sub.id,
-                name: sub.name,
-                description: sub.description || '',
-                parentCategoryId: sub.parent_category_id,
-                departmentId: sub.department_id,
-                nfcUid: sub.nfc_tag_id || null,
-                nfcRegistered: sub.nfc_registered,
-                storageLocation: sub.storage_location || undefined,
-                managementNumber: (sub as any).management_number || undefined,
-                defaultExpiryDays: (sub as any).default_expiry_days || null,
-                expiryDate: (sub as any).expiry_date || null,
-                colorLabel: (sub as any).color_label || null,
-                documentCount: 0,
-              };
-            }
-          }
-        )
+      const docCountBySub: Record<string, number> = {};
+      (docData || []).forEach((d: { subcategory_id: string }) => {
+        docCountBySub[d.subcategory_id] = (docCountBySub[d.subcategory_id] || 0) + 1;
+      });
+
+      const subcategories: Subcategory[] = data.map(
+        (sub: SupabaseSubcategory & { department_id: string; parent_category_id: string }) => ({
+          id: sub.id,
+          name: sub.name,
+          description: sub.description || '',
+          parentCategoryId: sub.parent_category_id,
+          departmentId: sub.department_id,
+          nfcUid: sub.nfc_tag_id || null,
+          nfcRegistered: sub.nfc_registered,
+          storageLocation: sub.storage_location || undefined,
+          managementNumber: (sub as any).management_number || undefined,
+          defaultExpiryDays: (sub as any).default_expiry_days || null,
+          expiryDate: (sub as any).expiry_date || null,
+          colorLabel: (sub as any).color_label || null,
+          documentCount: docCountBySub[sub.id] || 0,
+        })
       );
 
       set({ subcategories });
@@ -502,17 +508,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ subcategories: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 
   fetchDocuments: async () => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
 
       if (!user?.companyId) {
-        set({ documents: [], isLoading: false });
+        set({ documents: [] });
         return;
       }
 
@@ -527,7 +534,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const deptIds = (deptData || []).map((d: { id: string }) => d.id);
 
       if (deptIds.length === 0) {
-        set({ documents: [], isLoading: false });
+        set({ documents: [] });
         return;
       }
 
@@ -546,14 +553,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
           return {
             id: doc.id,
-            name: doc.title, // title을 name으로 매핑
+            name: doc.title,
             categoryId: (doc as SupabaseDocument & { category_id?: string }).category_id || undefined,
             parentCategoryId,
             subcategoryId,
             departmentId: doc.department_id,
             uploadDate: doc.uploaded_at,
-            uploader: doc.uploaded_by || '', // uploaded_by를 uploader로 매핑 (nullable)
-            classified: doc.is_classified, // is_classified를 classified로 매핑
+            uploader: doc.uploaded_by || '',
+            classified: doc.is_classified,
             fileUrl:
               supabase.storage.from('123').getPublicUrl(doc.file_path).data
                 .publicUrl || '#',
@@ -573,7 +580,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ documents: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 
@@ -695,23 +702,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }
     } catch (err) {
       console.error('Failed to add parent category to Supabase:', err);
-
-
-      const newParent: ParentCategory = {
-        id: `temp_${Date.now()}`,
-        name: category.name,
-        description: category.description,
-        departmentId: category.departmentId,
-        subcategoryCount: 0,
-        documentCount: 0,
-      };
-      set((state) => ({
-        parentCategories: [...state.parentCategories, newParent],
-        error: 'Failed to add parent category to Supabase, added locally only',
-      }));
+      // 임시 ID로 로컬에 추가하지 않음: temp ID 데이터는 후속 작업(수정·삭제·NFC 등록)이 모두 실패함
+      set({ error: 'Failed to add parent category to Supabase' });
       toast({
         title: '대분류 카테고리 추가 실패',
-        description: '네트워크 오류로 인해 카테고리를 로컬에만 추가했습니다.',
+        description: '저장에 실패했습니다. 다시 시도해주세요.',
         variant: 'destructive',
       });
     }
@@ -1210,7 +1205,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           file_path: filePath,
           file_size: document.file.size,
           ocr_text: document.ocrText || null, // OCR 텍스트
-          uploaded_by: null,
+          uploaded_by: useAuthStore.getState().user?.id ?? null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
           uploaded_at: new Date().toISOString(), // 클라이언트 현재 시간을 ISO 형식으로 전송 (타임존 정보 포함)
         })
@@ -1560,12 +1555,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   fetchSharedDocuments: async () => {
-    set({ isLoading: true, error: null });
+    startLoading(set);
+    set({ error: null });
     try {
       const { user } = useAuthStore.getState();
-      
+
       if (!user?.id) {
-        set({ sharedDocuments: [], isLoading: false });
+        set({ sharedDocuments: [] });
+        endLoading(set);
         return;
       }
 
@@ -1636,7 +1633,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
       set({ sharedDocuments: [], error: null });
     } finally {
-      set({ isLoading: false });
+      endLoading(set);
     }
   },
 

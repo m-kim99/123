@@ -572,6 +572,53 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   }, [speechRecognition]);
   // 주: hasEverStartedRef는 onStart 콜백에서 동기적으로 설정 (useEffect 타이밍 버그 제거)
 
+  // 컴포넌트 언마운트 시 음성 리소스 전체 정리
+  // 음성 모드 ON 상태에서 라우트 변경 시 타이머·TTS·STT 누수 방지
+  useEffect(() => {
+    return () => {
+      // 음성 모드 플래그 즉시 해제 (진행 중인 콜백이 새 작업을 시작하지 않도록)
+      isVoiceModeRef.current = false;
+
+      // TTS keep-alive setInterval 정리
+      if (ttsKeepAliveRef.current) {
+        clearInterval(ttsKeepAliveRef.current);
+        ttsKeepAliveRef.current = null;
+      }
+
+      // 네이티브 STT 워치독 setTimeout 정리
+      if (nativeSTTWatchdogRef.current) {
+        clearTimeout(nativeSTTWatchdogRef.current);
+        nativeSTTWatchdogRef.current = null;
+      }
+
+      // 음성 인식 디바운스 setTimeout 정리
+      if (speechDebounceTimerRef.current) {
+        clearTimeout(speechDebounceTimerRef.current);
+        speechDebounceTimerRef.current = null;
+      }
+
+      // 브라우저 TTS 중단
+      try { window.speechSynthesis?.cancel(); } catch (_) {}
+      currentUtteranceRef.current = null;
+
+      // 재생 중인 오디오 중단
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+
+      // STT 중단
+      try { speechRecognitionRef.current?.stopListening(); } catch (_) {}
+
+      // 네이티브 STT 중단
+      try {
+        if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+          stopNativeSTT();
+        }
+      } catch (_) {}
+    };
+  }, []); // 의존성 없음: 모든 상태는 ref로 접근
+
   // 한국어 TTS 음성 프리로드 (Android 첫 TTS 무음 / iOS 발음 오류 방지)
   // voiceschanged 이벤트 후에야 음성 목록이 채워지는 브라우저 대응
   useEffect(() => {

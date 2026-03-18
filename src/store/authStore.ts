@@ -364,8 +364,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', session.user.id)
           .single();
 
-        // users 테이블에 없으면 자동 생성 (OAuth 사용자 등)
+        // users 테이블에 없으면 자동 생성 (신규 OAuth 사용자에 한함)
         if (error && (error as any).code === 'PGRST116') {
+          // 보안: Auth 계정 생성 후 24시간 이내인 경우에만 자동 생성 허용
+          // 기존 사용자의 DB 레코드가 삭제된 경우 재가입 악용 방지
+          const authCreatedAt = new Date(session.user.created_at);
+          const hoursSinceCreated = (Date.now() - authCreatedAt.getTime()) / (1000 * 60 * 60);
+
+          if (hoursSinceCreated > 24) {
+            // 24시간 이상 된 Auth 계정에 users 레코드가 없는 경우 → 데이터 불일치 또는 삭제된 계정
+            await supabase.auth.signOut();
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: '계정 정보가 없습니다. 고객센터에 문의하거나 새로 가입해주세요.',
+            });
+            return;
+          }
+
           const { data: newUser, error: insertError } = await supabase
             .from('users')
             .insert({

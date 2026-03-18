@@ -53,17 +53,12 @@ export async function signIn(
 
     if (userError) {
       console.error('Failed to fetch user data:', userError);
-      // Auth는 성공했지만 users 테이블에서 정보를 가져오지 못한 경우
-      // Auth 사용자 정보만 반환
+      // users 테이블 조회 실패 시 기본 role로 폴백하지 않음 (fail-closed)
+      // 관리자가 team으로 로그인되는 보안 문제 방지
+      await supabase.auth.signOut();
       return {
-        user: {
-          id: authData.user.id,
-          email: authData.user.email || email,
-          name: authData.user.user_metadata?.name || '',
-          role: 'team', // 기본값
-          department_id: null,
-        },
-        error: null,
+        user: null,
+        error: '사용자 정보를 불러오지 못했습니다. 다시 로그인해주세요.',
       };
     }
 
@@ -129,15 +124,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
     if (userError) {
       console.error('Failed to fetch user data:', userError);
-      // users 테이블에서 정보를 가져오지 못한 경우
-      // Auth 사용자 정보만 반환
-      return {
-        id: session.user.id,
-        email: session.user.email || '',
-        name: session.user.user_metadata?.name || '',
-        role: 'team', // 기본값
-        department_id: null,
-      };
+      // users 테이블 조회 실패 시 기본 role로 폴백하지 않음 (fail-closed)
+      return null;
     }
 
     // 사용자 정보 반환

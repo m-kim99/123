@@ -2,15 +2,30 @@ import { supabase } from './supabase';
 import { NFCMapping, NFCRegisterRequest, NFCResolveResponse } from '@/types/nfc';
 
 export async function registerNFCTag(request: NFCRegisterRequest): Promise<void> {
-  const { data: user } = await supabase.auth.getUser();
+  // 인증 확인: 미인증 상태에서 undefined를 registered_by에 insert하는 것 방지
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    throw new Error('NFC 태그 등록은 로그인이 필요합니다.');
+  }
 
   const { error } = await supabase.from('nfc_mappings').insert({
     tag_id: request.tagId,
     category_id: request.categoryId,
-    registered_by: user.user?.id,
+    registered_by: authData.user.id,
   });
 
   if (error) throw error;
+}
+
+// Supabase 중첩 조인 결과 타입 정의 (categories + departments)
+interface NfcMappingRow {
+  category_id: string;
+  categories: {
+    id: string;
+    name: string;
+    department_id: string;
+    departments: { name: string } | null;
+  } | null;
 }
 
 export async function resolveNFCTag(tagId: string): Promise<NFCResolveResponse> {
@@ -34,6 +49,13 @@ export async function resolveNFCTag(tagId: string): Promise<NFCResolveResponse> 
     return { found: false };
   }
 
+  // 타입 안전하게 캐스팅 (Supabase 중첩 조인 결과)
+  const row = data as unknown as NfcMappingRow;
+
+  if (!row.categories) {
+    return { found: false };
+  }
+
   await supabase
     .from('nfc_mappings')
     .update({
@@ -45,14 +67,10 @@ export async function resolveNFCTag(tagId: string): Promise<NFCResolveResponse> 
   return {
     found: true,
     category: {
-      // @ts-ignore
-      id: data.categories.id,
-      // @ts-ignore
-      name: data.categories.name,
-      // @ts-ignore
-      departmentId: data.categories.department_id,
-      // @ts-ignore
-      departmentName: data.categories.departments?.name,
+      id: row.categories.id,
+      name: row.categories.name,
+      departmentId: row.categories.department_id,
+      departmentName: row.categories.departments?.name,
     },
   };
 }

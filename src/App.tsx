@@ -484,9 +484,10 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        {/* DeletionWarningDialog는 BrowserRouter 내부에 위치해야 Router 컨텍스트를 사용할 수 있음 */}
+        <DeletionWarningDialog />
       </BrowserRouter>
       <Toaster />
-      <DeletionWarningDialog />
     </>
   );
 }
