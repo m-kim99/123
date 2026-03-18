@@ -139,6 +139,17 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
       });
     }
     
+    // parent_category_id가 null인 문서는 subcategory 테이블에서 보완
+    const docsNeedingParent = (docR.data || []).filter((d: any) => d.subcategory_id && !d.parent_category_id);
+    let subParentMap = new Map<string, string>();
+    if (docsNeedingParent.length > 0) {
+      const missingSubIds = docsNeedingParent.map((d: any) => d.subcategory_id);
+      const { data: subParentData } = await supabase.from('subcategories').select('id, parent_category_id').in('id', missingSubIds);
+      for (const s of subParentData || []) {
+        if (s.parent_category_id) subParentMap.set(s.id, s.parent_category_id);
+      }
+    }
+
     for (const d of docR.data || []) {
       // OCR 스니펫: 키워드 주변 텍스트 표시
       let ocrSnippet = '';
@@ -159,11 +170,13 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
         }
       }
       
+      const parentCatId = d.parent_category_id || subParentMap.get(d.subcategory_id) || null;
+      
       results.push({ 
         type: '문서', 
         name: d.title, 
         path: d.title, 
-        link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, 
+        link: (d.subcategory_id && parentCatId) ? `/admin/category/${parentCatId}/subcategory/${d.subcategory_id}` : null, 
         storage_location: null, 
         ocr_snippet: ocrSnippet,
         uploaded_at: d.uploaded_at 

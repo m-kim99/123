@@ -1116,8 +1116,6 @@ export async function generateResponse(
       const docsJsonStr = fullText.slice(separatorIndex + docsSeparator.length);
       try {
         const rawDocs = JSON.parse(docsJsonStr);
-        const { subcategories: storeSubcategories } = useDocumentStore.getState();
-        const validSubcategoryIds = new Set(storeSubcategories.map((s) => s.id));
         parsedDocs = rawDocs
           .map((d: any) => ({
             id: d.id ?? '',
@@ -1129,7 +1127,7 @@ export async function generateResponse(
             subcategoryId: d.subcategoryId ?? '',
             parentCategoryId: d.parentCategoryId ?? '',
           }))
-          .filter((d: ChatSearchResult) => d.subcategoryId && validSubcategoryIds.has(d.subcategoryId));
+          .filter((d: ChatSearchResult) => d.subcategoryId && d.parentCategoryId);
       } catch (parseErr) {
         console.error('Failed to parse docs JSON from stream:', parseErr);
       }
