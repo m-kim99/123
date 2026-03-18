@@ -62,10 +62,12 @@ export function waitForCallHandler(callback: () => void, attempts = 0): void {
  */
 export function requestNativeMicrophonePermission(): void {
   if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+    // iOS 앱(WKWebView): 네이티브 마이크 권한 다이얼로그 표시
     window.webkit.messageHandlers.cordova_iab.postMessage(
       JSON.stringify({ action: 'request_microphone' })
     );
   }
+  // Android 앱: window.webkit 없음 → WebView 자체 권한 다이얼로그에 의존, 별도 처리 불필요
 }
 
 /**
@@ -90,8 +92,23 @@ export function startNativeSTT(onResult: (text: string) => void): void {
 }
 
 /**
- * 네이티브 STT 종료
+ * 네이티브 STT 확인 (전송)
+ * 사용자가 전송 버튼을 눌렀을 때 호출 — iOS 네이티브에 텍스트 확정(commit)을 알림
+ * iOS 흐름: sttstart(빨간) → 말함 → 네이티브가 입력란 채움 → sttenter(파란)
+ * 앱케이크 액션: 'sttenter'
+ */
+export function submitNativeSTT(): void {
+  if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
+
+  window.webkit.messageHandlers.cordova_iab.postMessage(
+    JSON.stringify({ action: 'sttenter' })
+  );
+}
+
+/**
+ * 네이티브 STT 종료 (취소)
  * 앱 네이티브 음성 인식을 중단하고 콜백을 해제
+ * 앱케이크 액션: 'sttstop'
  */
 export function stopNativeSTT(): void {
   if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;

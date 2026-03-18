@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, stopNativeSTT } from '@/lib/appBridge';
+import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, submitNativeSTT, stopNativeSTT } from '@/lib/appBridge';
 
 // **텍스트** 패턴을 <strong>으로 변환하는 함수
 function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
@@ -162,7 +162,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   const speechRecognitionRef = useRef<{ startListening: () => void; stopListening: () => void; isListening: boolean } | null>(null);
   // iOS Safari: not-allowed 에러가 재시작 타이밍 문제인지 실제 권한거부인지 구분
   const hasEverStartedRef = useRef(false);
-  const notAllowedRetryCountRef = useRef(0);
+  // 30초 슬라이딩 윈도우 기반 not-allowed 추적 (단순 카운터는 연속 대화 시 너무 쉽게 한도 도달)
+  const notAllowedTimestampsRef = useRef<number[]>([]);
+  // 더블탭 방지 (500ms 쿨다운)
+  const isTogglingVoiceRef = useRef(false);
+  // 한국어 TTS 음성 프리로드 ref (Android 첫 TTS 무음 / iOS 발음 오류 방지)
+  const koreanVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  // speakText([] deps)의 빈 closure에서 최신 handleUserSpeech를 참조하기 위한 ref
+  const handleUserSpeechRef = useRef<((transcript: string) => void) | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -210,6 +217,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     utterance.lang = 'ko-KR';
     utterance.rate = 1.1;
     utterance.pitch = 1.0;
+    // 한국어 TTS 음성 명시적 지정 (Android 첫 TTS 무음 / iOS 발음 오류 방지)
+    if (koreanVoiceRef.current) {
+      utterance.voice = koreanVoiceRef.current;
+    }
 
     // Safari: utterance가 GC되면 TTS가 즉시 중단됨 → ref로 참조 유지
     currentUtteranceRef.current = utterance;
@@ -241,10 +252,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.log('🔊 TTS 완료');
       cleanupTts();
       setIsSpeaking(false);
-      // TTS 완료 후 음성모드면 STT 재시작 (300ms→600ms: iOS TTS 오디오세션 해제 대기)
-      if (isVoiceModeRef.current && speechRecognitionRef.current) {
+      // TTS 완료 후 음성모드면 STT 재시작 (iOS TTS 오디오세션 해제 대기 600ms)
+      if (isVoiceModeRef.current) {
         setTimeout(() => {
-          if (isVoiceModeRef.current) {
+          if (!isVoiceModeRef.current) return;
+          if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            // iOS 앱: 네이티브 STT 재시작 (voice mode ON 상태일 때만 — 연속 음성 요청 시)
+            startNativeSTT((text) => {
+              isVoiceModeRef.current = false;
+              setIsVoiceMode(false);
+              handleUserSpeechRef.current?.(text);
+            });
+          } else {
+            // 브라우저 또는 Android 앱 폴백
             speechRecognitionRef.current?.startListening();
           }
         }, 600);
@@ -255,10 +275,18 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       console.error('🔊 TTS 오류:', e?.error || e);
       cleanupTts();
       setIsSpeaking(false);
-      // setTimeout 추가: async 컨텍스트에서 iOS recognition.start() 실패 방지
-      if (isVoiceModeRef.current && speechRecognitionRef.current) {
+      if (isVoiceModeRef.current) {
         setTimeout(() => {
-          speechRecognitionRef.current?.startListening();
+          if (!isVoiceModeRef.current) return;
+          if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            startNativeSTT((text) => {
+              isVoiceModeRef.current = false;
+              setIsVoiceMode(false);
+              handleUserSpeechRef.current?.(text);
+            });
+          } else {
+            speechRecognitionRef.current?.startListening();
+          }
         }, 500);
       }
     };
@@ -361,13 +389,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     }
   }, [messages, speakText]);
 
+  // speakText([] deps) closure에서 항상 최신 handleUserSpeech를 참조하도록 매 렌더마다 갱신
+  handleUserSpeechRef.current = handleUserSpeech;
+
   // Web Speech API로 음성 인식 (STT)
   const speechRecognition = useSpeechRecognition({
     language: 'ko-KR',
     onStart: () => {
       // SYNCHRONOUS: onstart 핸들러 내부에서 바로 호출 → useEffect 타이밍 버그 없음
       hasEverStartedRef.current = true;
-      notAllowedRetryCountRef.current = 0;
+      notAllowedTimestampsRef.current = []; // STT 성공 시 타임스탬프 초기화
     },
     onSilenceEnd: () => {
       // onend 발생 후 재시작: iOS 오디오세션 해제 대기 (100ms→1000ms)
@@ -381,12 +412,24 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     },
     onResult: (transcript, isFinal) => {
       if (isFinal) {
-        // stop() 비동기로 인한 동일 transcript 중복만 차단
-        // 다른 transcript는 통과 (Android 단어별/버퍼 finals 누적 허용)
         if (transcript === lastFinalTranscriptRef.current) return;
+        const prevTranscript = lastFinalTranscriptRef.current;
         lastFinalTranscriptRef.current = transcript;
 
-        accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + transcript).trim();
+        // Android Chrome continuous=true: isFinal이 누적형으로 발생 가능
+        // 예) "안녕" → "안녕 트로이" — 이전 것이 새 것의 접두사면 교체, 아니면 누적
+        if (prevTranscript && transcript.startsWith(prevTranscript)) {
+          const accumulated = accumulatedTranscriptRef.current;
+          if (accumulated.endsWith(prevTranscript)) {
+            accumulatedTranscriptRef.current =
+              (accumulated.slice(0, -prevTranscript.length).trim() + ' ' + transcript).trim();
+          } else {
+            accumulatedTranscriptRef.current = transcript;
+          }
+        } else {
+          accumulatedTranscriptRef.current =
+            (accumulatedTranscriptRef.current + ' ' + transcript).trim();
+        }
 
         if (speechDebounceTimerRef.current) {
           clearTimeout(speechDebounceTimerRef.current);
@@ -433,13 +476,16 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
             }]);
           }
         } else {
-          // 재시작 중 not-allowed = iOS 오디오세션 타이밍 문제 → voice mode 유지, onSilenceEnd 재시도
-          notAllowedRetryCountRef.current++;
-          console.warn(`iOS not-allowed 재시도 ${notAllowedRetryCountRef.current}/3`);
-          if (notAllowedRetryCountRef.current >= 3) {
+          // 재시작 중 not-allowed = iOS 오디오세션 타이밍 문제 → 30초 슬라이딩 윈도우 내 3회 초과 시 비활성화
+          const now = Date.now();
+          const recent = notAllowedTimestampsRef.current.filter(t => now - t < 30000);
+          recent.push(now);
+          notAllowedTimestampsRef.current = recent;
+          console.warn(`iOS not-allowed ${recent.length}/3 (30초 윈도우)`);
+          if (recent.length >= 3) {
             isVoiceModeRef.current = false;
             setIsVoiceMode(false);
-            notAllowedRetryCountRef.current = 0;
+            notAllowedTimestampsRef.current = [];
             setMessages(prev => [...prev, {
               id: `${Date.now()}-system`,
               role: 'assistant' as const,
@@ -461,6 +507,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       } else if (error === 'network' || error === 'service-not-available') {
         // 일시적 네트워크/서비스 오류 → voice mode 유지, onSilenceEnd가 재시도
         console.warn('STT 일시 오류 (재시도 예정):', error);
+      } else {
+        // catch-all: 미지원 브라우저(Firefox 등) 또는 알 수 없는 오류
+        // 참고: toggleLiveVoice의 isSupported 조기 차단으로 Firefox는 여기 도달하지 않아야 함
+        // 그러나 혹시 도달하더라도 음성모드를 확실히 OFF로
+        console.error('처리되지 않은 STT 오류, 음성모드 종료:', error);
+        isVoiceModeRef.current = false;
+        setIsVoiceMode(false);
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-system`,
+          role: 'assistant' as const,
+          content: '🎤 이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome 또는 Safari를 사용해주세요.',
+          timestamp: new Date(),
+        }]);
       }
     },
   });
@@ -470,6 +529,42 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
   // 주: hasEverStartedRef는 onStart 콜백에서 동기적으로 설정 (useEffect 타이밍 버그 제거)
+
+  // 한국어 TTS 음성 프리로드 (Android 첫 TTS 무음 / iOS 발음 오류 방지)
+  // voiceschanged 이벤트 후에야 음성 목록이 채워지는 브라우저 대응
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      koreanVoiceRef.current = voices.find(v => v.lang.startsWith('ko')) || null;
+    };
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+    return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
+  // 배경 전환 후 포그라운드 복귀 시 STT 자동 복구
+  // iOS Safari/앱: 배경 전환 시 SpeechRecognition이 자동 종료되므로 복귀 후 재시작
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isVoiceModeRef.current && !isProcessingSpeechRef.current) {
+        console.log('📱 포그라운드 복귀 - STT 재시작 시도');
+        setTimeout(() => {
+          if (!isVoiceModeRef.current || isProcessingSpeechRef.current) return;
+          if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+            startNativeSTT((text) => {
+              isVoiceModeRef.current = false;
+              setIsVoiceMode(false);
+              handleUserSpeechRef.current?.(text);
+            });
+          } else {
+            speechRecognitionRef.current?.startListening();
+          }
+        }, 500); // iOS 오디오세션 재활성화 대기
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []); // deps 없음: 모든 상태는 ref로 접근 → 불필요한 재등록 없음
 
   // 사운드 재생 헬퍼 함수 (PC/모바일 호환)
   const playSound = useCallback((soundPath: string, label: string) => {
@@ -511,13 +606,19 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
   // 음성 모드 토글 (PC/모바일 호환)
   const toggleLiveVoice = useCallback(() => {
+    // 더블탭 방지 (500ms 쿨다운)
+    if (isTogglingVoiceRef.current) return;
+    isTogglingVoiceRef.current = true;
+    setTimeout(() => { isTogglingVoiceRef.current = false; }, 500);
+
     console.log('🎤 음성 모드 토글 - 현재 상태:', isVoiceMode ? '켜짐' : '꺼짐');
-    
+
     if (isVoiceMode) {
       // 음성 모드 종료
       console.log('🔴 음성 모드 종료 시작');
       isVoiceModeRef.current = false;
-      if (isRunningInApp()) {
+      // Android 앱은 window.webkit 없음 → stopNativeSTT() no-op → speechRecognition.stopListening() 필요
+      if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
         stopNativeSTT();
       } else {
         speechRecognition.stopListening();
@@ -525,7 +626,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       try { window.speechSynthesis?.cancel(); } catch (_) { /* Android WebView 미지원 */ }
       setIsSpeaking(false);
       setIsVoiceMode(false);
-      
+
       // 디바운스 타이머 및 누적 전사 초기화
       if (speechDebounceTimerRef.current) {
         clearTimeout(speechDebounceTimerRef.current);
@@ -535,68 +636,87 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       lastFinalTranscriptRef.current = '';
       lastProcessedTranscriptRef.current = '';
       isProcessingSpeechRef.current = false;
-      
+
       // 종료 사운드 재생
       playSound('/sounds/end.wav', '종료');
     } else {
       // 음성 모드 시작
       console.log('🟢 음성 모드 시작 시도');
 
-      // ⚠️ 모바일 대응: 사용자 제스처 컨텍스트 내에서 즉시 오디오 생성 및 재생
       // 이전 오디오 중단
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
         currentAudioRef.current.currentTime = 0;
       }
-      
+
       const audio = new Audio('/sounds/start.wav');
       audio.volume = 0.5;
-      currentAudioRef.current = audio;
 
-      if (isRunningInApp()) {
-        // 앱 환경: 네이티브 STT 사용 (앱케이크 브릿지)
-        // Web Speech API 대신 네이티브 음성 인식 → 결과는 window.onNativeSTTResult 콜백으로 수신
+      // 네이티브 브릿지 존재 여부로 iOS 앱 vs 브라우저/Android 앱 분기
+      const hasNativeBridge = isRunningInApp() && !!window.webkit?.messageHandlers?.cordova_iab;
+
+      if (hasNativeBridge) {
+        // iOS 앱: 네이티브 STT 사용 (앱케이크 WKWebView 브릿지)
+        currentAudioRef.current = audio;
         audio.onended = () => { currentAudioRef.current = null; };
+        audio.onerror = () => { currentAudioRef.current = null; };
         audio.play()
           .then(() => console.log('✅ 시작 사운드 재생 성공'))
           .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
 
         setTimeout(() => {
           startNativeSTT((text) => {
-            // 네이티브 STT 결과 수신: 빨간색(녹음중) → 파란색(종료)
             console.log('🎤 네이티브 STT 결과:', text);
+            // 인식 완료: 빨간(ON) → 파란(OFF) 전환 후 AI 응답 처리
+            // 전송 버튼으로 이미 종료된 경우 onNativeSTTResult = null이므로 여기 도달 안 함
             isVoiceModeRef.current = false;
             setIsVoiceMode(false);
-            // 인식된 텍스트로 AI 응답 생성
-            handleUserSpeech(text);
+            handleUserSpeechRef.current?.(text);
           });
           isVoiceModeRef.current = true;
           setIsVoiceMode(true);
-          console.log('✅ 네이티브 STT 시작됨 (앱)');
+          console.log('✅ 네이티브 STT 시작됨 (iOS 앱)');
         }, 300);
       } else {
-        // 브라우저 환경: gesture context 살아있는 동기 구간에서 STT 먼저 시작
-        // Safari macOS는 await 이후 gesture context가 소멸되어 SpeechRecognition.start()가 not-allowed 에러 발생
-        // → getUserMedia 제거, await 제거, STT를 동기적으로 즉시 시작
+        // 브라우저 또는 Android 앱 폴백: Web Speech API 사용
+
+        // Firefox 등 미지원 브라우저 조기 차단
+        // (onError catch-all만으로는 React 배칭으로 인해 setIsVoiceMode(true)가 덮어씀)
+        if (!speechRecognition.isSupported) {
+          currentAudioRef.current = null;
+          isTogglingVoiceRef.current = false;
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: '🎤 이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome 또는 Safari를 사용해주세요.',
+            timestamp: new Date(),
+          }]);
+          return;
+        }
+
         // iOS: 재시작 추적 초기화
         hasEverStartedRef.current = false;
-        notAllowedRetryCountRef.current = 0;
+        notAllowedTimestampsRef.current = [];
 
-        // 원인#3: TTS 오디오세션이 playback 모드이면 STT 시작 즉시 실패
+        // TTS 오디오세션이 playback 모드이면 STT 시작 즉시 실패 방지
         try { window.speechSynthesis?.cancel(); } catch (_) {}
 
-        // 원인#6: user gesture context 최우선 확보 → startListening()을 setState보다 먼저 호출
-        // 원인#4: currentAudioRef 할당을 startListening() 이후로 이동 → 오디오 초기화가 STT 앞에 오는 것 방지
+        // user gesture context 최우선 확보 → startListening()을 setState보다 먼저 호출
         isVoiceModeRef.current = true;
         speechRecognition.startListening();
         setIsVoiceMode(true);
         console.log('✅ 음성 인식 시작됨');
 
-        // 오디오는 1500ms 후 재생 (iOS AVAudioSession: STT가 먼저 세션을 확보한 뒤 재생)
+        // currentAudioRef 할당을 startListening() 이후로 이동
+        // (오디오 초기화가 STT 앞에 오면 iOS AVAudioSession 간섭 가능)
         currentAudioRef.current = audio;
         audio.onended = () => { currentAudioRef.current = null; };
         audio.onerror = () => { currentAudioRef.current = null; };
-        setTimeout(() => { audio.play().catch(() => {}); }, 1500);
+        // 1500ms 후 재생: iOS AVAudioSession이 STT 세션 확보 후 재생해야 충돌 없음
+        // gesture context 이탈로 iOS Safari에서 차단될 수 있으나 시작음은 필수 UX 아님
+        setTimeout(() => {
+          audio.play().catch(err => console.warn('⚠️ 시작음 재생 차단 (gesture context 이탈):', err));
+        }, 1500);
       }
     }
   }, [isVoiceMode, speechRecognition]);
@@ -670,6 +790,29 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
   const handleSendMessage = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // 앱 환경 음성모드 중 전송: sttenter 전송 → 음성모드 종료 → 입력 텍스트 전송
+    if (isRunningInApp() && isVoiceMode) {
+      submitNativeSTT();
+      // onNativeSTTResult 콜백 해제: sttenter 이후 중복 처리 방지
+      window.onNativeSTTResult = null;
+      isVoiceModeRef.current = false;
+      setIsVoiceMode(false);
+      if (speechDebounceTimerRef.current) {
+        clearTimeout(speechDebounceTimerRef.current);
+        speechDebounceTimerRef.current = null;
+      }
+      accumulatedTranscriptRef.current = '';
+      lastFinalTranscriptRef.current = '';
+      lastProcessedTranscriptRef.current = '';
+      isProcessingSpeechRef.current = false;
+      // 입력란에 텍스트가 있으면 전송 (네이티브가 채워준 텍스트)
+      if (inputValue.trim()) {
+        sendMessage(inputValue);
+      }
+      return;
+    }
+
     if (!inputValue.trim()) return;
     console.log('메시지 전송:', inputValue);
     sendMessage(inputValue);
@@ -721,7 +864,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     // 음성 모드 종료 및 TTS 중단
                     if (isVoiceMode) {
                       isVoiceModeRef.current = false;
-                      if (isRunningInApp()) {
+                      if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
                         stopNativeSTT();
                       } else {
                         speechRecognition.stopListening();
@@ -918,13 +1061,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isVoiceMode ? '🎤 음성 대화 중... 말씀하세요' : '질문하세요...'}
                   className="text-sm pr-10"
-                  disabled={isVoiceMode}
+                  disabled={isVoiceMode && !isRunningInApp()}
                 />
                 <button
                   type="submit"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                   style={{ backgroundColor: primaryColor }}
-                  disabled={isVoiceMode}
+                  disabled={isVoiceMode && !isRunningInApp()}
                 >
                   <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
