@@ -860,11 +860,23 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     // Android 앱은 Web Speech API 사용(hasNativeBridge=false) → 일반 전송 경로로 fall-through
     const hasNativeBridge = isRunningInApp() && !!window.webkit?.messageHandlers?.cordova_iab;
     if (hasNativeBridge && isVoiceMode) {
+      // 기존 콜백을 교체: sttenter 응답으로 텍스트가 오면 전송 처리
+      window.onNativeSTTResult = (text: string) => {
+        window.onNativeSTTResult = null; // 콜백 수신 후 해제
+        if (text?.trim()) {
+          sendMessage(text.trim());
+        }
+      };
+      // sttenter 전송 (앱이 텍스트 확정 후 위 콜백 호출)
       submitNativeSTT();
-      // onNativeSTTResult 콜백 해제: sttenter 이후 중복 처리 방지
-      window.onNativeSTTResult = null;
+      // 음성모드 종료 및 상태 초기화
       isVoiceModeRef.current = false;
       setIsVoiceMode(false);
+      // 워치독 타이머 해제
+      if (nativeSTTWatchdogRef.current) {
+        clearTimeout(nativeSTTWatchdogRef.current);
+        nativeSTTWatchdogRef.current = null;
+      }
       if (speechDebounceTimerRef.current) {
         clearTimeout(speechDebounceTimerRef.current);
         speechDebounceTimerRef.current = null;
@@ -873,10 +885,6 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       lastFinalTranscriptRef.current = '';
       lastProcessedTranscriptRef.current = '';
       isProcessingSpeechRef.current = false;
-      // 입력란에 텍스트가 있으면 전송 (네이티브가 채워준 텍스트)
-      if (inputValue.trim()) {
-        sendMessage(inputValue);
-      }
       return;
     }
 
