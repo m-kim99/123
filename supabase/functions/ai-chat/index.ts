@@ -65,7 +65,7 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
       else return null; 
     }
     
-    console.log(`🔍 preSearch: keyword="${keyword}", words=${JSON.stringify(words)}`);
+    console.log(`🔍 preSearch: keyword="${keyword}", words=${JSON.stringify(words)}, deptIds=${JSON.stringify(deptIds)}`);
     
     // OR 조건 생성 (ilike + similarity 병행)
     const nameOr = words.map(w => `name.ilike.*${w}*`).join(',');
@@ -76,7 +76,7 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
       `ocr_text.ilike.*${w}*` 
     ]).join(',');
     
-    console.log(`📊 문서 검색 조건: ${docOrConditions}`);
+    console.log(`📊 문서 검색 조건: ${docOrConditions}, deptIds count: ${deptIds.length}`);
     
     const [deptR, catR, subR, docR] = await Promise.all([
       supabase.from('departments')
@@ -95,8 +95,9 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
         .or(nameOr)
         .limit(5),
       supabase.from('documents')
-        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, department_id, subcategory:subcategories!inner(id)')
+        .select('id, title, ocr_text, uploaded_at, subcategory_id, parent_category_id, department_id')
         .in('department_id', deptIds)
+        .not('subcategory_id', 'is', null)
         .or(docOrConditions)
         .limit(10)
     ]);
@@ -105,6 +106,8 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], ke
     if (catR.error) console.error('❌ preSearch cat error:', catR.error);
     if (subR.error) console.error('❌ preSearch sub error:', subR.error);
     if (docR.error) console.error('❌ preSearch doc error:', docR.error);
+    
+    console.log(`✅ preSearch 결과: 부서 ${deptR.data?.length || 0}건, 대분류 ${catR.data?.length || 0}건, 세부 ${subR.data?.length || 0}건, 문서 ${docR.data?.length || 0}건`);
     
     const results: any[] = [];
     
@@ -222,27 +225,33 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'search_documents': {
         const { keyword, department_name, limit = 10 } = args;
-        let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, uploader:users!documents_uploaded_by_fkey(name), subcategory:subcategories!inner(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
+        let query = supabase.from('documents').select('id, title, ocr_text, uploaded_at, uploaded_by, subcategory_id, parent_category_id, department_id, uploader:users!documents_uploaded_by_fkey(name), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).not('subcategory_id', 'is', null).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(limit);
         if (department_name) { const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single(); if (dept) query = query.eq('department_id', dept.id); }
         const { data } = await query;
+        // subcategory 정보 별도 조회
+        const subIds = [...new Set((data || []).map((d: any) => d.subcategory_id).filter(Boolean))];
+        const { data: subData } = subIds.length > 0 ? await supabase.from('subcategories').select('id, name, storage_location').in('id', subIds) : { data: [] };
+        const subMap = new Map((subData || []).map((s: any) => [s.id, s]));
         return JSON.stringify({ 
-          documents: (data || []).map((d: any) => ({ 
-            id: d.id, 
-            title: d.title, 
-            ocr_snippet: d.ocr_text ? d.ocr_text.substring(0, 200) : null, 
-            subcategory: d.subcategory?.name, 
-            subcategory_id: d.subcategory_id || d.subcategory?.id, 
-            parent_category: d.parent_category?.name, 
-            parent_category_id: d.parent_category_id || d.parent_category?.id, 
-            department: d.department?.name, 
-            department_id: d.department?.id, 
-            storage_location: d.subcategory?.storage_location, 
-            uploaded_at: d.uploaded_at, 
-            uploader: d.uploader?.name || '알 수 없음',
-            // 문서 링크 추가
-            link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null,
-            path: `${d.department?.name || ''} → ${d.parent_category?.name || ''} → ${d.subcategory?.name || ''}`
-          })), 
+          documents: (data || []).map((d: any) => {
+            const sub = subMap.get(d.subcategory_id);
+            return { 
+              id: d.id, 
+              title: d.title, 
+              ocr_snippet: d.ocr_text ? d.ocr_text.substring(0, 200) : null, 
+              subcategory: sub?.name || '', 
+              subcategory_id: d.subcategory_id, 
+              parent_category: d.parent_category?.name, 
+              parent_category_id: d.parent_category_id || d.parent_category?.id, 
+              department: d.department?.name, 
+              department_id: d.department?.id || d.department_id, 
+              storage_location: sub?.storage_location || null, 
+              uploaded_at: d.uploaded_at, 
+              uploader: d.uploader?.name || '알 수 없음',
+              link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null,
+              path: `${d.department?.name || ''} → ${d.parent_category?.name || ''} → ${sub?.name || ''}`
+            };
+          }), 
           count: data?.length || 0 
         });
       }
@@ -359,7 +368,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${keyword}%`).limit(searchLimit),
           supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
           supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${keyword}%`).limit(searchLimit),
-          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories!inner(id, name, storage_location), parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit)
+          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).not('subcategory_id', 'is', null).or(`title.ilike.%${keyword}%,ocr_text.ilike.%${keyword}%`).limit(searchLimit)
         ]);
 
         const depts = deptResult.data || [];
@@ -367,6 +376,11 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         const subs = subResult.data || [];
         const docs = docResult.data || [];
         console.log(`unified_search results: depts=${depts.length}, cats=${cats.length}, subs=${subs.length}, docs=${docs.length}`);
+
+        // subcategory 정보 별도 조회
+        const docSubIds = [...new Set(docs.map((d: any) => d.subcategory_id).filter(Boolean))];
+        const { data: docSubData } = docSubIds.length > 0 ? await supabase.from('subcategories').select('id, name, storage_location').in('id', docSubIds) : { data: [] };
+        const docSubMap = new Map((docSubData || []).map((s: any) => [s.id, s]));
 
         const allResults: any[] = [];
 
@@ -380,7 +394,8 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정' });
         }
         for (const d of docs) {
-          allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: d.subcategory?.name, path: `${d.department?.name} → ${d.parent_category?.name} → ${d.subcategory?.name} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: d.subcategory?.storage_location || '미지정', uploaded_at: d.uploaded_at });
+          const docSub = docSubMap.get(d.subcategory_id);
+          allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: docSub?.name || '', path: `${d.department?.name} → ${d.parent_category?.name} → ${docSub?.name || ''} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: docSub?.storage_location || '미지정', uploaded_at: d.uploaded_at });
         }
 
         return JSON.stringify({ results: allResults.slice(0, searchLimit), total_count: allResults.length, breakdown: { departments: depts.length, parent_categories: cats.length, subcategories: subs.length, documents: docs.length } });
