@@ -199,7 +199,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (validationError) {
-        console.error('비밀번호 검증 오류:', validationError);
+        // 검증 서비스 오류 시 fail-closed: 회원가입 차단
+        const errMsg = '비밀번호 검증 서비스에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        set({ error: errMsg, isLoading: false });
+        return { success: false, error: errMsg };
       } else if (validation && !validation.valid) {
         set({ error: validation.errors.join(', '), isLoading: false });
         return { success: false, error: validation.errors.join(', ') };

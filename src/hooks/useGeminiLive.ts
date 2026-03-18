@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isRunningInApp, requestNativeMicrophonePermission } from '@/lib/appBridge';
+import { supabase } from '@/lib/supabase';
 
+// apiKey는 props에서 제거 — Edge Function(get-gemini-key)을 통해 서버에서 발급받음
 interface UseGeminiLiveProps {
-  apiKey: string;
   systemPrompt?: string;
   onTranscript?: (text: string, isFinal: boolean) => void;
   onUserTranscript?: (text: string) => void;
@@ -11,7 +12,6 @@ interface UseGeminiLiveProps {
 }
 
 export function useGeminiLive({
-  apiKey,
   systemPrompt,
   onTranscript,
   onUserTranscript,
@@ -25,12 +25,28 @@ export function useGeminiLive({
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
-  // 연결 완료 resolve 함수를 저장할 ref
+  // 연결 완료 resolve/reject 함수를 저장할 ref
   const connectResolveRef = useRef<(() => void) | null>(null);
+  const connectRejectRef = useRef<((err: Error) => void) | null>(null);
+
+  /**
+   * 서버에서 Gemini API 키를 발급받는 함수
+   * GEMINI_API_KEY는 Supabase Secrets에 저장되어 클라이언트 번들에 노출되지 않음
+   */
+  const fetchApiKey = useCallback(async (): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke('get-gemini-key');
+    if (error) {
+      throw new Error(`Gemini 키 발급 실패: ${error.message}`);
+    }
+    if (!data?.apiKey) {
+      throw new Error('Gemini API 키를 받지 못했습니다');
+    }
+    return data.apiKey as string;
+  }, []);
 
   // WebSocket 연결 - Promise로 setup 완료까지 대기
   const connect = useCallback(() => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       try {
         // 이미 연결되어 있으면 바로 resolve
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -38,18 +54,22 @@ export function useGeminiLive({
           return;
         }
 
+        // API 키를 서버에서 발급받음 (클라이언트 번들에 포함되지 않음)
+        const apiKey = await fetchApiKey();
+
         const ws = new WebSocket(
           `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`
         );
 
-        // setup 완료 시 resolve할 함수 저장
+        // setup 완료 시 resolve/reject할 함수 저장
         connectResolveRef.current = resolve;
+        connectRejectRef.current = reject;
 
         ws.onopen = () => {
           console.log('✅ Gemini Live API 연결됨');
-          
+
           // 초기 설정 메시지 - 시스템 프롬프트 포함
-          const setupMessage: any = {
+          const setupMessage: Record<string, unknown> = {
             setup: {
               model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
               generation_config: {
@@ -64,14 +84,14 @@ export function useGeminiLive({
               },
             },
           };
-          
+
           // 시스템 프롬프트가 있으면 추가
           if (systemPrompt) {
-            setupMessage.setup.system_instruction = {
+            (setupMessage.setup as Record<string, unknown>).system_instruction = {
               parts: [{ text: systemPrompt }],
             };
           }
-          
+
           ws.send(JSON.stringify(setupMessage));
         };
 
@@ -82,11 +102,8 @@ export function useGeminiLive({
             if (data instanceof Blob) {
               data = await data.text();
             }
-            
+
             const response = JSON.parse(data);
-            
-            // 디버그 로깅
-            console.log('📩 Gemini 응답:', response);
 
             // setupComplete 응답 확인 - 이때 연결 완료
             if (response.setupComplete) {
@@ -95,6 +112,7 @@ export function useGeminiLive({
               if (connectResolveRef.current) {
                 connectResolveRef.current();
                 connectResolveRef.current = null;
+                connectRejectRef.current = null;
               }
               return;
             }
@@ -107,22 +125,19 @@ export function useGeminiLive({
                   onTranscript(part.text, true);
                 }
                 if (part.inlineData?.data && onAudioData) {
-                  // Base64 PCM 오디오 디코딩
                   const audioBytes = base64ToInt16Array(part.inlineData.data);
                   onAudioData(audioBytes);
                 }
               }
             }
 
-            // AI 응답 전사 (outputTranscript) - 챗봇이 말한 내용
+            // AI 응답 전사
             if (response.serverContent?.outputTranscript && onTranscript) {
-              console.log('🤖 AI 전사:', response.serverContent.outputTranscript);
               onTranscript(response.serverContent.outputTranscript, true);
             }
-            
-            // 사용자 음성 전사 (inputTranscript) - 사용자가 말한 내용
+
+            // 사용자 음성 전사
             if (response.serverContent?.inputTranscript && onUserTranscript) {
-              console.log('🎤 사용자 전사:', response.serverContent.inputTranscript);
               onUserTranscript(response.serverContent.inputTranscript);
             }
           } catch (err) {
@@ -132,15 +147,27 @@ export function useGeminiLive({
 
         ws.onerror = (error) => {
           console.error('❌ WebSocket 오류:', error);
-          if (onError) onError(new Error('WebSocket connection failed'));
+          const err = new Error('WebSocket connection failed');
+          if (onError) onError(err);
           setIsConnected(false);
-          reject(new Error('WebSocket connection failed'));
+          // reject 후 ref 정리
+          if (connectRejectRef.current) {
+            connectRejectRef.current(err);
+            connectResolveRef.current = null;
+            connectRejectRef.current = null;
+          }
         };
 
         ws.onclose = (event) => {
           console.log('🔌 연결 종료, 코드:', event.code, '이유:', event.reason);
           setIsConnected(false);
           setIsStreaming(false);
+          // setupComplete 전에 닫히면 reject
+          if (connectRejectRef.current) {
+            connectRejectRef.current(new Error('WebSocket closed before setup complete'));
+            connectResolveRef.current = null;
+            connectRejectRef.current = null;
+          }
         };
 
         wsRef.current = ws;
@@ -150,7 +177,7 @@ export function useGeminiLive({
         reject(error);
       }
     });
-  }, [apiKey, systemPrompt, onTranscript, onUserTranscript, onAudioData, onError]);
+  }, [fetchApiKey, systemPrompt, onTranscript, onUserTranscript, onAudioData, onError]);
 
   // 마이크 스트리밍 시작
   const startStreaming = useCallback(async () => {
@@ -160,7 +187,6 @@ export function useGeminiLive({
     }
 
     try {
-      // 마이크 권한
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -172,26 +198,19 @@ export function useGeminiLive({
 
       mediaStreamRef.current = stream;
 
-      // AudioContext 생성
       const audioContext = new AudioContext({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
 
-      // AudioWorklet으로 실시간 PCM 추출
       await audioContext.audioWorklet.addModule('/audio-processor.js');
 
       const source = audioContext.createMediaStreamSource(stream);
       const worklet = new AudioWorkletNode(audioContext, 'audio-processor');
 
       worklet.port.onmessage = (event) => {
-        const pcmData = event.data; // Float32Array
-
-        // Float32 → Int16 변환
+        const pcmData = event.data as Float32Array;
         const int16Data = float32ToInt16(pcmData);
-
-        // Base64 인코딩
         const base64Audio = int16ToBase64(int16Data);
 
-        // Gemini로 전송
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
@@ -203,11 +222,9 @@ export function useGeminiLive({
           }));
         }
       };
-      
-      console.log('🎤 오디오 컨텍스트 샘플레이트:', audioContext.sampleRate);
 
+      // worklet을 destination에 연결하지 않음 — 에코/피드백 루프 방지
       source.connect(worklet);
-      worklet.connect(audioContext.destination);
       workletNodeRef.current = worklet;
 
       setIsStreaming(true);
@@ -215,14 +232,13 @@ export function useGeminiLive({
     } catch (error) {
       console.error('스트리밍 시작 실패:', error);
       if (isRunningInApp()) {
-        // 앱 환경: 네이티브 마이크 권한 요청
         requestNativeMicrophonePermission();
       }
       if (onError) onError(error as Error);
     }
   }, [onError]);
 
-  // 스트리밍 중단 - 실제 스트리밍 중일 때만 동작
+  // 스트리밍 중단
   const stopStreaming = useCallback(() => {
     const hasActiveResources = workletNodeRef.current || audioContextRef.current || mediaStreamRef.current;
     if (!hasActiveResources) return;
@@ -246,7 +262,7 @@ export function useGeminiLive({
     console.log('⏹️ 스트리밍 중단');
   }, []);
 
-  // 연결 종료 - 실제 연결되어 있을 때만 동작
+  // 연결 종료
   const disconnect = useCallback(() => {
     const hasConnection = wsRef.current || workletNodeRef.current || audioContextRef.current || mediaStreamRef.current;
     if (!hasConnection) return;
@@ -266,7 +282,6 @@ export function useGeminiLive({
       return;
     }
 
-    console.log('📤 텍스트 전송:', text);
     wsRef.current.send(JSON.stringify({
       clientContent: {
         turns: [{

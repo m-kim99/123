@@ -2,8 +2,8 @@ import { supabase } from './supabase';
 
 /**
  * OneSignal 개별 푸시 발송
- * 주의: 프론트엔드에서 직접 호출 시 REST_API_KEY 노출 위험
- * → 가능하면 Supabase Edge Function으로 이동 권장
+ * REST API KEY는 서버 사이드(Edge Function)에서만 사용됩니다.
+ * 프론트엔드에서 직접 OneSignal API를 호출하지 않습니다.
  */
 interface SendPushParams {
   playerIds: string[];
@@ -20,52 +20,13 @@ export async function sendPushNotification({
   customUrl,
   imageUrl,
 }: SendPushParams): Promise<void> {
-  const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
-  const REST_API_KEY = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
+  const { error } = await supabase.functions.invoke('send-push-notification', {
+    body: { playerIds, title, message, customUrl, imageUrl },
+  });
 
-  if (!APP_ID || !REST_API_KEY) {
-    console.warn('OneSignal 설정이 없습니다. 환경변수를 확인하세요.');
-    return;
-  }
-
-  const dataParam = customUrl ? { custom_url: customUrl } : {};
-
-  const payload: Record<string, any> = {
-    app_id: APP_ID,
-    include_player_ids: playerIds,
-    headings: { en: title },
-    contents: { en: message },
-    data: dataParam,
-    ios_badgeType: 'Increase',
-    ios_badgeCount: 1,
-    large_icon: 'icon_96',
-    small_icon: 'icon_48',
-  };
-
-  if (imageUrl) {
-    payload.big_picture = imageUrl;
-  }
-
-  try {
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Basic ${REST_API_KEY}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`푸시 발송 실패: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log('푸시 발송 성공:', result);
-  } catch (error) {
+  if (error) {
     console.error('푸시 발송 오류:', error);
-    throw error;
+    throw new Error(`푸시 발송 실패: ${error.message}`);
   }
 }
 

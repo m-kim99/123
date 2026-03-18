@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // 환경변수에서 Supabase 설정 가져오기
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -10,10 +10,18 @@ const isSupabaseConfigured =
   supabaseUrl !== 'your_supabase_url_here' &&
   !!supabaseAnonKey;
 
-// Supabase 클라이언트 초기화 (환경변수가 없거나 placeholder면 null로 동작)
-export const supabase = isSupabaseConfigured
+// Supabase 클라이언트 초기화
+// 환경변수 미설정 시 null as any 대신 Proxy를 사용해 즉시 명확한 에러를 던짐
+export const supabase: SupabaseClient = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : (null as any);
+  : (new Proxy({} as SupabaseClient, {
+      get(_target, prop) {
+        throw new Error(
+          `[Supabase 미설정] .${String(prop)} 호출 불가. ` +
+          'VITE_SUPABASE_URL과 VITE_SUPABASE_ANON_KEY 환경변수를 설정하세요.'
+        );
+      },
+    }));
 
 // TypeScript 타입 정의
 export interface Department {

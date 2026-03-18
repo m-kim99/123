@@ -43,9 +43,9 @@ export function NaverCallback() {
         return;
       }
 
-      // State 검증 (CSRF 방지)
+      // State 검증 (CSRF 방지) — savedState가 없어도 검증 실패로 처리
       const savedState = sessionStorage.getItem('naver_oauth_state');
-      if (savedState && savedState !== state) {
+      if (!savedState || savedState !== state) {
         setStatus('error');
         setErrorMessage('잘못된 state 값입니다.');
         toast({

@@ -53,8 +53,8 @@ export async function checkUserAccess(
   departmentId: string,
   userDepartmentId: string | null
 ): Promise<{ hasAccess: boolean; role: Role }> {
-  // 소속 부서는 자동 manager
-  if (userDepartmentId === departmentId) {
+  // 소속 부서는 자동 manager (null 값은 일치로 처리하지 않음)
+  if (userDepartmentId !== null && userDepartmentId === departmentId) {
     return { hasAccess: true, role: 'manager' };
   }
 
