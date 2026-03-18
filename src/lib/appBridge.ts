@@ -69,6 +69,40 @@ export function requestNativeMicrophonePermission(): void {
 }
 
 /**
+ * 네이티브 STT 시작
+ * 앱 네이티브에서 음성 인식을 수행하고, 결과를 onResult 콜백으로 전달
+ * @param onResult STT 인식 결과 텍스트를 받는 콜백
+ */
+export function startNativeSTT(onResult: (text: string) => void): void {
+  if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
+
+  // 결과 콜백 등록 (앱에서 window.onNativeSTTResult("텍스트") 호출)
+  window.onNativeSTTResult = (text: string) => {
+    if (text?.trim()) {
+      onResult(text.trim());
+    }
+  };
+
+  // STT 시작 요청
+  window.webkit.messageHandlers.cordova_iab.postMessage(
+    JSON.stringify({ action: 'sttstart' })
+  );
+}
+
+/**
+ * 네이티브 STT 종료
+ * 앱 네이티브 음성 인식을 중단하고 콜백을 해제
+ */
+export function stopNativeSTT(): void {
+  if (!isRunningInApp() || !window.webkit?.messageHandlers?.cordova_iab) return;
+
+  window.webkit.messageHandlers.cordova_iab.postMessage(
+    JSON.stringify({ action: 'sttstop' })
+  );
+  window.onNativeSTTResult = null;
+}
+
+/**
  * 앱에서 푸시키(pushId)를 요청하고, 콜백으로 받아 처리
  * @param onPushIdReceived 푸시키를 받았을 때 실행할 콜백
  */

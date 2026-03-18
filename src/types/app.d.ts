@@ -7,4 +7,5 @@ interface Window {
     };
   };
   get_pushid?: (pushId: string) => void;
+  onNativeSTTResult?: ((text: string) => void) | null;
 }

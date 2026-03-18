@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { isRunningInApp, requestNativeMicrophonePermission } from '@/lib/appBridge';
+import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, stopNativeSTT } from '@/lib/appBridge';
 
 // **텍스트** 패턴을 <strong>으로 변환하는 함수
 function parseBoldText(text: string, keyPrefix: string): ReactNode[] {
@@ -517,7 +517,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       // 음성 모드 종료
       console.log('🔴 음성 모드 종료 시작');
       isVoiceModeRef.current = false;
-      speechRecognition.stopListening();
+      if (isRunningInApp()) {
+        stopNativeSTT();
+      } else {
+        speechRecognition.stopListening();
+      }
       try { window.speechSynthesis?.cancel(); } catch (_) { /* Android WebView 미지원 */ }
       setIsSpeaking(false);
       setIsVoiceMode(false);
@@ -550,19 +554,25 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       currentAudioRef.current = audio;
 
       if (isRunningInApp()) {
-        // 앱 환경: 사운드 대기·getUserMedia 스킵
-        // - Android: 사운드 완료 대기 없이 즉시 시작 → 활성화 지연 해소
-        // - iOS: getUserMedia 후 트랙 종료 시 오디오 세션이 해제되어 SpeechRecognition 실패하는 문제 방지
+        // 앱 환경: 네이티브 STT 사용 (앱케이크 브릿지)
+        // Web Speech API 대신 네이티브 음성 인식 → 결과는 window.onNativeSTTResult 콜백으로 수신
         audio.onended = () => { currentAudioRef.current = null; };
         audio.play()
           .then(() => console.log('✅ 시작 사운드 재생 성공'))
           .catch(err => console.error('❌ 시작 사운드 재생 실패:', err));
 
         setTimeout(() => {
+          startNativeSTT((text) => {
+            // 네이티브 STT 결과 수신: 빨간색(녹음중) → 파란색(종료)
+            console.log('🎤 네이티브 STT 결과:', text);
+            isVoiceModeRef.current = false;
+            setIsVoiceMode(false);
+            // 인식된 텍스트로 AI 응답 생성
+            handleUserSpeech(text);
+          });
           isVoiceModeRef.current = true;
-          speechRecognition.startListening();
           setIsVoiceMode(true);
-          console.log('✅ 음성 인식 시작됨 (앱)');
+          console.log('✅ 네이티브 STT 시작됨 (앱)');
         }, 300);
       } else {
         // 브라우저 환경: gesture context 살아있는 동기 구간에서 STT 먼저 시작
@@ -711,7 +721,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     // 음성 모드 종료 및 TTS 중단
                     if (isVoiceMode) {
                       isVoiceModeRef.current = false;
-                      speechRecognition.stopListening();
+                      if (isRunningInApp()) {
+                        stopNativeSTT();
+                      } else {
+                        speechRecognition.stopListening();
+                      }
                       setIsVoiceMode(false);
                       setIsSpeaking(false);
                       if (speechDebounceTimerRef.current) {
