@@ -1519,8 +1519,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { user } = useAuthStore.getState();
       const userDepartmentId = user?.departmentId || null;
 
-      // 1. 소속 부서는 자동 manager 권한
-      if (userDepartmentId === departmentId) {
+      // 1. 소속 부서는 자동 manager 권한 (null === null 오탐 방지)
+      if (userDepartmentId !== null && userDepartmentId === departmentId) {
         const managerPermissions = ['read', 'download', 'print', 'write', 'upload', 'delete', 'share'];
         return managerPermissions.includes(action);
       }
@@ -1562,7 +1562,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (!user?.id) {
         set({ sharedDocuments: [] });
-        endLoading(set);
         return;
       }
 
