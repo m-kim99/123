@@ -1183,12 +1183,12 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
               </div>
-              {/* 음성 대화 버튼 */}
+              {/* 음성 대화 버튼 (숨김 처리 — 기능은 유지) */}
               <button
                 type="button"
                 onClick={toggleLiveVoice}
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor }}
+                style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor, display: 'none' }}
                 title={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
               >
                 <img
