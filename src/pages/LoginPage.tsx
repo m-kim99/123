@@ -787,11 +787,8 @@ export function LoginPage() {
               <img
                 src={logo}
                 alt="문서 관리 시스템 로고"
-                className="h-14 sm:h-16 w-auto max-w-[calc(100%-4rem)] object-contain"
+                className="h-14 sm:h-16 w-auto object-contain"
               />
-              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shrink-0 whitespace-nowrap translate-y-[0.35rem] sm:translate-y-[0.4rem]">
-                BETA
-              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
