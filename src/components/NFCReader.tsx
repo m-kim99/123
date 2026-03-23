@@ -43,50 +43,72 @@ export function NFCReader() {
 
       console.log('NFC 태그 데이터 읽기 완료:', tagData);
 
-      // categoryCode로 카테고리 찾기
-      let categoryId: string | null = null;
-
-      // 1. categoryCode로 먼저 찾기
-      if (tagData.categoryCode) {
-        const { data: categoryByCode, error: codeError } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('code', tagData.categoryCode)
-          .single();
-
-        if (!codeError && categoryByCode?.id) {
-          categoryId = categoryByCode.id;
-        }
-      }
-
-      // 2. categoryCode로 찾지 못하면 name으로 찾기
-      if (!categoryId && tagData.categoryName) {
-        const { data: categoryByName, error: nameError } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('name', tagData.categoryName)
-          .single();
-
-        if (!nameError && categoryByName?.id) {
-          categoryId = categoryByName.id;
-        }
-      }
-
-      // 3. 카테고리를 찾지 못한 경우
-      if (!categoryId) {
-        throw new Error(
-          `카테고리를 찾을 수 없습니다. (코드: ${tagData.categoryCode}, 이름: ${tagData.categoryName})`
-        );
-      }
-
-      // 카테고리 ID로 페이지 이동
       const isAdmin = user.role === 'admin';
-      const path = isAdmin
-        ? `/admin/category/${categoryId}`
-        : `/team/category/${categoryId}`;
+      const basePath = isAdmin ? '/admin' : '/team';
+      let path: string;
 
-      setStatus('success');
-      setStatusMessage('✅ 카테고리 찾음! 이동 중...');
+      // subcategoryId가 있는 경우 (writeNFCUrl로 기록된 세부 카테고리 태그)
+      if (tagData.subcategoryId) {
+        // DB에서 parent_category_id 조회
+        const { data: subData, error: subError } = await supabase
+          .from('subcategories')
+          .select('parent_category_id')
+          .eq('id', tagData.subcategoryId)
+          .single();
+
+        if (subError || !subData) {
+          throw new Error(
+            `세부 카테고리를 찾을 수 없습니다. (ID: ${tagData.subcategoryId})`
+          );
+        }
+
+        const parentCategoryId = (subData as any).parent_category_id;
+        path = `${basePath}/parent-category/${parentCategoryId}/subcategory/${tagData.subcategoryId}`;
+
+        setStatus('success');
+        setStatusMessage('✅ 세부 카테고리 찾음! 이동 중...');
+      } else {
+        // categoryCode/categoryName으로 카테고리 찾기 (레거시 JSON 태그)
+        let categoryId: string | null = null;
+
+        // 1. categoryCode로 먼저 찾기
+        if (tagData.categoryCode) {
+          const { data: categoryByCode, error: codeError } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('code', tagData.categoryCode)
+            .single();
+
+          if (!codeError && categoryByCode?.id) {
+            categoryId = categoryByCode.id;
+          }
+        }
+
+        // 2. categoryCode로 찾지 못하면 name으로 찾기
+        if (!categoryId && tagData.categoryName) {
+          const { data: categoryByName, error: nameError } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', tagData.categoryName)
+            .single();
+
+          if (!nameError && categoryByName?.id) {
+            categoryId = categoryByName.id;
+          }
+        }
+
+        // 3. 카테고리를 찾지 못한 경우
+        if (!categoryId) {
+          throw new Error(
+            `카테고리를 찾을 수 없습니다. (코드: ${tagData.categoryCode}, 이름: ${tagData.categoryName})`
+          );
+        }
+
+        path = `${basePath}/category/${categoryId}`;
+
+        setStatus('success');
+        setStatusMessage('✅ 카테고리 찾음! 이동 중...');
+      }
 
       // 잠시 후 페이지 이동
       setTimeout(() => {

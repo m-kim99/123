@@ -6,6 +6,7 @@ export interface NFCTagData {
   categoryName: string;
   storageLocation: string;
   documentCount: number;
+  subcategoryId?: string;
 }
 
 // NFC 동작 모드: 일반(idle) / 쓰기(writing)
@@ -261,23 +262,45 @@ export async function readNFCTag(): Promise<NFCTagData> {
           }
 
           // 데이터 디코딩
-          let jsonData: string;
+          let decodedData: string;
 
           try {
             const decoder = new TextDecoder();
-            jsonData = decoder.decode(record.data);
+            decodedData = decoder.decode(record.data);
           } catch (decodeError) {
             reject(new Error('NFC 태그 데이터를 디코딩할 수 없습니다.'));
             return;
           }
 
-          // JSON 파싱
+          // URL 레코드인지 확인 (writeNFCUrl로 기록된 태그)
+          if (record.recordType === 'url' || decodedData.includes('/nfc-redirect?subcategoryId=')) {
+            try {
+              const url = new URL(decodedData, window.location.origin);
+              const subcategoryId = url.searchParams.get('subcategoryId');
+              if (subcategoryId) {
+                const tagData: NFCTagData = {
+                  categoryCode: '',
+                  categoryName: '',
+                  storageLocation: '',
+                  documentCount: 0,
+                  subcategoryId,
+                };
+                console.log('NFC URL 태그 데이터 읽기 완료 (subcategoryId):', tagData);
+                resolve(tagData);
+                return;
+              }
+            } catch (urlError) {
+              // URL 파싱 실패 시 JSON 파싱으로 폴백
+              console.warn('NFC URL 파싱 실패, JSON 파싱 시도:', urlError);
+            }
+          }
+
+          // JSON 파싱 (writeNFCTag로 기록된 레거시 태그)
           let data: any;
           try {
-            data = JSON.parse(jsonData);
+            data = JSON.parse(decodedData);
           } catch (parseError) {
-            // JSON이 아닐 경우 텍스트로 처리
-            reject(new Error('NFC 태그에 유효한 JSON 데이터가 없습니다.'));
+            reject(new Error('NFC 태그에 유효한 데이터가 없습니다.'));
             return;
           }
 
