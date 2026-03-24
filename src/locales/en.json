@@ -125,6 +125,7 @@
     "deleteOAuthNote": "Social login accounts confirm by typing \"delete\" instead of password.",
     "deletePasswordLabel": "Confirm Password",
     "deletePasswordPlaceholder": "Enter your current password",
+    "deleteKeyword": "delete",
     "deleteConfirmExact": "Please type \"delete\" exactly.",
     "enterPasswordPlease": "Please enter your password.",
     "passwordMismatch": "Password does not match.",
@@ -1049,7 +1050,9 @@
     "goToDepartment": "Go to Department",
     "goToSubcategory": "Go to Subcategory",
     "goToParentCategory": "Go to Parent Category",
-    "sharedDocuments": "Shared Documents"
+    "sharedDocuments": "Shared Documents",
+    "below": "below",
+    "belowDoc": "document below"
   },
   "months": {
     "1": "Jan",

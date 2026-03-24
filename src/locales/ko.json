@@ -125,6 +125,7 @@
     "deleteOAuthNote": "소셜 로그인 계정은 비밀번호 대신 \"탈퇴\" 입력으로 확인합니다.",
     "deletePasswordLabel": "비밀번호 확인",
     "deletePasswordPlaceholder": "현재 비밀번호를 입력하세요",
+    "deleteKeyword": "탈퇴",
     "deleteConfirmExact": "\"탈퇴\"를 정확히 입력해주세요.",
     "enterPasswordPlease": "비밀번호를 입력해주세요.",
     "passwordMismatch": "비밀번호가 일치하지 않습니다.",
@@ -1048,7 +1049,9 @@
     "goToDepartment": "부서 페이지로 이동",
     "goToSubcategory": "세부 스토리지로 이동",
     "goToParentCategory": "대분류로 이동",
-    "sharedDocuments": "공유 문서함"
+    "sharedDocuments": "공유 문서함",
+    "below": "아래",
+    "belowDoc": "아래 문서"
   },
   "months": {
     "1": "1월",

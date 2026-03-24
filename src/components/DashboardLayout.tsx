@@ -30,7 +30,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -392,7 +397,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     // OAuth 사용자: "탈퇴" 텍스트 확인
     if (isOAuthUser) {
-      if (deletionConfirmText !== '탈퇴') {
+      if (deletionConfirmText !== t('profile.deleteKeyword')) {
         setProfileError(t('profile.deleteConfirmExact'));
         return;
       }
@@ -932,26 +937,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {t('header.profileSettings')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <div className="flex items-center justify-between w-full cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    <span>{t('language.settings')}</span>
-                  </div>
-                  <select
-                    value={i18n.language}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      changeLanguage(e.target.value);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs border rounded px-1.5 py-0.5 bg-white"
-                  >
-                    <option value="ko">{t('language.korean')}</option>
-                    <option value="en">{t('language.english')}</option>
-                  </select>
-                </div>
-              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Globe className="h-4 w-4 mr-2" />
+                  <span>{t('language.settings')}</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
+                    <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -1148,26 +1145,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     {t('header.profileSettings')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <div className="flex items-center justify-between w-full cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        <span>{t('language.settings')}</span>
-                      </div>
-                      <select
-                        value={i18n.language}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          changeLanguage(e.target.value);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs border rounded px-1.5 py-0.5 bg-white"
-                      >
-                        <option value="ko">{t('language.korean')}</option>
-                        <option value="en">{t('language.english')}</option>
-                      </select>
-                    </div>
-                  </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Globe className="h-4 w-4 mr-2" />
+                      <span>{t('language.settings')}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
+                        <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -1284,7 +1273,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Input
                       id="deletion-confirm"
                       type="text"
-                      placeholder="탈퇴"
+                      placeholder={t('profile.deleteKeyword')}
                       value={deletionConfirmText}
                       onChange={(e) => setDeletionConfirmText(e.target.value)}
                       disabled={isRequestingDeletion}
@@ -1329,7 +1318,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="destructive"
                   onClick={handleRequestDeletion}
-                  disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== '탈퇴' : !deletionPassword.trim())}
+                  disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== t('profile.deleteKeyword') : !deletionPassword.trim())}
                   className="w-full sm:w-auto"
                 >
                   {isRequestingDeletion ? t('common.processing') : t('profile.requestDeletion')}

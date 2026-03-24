@@ -52,26 +52,28 @@ interface ExtractedLink {
 }
 
 // 텍스트에서 링크 패턴을 "아래"로 대치
-function parseContentWithoutLinks(content: string): ReactNode[] {
-  // 링크 패턴을 "아래"로 대치 (→ /path/... 또는 문서: /path/...)
+function parseContentWithoutLinks(content: string, below?: string, belowDoc?: string): ReactNode[] {
+  const belowText = below || '아래';
+  const belowDocText = belowDoc || '아래 문서';
   const cleanedContent = content
-    .replace(/→\s*\/[^\s\n]+/g, '아래') // → /path/... → 아래
-    .replace(/문서:\s*\/[^\s\n]+/g, '아래 문서') // 문서: /path/... → 아래 문서
-    .replace(/\n{3,}/g, '\n\n') // 여러 줄바꿈 정리
+    .replace(/→\s*\/[^\s\n]+/g, belowText)
+    .replace(/문서:\s*\/[^\s\n]+/g, belowDocText)
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
   return parseBoldText(cleanedContent, 'content');
 }
 
 // 메시지에서 링크 추출 및 경로 수정
-function extractLinksFromMessage(content: string): ExtractedLink[] {
+function extractLinksFromMessage(content: string, labels?: { viewDoc: string; goDept: string; goSub: string; goParent: string; shared: string }): ExtractedLink[] {
   const links: ExtractedLink[] = [];
   const linkRegex = /(?:→\s*|문서:\s*)(\/[^\s\n]+)/g;
   let match;
+  const l = labels || { viewDoc: '문서 보기', goDept: '부서 페이지로 이동', goSub: '세부 스토리지로 이동', goParent: '대분류로 이동', shared: '공유 문서함' };
   
   while ((match = linkRegex.exec(content)) !== null) {
     let path = match[1];
-    let label = '문서 보기';
+    let label = l.viewDoc;
     
     // 경로 수정: /department/ → /departments/ (라우트와 일치시키기)
     if (path.includes('/department/') && !path.includes('/departments/')) {
@@ -80,15 +82,15 @@ function extractLinksFromMessage(content: string): ExtractedLink[] {
     
     // 레이블 설정
     if (path.includes('/departments/')) {
-      label = '부서 페이지로 이동';
+      label = l.goDept;
     } else if (path.includes('/parent-category/') && path.includes('/subcategory/')) {
-      label = '세부 스토리지로 이동';
+      label = l.goSub;
     } else if (path.includes('/parent-category/')) {
-      label = '대분류로 이동';
+      label = l.goParent;
     } else if (path.includes('/documents')) {
-      label = '문서 보기';
+      label = l.viewDoc;
     } else if (path.includes('/shared')) {
-      label = '공유 문서함';
+      label = l.shared;
     }
     links.push({ path, label });
   }
@@ -1037,7 +1039,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     >
                       <div className="text-sm break-words whitespace-pre-line">
                         {message.role === 'assistant'
-                          ? parseContentWithoutLinks(message.content)
+                          ? parseContentWithoutLinks(message.content, t('chatbot.below'), t('chatbot.belowDoc'))
                           : message.content
                         }
                       </div>
@@ -1051,7 +1053,13 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   </div>
                   {/* 텍스트 내 링크를 카드로 표시 */}
                   {message.role === 'assistant' && (() => {
-                    const extractedLinks = extractLinksFromMessage(message.content);
+                    const extractedLinks = extractLinksFromMessage(message.content, {
+                      viewDoc: t('chatbot.viewDocument'),
+                      goDept: t('chatbot.goToDepartment'),
+                      goSub: t('chatbot.goToSubcategory'),
+                      goParent: t('chatbot.goToParentCategory'),
+                      shared: t('chatbot.sharedDocuments'),
+                    });
                     if (extractedLinks.length > 0) {
                       return (
                         <div className="ml-2 space-y-2 mt-2">
