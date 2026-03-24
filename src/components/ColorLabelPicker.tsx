@@ -1,16 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 export const COLOR_LABELS = [
-  { value: 'ffffff', name: '흰색' },
-  { value: 'e80000', name: '빨강' },
-  { value: 'ff7f00', name: '주황' },
-  { value: 'ffff00', name: '노랑' },
-  { value: '26af00', name: '초록' },
-  { value: '009eff', name: '파랑' },
-  { value: '8800a0', name: '보라' },
-  { value: '7f4800', name: '갈색' },
-  { value: 'a5a5a5', name: '회색' },
-  { value: '000000', name: '검정' },
+  { value: 'ffffff', nameKey: 'colors.white' },
+  { value: 'e80000', nameKey: 'colors.red' },
+  { value: 'ff7f00', nameKey: 'colors.orange' },
+  { value: 'ffff00', nameKey: 'colors.yellow' },
+  { value: '26af00', nameKey: 'colors.green' },
+  { value: '009eff', nameKey: 'colors.blue' },
+  { value: '8800a0', nameKey: 'colors.purple' },
+  { value: '7f4800', nameKey: 'colors.brown' },
+  { value: 'a5a5a5', nameKey: 'colors.gray' },
+  { value: '000000', nameKey: 'colors.black' },
 ] as const;
 
 interface ColorLabelPickerProps {
@@ -20,13 +21,14 @@ interface ColorLabelPickerProps {
 }
 
 export function ColorLabelPicker({ value, onChange, className }: ColorLabelPickerProps) {
+  const { t } = useTranslation();
   return (
     <div className={cn('flex flex-wrap gap-2', className)}>
       {COLOR_LABELS.map((color) => (
         <button
           key={color.value}
           type="button"
-          title={color.name}
+          title={t(color.nameKey)}
           onClick={() => onChange(value === color.value ? null : color.value)}
           className={cn(
             'w-8 h-8 rounded-full border-2 transition-all hover:scale-110',

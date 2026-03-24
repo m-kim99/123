@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ export function NFCRegistrationDialog({
   categoryId,
   categoryName,
 }: NFCRegistrationDialogProps) {
+  const { t } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +50,8 @@ export function NFCRegistrationDialog({
       });
 
       toast({
-        title: 'NFC 태그 등록 완료',
-        description: '태그와 카테고리가 성공적으로 연결되었습니다.',
+        title: t('nfc.registrationDone'),
+        description: t('nfcRegDialog.tagLinked'),
       });
 
       setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
@@ -59,7 +61,7 @@ export function NFCRegistrationDialog({
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('NFC 태그 등록 중 오류가 발생했습니다.');
+        setError(t('nfcRegDialog.registrationError'));
       }
       setNfcMode('idle'); // 에러 시 모드 초기화
     } finally {
@@ -71,10 +73,10 @@ export function NFCRegistrationDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>NFC 태그 등록</DialogTitle>
+          <DialogTitle>{t('nfc.tagRegistration')}</DialogTitle>
           <DialogDescription>
-            "{categoryName}" 카테고리를 NFC 태그에 등록하시겠어요?\n
-            태그를 기기에 가까이 가져다 대면 자동으로 UID를 읽어 매핑합니다.
+            {t('nfcRegDialog.confirmRegister', { name: categoryName })}\n
+            {t('nfcRegDialog.bringTagClose')}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,14 +91,14 @@ export function NFCRegistrationDialog({
             onClick={() => handleClose(false)}
             disabled={isRegistering}
           >
-            나중에
+            {t('nfcRegDialog.later')}
           </Button>
           <Button
             type="button"
             onClick={handleRegister}
             disabled={isRegistering}
           >
-            {isRegistering ? '태그 스캔 중...' : '태그 등록 시작'}
+            {isRegistering ? t('nfcRegDialog.scanningTag') : t('nfcRegDialog.startRegistration')}
           </Button>
         </DialogFooter>
       </DialogContent>

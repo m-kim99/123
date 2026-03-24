@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { isNFCSupported, getNfcMode } from '@/lib/nfc';
 import { toast } from '@/hooks/use-toast';
@@ -6,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 
 export function NFCAutoRedirect() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const ndefReaderRef = useRef<any>(null);
@@ -99,8 +101,8 @@ export function NFCAutoRedirect() {
 
                     if (parentCategoryId) {
                       toast({
-                        title: '✅ NFC 태그 인식',
-                        description: '연결된 세부 스토리지로 이동합니다.',
+                        title: t('nfc.tagRecognized'),
+                        description: t('nfc.navigatingToSubcategory'),
                       });
 
                       navigate(
@@ -124,8 +126,8 @@ export function NFCAutoRedirect() {
 
             if (!subError && sub) {
               toast({
-                title: '✅ NFC 태그 인식',
-                description: '연결된 세부 스토리지로 이동합니다.',
+                title: t('nfc.tagRecognized'),
+                description: t('nfc.navigatingToSubcategory'),
               });
 
               navigate(
@@ -136,15 +138,15 @@ export function NFCAutoRedirect() {
 
             // 등록되지 않은 태그
             toast({
-              title: '❌ 미등록 태그',
-              description: '이 NFC 태그는 등록되지 않았습니다.',
+              title: t('nfc.unregisteredTag'),
+              description: t('nfc.unregisteredTagDesc'),
               variant: 'destructive',
             });
           } catch (error) {
             console.error('NFC 처리 오류:', error);
             toast({
-              title: '오류',
-              description: 'NFC 태그 처리 중 오류가 발생했습니다.',
+              title: t('common.error'),
+              description: t('nfc.processingError'),
               variant: 'destructive',
             });
           }

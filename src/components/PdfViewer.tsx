@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { downloadFile as appDownloadFile } from '@/lib/appBridge';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ interface PdfViewerProps {
 }
 
 export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfViewerProps) {
+  const { t } = useTranslation();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
@@ -139,7 +141,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={() => setShowSidebar(!showSidebar)}
-            title="목차"
+            title={t('pdfViewer.toc')}
             className="p-1 sm:p-2"
           >
             {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
@@ -152,7 +154,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={() => setScale((prev) => Math.max(0.5, prev - 0.1))}
-            title="축소"
+            title={t('pdfViewer.zoomOut')}
             className="p-1 sm:p-2"
           >
             <ZoomOut className="h-4 w-4" />
@@ -165,7 +167,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={() => setScale((prev) => Math.min(2.5, prev + 0.1))}
-            title="확대"
+            title={t('pdfViewer.zoomIn')}
             className="p-1 sm:p-2"
           >
             <ZoomIn className="h-4 w-4" />
@@ -214,7 +216,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={handleRotate}
-            title="회전"
+            title={t('pdfViewer.rotate')}
             className="p-1 sm:p-2"
           >
             <RotateCw className="h-4 w-4" />
@@ -224,7 +226,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={() => setShowSearch(!showSearch)}
-            title="검색"
+            title={t('common.search')}
             className="p-1 sm:p-2"
           >
             <Search className="h-4 w-4" />
@@ -234,7 +236,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={handlePrint}
-            title="인쇄"
+            title={t('pdfViewer.print')}
             className="hidden sm:flex p-1 sm:p-2"
           >
             <Printer className="h-4 w-4" />
@@ -244,7 +246,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             variant="outline"
             size="sm"
             onClick={handleDownload}
-            title="다운로드"
+            title={t('pdfViewer.download')}
             className="p-1 sm:p-2"
           >
             <Download className="h-4 w-4" />
@@ -258,7 +260,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
           <Search className="h-4 w-4 text-slate-400" />
           <Input
             type="text"
-            placeholder="텍스트 검색..."
+            placeholder={t('pdfViewer.searchText')}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="flex-1 h-8 text-sm"
@@ -285,7 +287,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
           <div className="w-32 sm:w-40 border-r bg-slate-50 overflow-y-auto flex-shrink-0">
             <div className="p-2 border-b bg-white sticky top-0 z-10">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600">목차</span>
+                <span className="text-xs font-medium text-slate-600">{t('pdfViewer.toc')}</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -337,12 +339,12 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             onLoadSuccess={handleDocumentLoadSuccess}
             loading={
               <div className="flex h-40 items-center justify-center px-4">
-                <p className="text-slate-500 text-sm">PDF 문서를 불러오는 중입니다...</p>
+                <p className="text-slate-500 text-sm">{t('pdfViewer.loading')}</p>
               </div>
             }
             error={
               <div className="flex h-40 items-center justify-center px-4">
-                <p className="text-red-500 text-sm">PDF 문서를 불러오지 못했습니다.</p>
+                <p className="text-red-500 text-sm">{t('pdfViewer.loadError')}</p>
               </div>
             }
             className="flex flex-col items-center py-4 gap-4"

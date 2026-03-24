@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -7,6 +8,7 @@ interface BackButtonProps {
 }
 
 export function BackButton({ className = '' }: BackButtonProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -16,7 +18,7 @@ export function BackButton({ className = '' }: BackButtonProps) {
       onClick={() => navigate(-1)}
     >
       <ArrowLeft className="h-4 w-4 mr-2" />
-      돌아가기
+      {t('common.back')}
     </Button>
   );
 }

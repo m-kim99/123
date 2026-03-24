@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
@@ -129,6 +130,7 @@ function loadMessages(): ChatMessage[] {
 }
 
 export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(() => sessionStorage.getItem(CHAT_OPEN_KEY) === 'true');
@@ -436,7 +438,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
           role: 'assistant' as const,
-          content: '🎤 음성 인식 시간이 초과되었습니다. 마이크 버튼을 다시 눌러주세요.',
+          content: t('chatbot.voiceTimeout'),
           timestamp: new Date(),
         }]);
       }
@@ -515,14 +517,14 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
             setMessages(prev => [...prev, {
               id: `${Date.now()}-system`,
               role: 'assistant' as const,
-              content: '🎤 마이크 권한이 거부되었습니다. 권한을 허용한 후 다시 시도해주세요.',
+              content: t('chatbot.micDeniedApp'),
               timestamp: new Date(),
             }]);
           } else {
             setMessages(prev => [...prev, {
               id: `${Date.now()}-system`,
               role: 'assistant' as const,
-              content: '🎤 마이크 권한이 거부되었습니다. iPhone: 설정 → Safari → 마이크를 허용해주세요.',
+              content: t('chatbot.micDeniedBrowser'),
               timestamp: new Date(),
             }]);
           }
@@ -540,7 +542,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
             setMessages(prev => [...prev, {
               id: `${Date.now()}-system`,
               role: 'assistant' as const,
-              content: '🎤 마이크가 비활성화되었습니다. 마이크 버튼을 다시 눌러주세요.',
+              content: t('chatbot.micDeactivated'),
               timestamp: new Date(),
             }]);
           }
@@ -552,7 +554,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
           role: 'assistant' as const,
-          content: '🎤 마이크에 접근할 수 없습니다. 다른 앱이 마이크를 사용 중인지 확인해주세요.',
+          content: t('chatbot.micUnavailable'),
           timestamp: new Date(),
         }]);
       } else if (error === 'network' || error === 'service-not-available') {
@@ -568,7 +570,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         setMessages(prev => [...prev, {
           id: `${Date.now()}-system`,
           role: 'assistant' as const,
-          content: '🎤 이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome 또는 Safari를 사용해주세요.',
+          content: t('chatbot.browserNotSupported'),
           timestamp: new Date(),
         }]);
       }
@@ -773,7 +775,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
           setMessages(prev => [...prev, {
             id: `${Date.now()}-system`,
             role: 'assistant' as const,
-            content: '🎤 이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome 또는 Safari를 사용해주세요.',
+            content: t('chatbot.browserNotSupported'),
             timestamp: new Date(),
           }]);
           return;
@@ -943,7 +945,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               <div className="p-1 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
                 <MessageSquare className="h-4 w-4" style={{ color: primaryColor }} />
               </div>
-              AI 챗봇
+              {t('chatbot.title')}
             </CardTitle>
             <div className="flex items-center gap-1">
               <button
@@ -954,7 +956,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               >
                 <img
                   src={isTall ? reduceIcon : expandIcon}
-                  alt={isTall ? '축소' : '확장'}
+                  alt={isTall ? t('pdfViewer.zoomOut') : t('pdfViewer.zoomIn')}
                   className="h-5 w-5 block object-contain pointer-events-none"
                 />
               </button>
@@ -1005,7 +1007,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: primaryColor }}
               >
-                <img src={closeIcon} alt="닫기" className="h-5 w-5 block object-contain pointer-events-none" />
+                <img src={closeIcon} alt={t('common.close')} className="h-5 w-5 block object-contain pointer-events-none" />
               </button>
             </div>
           </CardHeader>
@@ -1128,7 +1130,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="px-3 py-1 rounded-lg bg-transparent text-xs text-slate-600">
-                    생각 중...
+                    {t('chatbot.thinking')}
                   </div>
                 </div>
               )}
@@ -1140,25 +1142,25 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => handleQuickQuestion('인사팀 문서는 어디에 있나요?')}
+                onClick={() => handleQuickQuestion(t('chatbot.quickQ1'))}
               >
-                인사팀 문서는 어디에 있나요?
+                {t('chatbot.quickQ1')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => handleQuickQuestion('전체 문서 수는?')}
+                onClick={() => handleQuickQuestion(t('chatbot.quickQ2'))}
               >
-                전체 문서 수는?
+                {t('chatbot.quickQ2')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => handleQuickQuestion('카테고리 목록 보여줘')}
+                onClick={() => handleQuickQuestion(t('chatbot.quickQ3'))}
               >
-                카테고리 목록 보여줘
+                {t('chatbot.quickQ3')}
               </Button>
             </div>
 
@@ -1170,7 +1172,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={isVoiceMode ? '🎤 음성 대화 중... 말씀하세요' : '질문하세요...'}
+                  placeholder={isVoiceMode ? t('chatbot.voicePlaceholder') : t('chatbot.inputPlaceholder')}
                   className="text-sm pr-10"
                   disabled={isVoiceMode && !isRunningInApp()}
                 />
@@ -1180,7 +1182,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   style={{ backgroundColor: primaryColor }}
                   disabled={isVoiceMode && !isRunningInApp()}
                 >
-                  <img src={sendIcon} alt="전송" className="h-5 w-5 block object-contain pointer-events-none" />
+                  <img src={sendIcon} alt={t('chatbot.send')} className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
               </div>
               {/* 음성 대화 버튼 (숨김 처리 — 기능은 유지) */}
@@ -1189,17 +1191,17 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 onClick={toggleLiveVoice}
                 className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
                 style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor, display: 'none' }}
-                title={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
+                title={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
               >
                 <img
                   src={isVoiceMode ? micOnIcon : micIcon}
-                  alt={isVoiceMode ? '음성 대화 종료' : '음성 대화 시작'}
+                  alt={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
                   className="h-5 w-5 block object-contain pointer-events-none"
                 />
               </button>
             </form>
             {isSpeaking && (
-              <div className="text-xs text-green-600 animate-pulse text-center pb-2">🔊 AI가 답변 중...</div>
+              <div className="text-xs text-green-600 animate-pulse text-center pb-2">{t('chatbot.aiSpeaking')}</div>
             )}
           </CardContent>
         </Card>

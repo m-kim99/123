@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 
 export function NFCReader() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [isScanning, setIsScanning] = useState(false);
@@ -27,13 +29,13 @@ export function NFCReader() {
   const handleScan = async () => {
     if (!user) {
       setStatus('error');
-      setStatusMessage('로그인이 필요합니다.');
+      setStatusMessage(t('nfc.loginRequired'));
       return;
     }
 
     setIsScanning(true);
     setStatus('scanning');
-    setStatusMessage('태그를 가까이 대세요...');
+    setStatusMessage(t('nfc.bringTagClose'));
     setErrorMessage('');
     setShowDialog(true);
 
@@ -66,7 +68,7 @@ export function NFCReader() {
         path = `${basePath}/parent-category/${parentCategoryId}/subcategory/${tagData.subcategoryId}`;
 
         setStatus('success');
-        setStatusMessage('✅ 세부 카테고리 찾음! 이동 중...');
+        setStatusMessage(t('nfc.subcategoryFound'));
       } else {
         // categoryCode/categoryName으로 카테고리 찾기 (레거시 JSON 태그)
         let categoryId: string | null = null;
@@ -107,7 +109,7 @@ export function NFCReader() {
         path = `${basePath}/category/${categoryId}`;
 
         setStatus('success');
-        setStatusMessage('✅ 카테고리 찾음! 이동 중...');
+        setStatusMessage(t('nfc.categoryFound'));
       }
 
       // 잠시 후 페이지 이동
@@ -120,11 +122,11 @@ export function NFCReader() {
     } catch (error) {
       console.error('NFC 스캔 오류:', error);
       setStatus('error');
-      setStatusMessage('❌ 스캔 실패');
+      setStatusMessage(t('nfc.scanFailed'));
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'NFC 태그 스캔 중 오류가 발생했습니다.'
+          : t('nfc.scanError')
       );
 
       // 에러 후 3초 뒤 자동으로 대화상자 닫기
@@ -168,7 +170,7 @@ export function NFCReader() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">NFC 스캔</h3>
+              <h3 className="text-lg font-semibold">{t('nfc.scan')}</h3>
               {!isScanning && (
                 <Button
                   variant="ghost"
@@ -185,7 +187,7 @@ export function NFCReader() {
             {status === 'scanning' && (
               <Alert className="border-blue-200 bg-blue-50">
                 <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-                <AlertTitle className="text-blue-900">NFC 스캔 중</AlertTitle>
+                <AlertTitle className="text-blue-900">{t('nfc.scanning')}</AlertTitle>
                 <AlertDescription className="text-blue-800">
                   {statusMessage}
                 </AlertDescription>
@@ -195,7 +197,7 @@ export function NFCReader() {
             {/* 성공 상태 */}
             {status === 'success' && (
               <Alert className="border-green-200 bg-green-50">
-                <AlertTitle className="text-green-900">스캔 성공</AlertTitle>
+                <AlertTitle className="text-green-900">{t('nfc.scanSuccess')}</AlertTitle>
                 <AlertDescription className="text-green-800">
                   {statusMessage}
                 </AlertDescription>
@@ -205,7 +207,7 @@ export function NFCReader() {
             {/* 에러 상태 */}
             {status === 'error' && (
               <Alert variant="destructive">
-                <AlertTitle>스캔 실패</AlertTitle>
+                <AlertTitle>{t('nfc.scanFailed')}</AlertTitle>
                 <AlertDescription>
                   {statusMessage}
                   {errorMessage && (
@@ -219,7 +221,7 @@ export function NFCReader() {
             {!isScanning && (
               <div className="mt-4 flex justify-end">
                 <Button onClick={handleCloseDialog} variant="outline">
-                  닫기
+                  {t('common.close')}
                 </Button>
               </div>
             )}
