@@ -150,7 +150,7 @@ function getExpiryStatus(expiryDate: string | null): {
 }
 
 export function DocumentManagement() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   
   // Selector 최적화: 상태값은 개별 selector로
