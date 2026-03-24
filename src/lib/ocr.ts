@@ -43,9 +43,14 @@ async function convertPDFPageToImage(
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    // PDF 페이지를 Canvas에 렌더링
+    const canvasContext = canvas.getContext('2d');
+    if (!canvasContext) {
+      throw new Error('Canvas 2D 컨텍스트를 생성할 수 없습니다.');
+    }
+
+    // PDF 페이지를 Canvas에 렌더링 (pdfjs-dist v3.x는 canvasContext 필요)
     await page.render({
-      canvas,
+      canvasContext,
       viewport,
     }).promise;
 
@@ -106,14 +111,19 @@ export async function extractTextFromPDF(
         const page = await pdf.getPage(pageNum);
         
         // 1단계: 텍스트 레이어에서 텍스트 추출 시도 (문자 PDF)
-        const textContent = await page.getTextContent();
-        const textLayerText = textContent.items
-          .map((item: any) => item.str || '')
-          .join(' ')
-          .trim();
+        let textLayerText = '';
+        try {
+          const textContent = await page.getTextContent();
+          textLayerText = textContent.items
+            .map((item: any) => item.str || '')
+            .join(' ')
+            .trim();
+        } catch (textError) {
+          console.warn(`⚠️ 페이지 ${pageNum}: 텍스트 레이어 추출 실패`, textError);
+        }
 
-        if (textLayerText.length > 50) {
-          // 텍스트가 충분히 있으면 OCR 불필요
+        if (textLayerText.length > 0) {
+          // 텍스트 레이어에 텍스트가 있으면 OCR 불필요 (워드 문서 PDF 등)
           console.log(`✅ 페이지 ${pageNum}: 텍스트 레이어 발견 (${textLayerText.length}자)`);
           extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${textLayerText}\n`);
           textLayerPageCount++;
@@ -127,7 +137,7 @@ export async function extractTextFromPDF(
           continue;
         }
 
-        // 2단계: 텍스트 레이어가 없으면 OCR 사용 (이미지 PDF)
+        // 2단계: 텍스트 레이어가 없으면 OCR 사용 (스캔/이미지 PDF)
         console.log(`🖼️ 페이지 ${pageNum}: 텍스트 레이어 없음, OCR 실행...`);
         
         onProgress?.({
