@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Send } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
@@ -16,6 +17,7 @@ import type { Announcement, AnnouncementComment } from '@/types/announcement';
 import { BackButton } from '@/components/BackButton';
 
 export function TeamAnnouncements() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -54,7 +56,7 @@ export function TeamAnnouncements() {
         createdBy: a.created_by,
         createdAt: a.created_at,
         updatedAt: a.updated_at,
-        authorName: a.author?.name || '알 수 없음',
+        authorName: a.author?.name || t('common.unknown'),
       }));
 
       setAnnouncements(formatted);
@@ -62,8 +64,8 @@ export function TeamAnnouncements() {
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       toast({
-        title: '로드 실패',
-        description: '공지사항을 불러오지 못했습니다.',
+        title: t('announcements.loadFailed'),
+        description: t('announcements.loadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -91,7 +93,7 @@ export function TeamAnnouncements() {
         content: c.content,
         createdAt: c.created_at,
         updatedAt: c.updated_at,
-        userName: c.commenter?.name || '알 수 없음',
+        userName: c.commenter?.name || t('common.unknown'),
       }));
 
       setComments((prev) => ({
@@ -107,8 +109,8 @@ export function TeamAnnouncements() {
     const content = newComment[announcementId]?.trim();
     if (!content) {
       toast({
-        title: '입력 오류',
-        description: '댓글 내용을 입력해주세요.',
+        title: t('announcements.inputError'),
+        description: t('teamAnnouncements.enterComment'),
         variant: 'destructive',
       });
       return;
@@ -116,8 +118,8 @@ export function TeamAnnouncements() {
 
     if (!user?.id) {
       toast({
-        title: '사용자 정보 없음',
-        description: '사용자 정보를 불러오지 못했습니다. 다시 로그인해주세요.',
+        title: t('announcements.noUserInfo'),
+        description: t('announcements.noUserInfoDesc'),
         variant: 'destructive',
       });
       return;
@@ -133,8 +135,8 @@ export function TeamAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '댓글 추가',
-        description: '댓글이 추가되었습니다.',
+        title: t('teamAnnouncements.commentAdded'),
+        description: t('teamAnnouncements.commentAddedDesc'),
       });
 
       setNewComment((prev) => ({ ...prev, [announcementId]: '' }));
@@ -142,8 +144,8 @@ export function TeamAnnouncements() {
     } catch (error) {
       console.error('댓글 추가 실패:', error);
       toast({
-        title: '댓글 추가 실패',
-        description: '댓글을 추가하지 못했습니다.',
+        title: t('teamAnnouncements.commentAddFailed'),
+        description: t('teamAnnouncements.commentAddFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -152,8 +154,8 @@ export function TeamAnnouncements() {
   const handleEditComment = async (commentId: string, announcementId: string) => {
     if (!editingCommentContent.trim()) {
       toast({
-        title: '입력 오류',
-        description: '댓글 내용을 입력해주세요.',
+        title: t('announcements.inputError'),
+        description: t('teamAnnouncements.enterComment'),
         variant: 'destructive',
       });
       return;
@@ -171,8 +173,8 @@ export function TeamAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '댓글 수정',
-        description: '댓글이 수정되었습니다.',
+        title: t('teamAnnouncements.commentEdited'),
+        description: t('teamAnnouncements.commentEditedDesc'),
       });
 
       setEditingCommentId(null);
@@ -181,15 +183,15 @@ export function TeamAnnouncements() {
     } catch (error) {
       console.error('댓글 수정 실패:', error);
       toast({
-        title: '댓글 수정 실패',
-        description: '댓글을 수정하지 못했습니다.',
+        title: t('teamAnnouncements.commentEditFailed'),
+        description: t('teamAnnouncements.commentEditFailedDesc'),
         variant: 'destructive',
       });
     }
   };
 
   const handleDeleteComment = async (commentId: string, announcementId: string) => {
-    const confirmed = window.confirm('정말 이 댓글을 삭제하시겠습니까?');
+    const confirmed = window.confirm(t('announcements.confirmDeleteComment'));
     if (!confirmed) return;
 
     try {
@@ -198,16 +200,16 @@ export function TeamAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '댓글 삭제',
-        description: '댓글이 삭제되었습니다.',
+        title: t('announcements.commentDeleted'),
+        description: t('announcements.commentDeletedDesc'),
       });
 
       await fetchComments(announcementId);
     } catch (error) {
       console.error('댓글 삭제 실패:', error);
       toast({
-        title: '댓글 삭제 실패',
-        description: '댓글을 삭제하지 못했습니다.',
+        title: t('announcements.commentDeleteFailed'),
+        description: t('announcements.commentDeleteFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -220,16 +222,16 @@ export function TeamAnnouncements() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">공지사항</h1>
-          <p className="text-slate-500 mt-1">회사 공지사항을 확인합니다</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('teamAnnouncements.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('teamAnnouncements.subtitle')}</p>
         </div>
 
         {isLoading ? (
-          <p className="text-slate-500">로딩 중...</p>
+          <p className="text-slate-500">{t('common.loading')}</p>
         ) : announcements.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <p className="text-slate-500">등록된 공지사항이 없습니다</p>
+              <p className="text-slate-500">{t('announcements.noAnnouncements')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -239,7 +241,7 @@ export function TeamAnnouncements() {
                 <CardHeader>
                   <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
                   <p className="text-sm text-slate-500 truncate">
-                    작성자: {announcement.authorName} ·{' '}
+                    {t('announcements.author')}: {announcement.authorName} ·{' '}
                     {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
                   </p>
                 </CardHeader>
@@ -251,7 +253,7 @@ export function TeamAnnouncements() {
                       <div className="flex items-center gap-2 mb-4">
                         <MessageSquare className="h-5 w-5 text-slate-500" />
                         <span className="font-medium text-slate-700">
-                          댓글 {comments[announcement.id]?.length || 0}개
+                          {t('announcements.commentsCount', { count: comments[announcement.id]?.length || 0 })}
                         </span>
                       </div>
 
@@ -270,7 +272,7 @@ export function TeamAnnouncements() {
                                     size="sm"
                                     onClick={() => handleEditComment(comment.id, announcement.id)}
                                   >
-                                    저장
+                                    {t('common.save')}
                                   </Button>
                                   <Button
                                     size="sm"
@@ -280,7 +282,7 @@ export function TeamAnnouncements() {
                                       setEditingCommentContent('');
                                     }}
                                   >
-                                    취소
+                                    {t('common.cancel')}
                                   </Button>
                                 </div>
                               </div>
@@ -304,7 +306,7 @@ export function TeamAnnouncements() {
                                           setEditingCommentContent(comment.content);
                                         }}
                                       >
-                                        <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
+                                        <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
                                       </Button>
                                     )}
                                     <Button
@@ -313,7 +315,7 @@ export function TeamAnnouncements() {
                                       className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                       onClick={() => handleDeleteComment(comment.id, announcement.id)}
                                     >
-                                      <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                                      <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                                     </Button>
                                   </div>
                                 )}
@@ -332,7 +334,7 @@ export function TeamAnnouncements() {
                               [announcement.id]: e.target.value,
                             }))
                           }
-                          placeholder="댓글을 입력하세요..."
+                          placeholder={t('teamAnnouncements.commentPlaceholder')}
                           rows={2}
                         />
                         <Button

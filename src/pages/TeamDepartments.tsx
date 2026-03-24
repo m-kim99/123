@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ interface Department {
 }
 
 export function TeamDepartments() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   
@@ -112,21 +114,21 @@ export function TeamDepartments() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">전체 부서 보기</h1>
-          <p className="text-slate-500 mt-1">접근 가능한 부서 목록입니다</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('teamDepts.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('teamDepts.subtitle')}</p>
         </div>
 
         {isLoading ? (
           <div className="text-center py-12">
-            <p className="text-slate-500">부서를 불러오는 중...</p>
+            <p className="text-slate-500">{t('teamDepts.loadingDepts')}</p>
           </div>
         ) : departments.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">접근 가능한 부서가 없습니다.</p>
+              <p className="text-slate-500">{t('teamDepts.noDepts')}</p>
               <p className="text-sm text-slate-400 mt-2">
-                관리자에게 부서 접근 권한을 요청하세요.
+                {t('teamDepts.requestAccess')}
               </p>
             </CardContent>
           </Card>
@@ -163,7 +165,7 @@ export function TeamDepartments() {
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-1 h-12">
                             <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">문서</span>
+                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('common.documents')}</span>
                           </div>
                           <p className="text-2xl font-bold">{deptDocuments.length}</p>
                         </div>
@@ -171,8 +173,8 @@ export function TeamDepartments() {
                           <div className="flex items-center gap-2 mb-1 h-12">
                             <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
                             <span className="text-xs text-slate-500 leading-tight">
-                              <span className="md:hidden">카테<br/>고리</span>
-                              <span className="hidden md:inline">카테고리</span>
+                              <span className="md:hidden">{t('sharedDocs.category')}</span>
+                              <span className="hidden md:inline">{t('sharedDocs.category')}</span>
                             </span>
                           </div>
                           <p className="text-2xl font-bold">{deptCategories.length}</p>
@@ -180,7 +182,7 @@ export function TeamDepartments() {
                         <div className="bg-slate-50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-1 h-12">
                             <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">팀원</span>
+                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('common.team')}</span>
                           </div>
                           <p className="text-2xl font-bold">{dept.member_count ?? 0}</p>
                         </div>
@@ -188,7 +190,7 @@ export function TeamDepartments() {
 
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-slate-700">
-                          주요 카테고리
+                          {t('teamDepts.mainCategories')}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {deptCategories.slice(0, 3).map((cat) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, MessageSquare } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
@@ -37,6 +38,7 @@ import type { Announcement, AnnouncementComment } from '@/types/announcement';
 import { BackButton } from '@/components/BackButton';
 
 export function AdminAnnouncements() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -89,7 +91,7 @@ export function AdminAnnouncements() {
         createdBy: a.created_by,
         createdAt: a.created_at,
         updatedAt: a.updated_at,
-        authorName: a.author?.name || '알 수 없음',
+        authorName: a.author?.name || t('common.unknown'),
       }));
 
       setAnnouncements(formatted);
@@ -97,8 +99,8 @@ export function AdminAnnouncements() {
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       toast({
-        title: '로드 실패',
-        description: '공지사항을 불러오지 못했습니다.',
+        title: t('announcements.loadFailed'),
+        description: t('announcements.loadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -126,7 +128,7 @@ export function AdminAnnouncements() {
         content: c.content,
         createdAt: c.created_at,
         updatedAt: c.updated_at,
-        userName: c.commenter?.name || '알 수 없음',
+        userName: c.commenter?.name || t('common.unknown'),
       }));
 
       setComments((prev) => ({
@@ -139,7 +141,7 @@ export function AdminAnnouncements() {
   };
 
   const handleDeleteComment = async (commentId: string, announcementId: string) => {
-    const confirmed = window.confirm('정말 이 댓글을 삭제하시겠습니까?');
+    const confirmed = window.confirm(t('announcements.confirmDeleteComment'));
     if (!confirmed) return;
 
     try {
@@ -148,16 +150,16 @@ export function AdminAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '댓글 삭제',
-        description: '댓글이 삭제되었습니다.',
+        title: t('announcements.commentDeleted'),
+        description: t('announcements.commentDeletedDesc'),
       });
 
       await fetchComments(announcementId);
     } catch (error) {
       console.error('댓글 삭제 실패:', error);
       toast({
-        title: '댓글 삭제 실패',
-        description: '댓글을 삭제하지 못했습니다.',
+        title: t('announcements.commentDeleteFailed'),
+        description: t('announcements.commentDeleteFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -166,8 +168,8 @@ export function AdminAnnouncements() {
   const handleAdd = async () => {
     if (!newTitle.trim() || !newContent.trim()) {
       toast({
-        title: '입력 오류',
-        description: '제목과 내용을 모두 입력해주세요.',
+        title: t('announcements.inputError'),
+        description: t('announcements.inputErrorDesc'),
         variant: 'destructive',
       });
       return;
@@ -175,8 +177,8 @@ export function AdminAnnouncements() {
 
     if (!user?.id || !user?.companyId) {
       toast({
-        title: '사용자 정보 없음',
-        description: '사용자 정보를 불러오지 못했습니다. 다시 로그인해주세요.',
+        title: t('announcements.noUserInfo'),
+        description: t('announcements.noUserInfoDesc'),
         variant: 'destructive',
       });
       return;
@@ -195,8 +197,8 @@ export function AdminAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '추가 완료',
-        description: '공지사항이 추가되었습니다.',
+        title: t('announcements.addComplete'),
+        description: t('announcements.addCompleteDesc'),
       });
 
       setAddDialogOpen(false);
@@ -207,8 +209,8 @@ export function AdminAnnouncements() {
     } catch (error) {
       console.error('공지사항 추가 실패:', error);
       toast({
-        title: '추가 실패',
-        description: '공지사항을 추가하지 못했습니다.',
+        title: t('announcements.addFailed'),
+        description: t('announcements.addFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -229,8 +231,8 @@ export function AdminAnnouncements() {
 
     if (!editTitle.trim() || !editContent.trim()) {
       toast({
-        title: '입력 오류',
-        description: '제목과 내용을 모두 입력해주세요.',
+        title: t('announcements.inputError'),
+        description: t('announcements.inputErrorDesc'),
         variant: 'destructive',
       });
       return;
@@ -251,8 +253,8 @@ export function AdminAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '수정 완료',
-        description: '공지사항이 수정되었습니다.',
+        title: t('announcements.editComplete'),
+        description: t('announcements.editCompleteDesc'),
       });
 
       setEditDialogOpen(false);
@@ -260,8 +262,8 @@ export function AdminAnnouncements() {
     } catch (error) {
       console.error('공지사항 수정 실패:', error);
       toast({
-        title: '수정 실패',
-        description: '공지사항을 수정하지 못했습니다.',
+        title: t('announcements.editFailed'),
+        description: t('announcements.editFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -284,8 +286,8 @@ export function AdminAnnouncements() {
       if (error) throw error;
 
       toast({
-        title: '삭제 완료',
-        description: '공지사항이 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('announcements.deleteCompleteDesc'),
       });
 
       setDeleteDialogOpen(false);
@@ -293,8 +295,8 @@ export function AdminAnnouncements() {
     } catch (error) {
       console.error('공지사항 삭제 실패:', error);
       toast({
-        title: '삭제 실패',
-        description: '공지사항을 삭제하지 못했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('announcements.deleteFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -308,8 +310,8 @@ export function AdminAnnouncements() {
         <BackButton className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">공지사항 관리</h1>
-            <p className="text-slate-500 mt-1">회사 공지사항을 작성하고 관리합니다</p>
+            <h1 className="text-3xl font-bold text-slate-900">{t('announcements.title')}</h1>
+            <p className="text-slate-500 mt-1">{t('announcements.subtitle')}</p>
           </div>
 
           {/* 데스크톱: 헤더 옆에 표시 */}
@@ -318,7 +320,7 @@ export function AdminAnnouncements() {
             onClick={() => setAddDialogOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            글쓰기
+            {t('announcements.write')}
           </Button>
         </div>
 
@@ -328,31 +330,31 @@ export function AdminAnnouncements() {
           onClick={() => setAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
-          글쓰기
+          {t('announcements.write')}
         </Button>
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">
               <DialogHeader>
-                <DialogTitle>새 공지사항 작성</DialogTitle>
-                <DialogDescription>회사 전체에 공지할 내용을 작성합니다</DialogDescription>
+                <DialogTitle>{t('announcements.addDialogTitle')}</DialogTitle>
+                <DialogDescription>{t('announcements.addDialogDesc')}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>제목</Label>
+                  <Label>{t('announcements.titleLabel')}</Label>
                   <Input
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="공지사항 제목을 입력하세요"
+                    placeholder={t('announcements.titlePlaceholder')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>내용</Label>
+                  <Label>{t('announcements.contentLabel')}</Label>
                   <Textarea
                     value={newContent}
                     onChange={(e) => setNewContent(e.target.value)}
-                    placeholder="공지사항 내용을 입력하세요"
+                    placeholder={t('announcements.contentPlaceholder')}
                     rows={8}
                   />
                 </div>
@@ -363,13 +365,13 @@ export function AdminAnnouncements() {
                     onCheckedChange={(checked) => setNewAllowComments(checked === true)}
                     className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
                   />
-                  <Label htmlFor="allow-comments">댓글 허용</Label>
+                  <Label htmlFor="allow-comments">{t('announcements.allowComments')}</Label>
                 </div>
               </div>
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
-                  취소
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="button"
@@ -377,18 +379,18 @@ export function AdminAnnouncements() {
                   disabled={isAdding}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {isAdding ? '추가 중...' : '추가'}
+                  {isAdding ? t('announcements.adding') : t('common.add')}
                 </Button>
               </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {isLoading ? (
-          <p className="text-slate-500">로딩 중...</p>
+          <p className="text-slate-500">{t('common.loading')}</p>
         ) : announcements.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <p className="text-slate-500">등록된 공지사항이 없습니다</p>
+              <p className="text-slate-500">{t('announcements.noAnnouncements')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -400,7 +402,7 @@ export function AdminAnnouncements() {
                     <div className="flex-1 min-w-0 overflow-hidden">
                       <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
                       <p className="text-sm text-slate-500 mt-1 truncate">
-                        작성자: {announcement.authorName} ·{' '}
+                        {t('announcements.author')}: {announcement.authorName} ·{' '}
                         {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
                       </p>
                     </div>
@@ -410,7 +412,7 @@ export function AdminAnnouncements() {
                         size="icon"
                         onClick={() => openEditDialog(announcement)}
                       >
-                        <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
+                        <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
@@ -418,7 +420,7 @@ export function AdminAnnouncements() {
                         className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => openDeleteDialog(announcement.id)}
                       >
-                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                        <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -428,14 +430,14 @@ export function AdminAnnouncements() {
                   <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
-                      댓글 {comments[announcement.id]?.length || 0}개 {announcement.allowComments ? '' : '(댓글 비허용)'}
+                      {t('announcements.commentsCount', { count: comments[announcement.id]?.length || 0 })} {announcement.allowComments ? '' : `(${t('announcements.commentsDisabled')})`}
                     </div>
                   </div>
 
                   {/* 댓글 목록 */}
                   {comments[announcement.id] && comments[announcement.id].length > 0 && (
                     <div className="mt-4 pt-4 border-t space-y-3">
-                      <p className="text-sm font-medium text-slate-700">댓글 목록</p>
+                      <p className="text-sm font-medium text-slate-700">{t('announcements.commentList')}</p>
                       {comments[announcement.id].map((comment) => (
                         <div key={comment.id} className="bg-slate-50 rounded-lg p-3 flex items-start justify-between">
                           <div className="flex-1">
@@ -451,7 +453,7 @@ export function AdminAnnouncements() {
                             className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                             onClick={() => handleDeleteComment(comment.id, announcement.id)}
                           >
-                            <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                            <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                           </Button>
                         </div>
                       ))}
@@ -466,25 +468,25 @@ export function AdminAnnouncements() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">
             <DialogHeader>
-              <DialogTitle>공지사항 수정</DialogTitle>
-              <DialogDescription>공지사항 내용을 수정합니다</DialogDescription>
+              <DialogTitle>{t('announcements.editDialogTitle')}</DialogTitle>
+              <DialogDescription>{t('announcements.editDialogDesc')}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>제목</Label>
+                <Label>{t('announcements.titleLabel')}</Label>
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="공지사항 제목을 입력하세요"
+                  placeholder={t('announcements.titlePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>내용</Label>
+                <Label>{t('announcements.contentLabel')}</Label>
                 <Textarea
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="공지사항 내용을 입력하세요"
+                  placeholder={t('announcements.contentPlaceholder')}
                   rows={8}
                 />
               </div>
@@ -495,13 +497,13 @@ export function AdminAnnouncements() {
                   onCheckedChange={(checked) => setEditAllowComments(checked === true)}
                   className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
                 />
-                <Label htmlFor="edit-allow-comments">댓글 허용</Label>
+                <Label htmlFor="edit-allow-comments">{t('announcements.allowComments')}</Label>
               </div>
             </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -509,7 +511,7 @@ export function AdminAnnouncements() {
                 disabled={isEditing}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {isEditing ? '확인 중...' : '확인'}
+                {isEditing ? t('common.processing') : t('common.confirm')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -518,21 +520,21 @@ export function AdminAnnouncements() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>공지사항 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{t('announcements.deleteDialogTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                정말 이 공지사항을 삭제하시겠습니까?
+                {t('announcements.deleteConfirmMsg')}
                 <br />
-                삭제 시 모든 댓글도 함께 삭제되며, 되돌릴 수 없습니다.
+                {t('announcements.deleteWarning')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 disabled={isDeleting}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {isDeleting ? '삭제 중...' : '삭제'}
+                {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

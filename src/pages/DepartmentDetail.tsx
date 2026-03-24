@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
@@ -28,6 +29,7 @@ import { toast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/BackButton';
 
 export function DepartmentDetail() {
+  const { t } = useTranslation();
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
   
@@ -64,7 +66,7 @@ export function DepartmentDetail() {
       <DashboardLayout>
         <div className="space-y-4">
           <BackButton />
-          <p className="text-slate-500">부서를 찾을 수 없습니다</p>
+          <p className="text-slate-500">{t('deptDetail.notFound')}</p>
         </div>
       </DashboardLayout>
     );
@@ -134,14 +136,14 @@ export function DepartmentDetail() {
 
     let hasError = false;
     if (!name) {
-      setEditNameError('부서 이름을 입력하세요');
+      setEditNameError(t('deptDetail.enterDeptName'));
       hasError = true;
     } else {
       setEditNameError('');
     }
 
     if (!code) {
-      setEditCodeError('부서 코드를 입력하세요');
+      setEditCodeError(t('deptDetail.enterDeptCode'));
       hasError = true;
     } else {
       setEditCodeError('');
@@ -168,16 +170,16 @@ export function DepartmentDetail() {
       await fetchDepartments();
 
       toast({
-        title: '수정 완료',
-        description: '부서 정보가 수정되었습니다.',
+        title: t('deptDetail.editComplete'),
+        description: t('deptDetail.editCompleteDesc'),
       });
 
       setIsEditDialogOpen(false);
     } catch (err) {
       console.error('부서 수정 실패:', err);
       toast({
-        title: '수정 실패',
-        description: '부서 정보를 수정하는 중 오류가 발생했습니다.',
+        title: t('deptDetail.editFailed'),
+        description: t('deptDetail.editFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -203,8 +205,8 @@ export function DepartmentDetail() {
       await fetchDepartments();
 
       toast({
-        title: '삭제 완료',
-        description: '부서가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('deptDetail.deleteCompleteDesc'),
       });
 
       setIsDeleteDialogOpen(false);
@@ -212,8 +214,8 @@ export function DepartmentDetail() {
     } catch (err) {
       console.error('부서 삭제 실패:', err);
       toast({
-        title: '삭제 실패',
-        description: '부서를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('deptDetail.deleteFailedDesc'),
         variant: 'destructive',
       });
       setIsDeleting(false);
@@ -227,7 +229,7 @@ export function DepartmentDetail() {
           <DocumentBreadcrumb
             items={[
               {
-                label: '부서 관리',
+                label: t('nav.departmentManagement'),
                 href: '/admin/departments',
               },
               {
@@ -243,9 +245,9 @@ export function DepartmentDetail() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold">{department.name}</h1>
-              <p className="text-sm text-slate-500">부서 코드: {department.code}</p>
+              <p className="text-sm text-slate-500">{t('deptDetail.deptCode')}: {department.code}</p>
               <p className="text-slate-500 mt-1">
-                {department.description || '부서 설명이 등록되어 있지 않습니다.'}
+                {department.description || t('deptDetail.noDescription')}
               </p>
             </div>
 
@@ -262,7 +264,7 @@ export function DepartmentDetail() {
                   setIsEditDialogOpen(true);
                 }}
               >
-                <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
+                <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
               </Button>
 
               <Button
@@ -271,7 +273,7 @@ export function DepartmentDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
               </Button>
             </div>
           </div>
@@ -280,26 +282,26 @@ export function DepartmentDetail() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">문서 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.docCount')}</p>
               <p className="text-2xl font-bold mt-2">{departmentDocuments.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
               <p className="text-2xl font-bold mt-2">{departmentParentCategories.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">팀원 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.teamMemberCount')}</p>
               <p className="text-2xl font-bold mt-2">{teamMembersCount}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
-              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}개</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
+              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}</p>
             </CardContent>
           </Card>
         </div>
@@ -307,20 +309,20 @@ export function DepartmentDetail() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>대분류 목록</CardTitle>
+              <CardTitle>{t('deptDetail.parentCategoryList')}</CardTitle>
               <CardDescription className="mt-1">
-                {department.name} 부서에 속한 대분류입니다
+                {t('deptDetail.parentCategoryListDesc', { name: department.name })}
               </CardDescription>
             </div>
             <Button style={{ backgroundColor: primaryColor }} onClick={handleOpenAddDialog}>
               <Plus className="h-4 w-4 mr-2" />
-              대분류 추가
+              {t('deptDetail.addParentCategory')}
             </Button>
           </CardHeader>
           <CardContent>
             {departmentParentCategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 부서에 등록된 대분류가 없습니다
+                {t('deptDetail.noParentCategories')}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -335,7 +337,7 @@ export function DepartmentDetail() {
                         <div className="flex-1 min-w-0 overflow-hidden">
                           <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
                           <CardDescription className="mt-1 truncate">
-                            {pc.description || '설명이 없습니다.'}
+                            {pc.description || t('parentCategoryDetail.noDescription')}
                           </CardDescription>
                         </div>
                       </div>
@@ -343,12 +345,12 @@ export function DepartmentDetail() {
                     <CardContent>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 스토리지</span>
-                          <span className="font-medium">{pc.subcategoryCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.subcategories')}</span>
+                          <span className="font-medium">{pc.subcategoryCount}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">{pc.documentCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.docCount')}</span>
+                          <span className="font-medium">{pc.documentCount}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -371,40 +373,40 @@ export function DepartmentDetail() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>부서 정보 수정</DialogTitle>
+              <DialogTitle>{t('deptDetail.editDeptTitle')}</DialogTitle>
               <DialogDescription>
-                부서 이름, 코드, 설명을 수정합니다.
+                {t('deptDetail.editDeptDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>부서 이름</Label>
+                <Label>{t('deptDetail.deptName')}</Label>
                 <Input
                   value={editDeptName}
                   onChange={(e) => setEditDeptName(e.target.value)}
-                  placeholder="예: 인사팀"
+                  placeholder={t('deptDetail.deptNamePlaceholder')}
                 />
                 {editNameError && (
                   <p className="text-xs text-red-500 mt-1">{editNameError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>부서 코드</Label>
+                <Label>{t('deptDetail.deptCode')}</Label>
                 <Input
                   value={editDeptCode}
                   onChange={(e) => setEditDeptCode(e.target.value)}
-                  placeholder="예: HR001"
+                  placeholder={t('deptDetail.deptCodePlaceholder')}
                 />
                 {editCodeError && (
                   <p className="text-xs text-red-500 mt-1">{editCodeError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={editDeptDescription}
                   onChange={(e) => setEditDeptDescription(e.target.value)}
-                  placeholder="부서 역할 및 설명을 입력하세요"
+                  placeholder={t('deptDetail.deptDescPlaceholder')}
                 />
               </div>
             </div>
@@ -415,14 +417,14 @@ export function DepartmentDetail() {
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSaving}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
               >
-                {isSaving ? '저장 중...' : '저장'}
+                {isSaving ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -440,37 +442,36 @@ export function DepartmentDetail() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>부서 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{t('deptDetail.deleteDept')}</AlertDialogTitle>
               <AlertDialogDescription>
-                <p>"{department.name}" 부서를 정말 삭제하시겠습니까?</p>
+                <p>{t('deptDetail.deleteDeptConfirm', { name: department.name })}</p>
                 <p className="mt-1">
-                  이 부서의 대분류 {departmentParentCategories.length}개와 문서{' '}
-                  {departmentDocuments.length}개도 함께 삭제됩니다.
+                  {t('deptDetail.deleteDeptWarning', { categories: departmentParentCategories.length, docs: departmentDocuments.length })}
                 </p>
                 <p className="mt-3 text-sm font-medium text-red-600">
-                  삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                  {t('documentMgmt.deleteIrreversible')}
                 </p>
                 <div className="mt-4">
                   <p className="text-sm text-slate-600 mb-2">
-                    정말 삭제하려면 아래에 <span className="font-bold text-red-600">삭제하겠습니다</span>를 입력하세요.
+                    {t('deptDetail.typeToConfirm')} <span className="font-bold text-red-600">{t('deptDetail.confirmWord')}</span>
                   </p>
                   <Input
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="삭제하겠습니다"
+                    placeholder={t('deptDetail.confirmWord')}
                     className="mt-1"
                   />
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteDepartment}
                 className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={isDeleting || deleteConfirmText !== '삭제하겠습니다'}
+                disabled={isDeleting || deleteConfirmText !== t('deptDetail.confirmWord')}
               >
-                {isDeleting ? '삭제 중...' : '삭제'}
+                {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -479,26 +480,26 @@ export function DepartmentDetail() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 대분류 추가</DialogTitle>
+              <DialogTitle>{t('deptDetail.addParentCategoryTitle')}</DialogTitle>
               <DialogDescription>
-                {department.name} 부서에 속한 새로운 대분류를 생성합니다
+                {t('deptDetail.addParentCategoryDesc', { name: department.name })}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>대분류 이름</Label>
+                <Label>{t('deptDetail.parentCategoryName')}</Label>
                 <Input
                   value={newParentCategoryName}
                   onChange={(e) => setNewParentCategoryName(e.target.value)}
-                  placeholder="예: 인사 문서"
+                  placeholder={t('deptDetail.parentCategoryNamePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={newParentCategoryDescription}
                   onChange={(e) => setNewParentCategoryDescription(e.target.value)}
-                  placeholder="대분류 설명을 입력하세요"
+                  placeholder={t('deptDetail.parentCategoryDescPlaceholder')}
                 />
               </div>
             </div>
@@ -508,7 +509,7 @@ export function DepartmentDetail() {
                 variant="outline"
                 onClick={() => setAddDialogOpen(false)}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -516,7 +517,7 @@ export function DepartmentDetail() {
                 style={{ backgroundColor: primaryColor }}
                 disabled={!newParentCategoryName.trim()}
               >
-                추가
+                {t('common.add')}
               </Button>
             </DialogFooter>
           </DialogContent>

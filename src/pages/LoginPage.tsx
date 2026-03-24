@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ import { TermsOfServiceContent } from '@/components/terms/TermsOfService';
 import { PrivacyPolicyContent } from '@/components/terms/PrivacyPolicy';
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signupOpen, setSignupOpen] = useState(false);
@@ -131,8 +133,8 @@ export function LoginPage() {
       if (error) {
         console.error('❌ Google 로그인 실패:', error);
         toast({
-          title: 'Google 로그인 실패',
-          description: error.message || '다시 시도해주세요',
+          title: t('login.googleLoginFailed'),
+          description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
       } else {
@@ -141,8 +143,8 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('❌ Google 로그인 예외:', error);
       toast({
-        title: 'Google 로그인 오류',
-        description: error?.message || 'Google 로그인 중 오류가 발생했습니다.',
+        title: t('login.googleLoginError'),
+        description: error?.message || t('login.googleLoginErrorDesc'),
         variant: 'destructive',
       });
     }
@@ -169,8 +171,8 @@ export function LoginPage() {
       if (error) {
         console.error('❌ Kakao 로그인 실패:', error);
         toast({
-          title: 'Kakao 로그인 실패',
-          description: error.message || '다시 시도해주세요',
+          title: t('login.kakaoLoginFailed'),
+          description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
       } else {
@@ -179,8 +181,8 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('❌ Kakao 로그인 예외:', error);
       toast({
-        title: 'Kakao 로그인 오류',
-        description: error?.message || 'Kakao 로그인 중 오류가 발생했습니다.',
+        title: t('login.kakaoLoginError'),
+        description: error?.message || t('login.kakaoLoginErrorDesc'),
         variant: 'destructive',
       });
     }
@@ -217,8 +219,8 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('❌ Naver 로그인 오류:', error);
       toast({
-        title: 'Naver 로그인 오류',
-        description: error?.message || 'Naver 로그인 중 오류가 발생했습니다.',
+        title: t('login.naverLoginError'),
+        description: error?.message || t('login.naverLoginErrorDesc'),
         variant: 'destructive',
       });
     }
@@ -245,8 +247,8 @@ export function LoginPage() {
       if (error) {
         console.error('❌ Apple 로그인 실패:', error);
         toast({
-          title: 'Apple 로그인 실패',
-          description: error.message || '다시 시도해주세요',
+          title: t('login.appleLoginFailed'),
+          description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
       } else {
@@ -255,8 +257,8 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('❌ Apple 로그인 예외:', error);
       toast({
-        title: 'Apple 로그인 오류',
-        description: error?.message || 'Apple 로그인 중 오류가 발생했습니다.',
+        title: t('login.appleLoginError'),
+        description: error?.message || t('login.appleLoginErrorDesc'),
         variant: 'destructive',
       });
     }
@@ -298,8 +300,8 @@ export function LoginPage() {
 
     if (!cleanBizNo || cleanBizNo.length !== 10) {
       toast({
-        title: '사업자 등록번호 입력',
-        description: '사업자 등록번호 10자리를 정확히 입력해주세요.',
+        title: t('signup.bizNoInput'),
+        description: t('signup.bizNoInputDesc'),
         variant: 'destructive',
       });
       return;
@@ -313,11 +315,11 @@ export function LoginPage() {
       });
 
       if (fnError) {
-        throw new Error(fnError.message || '사업자 인증 실패');
+        throw new Error(fnError.message || t('signup.bizVerifyFailed'));
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || '사업자 인증에 실패했습니다.');
+        throw new Error(data?.error || t('signup.bizVerifyFailedDesc'));
       }
 
       const bizInfo = data.item;
@@ -325,8 +327,8 @@ export function LoginPage() {
       // 휴폐업 체크
       if (bizInfo.b_stt_cd === '03') {
         toast({
-          title: '폐업 사업자',
-          description: '해당 사업자는 폐업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
+          title: t('signup.closedBiz'),
+          description: t('signup.closedBizDesc'),
           variant: 'destructive',
         });
         return;
@@ -334,8 +336,8 @@ export function LoginPage() {
 
       if (bizInfo.b_stt_cd === '02') {
         toast({
-          title: '휴업 사업자',
-          description: '해당 사업자는 휴업 상태입니다. 계속 사업 중인 사업자만 등록 가능합니다.',
+          title: t('signup.suspendedBiz'),
+          description: t('signup.suspendedBizDesc'),
           variant: 'destructive',
         });
         return;
@@ -359,14 +361,14 @@ export function LoginPage() {
       setCompanyCodeVerified(true);
 
       toast({
-        title: '사업자 인증 완료',
-        description: `사업자번호 ${bizInfo.b_no} (${bizInfo.b_stt})`,
+        title: t('signup.bizVerifyComplete'),
+        description: `${t('signup.bizNumber')} ${bizInfo.b_no} (${bizInfo.b_stt})`,
       });
     } catch (err: any) {
       console.error('사업자 인증 오류:', err);
       toast({
-        title: '사업자 인증 실패',
-        description: err?.message || '사업자 정보를 확인할 수 없습니다. 다시 시도해주세요.',
+        title: t('signup.bizVerifyFailed'),
+        description: err?.message || t('signup.bizVerifyFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -379,8 +381,8 @@ export function LoginPage() {
 
     if (!phone || phone.length < 10 || phone.length > 11) {
       toast({
-        title: '휴대폰 번호 입력',
-        description: '휴대폰 번호를 정확히 입력해주세요. (예: 01012345678)',
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneInputDesc'),
         variant: 'destructive',
       });
       return;
@@ -395,7 +397,7 @@ export function LoginPage() {
       console.log('send-phone-otp response:', { data, fnError });
 
       if (fnError) {
-        let errMsg = fnError.message || '문자 발송 실패';
+        let errMsg = fnError.message || t('signup.smsSendFailed');
         try {
           const errBody = await fnError.context?.json();
           if (errBody?.error) errMsg = errBody.error;
@@ -404,7 +406,7 @@ export function LoginPage() {
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || data?.message || '문자 발송 실패');
+        throw new Error(data?.error || data?.message || t('signup.smsSendFailed'));
       }
 
       setAdminOtpSent(true);
@@ -412,13 +414,13 @@ export function LoginPage() {
       setAdminOtp('');
 
       toast({
-        title: '인증번호 전송 완료',
-        description: '문자로 받은 인증번호를 입력해주세요. (5분 유효)',
+        title: t('signup.otpSent'),
+        description: t('signup.otpSentDesc'),
       });
     } catch (err: any) {
       toast({
-        title: '인증번호 전송 실패',
-        description: err?.message || '잠시 후 다시 시도해주세요.',
+        title: t('signup.otpSendFailed'),
+        description: err?.message || t('signup.otpSendFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -432,8 +434,8 @@ export function LoginPage() {
 
     if (!phone || phone.length < 10 || phone.length > 11) {
       toast({
-        title: '휴대폰 번호 입력',
-        description: '휴대폰 번호를 확인해주세요.',
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneCheckDesc'),
         variant: 'destructive',
       });
       return;
@@ -441,8 +443,8 @@ export function LoginPage() {
 
     if (!adminOtpSent) {
       toast({
-        title: '인증번호 전송',
-        description: '먼저 인증번호를 전송해주세요.',
+        title: t('signup.sendOtpFirst'),
+        description: t('signup.sendOtpFirstDesc'),
         variant: 'destructive',
       });
       return;
@@ -450,8 +452,8 @@ export function LoginPage() {
 
     if (!code) {
       toast({
-        title: '인증번호 입력',
-        description: '인증번호를 입력해주세요.',
+        title: t('signup.enterOtp'),
+        description: t('signup.enterOtpDesc'),
         variant: 'destructive',
       });
       return;
@@ -464,23 +466,23 @@ export function LoginPage() {
       });
 
       if (fnError) {
-        throw new Error(fnError.message || '인증 실패');
+        throw new Error(fnError.message || t('signup.verifyFailed'));
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || '인증 실패');
+        throw new Error(data?.error || t('signup.verifyFailed'));
       }
 
       setAdminOtpVerified(true);
 
       toast({
-        title: '휴대폰 인증 완료',
-        description: '관리자 회원가입을 계속 진행할 수 있습니다.',
+        title: t('signup.phoneVerifyComplete'),
+        description: t('signup.phoneVerifyCompleteDesc'),
       });
     } catch (err: any) {
       toast({
-        title: '인증 실패',
-        description: err?.message || '다시 시도해주세요.',
+        title: t('signup.verifyFailed'),
+        description: err?.message || t('signup.verifyFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -499,8 +501,8 @@ export function LoginPage() {
 
     if (authError) {
       toast({
-        title: '로그인 실패',
-        description: authError.message || '다시 시도해주세요',
+        title: t('login.loginFailed'),
+        description: authError.message || t('login.tryAgain'),
         variant: 'destructive',
       });
       return;
@@ -508,8 +510,8 @@ export function LoginPage() {
 
     if (!authData.user) {
       toast({
-        title: '로그인 실패',
-        description: '사용자 정보를 찾을 수 없습니다',
+        title: t('login.loginFailed'),
+        description: t('login.userNotFound'),
         variant: 'destructive',
       });
       return;
@@ -548,8 +550,8 @@ export function LoginPage() {
 
     if (result.success) {
       toast({
-        title: '로그인 성공',
-        description: '환영합니다.',
+        title: t('login.loginSuccess'),
+        description: t('login.welcome'),
       });
 
       const basePath = role === 'admin' ? '/admin' : '/team';
@@ -562,8 +564,8 @@ export function LoginPage() {
       }
     } else {
       toast({
-        title: '로그인 실패',
-        description: result.error || '다시 시도해주세요',
+        title: t('login.loginFailed'),
+        description: result.error || t('login.tryAgain'),
         variant: 'destructive',
       });
     }
@@ -587,8 +589,8 @@ export function LoginPage() {
       if (error) throw error;
 
       toast({
-        title: '탈퇴 취소 완료',
-        description: '회원 탈퇴가 취소되었습니다. 계속 서비스를 이용하실 수 있습니다.',
+        title: t('deletion.cancelComplete'),
+        description: t('deletion.cancelCompleteDesc'),
       });
 
       setDeletionWarningOpen(false);
@@ -601,8 +603,8 @@ export function LoginPage() {
     } catch (error) {
       console.error('탈퇴 취소 실패:', error);
       toast({
-        title: '탈퇴 취소 실패',
-        description: '다시 시도해주세요.',
+        title: t('deletion.cancelFailed'),
+        description: t('common.tryAgain'),
         variant: 'destructive',
       });
     } finally {
@@ -613,8 +615,8 @@ export function LoginPage() {
   const handleResetPassword = async () => {
     if (!resetEmail.trim()) {
       toast({
-        title: '이메일 입력',
-        description: '이메일 주소를 입력해주세요',
+        title: t('resetPassword.emailInput'),
+        description: t('resetPassword.enterEmail'),
         variant: 'destructive',
       });
       return;
@@ -629,21 +631,21 @@ export function LoginPage() {
       });
 
       if (fnError) {
-        throw new Error(fnError.message || '요청 처리 실패');
+        throw new Error(fnError.message || t('resetPassword.requestFailed'));
       }
 
       if (!data.success) {
         // OAuth 사용자인 경우
         if (data.isOAuth) {
           toast({
-            title: 'OAuth 계정',
+            title: t('resetPassword.oauthAccount'),
             description: data.message,
             variant: 'destructive',
           });
         } else {
           toast({
-            title: '오류',
-            description: data.error || '다시 시도해주세요',
+            title: t('resetPassword.error'),
+            description: data.error || t('common.tryAgain'),
             variant: 'destructive',
           });
         }
@@ -652,7 +654,7 @@ export function LoginPage() {
 
       // 성공
       toast({
-        title: '이메일 전송 완료',
+        title: t('resetPassword.emailSent'),
         description: data.message,
       });
 
@@ -661,8 +663,8 @@ export function LoginPage() {
     } catch (error: any) {
       console.error('비밀번호 재설정 오류:', error);
       toast({
-        title: '오류',
-        description: error?.message || '다시 시도해주세요',
+        title: t('resetPassword.error'),
+        description: error?.message || t('common.tryAgain'),
         variant: 'destructive',
       });
     } finally {
@@ -675,8 +677,8 @@ export function LoginPage() {
 
     if (!signupForm.name || !signupForm.email || !signupForm.password) {
       toast({
-        title: '입력 오류',
-        description: '모든 필드를 입력해주세요',
+        title: t('signup.inputError'),
+        description: t('signup.fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -684,8 +686,8 @@ export function LoginPage() {
 
     if (signupForm.password !== signupForm.confirmPassword) {
       toast({
-        title: '비밀번호 불일치',
-        description: '비밀번호가 일치하지 않습니다',
+        title: t('signup.passwordMismatch'),
+        description: t('signup.passwordMismatchDesc'),
         variant: 'destructive',
       });
       return;
@@ -693,8 +695,8 @@ export function LoginPage() {
 
     if (signupForm.password.length < 6) {
       toast({
-        title: '비밀번호 오류',
-        description: '비밀번호는 최소 6자 이상이어야 합니다',
+        title: t('signup.passwordError'),
+        description: t('signup.passwordMinLength'),
         variant: 'destructive',
       });
       return;
@@ -702,8 +704,8 @@ export function LoginPage() {
 
     if (signupRole === 'team' && !signupForm.departmentId) {
       toast({
-        title: '부서 선택',
-        description: '부서를 선택해주세요',
+        title: t('signup.selectDepartmentError'),
+        description: t('signup.selectDepartmentDesc'),
         variant: 'destructive',
       });
       return;
@@ -711,8 +713,8 @@ export function LoginPage() {
 
     if (signupRole === 'admin' && !signupForm.companyName.trim()) {
       toast({
-        title: '회사명 입력',
-        description: '회사명을 입력해주세요.',
+        title: t('signup.enterCompanyName'),
+        description: t('signup.enterCompanyNameDesc'),
         variant: 'destructive',
       });
       return;
@@ -722,8 +724,8 @@ export function LoginPage() {
       const phone = normalizePhone(adminPhone);
       if (!phone) {
         toast({
-          title: '휴대폰 번호 입력',
-          description: '관리자 가입을 위해 휴대폰 인증이 필요합니다.',
+          title: t('signup.enterPhone'),
+          description: t('signup.enterPhoneForAdmin'),
           variant: 'destructive',
         });
         return;
@@ -731,8 +733,8 @@ export function LoginPage() {
 
       if (!adminOtpVerified) {
         toast({
-          title: '휴대폰 인증 필요',
-          description: '관리자 가입을 위해 휴대폰 인증을 완료해주세요.',
+          title: t('signup.phoneVerifyNeeded'),
+          description: t('signup.phoneVerifyNeededDesc'),
           variant: 'destructive',
         });
         return;
@@ -751,15 +753,15 @@ export function LoginPage() {
 
     if (result.success) {
       toast({
-        title: '회원가입 완료',
-        description: '이제 로그인할 수 있습니다',
+        title: t('signup.signupComplete'),
+        description: t('signup.signupCompleteDesc'),
       });
       setSignupOpen(false);
       resetSignupForm();
     } else {
       toast({
-        title: '회원가입 실패',
-        description: result.error || '다시 시도해주세요',
+        title: t('signup.signupFailed'),
+        description: result.error || t('common.tryAgain'),
         variant: 'destructive',
       });
     }
@@ -786,7 +788,7 @@ export function LoginPage() {
             <CardTitle className="flex flex-row justify-center items-center gap-2 max-w-full overflow-hidden">
               <img
                 src={logo}
-                alt="문서 관리 시스템 로고"
+                alt={t('login.logoAlt')}
                 className="h-14 sm:h-16 w-auto max-w-[calc(100%-4rem)] object-contain"
               />
               <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shrink-0 whitespace-nowrap translate-y-[0.35rem] sm:translate-y-[0.4rem]">
@@ -801,13 +803,13 @@ export function LoginPage() {
                   value="admin"
                   className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
-                  관리자
+                  {t('login.adminTab')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="team"
                   className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
-                  팀원
+                  {t('login.teamTab')}
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="admin">
@@ -819,7 +821,7 @@ export function LoginPage() {
                   className="space-y-4"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="admin-email">이메일</Label>
+                    <Label htmlFor="admin-email">{t('login.email')}</Label>
                     <Input
                       id="admin-email"
                       type="email"
@@ -830,7 +832,7 @@ export function LoginPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="admin-password">비밀번호</Label>
+                    <Label htmlFor="admin-password">{t('login.password')}</Label>
                     <Input
                       id="admin-password"
                       type="password"
@@ -847,14 +849,14 @@ export function LoginPage() {
                       className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
                       onClick={() => setResetPasswordOpen(true)}
                     >
-                      비밀번호를 잊으셨나요?
+                      {t('login.forgotPassword')}
                     </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? '로그인 중...' : '관리자 로그인'}
+                    {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500">
-                    계정이 없으신가요?{' '}
+                    {t('login.noAccount')}{' '}
                     <Button
                       type="button"
                       variant="link"
@@ -865,7 +867,7 @@ export function LoginPage() {
                         setSignupOpen(true);
                       }}
                     >
-                      회원가입
+                      {t('login.signup')}
                     </Button>
                   </p>
                   <div className="mt-2 flex justify-center">
@@ -879,7 +881,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
                         </span>
-                        <span className="text-sm text-black w-[165px] text-left">Google 계정으로 계속하기</span>
+                        <span className="text-sm text-black w-[165px] text-left">{t('login.continueWithGoogle')}</span>
                       </span>
                     </Button>
                   </div>
@@ -894,7 +896,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Apple 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithApple')}</span>
                       </span>
                     </Button>
                   </div>
@@ -909,7 +911,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Kakao 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithKakao')}</span>
                       </span>
                     </Button>
                   </div>
@@ -924,20 +926,20 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Naver 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithNaver')}</span>
                       </span>
                     </Button>
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-xs text-slate-500">
-                      회원가입 또는 로그인 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주합니다.
+                      {t('login.termsAgreement')}
                       <Button
                         type="button"
                         variant="link"
                         className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
                         onClick={() => setTermsModalOpen(true)}
                       >
-                        보기
+                        {t('login.viewTerms')}
                       </Button>
                     </p>
                   </div>
@@ -952,7 +954,7 @@ export function LoginPage() {
                   className="space-y-4"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="team-email">이메일</Label>
+                    <Label htmlFor="team-email">{t('login.email')}</Label>
                     <Input
                       id="team-email"
                       type="email"
@@ -963,7 +965,7 @@ export function LoginPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="team-password">비밀번호</Label>
+                    <Label htmlFor="team-password">{t('login.password')}</Label>
                     <Input
                       id="team-password"
                       type="password"
@@ -980,14 +982,14 @@ export function LoginPage() {
                       className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
                       onClick={() => setResetPasswordOpen(true)}
                     >
-                      비밀번호를 잊으셨나요?
+                      {t('login.forgotPassword')}
                     </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? '로그인 중...' : '팀원 로그인'}
+                    {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500">
-                    계정이 없으신가요?{' '}
+                    {t('login.noAccount')}{' '}
                     <Button
                       type="button"
                       variant="link"
@@ -998,7 +1000,7 @@ export function LoginPage() {
                         setSignupOpen(true);
                       }}
                     >
-                      회원가입
+                      {t('login.signup')}
                     </Button>
                   </p>
                   <div className="mt-2 flex justify-center">
@@ -1012,7 +1014,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
                         </span>
-                        <span className="text-sm text-black w-[165px] text-left">Google 계정으로 계속하기</span>
+                        <span className="text-sm text-black w-[165px] text-left">{t('login.continueWithGoogle')}</span>
                       </span>
                     </Button>
                   </div>
@@ -1027,7 +1029,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Apple 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithApple')}</span>
                       </span>
                     </Button>
                   </div>
@@ -1042,7 +1044,7 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Kakao 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithKakao')}</span>
                       </span>
                     </Button>
                   </div>
@@ -1057,20 +1059,20 @@ export function LoginPage() {
                         <span className="w-6 h-6 flex items-center justify-center shrink-0">
                           <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
                         </span>
-                        <span className="text-sm w-[165px] text-left">Naver 계정으로 계속하기</span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithNaver')}</span>
                       </span>
                     </Button>
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-xs text-slate-500">
-                      회원가입 또는 로그인 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주합니다.
+                      {t('login.termsAgreement')}
                       <Button
                         type="button"
                         variant="link"
                         className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
                         onClick={() => setTermsModalOpen(true)}
                       >
-                        보기
+                        {t('login.viewTerms')}
                       </Button>
                     </p>
                   </div>
@@ -1082,10 +1084,10 @@ export function LoginPage() {
 
         <div className="mt-4 w-full text-center md:text-left">
           <p className="text-xs text-white">
-            COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
+            {t('login.copyright')}
           </p>
           <p className="text-xs text-white mt-1">
-            (주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다.
+            {t('login.patentNotice')}
           </p>
         </div>
       </div>
@@ -1094,8 +1096,8 @@ export function LoginPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card className="w-full max-w-md my-auto flex flex-col max-h-[90vh]">
             <CardHeader className="shrink-0">
-              <CardTitle>회원가입</CardTitle>
-              <CardDescription>새 계정을 생성합니다</CardDescription>
+              <CardTitle>{t('signup.title')}</CardTitle>
+              <CardDescription>{t('signup.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 flex-1 min-h-0 overflow-y-auto">
               <Tabs
@@ -1107,13 +1109,13 @@ export function LoginPage() {
                     value="admin"
                     className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                   >
-                    관리자
+                    {t('signup.adminTab')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="team"
                     className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                   >
-                    팀원
+                    {t('signup.teamTab')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1122,9 +1124,9 @@ export function LoginPage() {
               {signupRole === 'admin' && (
                 <>
                   <div className="space-y-2">
-                    <Label>회사명</Label>
+                    <Label>{t('signup.companyName')}</Label>
                     <Input
-                      placeholder="예: 삼성전자"
+                      placeholder={t('signup.companyNamePlaceholder')}
                       value={signupForm.companyName}
                       onChange={(e) =>
                         setSignupForm((prev) => ({
@@ -1136,7 +1138,7 @@ export function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>사업자 등록번호</Label>
+                    <Label>{t('signup.bizNo')}</Label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="000-00-00000"
@@ -1169,12 +1171,12 @@ export function LoginPage() {
                         disabled={isVerifyingBiz || bizNo.replace(/\D/g, '').length !== 10}
                         className={`shrink-0 ${bizVerified ? 'bg-green-600 hover:bg-green-700' : ''}`}
                       >
-                        {isVerifyingBiz ? '인증 중...' : bizVerified ? '✓ 인증됨' : '인증'}
+                        {isVerifyingBiz ? t('common.verifying') : bizVerified ? t('common.verified') : t('common.verify')}
                       </Button>
                     </div>
                     {!bizVerified && (
                       <p className="text-xs text-slate-400">
-                        사업자 등록번호 10자리를 입력하고 인증해주세요
+                        {t('signup.bizNoHint')}
                       </p>
                     )}
                   </div>
@@ -1182,13 +1184,13 @@ export function LoginPage() {
                   {/* 인증된 사업자 정보 표시 */}
                   {bizVerified && verifiedBizInfo && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
-                      <p className="text-sm font-semibold text-green-800">✓ 사업자 인증 완료</p>
+                      <p className="text-sm font-semibold text-green-800">{t('signup.bizVerified')}</p>
                       <div className="text-xs text-green-700 space-y-0.5">
-                        <p><span className="font-medium">사업자번호:</span> {verifiedBizInfo.b_no}</p>
-                        <p><span className="font-medium">사업상태:</span> {verifiedBizInfo.b_stt}</p>
-                        <p><span className="font-medium">과세유형:</span> {verifiedBizInfo.tax_type}</p>
+                        <p><span className="font-medium">{t('signup.bizNumber')}</span> {verifiedBizInfo.b_no}</p>
+                        <p><span className="font-medium">{t('signup.bizStatus')}</span> {verifiedBizInfo.b_stt}</p>
+                        <p><span className="font-medium">{t('signup.taxType')}</span> {verifiedBizInfo.tax_type}</p>
                         {verifiedBizInfo.end_dt && (
-                          <p><span className="font-medium">폐업일:</span> {verifiedBizInfo.end_dt.slice(0,4)}-{verifiedBizInfo.end_dt.slice(4,6)}-{verifiedBizInfo.end_dt.slice(6,8)}</p>
+                          <p><span className="font-medium">{t('signup.closedDate')}</span> {verifiedBizInfo.end_dt.slice(0,4)}-{verifiedBizInfo.end_dt.slice(4,6)}-{verifiedBizInfo.end_dt.slice(6,8)}</p>
                         )}
                       </div>
                     </div>
@@ -1200,9 +1202,9 @@ export function LoginPage() {
               {signupRole === 'team' && (
                 <>
                   <div className="space-y-2">
-                    <Label>회사 코드 (사업자 등록번호)</Label>
+                    <Label>{t('signup.companyCode')}</Label>
                     <Input
-                      placeholder="예: 1234567890"
+                      placeholder={t('signup.companyCodePlaceholder')}
                       value={signupForm.companyCode}
                       onChange={(e) => {
                         setSignupForm((prev) => ({
@@ -1215,9 +1217,9 @@ export function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>회사명</Label>
+                    <Label>{t('signup.companyName')}</Label>
                     <Input
-                      placeholder="예: 삼성전자"
+                      placeholder={t('signup.companyNamePlaceholder')}
                       value={signupForm.companyName}
                       onChange={(e) => {
                         setSignupForm((prev) => ({
@@ -1262,21 +1264,21 @@ export function LoginPage() {
                               if (!deptError && departments) {
                                 setAvailableDepartments(departments);
                                 toast({
-                                  title: '인증 완료',
-                                  description: `${departments.length}개 부서를 불러왔습니다.`,
+                                  title: t('signup.verifyComplete'),
+                                  description: t('signup.loadedDepartments', { count: departments.length }),
                                 });
                               } else {
                                 setAvailableDepartments([]);
                                 toast({
-                                  title: '인증 완료',
-                                  description: '해당 회사에 부서가 없습니다.',
+                                  title: t('signup.verifyComplete'),
+                                  description: t('signup.noDeptInCompany'),
                                 });
                               }
                             } else {
                               setAvailableDepartments([]);
                               toast({
-                                title: '회사 없음',
-                                description: '해당 회사 코드로 등록된 회사가 없습니다. 관리자에게 문의하세요.',
+                                title: t('signup.companyNotFound'),
+                                description: t('signup.companyNotFoundDesc'),
                                 variant: 'destructive',
                               });
                               setCompanyCodeVerified(false);
@@ -1290,9 +1292,9 @@ export function LoginPage() {
                           }
                         } else {
                           toast({
-                            title: '회사 정보 입력',
+                            title: t('profile.companyInfoChange'),
                             description:
-                              '회사 코드와 회사명을 모두 입력해주세요.',
+                              t('signup.enterCompanyCodeAndName'),
                             variant: 'destructive',
                           });
                         }
@@ -1303,16 +1305,16 @@ export function LoginPage() {
                       }
                       variant={companyCodeVerified ? 'default' : 'outline'}
                     >
-                      {companyCodeVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
+                      {companyCodeVerified ? t('signup.verifiedReVerify') : t('signup.verifyButton')}
                     </Button>
                     {!companyCodeVerified && (
                       <p className="text-xs text-slate-400">
-                        회사 코드와 회사명을 입력하고 인증해주세요
+                        {t('signup.companyCodeAndNameHint')}
                       </p>
                     )}
                     {companyCodeVerified && (
                       <p className="text-xs text-green-600">
-                        다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
+                        {t('signup.changeCompanyHint')}
                       </p>
                     )}
                   </div>
@@ -1320,9 +1322,9 @@ export function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <Label>이름</Label>
+                <Label>{t('signup.name')}</Label>
                 <Input
-                  placeholder="홍길동"
+                  placeholder={t('signup.namePlaceholder')}
                   value={signupForm.name}
                   onChange={(e) =>
                     setSignupForm((prev) => ({ ...prev, name: e.target.value }))
@@ -1331,10 +1333,10 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>이메일</Label>
+                <Label>{t('signup.email')}</Label>
                 <Input
                   type="email"
-                  placeholder="example@company.com"
+                  placeholder={t('signup.emailPlaceholder')}
                   value={signupForm.email}
                   onChange={(e) =>
                     setSignupForm((prev) => ({ ...prev, email: e.target.value }))
@@ -1344,10 +1346,10 @@ export function LoginPage() {
 
               {signupRole === 'admin' && (
                 <div className="space-y-2">
-                  <Label>휴대폰 인증</Label>
+                  <Label>{t('signup.phoneVerification')}</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="01012345678"
+                      placeholder={t('signup.phonePlaceholder')}
                       value={adminPhone}
                       onChange={(e) => {
                         setAdminPhone(e.target.value);
@@ -1363,16 +1365,16 @@ export function LoginPage() {
                       className="shrink-0"
                     >
                       {isSendingAdminOtp
-                        ? '전송 중...'
+                        ? t('common.sending')
                         : adminOtpSent
-                        ? '재전송'
-                        : '인증번호 전송'}
+                        ? t('signup.resend')
+                        : t('signup.sendOtp')}
                     </Button>
                   </div>
 
                   <div className="flex gap-2">
                     <Input
-                      placeholder="인증번호 6자리"
+                      placeholder={t('signup.otpPlaceholder')}
                       value={adminOtp}
                       onChange={(e) => setAdminOtp(e.target.value)}
                       disabled={isLoading || !adminOtpSent || adminOtpVerified}
@@ -1391,26 +1393,26 @@ export function LoginPage() {
                       className="shrink-0"
                     >
                       {adminOtpVerified
-                        ? '인증 완료'
+                        ? t('signup.otpVerified')
                         : isVerifyingAdminOtp
-                        ? '확인 중...'
-                        : '확인'}
+                        ? t('signup.verifyingOtp')
+                        : t('signup.verifyOtp')}
                     </Button>
                   </div>
 
                   {adminOtpVerified ? (
-                    <p className="text-xs text-green-600">휴대폰 인증이 완료되었습니다.</p>
+                    <p className="text-xs text-green-600">{t('signup.phoneVerified')}</p>
                   ) : (
-                    <p className="text-xs text-slate-400">관리자 가입을 위해 휴대폰 인증이 필요합니다.</p>
+                    <p className="text-xs text-slate-400">{t('signup.phoneVerifyRequired')}</p>
                   )}
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label>비밀번호</Label>
+                <Label>{t('signup.password')}</Label>
                 <Input
                   type="password"
-                  placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
+                  placeholder={t('signup.passwordPlaceholder')}
                   value={signupForm.password}
                   onChange={(e) =>
                     setSignupForm((prev) => ({
@@ -1427,10 +1429,10 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>비밀번호 확인</Label>
+                <Label>{t('signup.confirmPassword')}</Label>
                 <Input
                   type="password"
-                  placeholder="비밀번호 재입력"
+                  placeholder={t('signup.confirmPasswordPlaceholder')}
                   value={signupForm.confirmPassword}
                   onChange={(e) =>
                     setSignupForm((prev) => ({
@@ -1443,7 +1445,7 @@ export function LoginPage() {
 
               {signupRole === 'team' && (
                 <div className="space-y-2">
-                  <Label>부서</Label>
+                  <Label>{t('signup.department')}</Label>
                   <Select
                     value={signupForm.departmentId}
                     onValueChange={(value) =>
@@ -1458,12 +1460,12 @@ export function LoginPage() {
                       <SelectValue
                         placeholder={
                           !companyCodeVerified
-                            ? '먼저 회사 정보를 인증해주세요'
+                            ? t('signup.verifyCompanyFirst')
                             : isLoadingDepartments
-                            ? '부서를 불러오는 중...'
+                            ? t('signup.loadingDepartments')
                             : availableDepartments.length === 0
-                            ? '사용 가능한 부서가 없습니다'
-                            : '부서 선택'
+                            ? t('signup.noDepartments')
+                            : t('signup.selectDepartment')
                         }
                       />
                     </SelectTrigger>
@@ -1477,12 +1479,12 @@ export function LoginPage() {
                   </Select>
                   {!companyCodeVerified && (
                     <p className="text-xs text-slate-400">
-                      회사 인증 후 부서를 선택할 수 있습니다
+                      {t('signup.departmentAfterVerify')}
                     </p>
                   )}
                   {companyCodeVerified && availableDepartments.length === 0 && (
                     <p className="text-xs text-red-500">
-                      부서가 없습니다. 관리자에게 문의하거나 관리자 계정으로 가입하세요.
+                      {t('signup.noDeptContactAdmin')}
                     </p>
                   )}
                 </div>
@@ -1504,7 +1506,7 @@ export function LoginPage() {
                 }}
                 disabled={isLoading}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleSignup}
@@ -1518,7 +1520,7 @@ export function LoginPage() {
                   (signupRole === 'team' && (!companyCodeVerified || !signupForm.departmentId))
                 }
               >
-                {isLoading ? '가입 중...' : '회원가입'}
+                {isLoading ? t('signup.signingUp') : t('signup.signupButton')}
               </Button>
             </div>
           </Card>
@@ -1527,11 +1529,11 @@ export function LoginPage() {
       <Dialog open={termsModalOpen} onOpenChange={setTermsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>서비스 이용약관 및 개인정보 처리방침</DialogTitle>
+            <DialogTitle>{t('terms.title')}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 flex-1 min-h-0">
             <div className="border rounded-lg flex flex-col min-h-0 h-1/2">
-              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">서비스 이용 약관</h2>
+              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">{t('terms.tos')}</h2>
               <div className="overflow-y-auto flex-1 p-4">
                 <div className="text-sm text-slate-700 space-y-4" id="terms-content">
                   <TermsOfServiceContent />
@@ -1540,7 +1542,7 @@ export function LoginPage() {
             </div>
 
             <div className="border rounded-lg flex flex-col min-h-0 h-1/2">
-              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">개인정보 처리방침</h2>
+              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">{t('terms.privacy')}</h2>
               <div className="overflow-y-auto flex-1 p-4">
                 <div className="text-sm text-slate-700 space-y-4">
                   <PrivacyPolicyContent />
@@ -1554,21 +1556,21 @@ export function LoginPage() {
       <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>비밀번호 재설정</DialogTitle>
+            <DialogTitle>{t('resetPassword.title')}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-slate-600">
-              가입하신 이메일 주소를 입력하시면<br />
-              비밀번호 재설정 링크를 보내드립니다.
+              {t('resetPassword.description')}<br />
+              {t('resetPassword.description2')}
             </p>
             
             <div className="space-y-2">
-              <Label htmlFor="reset-email">이메일</Label>
+              <Label htmlFor="reset-email">{t('resetPassword.email')}</Label>
               <Input
                 id="reset-email"
                 type="email"
-                placeholder="example@company.com"
+                placeholder={t('resetPassword.emailPlaceholder')}
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
                 disabled={isResetting}
@@ -1585,14 +1587,14 @@ export function LoginPage() {
                 disabled={isResetting}
                 className="flex-1"
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleResetPassword}
                 disabled={isResetting || !resetEmail.trim()}
                 className="flex-1"
               >
-                {isResetting ? '전송 중...' : '재설정 링크 보내기'}
+                {isResetting ? t('common.sending') : t('resetPassword.sendLink')}
               </Button>
             </div>
           </div>
@@ -1611,26 +1613,26 @@ export function LoginPage() {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-600">⚠️ 탈퇴 신청된 계정</DialogTitle>
+            <DialogTitle className="text-red-600">{t('deletion.warningTitle')}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800 font-medium mb-2">
-                이 계정은 탈퇴가 신청된 상태입니다.
+                {t('deletion.accountPending')}
               </p>
               {deletionInfo && (
                 <div className="text-sm text-amber-700 space-y-1">
-                  <p>• 삭제 예정일: <strong>{deletionInfo.scheduledDate}</strong></p>
-                  <p>• 남은 기간: <strong>{deletionInfo.remainingDays}일</strong></p>
+                  <p>• {t('deletion.scheduledDate')} <strong>{deletionInfo.scheduledDate}</strong></p>
+                  <p>• {t('deletion.remainingDays')} <strong>{deletionInfo.remainingDays}{t('common.days')}</strong></p>
                 </div>
               )}
             </div>
             
             <p className="text-sm text-slate-600">
-              탈퇴를 취소하시면 계속 서비스를 이용하실 수 있습니다.
+              {t('deletion.cancelInfo')}
               <br />
-              취소하지 않으시면 예정일에 계정이 삭제됩니다.
+              {t('deletion.noCancelInfo')}
             </p>
             
             <div className="flex gap-2">
@@ -1645,14 +1647,14 @@ export function LoginPage() {
                 disabled={isCancellingDeletion}
                 className="flex-1"
               >
-                로그아웃
+                {t('common.logout')}
               </Button>
               <Button
                 onClick={handleCancelDeletion}
                 disabled={isCancellingDeletion}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                {isCancellingDeletion ? '처리 중...' : '탈퇴 취소'}
+                {isCancellingDeletion ? t('common.processing') : t('deletion.cancelDeletion')}
               </Button>
             </div>
           </div>

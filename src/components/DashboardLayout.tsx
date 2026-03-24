@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FileText,
@@ -17,6 +18,7 @@ import {
   FolderOpen,
   Archive,
   Megaphone,
+  Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +62,13 @@ declare global {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem('app-language', lng);
+  };
+
   // Selector 최적화: 상태값은 개별 selector로, 함수는 한 번에
   const user = useAuthStore((state) => state.user);
   const { logout, checkSession, clearError } = useAuthStore();
@@ -144,12 +153,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // 역할 + 부서명 표시 헬퍼 (useCallback으로 최적화)
   const getRoleDisplay = useCallback(() => {
-    const roleText = isAdmin ? '관리자' : '팀원';
+    const roleText = isAdmin ? t('common.admin') : t('common.team');
     if (userDepartmentName) {
       return `${roleText} | ${userDepartmentName}`;
     }
     return roleText;
-  }, [isAdmin, userDepartmentName]);
+  }, [isAdmin, userDepartmentName, t]);
 
   // useMemo로 계산 최적화
   const unreadCount = useMemo(
@@ -384,13 +393,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     // OAuth 사용자: "탈퇴" 텍스트 확인
     if (isOAuthUser) {
       if (deletionConfirmText !== '탈퇴') {
-        setProfileError('"탈퇴"를 정확히 입력해주세요.');
+        setProfileError(t('profile.deleteConfirmExact'));
         return;
       }
     } else {
       // 일반 사용자: 비밀번호 확인
       if (!deletionPassword.trim()) {
-        setProfileError('비밀번호를 입력해주세요.');
+        setProfileError(t('profile.enterPasswordPlease'));
         return;
       }
     }
@@ -407,7 +416,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         });
 
         if (authError) {
-          setProfileError('비밀번호가 일치하지 않습니다.');
+          setProfileError(t('profile.passwordMismatch'));
           setIsRequestingDeletion(false);
           return;
         }
@@ -422,7 +431,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .single();
 
       if (existingRequest) {
-        setProfileError('이미 탈퇴 신청이 진행 중입니다.');
+        setProfileError(t('profile.alreadyRequested'));
         setIsRequestingDeletion(false);
         return;
       }
@@ -439,8 +448,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       }
 
       toast({
-        title: '탈퇴 신청 완료',
-        description: '2주 후 계정이 삭제됩니다. 이 기간 내 로그인하면 탈퇴를 취소할 수 있습니다.',
+        title: t('profile.deleteRequestComplete'),
+        description: t('profile.deleteRequestDesc'),
       });
 
       setProfileDialogOpen(false);
@@ -449,7 +458,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     } catch (error) {
       console.error('탈퇴 신청 실패:', error);
       setProfileError(
-        error instanceof Error ? error.message : '탈퇴 신청 중 오류가 발생했습니다.'
+        error instanceof Error ? error.message : t('profile.deleteRequestError')
       );
     } finally {
       setIsRequestingDeletion(false);
@@ -467,14 +476,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     try {
       // 회사 정보 인증 확인
       if (!companyVerified) {
-        setProfileError('회사 정보를 인증해주세요.');
+        setProfileError(t('profile.verifyCompanyFirst'));
         setIsSavingProfile(false);
         return;
       }
 
       const trimmedName = profileName.trim();
       if (!trimmedName) {
-        setProfileError('이름을 입력하세요.');
+        setProfileError(t('profile.enterName'));
         setIsSavingProfile(false);
         return;
       }
@@ -497,7 +506,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         if (existingCompany) {
           if (existingCompany.name !== profileCompanyName) {
             setProfileError(
-              '회사 코드는 존재하지만 회사명이 일치하지 않습니다.'
+              t('profile.companyCodeMismatch')
             );
             setIsSavingProfile(false);
             return;
@@ -536,7 +545,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       // 3. 비밀번호 변경 (입력된 경우)
       if (newPassword) {
         if (newPassword !== confirmPassword) {
-          setProfileError('새 비밀번호가 일치하지 않습니다.');
+          setProfileError(t('profile.newPasswordMismatch'));
           setIsSavingProfile(false);
           return;
         }
@@ -549,7 +558,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         if (validationError) {
           console.error('비밀번호 검증 오류:', validationError);
         } else if (validation && !validation.valid) {
-          setProfileError('비밀번호 보안 요구사항: ' + validation.errors.join(', '));
+          setProfileError(t('profile.passwordSecurityReq') + validation.errors.join(', '));
           setIsSavingProfile(false);
           return;
         }
@@ -559,7 +568,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         });
 
         if (passwordError) {
-          setProfileError('비밀번호 변경 실패: ' + passwordError.message);
+          setProfileError(t('profile.passwordChangeFail') + passwordError.message);
           setIsSavingProfile(false);
           return;
         }
@@ -569,8 +578,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       await checkSession();
 
       toast({
-        title: '저장되었습니다',
-        description: '프로필이 업데이트되었습니다.',
+        title: t('profile.saved'),
+        description: t('profile.profileUpdated'),
       });
       setProfileDialogOpen(false);
     } catch (error) {
@@ -578,7 +587,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       setProfileError(
         error instanceof Error
           ? error.message
-          : '프로필을 저장하는 중 오류가 발생했습니다.'
+          : t('profile.profileSaveError')
       );
     } finally {
       setIsSavingProfile(false);
@@ -586,35 +595,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const navigation = [
-    { name: '홈', href: basePath, icon: Home },
-    { name: '문서 관리', href: `${basePath}/documents`, icon: FileText },
+    { name: t('nav.home'), href: basePath, icon: Home },
+    { name: t('nav.documentManagement'), href: `${basePath}/documents`, icon: FileText },
     {
-      name: isAdmin ? '부서 관리' : '부서 보기',
+      name: isAdmin ? t('nav.departmentManagement') : t('nav.departmentView'),
       href: `${basePath}/departments`,
       icon: Building2,
     },
     {
-      name: '대분류 관리',
+      name: t('nav.parentCategoryManagement'),
       href: `${basePath}/parent-categories`,
       icon: FolderOpen,
     },
     {
-      name: '세부 스토리지 관리',
+      name: t('nav.subcategoryManagement'),
       href: `${basePath}/subcategories`,
       icon: Archive,
     },
     ...(isAdmin
-      ? [{ name: '팀원 관리', href: `${basePath}/users`, icon: Users }]
+      ? [{ name: t('nav.teamManagement'), href: `${basePath}/users`, icon: Users }]
       : []),
     ...(!isAdmin
-      ? [{ name: '공유받은 문서함', href: `${basePath}/shared`, icon: Share2 }]
+      ? [{ name: t('nav.sharedDocuments'), href: `${basePath}/shared`, icon: Share2 }]
       : []),
-    { name: '통계', href: `${basePath}/statistics`, icon: BarChart3 },
-    { name: '공지사항', href: `${basePath}/announcements`, icon: Megaphone },
+    { name: t('nav.statistics'), href: `${basePath}/statistics`, icon: BarChart3 },
+    { name: t('nav.announcements'), href: `${basePath}/announcements`, icon: Megaphone },
     ...(isAdmin
       ? [
           {
-            name: '고객센터',
+            name: t('nav.customerService'),
             href: 'https://traystorage.net/contact/',
             icon: FAQIcon,
             external: true,
@@ -749,7 +758,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type="search"
-                placeholder="문서 검색..."
+                placeholder={t('header.searchPlaceholder')}
                 className="w-full pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-md"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -772,13 +781,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {showSuggestions && (
                 <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-full">
                   {isLoadingSuggestions ? (
-                    <div className="p-4 text-center text-slate-500">검색 중...</div>
+                    <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
                     <div className="flex">
                       {/* 좌측: 관련 문서 (자동완성) */}
                       <div className="flex-1 border-r p-3 max-h-80 overflow-y-auto">
                         <p className="text-xs font-semibold text-slate-500 mb-2">
-                          관련 문서
+                          {t('header.relatedDocuments')}
                         </p>
                         {searchSuggestions.related.length > 0 ? (
                           searchSuggestions.related.map((item, idx) => (
@@ -795,7 +804,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           ))
                         ) : (
                           <p className="text-sm text-slate-400 px-3">
-                            관련 문서가 없습니다
+                            {t('header.noRelatedDocuments')}
                           </p>
                         )}
                       </div>
@@ -806,7 +815,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {searchSuggestions.recent.length > 0 && (
                           <div className="mb-4">
                             <p className="text-xs font-semibold text-slate-500 mb-2">
-                              최근 검색어
+                              {t('header.recentSearches')}
                             </p>
                             {searchSuggestions.recent.map((item, idx) => (
                               <div
@@ -827,7 +836,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {searchSuggestions.popular.length > 0 && (
                           <div>
                             <p className="text-xs font-semibold text-slate-500 mb-2">
-                              인기 검색어
+                              {t('header.popularSearches')}
                             </p>
                             {searchSuggestions.popular.map((item, idx) => (
                               <div
@@ -848,7 +857,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {searchSuggestions.recent.length === 0 &&
                           searchSuggestions.popular.length === 0 && (
                             <p className="text-sm text-slate-400 text-center py-4">
-                              검색 기록이 없습니다
+                              {t('header.noSearchHistory')}
                             </p>
                           )}
                       </div>
@@ -865,7 +874,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
               onClick={handleSearch}
             >
-              <img src={searchIcon} alt="검색" className="h-7 w-7 block object-contain" />
+              <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
             </Button>
             <Button
               type="button"
@@ -874,7 +883,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
               onClick={() => setIsNotificationOpen((prev) => !prev)}
             >
-              <img src={bellIcon} alt="알림" className="h-7 w-7 block object-contain" />
+              <img src={bellIcon} alt={t('header.notifications')} className="h-7 w-7 block object-contain" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -896,7 +905,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <User className="h-6 w-6 text-slate-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
+                    <p className="font-semibold text-sm">{user?.name || t('common.user')}</p>
                     <p className="text-xs text-slate-500">
                       {getRoleDisplay()}
                     </p>
@@ -907,11 +916,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="px-4 py-3 border-b bg-slate-50">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600">회사 코드</span>
+                    <span className="text-slate-600">{t('header.companyCode')}</span>
                     <span className="font-medium">{user?.companyCode || 'A001'}</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-600 mb-0.5">회사명</p>
+                    <p className="text-xs text-slate-600 mb-0.5">{t('header.companyName')}</p>
                     <p className="text-sm font-medium break-words">
                       {user?.companyName || '주식회사파랑_인천지점'}
                     </p>
@@ -920,13 +929,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
 
               <DropdownMenuItem onClick={openProfileDialog}>
-                프로필 설정
+                {t('header.profileSettings')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>알림 설정</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <div className="flex items-center justify-between w-full cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    <span>{t('language.settings')}</span>
+                  </div>
+                  <select
+                    value={i18n.language}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      changeLanguage(e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs border rounded px-1.5 py-0.5 bg-white"
+                  >
+                    <option value="ko">{t('language.korean')}</option>
+                    <option value="en">{t('language.english')}</option>
+                  </select>
+                </div>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
-                로그아웃
+                {t('common.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -939,7 +968,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="relative flex-1">
                   <Input
                     type="search"
-                    placeholder="문서 검색..."
+                    placeholder={t('header.searchPlaceholder')}
                     className="bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-md"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -962,13 +991,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   {showSuggestions && (
                     <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-[600px]">
                       {isLoadingSuggestions ? (
-                        <div className="p-4 text-center text-slate-500">검색 중...</div>
+                        <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                       ) : (
                         <div className="flex">
                           {/* 좌측: 관련 문서 (자동완성) */}
                           <div className="flex-1 border-r p-3 max-h-80 overflow-y-auto">
                             <p className="text-xs font-semibold text-slate-500 mb-2">
-                              관련 문서
+                              {t('header.relatedDocuments')}
                             </p>
                             {searchSuggestions.related.length > 0 ? (
                               searchSuggestions.related.map((item, idx) => (
@@ -985,7 +1014,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               ))
                             ) : (
                               <p className="text-sm text-slate-400 px-3">
-                                관련 문서가 없습니다
+                                {t('header.noRelatedDocuments')}
                               </p>
                             )}
                           </div>
@@ -996,7 +1025,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {searchSuggestions.recent.length > 0 && (
                               <div className="mb-4">
                                 <p className="text-xs font-semibold text-slate-500 mb-2">
-                                  최근 검색어
+                                  {t('header.recentSearches')}
                                 </p>
                                 {searchSuggestions.recent.map((item, idx) => (
                                   <div
@@ -1017,7 +1046,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {searchSuggestions.popular.length > 0 && (
                               <div>
                                 <p className="text-xs font-semibold text-slate-500 mb-2">
-                                  인기 검색어
+                                  {t('header.popularSearches')}
                                 </p>
                                 {searchSuggestions.popular.map((item, idx) => (
                                   <div
@@ -1038,7 +1067,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {searchSuggestions.recent.length === 0 &&
                               searchSuggestions.popular.length === 0 && (
                                 <p className="text-sm text-slate-400 text-center py-4">
-                                  검색 기록이 없습니다
+                                  {t('header.noSearchHistory')}
                                 </p>
                               )}
                           </div>
@@ -1055,7 +1084,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
                   onClick={handleSearch}
                 >
-                  <img src={searchIcon} alt="검색" className="h-7 w-7 block object-contain" />
+                  <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
                 </Button>
                 <Button
                   type="button"
@@ -1064,7 +1093,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
                   onClick={() => setIsNotificationOpen((prev) => !prev)}
                 >
-                  <img src={bellIcon} alt="알림" className="h-7 w-7 block object-contain" />
+                  <img src={bellIcon} alt={t('header.notifications')} className="h-7 w-7 block object-contain" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
@@ -1092,7 +1121,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <User className="h-6 w-6 text-slate-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">{user?.name || '사용자'}</p>
+                        <p className="font-semibold text-sm">{user?.name || t('common.user')}</p>
                         <p className="text-xs text-slate-500">
                           {getRoleDisplay()}
                         </p>
@@ -1103,11 +1132,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="px-4 py-3 border-b bg-slate-50">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-600">회사 코드</span>
+                        <span className="text-slate-600">{t('header.companyCode')}</span>
                         <span className="font-medium">{user?.companyCode || 'A001'}</span>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-600 mb-0.5">회사명</p>
+                        <p className="text-xs text-slate-600 mb-0.5">{t('header.companyName')}</p>
                         <p className="text-sm font-medium break-words">
                           {user?.companyName || '주식회사파랑_인천지점'}
                         </p>
@@ -1116,13 +1145,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
 
                   <DropdownMenuItem onClick={openProfileDialog}>
-                    프로필 설정
+                    {t('header.profileSettings')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>알림 설정</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <div className="flex items-center justify-between w-full cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        <span>{t('language.settings')}</span>
+                      </div>
+                      <select
+                        value={i18n.language}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          changeLanguage(e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs border rounded px-1.5 py-0.5 bg-white"
+                      >
+                        <option value="ko">{t('language.korean')}</option>
+                        <option value="en">{t('language.english')}</option>
+                      </select>
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    로그아웃
+                    {t('common.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1140,20 +1189,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {isNotificationOpen && (
         <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-lg shadow-lg">
           <div className="flex items-center justify-between px-3 py-2 border-b bg-white">
-            <span className="text-sm font-semibold text-slate-900">알림</span>
+            <span className="text-sm font-semibold text-slate-900">{t('header.notifications')}</span>
             <button
               type="button"
               className="text-xs text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded px-2 py-1"
               onClick={() => setIsNotificationOpen(false)}
             >
-              닫기
+              {t('common.close')}
             </button>
           </div>
           <div className="max-h-80 overflow-y-auto bg-white">
             {isLoadingNotifications ? (
-              <div className="p-3 text-sm text-slate-500">불러오는 중...</div>
+              <div className="p-3 text-sm text-slate-500">{t('common.loading')}</div>
             ) : notifications.length === 0 ? (
-              <div className="p-3 text-sm text-slate-500">알림이 없습니다.</div>
+              <div className="p-3 text-sm text-slate-500">{t('header.noNotifications')}</div>
             ) : (
               notifications.map((n) => (
                 <div
@@ -1213,25 +1262,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {showDeletionView ? (
             <>
               <DialogHeader>
-                <DialogTitle>회원 탈퇴</DialogTitle>
+                <DialogTitle>{t('profile.deleteAccountTitle')}</DialogTitle>
                 <DialogDescription>
-                  탈퇴를 진행하시면 2주 후 계정이 완전히 삭제됩니다.
+                  {t('profile.deleteAccountDesc')}
                   <br />
-                  이 기간 내에 다시 로그인하면 탈퇴를 취소할 수 있습니다.
+                  {t('profile.deleteAccountDesc2')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700 font-medium mb-2">⚠️ 주의사항</p>
+                  <p className="text-sm text-red-700 font-medium mb-2">{t('profile.deleteWarning')}</p>
                   <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
-                    <li>탈퇴 후 모든 데이터가 삭제됩니다.</li>
-                    <li>삭제된 데이터는 복구할 수 없습니다.</li>
-                    <li>업로드한 문서 및 설정이 모두 삭제됩니다.</li>
+                    <li>{t('profile.deleteWarning1')}</li>
+                    <li>{t('profile.deleteWarning2')}</li>
+                    <li>{t('profile.deleteWarning3')}</li>
                   </ul>
                 </div>
                 {isOAuthUser ? (
                   <div className="space-y-2">
-                    <Label htmlFor="deletion-confirm">확인을 위해 "탈퇴"를 입력하세요</Label>
+                    <Label htmlFor="deletion-confirm">{t('profile.deleteConfirmLabel')}</Label>
                     <Input
                       id="deletion-confirm"
                       type="text"
@@ -1241,16 +1290,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       disabled={isRequestingDeletion}
                     />
                     <p className="text-xs text-slate-500">
-                      소셜 로그인 계정은 비밀번호 대신 "탈퇴" 입력으로 확인합니다.
+                      {t('profile.deleteOAuthNote')}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Label htmlFor="deletion-password">비밀번호 확인</Label>
+                    <Label htmlFor="deletion-password">{t('profile.deletePasswordLabel')}</Label>
                     <Input
                       id="deletion-password"
                       type="password"
-                      placeholder="현재 비밀번호를 입력하세요"
+                      placeholder={t('profile.deletePasswordPlaceholder')}
                       value={deletionPassword}
                       onChange={(e) => setDeletionPassword(e.target.value)}
                       disabled={isRequestingDeletion}
@@ -1274,7 +1323,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   disabled={isRequestingDeletion}
                   className="w-full sm:w-auto"
                 >
-                  돌아가기
+                  {t('common.back')}
                 </Button>
                 <Button
                   type="button"
@@ -1283,19 +1332,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== '탈퇴' : !deletionPassword.trim())}
                   className="w-full sm:w-auto"
                 >
-                  {isRequestingDeletion ? '처리 중...' : '탈퇴 신청'}
+                  {isRequestingDeletion ? t('common.processing') : t('profile.requestDeletion')}
                 </Button>
               </DialogFooter>
             </>
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>프로필 설정</DialogTitle>
-                <DialogDescription>사용자 정보를 수정합니다.</DialogDescription>
+                <DialogTitle>{t('profile.title')}</DialogTitle>
+                <DialogDescription>{t('profile.description')}</DialogDescription>
               </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="profile-name">이름</Label>
+              <Label htmlFor="profile-name">{t('profile.name')}</Label>
               <Input
                 id="profile-name"
                 value={profileName}
@@ -1304,12 +1353,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <p className="text-sm font-medium text-slate-700">회사 정보 변경</p>
+              <p className="text-sm font-medium text-slate-700">{t('profile.companyInfoChange')}</p>
 
               <div className="space-y-2">
-                <Label>회사 코드</Label>
+                <Label>{t('profile.companyCode')}</Label>
                 <Input
-                  placeholder="예: COMPANY001"
+                  placeholder={t('profile.companyCodePlaceholder')}
                   value={profileCompanyCode}
                   onChange={(e) => {
                     setProfileCompanyCode(e.target.value);
@@ -1319,9 +1368,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>회사명</Label>
+                <Label>{t('profile.companyName')}</Label>
                 <Input
-                  placeholder="예: 삼성전자"
+                  placeholder={t('profile.companyNamePlaceholder')}
                   value={profileCompanyName}
                   onChange={(e) => {
                     setProfileCompanyName(e.target.value);
@@ -1340,13 +1389,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     if (profileCompanyCode.trim() && profileCompanyName.trim()) {
                       setCompanyVerified(true);
                       toast({
-                        title: '인증 완료',
-                        description: '회사 정보가 인증되었습니다.',
+                        title: t('profile.verifyComplete'),
+                        description: t('profile.companyInfoVerified'),
                       });
                     } else {
                       toast({
-                        title: '회사 정보 입력',
-                        description: '회사 코드와 회사명을 모두 입력해주세요.',
+                        title: t('profile.companyInfoChange'),
+                        description: t('profile.enterCompanyInfo'),
                         variant: 'destructive',
                       });
                     }
@@ -1356,23 +1405,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   }
                   variant={companyVerified ? 'default' : 'outline'}
                 >
-                  {companyVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
+                  {companyVerified ? t('profile.verifiedReVerify') : t('profile.verifyButton')}
                 </Button>
                 {!companyVerified && (
                   <p className="text-xs text-slate-400">
-                    회사 코드와 회사명을 입력하고 인증해주세요
+                    {t('profile.enterCompanyCodeAndName')}
                   </p>
                 )}
                 {companyVerified && (
                   <p className="text-xs text-green-600">
-                    다른 회사로 변경하려면 위에서 수정 후 다시 인증하세요
+                    {t('profile.changeCompanyInfo')}
                   </p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="profile-email">이메일</Label>
+              <Label htmlFor="profile-email">{t('profile.email')}</Label>
               <Input
                 id="profile-email"
                 value={profileEmail}
@@ -1380,24 +1429,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>부서</Label>
+              <Label>{t('profile.department')}</Label>
               <Input
-                value={userDepartmentName || '부서 없음'}
+                value={userDepartmentName || t('common.noDepartment')}
                 disabled
               />
             </div>
             <div className="space-y-2">
-              <Label>역할</Label>
+              <Label>{t('profile.role')}</Label>
               <Input
                 value={getRoleDisplay()}
                 disabled
               />
             </div>
             <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium text-slate-700">비밀번호 변경</p>
+              <p className="text-sm font-medium text-slate-700">{t('profile.passwordChange')}</p>
               <div className="space-y-2">
                 <div className="space-y-1">
-                  <Label htmlFor="current-password">현재 비밀번호</Label>
+                  <Label htmlFor="current-password">{t('profile.currentPassword')}</Label>
                   <Input
                     id="current-password"
                     type="password"
@@ -1406,11 +1455,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="new-password">새 비밀번호</Label>
+                  <Label htmlFor="new-password">{t('profile.newPassword')}</Label>
                   <Input
                     id="new-password"
                     type="password"
-                    placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
+                    placeholder={t('profile.newPasswordPlaceholder')}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
@@ -1421,7 +1470,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   )}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="confirm-password">비밀번호 확인</Label>
+                  <Label htmlFor="confirm-password">{t('profile.confirmPassword')}</Label>
                   <Input
                     id="confirm-password"
                     type="password"
@@ -1442,14 +1491,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setProfileDialogOpen(false)}
               disabled={isSavingProfile}
             >
-              취소
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
               onClick={handleSaveProfile}
               disabled={isSavingProfile}
             >
-              {isSavingProfile ? '저장 중...' : '저장'}
+              {isSavingProfile ? t('common.saving') : t('common.save')}
             </Button>
           </DialogFooter>
           <div className="pt-4 border-t mt-4">
@@ -1461,7 +1510,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               }}
               className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
             >
-              회원 탈퇴
+              {t('profile.deleteAccount')}
             </button>
           </div>
             </>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -6,6 +7,7 @@ import { getNfcMode } from '@/lib/nfc';
 import { Loader2, Pencil, ArrowLeft } from 'lucide-react';
 
 export function NfcRedirect() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, setRedirectAfterLogin } = useAuthStore();
@@ -78,14 +80,14 @@ export function NfcRedirect() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <Pencil className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-          <p className="text-lg font-medium text-slate-700">NFC 쓰기 모드</p>
-          <p className="text-sm text-slate-500 mt-2">이전 페이지로 돌아갑니다...</p>
+          <p className="text-lg font-medium text-slate-700">{t('nfcRedirect.writeMode')}</p>
+          <p className="text-sm text-slate-500 mt-2">{t('nfcRedirect.goingBack')}</p>
           <button
             onClick={() => window.history.back()}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
-            돌아가기
+            {t('common.back')}
           </button>
         </div>
       </div>
@@ -96,8 +98,8 @@ export function NfcRedirect() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-        <p className="text-lg font-medium text-slate-700">NFC 태그 인식됨</p>
-        <p className="text-sm text-slate-500 mt-2">페이지로 이동 중...</p>
+        <p className="text-lg font-medium text-slate-700">{t('nfcRedirect.tagDetected')}</p>
+        <p className="text-sm text-slate-500 mt-2">{t('nfcRedirect.navigating')}</p>
       </div>
     </div>
   );

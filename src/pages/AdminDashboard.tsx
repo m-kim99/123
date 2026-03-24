@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileText, Building2, Star, Clock, FolderOpen, Archive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 export function AdminDashboard() {
+  const { t, i18n } = useTranslation();
   const departments = useDocumentStore((state) => state.departments);
   const documents = useDocumentStore((state) => state.documents);
   const parentCategories = useDocumentStore((state) => state.parentCategories);
@@ -31,25 +33,25 @@ export function AdminDashboard() {
 
   const stats = [
     {
-      title: '총 부서',
+      title: t('dashboard.totalDepartments'),
       value: departments.length,
       icon: Building2,
       color: '#2563eb',
     },
     {
-      title: '총 문서',
+      title: t('dashboard.totalDocuments'),
       value: documents.length,
       icon: FileText,
       color: '#3B82F6',
     },
     {
-      title: '총 대분류',
+      title: t('dashboard.totalParentCategories'),
       value: parentCategories.length,
       icon: FolderOpen,
       color: '#3b82f6',
     },
     {
-      title: '총 세부 스토리지',
+      title: t('dashboard.totalSubcategories'),
       value: subcategories.length,
       icon: Archive,
       color: '#8B5CF6',
@@ -60,8 +62,8 @@ export function AdminDashboard() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">대시보드</h1>
-          <p className="text-slate-500 mt-1">시스템 현황을 한눈에 확인하세요</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('dashboard.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('dashboard.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -95,13 +97,13 @@ export function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
-                즐겨찾기
+                {t('dashboard.favorites')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {favorites.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">
-                  즐겨찾기한 세부 스토리지가 없습니다
+                  {t('dashboard.noFavorites')}
                 </p>
               ) : (
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
@@ -118,7 +120,7 @@ export function AdminDashboard() {
                       className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
                     >
                       <p className="font-medium text-sm truncate">
-                        {fav.subcategoryName || '이름 없는 세부 스토리지'}
+                        {fav.subcategoryName || t('dashboard.unnamedSubcategory')}
                       </p>
                       <p className="text-xs text-slate-500 truncate">
                         {[fav.departmentName, fav.parentCategoryName]
@@ -136,13 +138,13 @@ export function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-blue-500" />
-                최근 방문
+                {t('dashboard.recentVisits')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {recentVisits.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">
-                  최근 방문 기록이 없습니다
+                  {t('dashboard.noRecentVisits')}
                 </p>
               ) : (
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
@@ -158,7 +160,7 @@ export function AdminDashboard() {
                       className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
                     >
                       <p className="font-medium text-sm truncate">
-                        {visit.subcategoryName || '이름 없는 세부 스토리지'}
+                        {visit.subcategoryName || t('dashboard.unnamedSubcategory')}
                       </p>
                       <div className="flex items-center justify-between mt-1">
                         <p className="text-xs text-slate-500 truncate">
@@ -168,7 +170,7 @@ export function AdminDashboard() {
                         </p>
                         <p className="text-xs text-slate-400">
                           {formatDistanceToNow(new Date(visit.visitedAt), {
-                            locale: ko,
+                            locale: i18n.language === 'ko' ? ko : undefined,
                             addSuffix: true,
                           })}
                         </p>
@@ -184,13 +186,13 @@ export function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-blue-500" />
-                많이 사용하는 부서
+                {t('dashboard.topDepartments')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {departmentStats.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">
-                  사용 통계가 없습니다
+                  {t('dashboard.noUsageStats')}
                 </p>
               ) : (
                 <div className="space-y-3 max-h-36 overflow-y-auto pr-1">
@@ -213,7 +215,7 @@ export function AdminDashboard() {
                               {stat.departmentName}
                             </p>
                             <p className="text-xs text-slate-500">
-                              방문 {stat.visitCount}회
+                              {t('dashboard.visitCount', { count: stat.visitCount })}
                             </p>
                           </div>
                         </div>
@@ -229,12 +231,12 @@ export function AdminDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>부서별 문서 현황</CardTitle>
+              <CardTitle>{t('dashboard.deptDocStatus')}</CardTitle>
               <Button
                 variant="outline"
                 onClick={() => navigate('/admin/departments')}
               >
-                전체 보기
+                {t('common.viewAll')}
               </Button>
             </div>
           </CardHeader>
@@ -258,7 +260,7 @@ export function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold">{dept.documentCount}</p>
-                      <p className="text-xs text-slate-500">문서</p>
+                      <p className="text-xs text-slate-500">{t('common.documents')}</p>
                     </div>
                   </CardContent>
                 </Card>

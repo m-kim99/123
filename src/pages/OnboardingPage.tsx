@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
 export function OnboardingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     user,
@@ -59,8 +61,8 @@ export function OnboardingPage() {
   const handleVerifyCompany = async () => {
     if (!companyCode.trim() || !companyName.trim()) {
       toast({
-        title: '회사 정보 입력',
-        description: '회사 코드와 회사명을 모두 입력해주세요.',
+        title: t('onboarding.companyInfoInput'),
+        description: t('onboarding.enterCompanyCodeAndName'),
         variant: 'destructive',
       });
       return;
@@ -87,21 +89,21 @@ export function OnboardingPage() {
           if (!deptError && departments) {
             setAvailableDepartments(departments);
             toast({
-              title: '인증 완료',
-              description: `${departments.length}개 부서를 불러왔습니다.`,
+              title: t('onboarding.verifyComplete'),
+              description: t('signup.loadedDepartments', { count: departments.length }),
             });
           } else {
             setAvailableDepartments([]);
             toast({
-              title: '인증 완료',
-              description: '해당 회사에 부서가 없습니다.',
+              title: t('onboarding.verifyComplete'),
+              description: t('signup.noDeptInCompany'),
             });
           }
         } else {
           setAvailableDepartments([]);
           toast({
-            title: '인증 완료',
-            description: '새로운 회사입니다.',
+            title: t('onboarding.verifyComplete'),
+            description: t('onboarding.newCompany'),
           });
         }
       } catch (error) {
@@ -112,8 +114,8 @@ export function OnboardingPage() {
       }
     } else {
       toast({
-        title: '인증 완료',
-        description: '회사 정보가 인증되었습니다.',
+        title: t('onboarding.verifyComplete'),
+        description: t('onboarding.companyVerified'),
       });
     }
   };
@@ -121,8 +123,8 @@ export function OnboardingPage() {
   const handleComplete = async () => {
     if (!name.trim() || !companyCode.trim() || !companyName.trim()) {
       toast({
-        title: '입력 오류',
-        description: '모든 필드를 입력해주세요.',
+        title: t('announcements.inputError'),
+        description: t('onboarding.fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -130,8 +132,8 @@ export function OnboardingPage() {
 
     if (!companyCodeVerified) {
       toast({
-        title: '회사 정보 인증',
-        description: '먼저 회사 정보를 인증해주세요.',
+        title: t('onboarding.companyInfoVerify'),
+        description: t('onboarding.verifyFirst'),
         variant: 'destructive',
       });
       return;
@@ -139,8 +141,8 @@ export function OnboardingPage() {
 
     if (role === 'team' && !departmentId) {
       toast({
-        title: '부서 선택',
-        description: '부서를 선택해주세요.',
+        title: t('onboarding.selectDept'),
+        description: t('onboarding.selectDeptDesc'),
         variant: 'destructive',
       });
       return;
@@ -158,8 +160,8 @@ export function OnboardingPage() {
 
     if (result.success) {
       toast({
-        title: '온보딩 완료',
-        description: '회사 정보가 저장되었습니다.',
+        title: t('onboarding.onboardingComplete'),
+        description: t('onboarding.companySaved'),
       });
       if (role === 'admin') {
         navigate('/admin');
@@ -168,8 +170,8 @@ export function OnboardingPage() {
       }
     } else {
       toast({
-        title: '온보딩 실패',
-        description: result.error || '다시 시도해주세요.',
+        title: t('onboarding.onboardingFailed'),
+        description: result.error || t('common.tryAgain'),
         variant: 'destructive',
       });
     }
@@ -180,9 +182,9 @@ export function OnboardingPage() {
       <div className="flex flex-col items-center">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader>
-            <CardTitle>회사 정보 입력</CardTitle>
+            <CardTitle>{t('onboarding.title')}</CardTitle>
             <CardDescription>
-              서비스 이용을 위해 회사 정보를 입력해주세요.
+              {t('onboarding.description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 max-h-[90vh] overflow-y-auto">
@@ -192,21 +194,21 @@ export function OnboardingPage() {
                   value="admin"
                   className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
-                  관리자
+                  {t('common.admin')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="team"
                   className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
-                  팀원
+                  {t('common.team')}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
             <div className="space-y-2">
-              <Label>회사 코드</Label>
+              <Label>{t('signup.companyCode')}</Label>
               <Input
-                placeholder="예: COMPANY001"
+                placeholder={t('signup.companyCodePlaceholder')}
                 value={companyCode}
                 onChange={(e) => {
                   setCompanyCode(e.target.value);
@@ -216,9 +218,9 @@ export function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>회사명</Label>
+              <Label>{t('signup.companyName')}</Label>
               <Input
-                placeholder="예: 삼성전자"
+                placeholder={t('signup.companyNamePlaceholder')}
                 value={companyName}
                 onChange={(e) => {
                   setCompanyName(e.target.value);
@@ -237,14 +239,14 @@ export function OnboardingPage() {
                 disabled={!companyCode.trim() || !companyName.trim()}
                 variant={companyCodeVerified ? 'default' : 'outline'}
               >
-                {companyCodeVerified ? '✓ 인증됨 (다시 인증)' : '인증하기'}
+                {companyCodeVerified ? t('signup.verifiedReVerify') : t('signup.verifyButton')}
               </Button>
             </div>
 
             <div className="space-y-2">
-              <Label>이름</Label>
+              <Label>{t('signup.name')}</Label>
               <Input
-                placeholder="홍길동"
+                placeholder={t('signup.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -252,7 +254,7 @@ export function OnboardingPage() {
 
             {role === 'team' && (
               <div className="space-y-2">
-                <Label>부서</Label>
+                <Label>{t('signup.department')}</Label>
                 <Select
                   value={departmentId}
                   onValueChange={(value) => setDepartmentId(value)}
@@ -262,12 +264,12 @@ export function OnboardingPage() {
                     <SelectValue
                       placeholder={
                         !companyCodeVerified
-                          ? '먼저 회사 정보를 인증해주세요'
+                          ? t('signup.verifyCompanyFirst')
                           : isLoadingDepartments
-                          ? '부서를 불러오는 중...'
+                          ? t('signup.loadingDepartments')
                           : availableDepartments.length === 0
-                          ? '사용 가능한 부서가 없습니다'
-                          : '부서 선택'
+                          ? t('signup.noDepartments')
+                          : t('signup.selectDepartment')
                       }
                     />
                   </SelectTrigger>
@@ -288,7 +290,7 @@ export function OnboardingPage() {
               onClick={handleComplete}
               disabled={isSubmitting || isLoading}
             >
-              {isSubmitting || isLoading ? '저장 중...' : '완료'}
+              {isSubmitting || isLoading ? t('common.saving') : t('onboarding.complete')}
             </Button>
           </CardContent>
         </Card>

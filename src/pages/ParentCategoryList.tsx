@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -21,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { BackButton } from '@/components/BackButton';
 
 export function ParentCategoryList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === 'admin';
@@ -136,9 +138,9 @@ export function ParentCategoryList() {
         <BackButton className="mb-4" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">대분류 관리</h1>
+            <h1 className="text-3xl font-bold">{t('parentCatList.title')}</h1>
             <p className="text-slate-500 mt-1">
-              부서별 문서 대분류를 관리합니다
+              {t('parentCatList.subtitle')}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -147,7 +149,7 @@ export function ParentCategoryList() {
               onChange={(e) => setSelectedDepartmentId(e.target.value)}
               className="border rounded-md px-3 py-2 text-sm min-w-[150px]"
             >
-              <option value="">전체 부서</option>
+              <option value="">{t('parentCatList.allDepartments')}</option>
               {departments
                 .filter((dept) => accessibleDepartmentIds.includes(dept.id))
                 .map((dept) => (
@@ -158,7 +160,7 @@ export function ParentCategoryList() {
             </select>
             <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              대분류 추가
+              {t('deptDetail.addParentCategory')}
             </Button>
           </div>
         </div>
@@ -167,17 +169,17 @@ export function ParentCategoryList() {
           <p className="text-sm text-slate-500">
             {departments.find((d) => d.id === selectedDepartmentId)?.name} -
             {filteredParentCategories.length > ITEMS_PER_PAGE
-              ? ` ${startItem}-${endItem} / 총 ${filteredParentCategories.length}개 대분류`
-              : ` 총 ${filteredParentCategories.length}개 대분류`}
+              ? ` ${startItem}-${endItem} / ${t('parentCatList.totalCategories', { count: filteredParentCategories.length })}`
+              : ` ${t('parentCatList.totalCategories', { count: filteredParentCategories.length })}`}
           </p>
         )}
 
         {isLoading && parentCategories.length === 0 ? (
-          <p className="text-slate-500">로딩 중...</p>
+          <p className="text-slate-500">{t('common.loading')}</p>
         ) : filteredParentCategories.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-slate-500">
-              등록된 대분류가 없습니다.
+              {t('deptDetail.noParentCategories')}
             </CardContent>
           </Card>
         ) : (
@@ -196,24 +198,24 @@ export function ParentCategoryList() {
                     <CardHeader>
                       <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
                       <CardDescription className="mt-1 truncate">
-                        {pc.description || '설명이 없습니다.'}
+                        {pc.description || t('parentCategoryDetail.noDescription')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">부서</span>
+                          <span className="text-slate-500">{t('common.department')}</span>
                           <span className="font-medium">
                             {dept?.name ?? pc.departmentId}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 스토리지</span>
-                          <span className="font-medium">{pc.subcategoryCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.subcategories')}</span>
+                          <span className="font-medium">{pc.subcategoryCount}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">{pc.documentCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.docCount')}</span>
+                          <span className="font-medium">{pc.documentCount}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -225,7 +227,7 @@ export function ParentCategoryList() {
             {filteredParentCategories.length > ITEMS_PER_PAGE && (
               <div className="flex items-center justify-between mt-6 pt-4 border-t">
                 <div className="text-sm text-slate-500">
-                  {startItem}-{endItem} / 총 {filteredParentCategories.length}개
+                  {startItem}-{endItem} / {t('parentCatList.totalItems', { count: filteredParentCategories.length })}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -235,7 +237,7 @@ export function ParentCategoryList() {
                     onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                   >
-                    이전
+                    {t('common.previous')}
                   </Button>
 
                   <div className="flex items-center gap-1">
@@ -273,7 +275,7 @@ export function ParentCategoryList() {
                     }
                     disabled={currentPage === totalPages}
                   >
-                    다음
+                    {t('common.next')}
                   </Button>
                 </div>
               </div>
@@ -284,24 +286,24 @@ export function ParentCategoryList() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 대분류 추가</DialogTitle>
+              <DialogTitle>{t('deptDetail.addParentCategoryTitle')}</DialogTitle>
               <DialogDescription>
-                부서에 속한 새로운 문서 대분류를 생성합니다.
+                {t('parentCatList.addDialogDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>대분류 이름</Label>
+                <Label>{t('deptDetail.parentCategoryName')}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="예: 인사 문서"
+                  placeholder={t('deptDetail.parentCategoryNamePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>부서</Label>
+                <Label>{t('common.department')}</Label>
                 <select
                   className="w-full border rounded-md px-3 py-2 text-sm"
                   value={form.departmentId}
@@ -312,7 +314,7 @@ export function ParentCategoryList() {
                     }))
                   }
                 >
-                  <option value="">부서를 선택하세요</option>
+                  <option value="">{t('parentCatList.selectDept')}</option>
                   {departments
                     .filter((dept) => accessibleDepartmentIds.includes(dept.id))
                     .map((dept) => (
@@ -323,7 +325,7 @@ export function ParentCategoryList() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={form.description}
                   onChange={(e) =>
@@ -332,7 +334,7 @@ export function ParentCategoryList() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="대분류 설명을 입력하세요"
+                  placeholder={t('deptDetail.parentCategoryDescPlaceholder')}
                 />
               </div>
             </div>
@@ -343,7 +345,7 @@ export function ParentCategoryList() {
                 onClick={() => setAddDialogOpen(false)}
                 disabled={isSaving}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -352,7 +354,7 @@ export function ParentCategoryList() {
                   isSaving || !form.name.trim() || !form.departmentId
                 }
               >
-                {isSaving ? '추가 중...' : '추가'}
+                {isSaving ? t('announcements.adding') : t('common.add')}
               </Button>
             </DialogFooter>
           </DialogContent>

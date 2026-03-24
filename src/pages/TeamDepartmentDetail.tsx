@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
@@ -9,6 +10,7 @@ import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { BackButton } from '@/components/BackButton';
 
 export function TeamDepartmentDetail() {
+  const { t } = useTranslation();
   const { departmentId } = useParams<{ departmentId: string }>();
   const navigate = useNavigate();
   const [teamMembersCount, setTeamMembersCount] = useState<number>(0);
@@ -59,7 +61,7 @@ export function TeamDepartmentDetail() {
       <DashboardLayout>
         <div className="space-y-4">
           <BackButton />
-          <p className="text-slate-500">부서를 찾을 수 없습니다</p>
+          <p className="text-slate-500">{t('deptDetail.notFound')}</p>
         </div>
       </DashboardLayout>
     );
@@ -72,7 +74,7 @@ export function TeamDepartmentDetail() {
           <DocumentBreadcrumb
             items={[
               {
-                label: '부서 보기',
+                label: t('teamDeptDetail.viewDepts'),
                 href: '/team/departments',
               },
               {
@@ -88,9 +90,9 @@ export function TeamDepartmentDetail() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold">{department.name}</h1>
-              <p className="text-sm text-slate-500">부서 코드: {department.code}</p>
+              <p className="text-sm text-slate-500">{t('deptDetail.deptCode')}: {department.code}</p>
               <p className="text-slate-500 mt-1">
-                {department.description || '부서 설명이 등록되어 있지 않습니다.'}
+                {department.description || t('deptDetail.noDescription')}
               </p>
             </div>
           </div>
@@ -99,26 +101,26 @@ export function TeamDepartmentDetail() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">문서 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.docCount')}</p>
               <p className="text-2xl font-bold mt-2">{deptDocuments.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
               <p className="text-2xl font-bold mt-2">{deptParentCategories.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">팀원 수</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.teamMemberCount')}</p>
               <p className="text-2xl font-bold mt-2">{teamMembersCount}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">대분류 수</p>
-              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}개</p>
+              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
+              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}</p>
             </CardContent>
           </Card>
         </div>
@@ -126,16 +128,16 @@ export function TeamDepartmentDetail() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>대분류 목록</CardTitle>
+              <CardTitle>{t('deptDetail.parentCategoryList')}</CardTitle>
               <CardDescription className="mt-1">
-                {department.name} 부서에 속한 대분류입니다
+                {t('deptDetail.parentCategoryListDesc', { name: department.name })}
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             {deptParentCategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 부서에 등록된 대분류가 없습니다
+                {t('deptDetail.noParentCategories')}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -150,7 +152,7 @@ export function TeamDepartmentDetail() {
                         <div className="flex-1">
                           <CardTitle className="text-lg">{pc.name}</CardTitle>
                           <CardDescription className="mt-1">
-                            {pc.description || '설명이 없습니다.'}
+                            {pc.description || t('parentCategoryDetail.noDescription')}
                           </CardDescription>
                         </div>
                       </div>
@@ -158,12 +160,12 @@ export function TeamDepartmentDetail() {
                     <CardContent>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">세부 스토리지</span>
-                          <span className="font-medium">{pc.subcategoryCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.subcategories')}</span>
+                          <span className="font-medium">{pc.subcategoryCount}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500">문서 수</span>
-                          <span className="font-medium">{pc.documentCount}개</span>
+                          <span className="text-slate-500">{t('deptDetail.docCount')}</span>
+                          <span className="font-medium">{pc.documentCount}</span>
                         </div>
                       </div>
                     </CardContent>

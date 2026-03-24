@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
@@ -89,6 +90,7 @@ function readFileAsDataURL(file: File): Promise<string> {
 }
 
 export function CategoryDetail() {
+  const { t } = useTranslation();
   const { categoryId } = useParams<{ categoryId: string }>();
   
   // Selector 최적화: 상태값은 개별 selector로
@@ -154,7 +156,7 @@ export function CategoryDetail() {
       <DashboardLayout>
         <div className="text-center py-12">
           <BackButton className="mb-4" />
-          <p className="text-slate-500">카테고리를 찾을 수 없습니다</p>
+          <p className="text-slate-500">{t('categoryDetail.categoryNotFound')}</p>
         </div>
       </DashboardLayout>
     );
@@ -187,7 +189,7 @@ export function CategoryDetail() {
         .single();
 
       if (error || !data) {
-        throw error || new Error('문서를 찾을 수 없습니다.');
+        throw error || new Error('Document not found');
       }
 
       const { data: publicData } = supabase.storage
@@ -197,7 +199,7 @@ export function CategoryDetail() {
       const publicUrl = publicData?.publicUrl;
 
       if (!publicUrl) {
-        throw new Error('파일 URL을 생성할 수 없습니다.');
+        throw new Error('Could not generate file URL');
       }
 
       const lowerPath = data.file_path.toLowerCase();
@@ -225,8 +227,8 @@ export function CategoryDetail() {
 
 
       toast({
-        title: '문서를 불러오지 못했습니다.',
-        description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
+        title: t('subcategoryDetail.previewFailed'),
+        description: t('subcategoryDetail.previewFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -252,7 +254,7 @@ export function CategoryDetail() {
     });
 
     if (validFiles.length === 0) {
-      setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+      setUploadError(t('documentMgmt.onlyPdfJpgPng'));
       setUploadFiles([]);
       setFileStatuses([]);
       return;
@@ -275,17 +277,17 @@ export function CategoryDetail() {
     setFileStatuses(
       validFiles.map((file) => ({
         name: file.name,
-        status: '대기 중',
+        status: t('documentMgmt.waitingUpload'),
         error: null,
       }))
     );
 
     if (imageFiles.length > 0 && pdfFiles.length === 0 && imageFiles.length > 1) {
-      setUploadStatus(`${imageFiles.length}개 이미지를 하나의 문서로 업로드합니다.`);
+      setUploadStatus(t('categoryDetail.imagesAsOneDoc', { count: imageFiles.length }));
     } else if (imageFiles.length > 0 && pdfFiles.length > 0) {
-      setUploadStatus(`PDF ${pdfFiles.length}개와 이미지 묶음 1개가 업로드됩니다.`);
+      setUploadStatus(t('categoryDetail.pdfAndImageBundle', { pdfCount: pdfFiles.length }));
     } else {
-      setUploadStatus(`${validFiles.length}개 파일 선택됨`);
+      setUploadStatus(t('documentMgmt.filesSelected', { count: validFiles.length }));
     }
   }, []);
 
@@ -299,9 +301,9 @@ export function CategoryDetail() {
     onDropRejected: (fileRejections) => {
       const rejection = fileRejections[0];
       if (rejection?.errors[0]?.code === 'file-invalid-type') {
-        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+        setUploadError(t('documentMgmt.onlyPdfJpgPng'));
       } else {
-        setUploadError('파일 업로드에 실패했습니다.');
+        setUploadError(t('documentMgmt.uploadFailedGeneric'));
       }
     },
   });
@@ -324,7 +326,7 @@ export function CategoryDetail() {
 
     if (!targetSubcategory) {
       setUploadError(
-        '이 카테고리에 연결된 세부 스토리지가 없어 업로드할 수 없습니다.',
+        t('categoryDetail.noSubcategoryForUpload'),
       );
       return;
     }
@@ -334,7 +336,7 @@ export function CategoryDetail() {
 
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStatus('파일 처리 준비 중...');
+    setUploadStatus(t('documentMgmt.preparingUpload'));
     setUploadError(null);
     setUploadSuccess(false);
 
@@ -348,7 +350,7 @@ export function CategoryDetail() {
       setFileStatuses(
         uploadFiles.map((file) => ({
           name: file.name,
-          status: '대기 중',
+          status: t('documentMgmt.waitingUpload'),
           error: null,
         }))
       );
@@ -362,7 +364,7 @@ export function CategoryDetail() {
         if (pdfFiles.length === 1) {
           return getBaseNameWithoutExt(pdfFiles[0].name);
         }
-        return '문서';
+        return t('documentMgmt.document');
       };
 
       // PDF 파일 병렬 처리 (Promise.allSettled 사용)
@@ -373,7 +375,7 @@ export function CategoryDetail() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '처리 중...' };
+              next[index] = { ...next[index], status: t('documentMgmt.processing') };
             }
             return next;
           });
@@ -408,25 +410,25 @@ export function CategoryDetail() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '완료', error: null };
+              next[index] = { ...next[index], status: t('documentMgmt.completed'), error: null };
             }
             return next;
           });
 
           return { success: true, fileName: file.name };
         } catch (fileError) {
-          console.error('업로드 오류:', file.name, fileError);
+          console.error('Upload error:', file.name, fileError);
 
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
               next[index] = {
                 ...next[index],
-                status: '실패',
+                status: t('documentMgmt.failed'),
                 error:
                   fileError instanceof Error
                     ? fileError.message
-                    : '문서 업로드 중 오류가 발생했습니다.',
+                    : t('documentMgmt.uploadErrorGeneric'),
               };
             }
             return next;
@@ -450,11 +452,11 @@ export function CategoryDetail() {
         setUploadProgress(Math.round((completedCount / totalFiles) * 100));
       });
 
-      setUploadStatus(`PDF 파일 ${pdfFiles.length}개 업로드 완료`);
+      setUploadStatus(t('documentMgmt.pdfUploadComplete', { count: pdfFiles.length }));
 
       // 이미지 파일들을 하나의 문서로 묶어서 처리 (OCR 병렬 처리)
       if (imageFiles.length > 1) {
-        setUploadStatus(`${imageFiles.length}개 이미지 OCR 병렬 처리 중...`);
+        setUploadStatus(t('categoryDetail.parallelOcr', { count: imageFiles.length }));
 
         // 병렬 OCR 처리 (Promise.all 사용)
         const ocrPromises = imageFiles.map(async (file, i) => {
@@ -464,7 +466,7 @@ export function CategoryDetail() {
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
-                next[index] = { ...next[index], status: 'OCR 처리 중...' };
+                next[index] = { ...next[index], status: t('documentMgmt.ocrProcessing') };
               }
               return next;
             });
@@ -479,7 +481,7 @@ export function CategoryDetail() {
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
-                next[index] = { ...next[index], status: 'OCR 완료' };
+                next[index] = { ...next[index], status: t('documentMgmt.ocrComplete') };
               }
               return next;
             });
@@ -488,7 +490,7 @@ export function CategoryDetail() {
             return {
               index: i,
               text: ocrText && ocrText.trim()
-                ? `--- 페이지 ${i + 1} ---\n${ocrText.trim()}\n`
+                ? `--- ${t('categoryDetail.page')} ${i + 1} ---\n${ocrText.trim()}\n`
                 : '',
             };
           } catch (fileError) {
@@ -500,10 +502,10 @@ export function CategoryDetail() {
               if (next[index]) {
                 next[index] = {
                   ...next[index],
-                  status: '실패',
+                  status: t('documentMgmt.failed'),
                   error: fileError instanceof Error
                     ? fileError.message
-                    : 'OCR 처리 실패',
+                    : t('categoryDetail.ocrProcessFailed'),
                 };
               }
               return next;
@@ -528,7 +530,7 @@ export function CategoryDetail() {
         const allOcrText = ocrParts.join('\n');
 
         try {
-          setUploadStatus('PDF 생성 중...');
+          setUploadStatus(t('categoryDetail.generatingPdf'));
 
           const { jsPDF } = await import('jspdf');
           const pdf = new jsPDF('p', 'mm', 'a4');
@@ -572,7 +574,7 @@ export function CategoryDetail() {
             type: 'application/pdf',
           });
 
-          setUploadStatus('업로드 중...');
+          setUploadStatus(t('documentMgmt.uploading'));
 
           await uploadDocument({
             name: imageTitle,
@@ -588,14 +590,14 @@ export function CategoryDetail() {
           });
 
           successCount += 1;
-          setUploadStatus(`완료: ${imageFiles.length}장을 하나의 문서로 업로드했습니다!`);
+          setUploadStatus(t('documentMgmt.imageBundleComplete', { count: imageFiles.length }));
         } catch (groupError) {
           console.error('이미지 묶음 업로드 오류:', groupError);
           failureCount += 1;
           setUploadError(
             groupError instanceof Error
               ? groupError.message
-              : '이미지 문서 업로드 중 오류가 발생했습니다.',
+              : t('documentMgmt.imageUploadError'),
           );
         }
       } else if (imageFiles.length === 1) {
@@ -605,12 +607,12 @@ export function CategoryDetail() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '처리 중...' };
+              next[index] = { ...next[index], status: t('documentMgmt.processing') };
             }
             return next;
           });
 
-          setUploadStatus('이미지 1/1 OCR 처리 중...');
+          setUploadStatus(t('categoryDetail.singleImageOcr'));
 
           let ocrText = '';
           try {
@@ -642,12 +644,12 @@ export function CategoryDetail() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '완료', error: null };
+              next[index] = { ...next[index], status: t('documentMgmt.completed'), error: null };
             }
             return next;
           });
         } catch (fileError) {
-          console.error('업로드 오류:', file.name, fileError);
+          console.error('Upload error:', file.name, fileError);
           failureCount += 1;
 
           setFileStatuses((prev) => {
@@ -655,11 +657,11 @@ export function CategoryDetail() {
             if (next[index]) {
               next[index] = {
                 ...next[index],
-                status: '실패',
+                status: t('documentMgmt.failed'),
                 error:
                   fileError instanceof Error
                     ? fileError.message
-                    : '문서 업로드 중 오류가 발생했습니다.',
+                    : t('documentMgmt.uploadErrorGeneric'),
               };
             }
             return next;
@@ -675,20 +677,20 @@ export function CategoryDetail() {
       if (successCount > 0) {
         setUploadSuccess(true);
         toast({
-          title: '업로드 완료',
-          description: `${successCount}개 문서가 업로드되었습니다.`,
+          title: t('documentMgmt.uploadComplete'),
+          description: t('categoryDetail.docsUploaded', { count: successCount }),
         });
       }
 
       if (failureCount > 0) {
         setUploadError(
           failureCount === totalFiles
-            ? '모든 파일 업로드에 실패했습니다.'
-            : `${failureCount}개 파일 업로드에 실패했습니다.`,
+            ? t('documentMgmt.allUploadsFailed')
+            : t('documentMgmt.someUploadsFailed', { count: failureCount }),
         );
       }
 
-      setUploadStatus('업로드 완료');
+      setUploadStatus(t('documentMgmt.uploadComplete'));
 
       setTimeout(() => {
         setUploadFiles([]);
@@ -702,7 +704,7 @@ export function CategoryDetail() {
     } catch (error) {
       console.error('업로드 오류:', error);
       setUploadError(
-        error instanceof Error ? error.message : '문서 업로드 중 오류가 발생했습니다.'
+        error instanceof Error ? error.message : t('documentMgmt.uploadErrorGeneric')
       );
       setUploadStatus('');
       setUploadProgress(0);
@@ -725,7 +727,7 @@ export function CategoryDetail() {
         .single();
 
       if (error || !data) {
-        throw error || new Error('문서를 찾을 수 없습니다.');
+        throw error || new Error('Document not found');
       }
 
       const { data: publicData } = supabase.storage
@@ -733,17 +735,17 @@ export function CategoryDetail() {
         .getPublicUrl(data.file_path);
 
       if (!publicData?.publicUrl) {
-        throw new Error('파일 URL을 생성할 수 없습니다.');
+        throw new Error('Could not generate file URL');
       }
 
       await downloadFile(publicData.publicUrl, data.title || 'document');
     } catch (error) {
-      console.error('문서 다운로드 실패:', error);
+      console.error('Document download failed:', error);
 
 
       toast({
-        title: '다운로드 실패',
-        description: '문서를 다운로드하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.downloadFailed'),
+        description: t('documentMgmt.downloadFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -813,8 +815,8 @@ export function CategoryDetail() {
       await fetchDocuments();
 
       toast({
-        title: '삭제 완료',
-        description: '문서가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.deleteCompleteDesc'),
       });
 
       if (user?.companyId && targetDoc) {
@@ -842,8 +844,8 @@ export function CategoryDetail() {
 
 
       toast({
-        title: '삭제 실패',
-        description: '문서를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.deleteFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -867,7 +869,7 @@ export function CategoryDetail() {
 
     try {
       if (!user?.companyId) {
-        throw new Error('회사 정보가 없습니다.');
+        throw new Error('Company info not found');
       }
 
       // 1. 공유 가능한 사용자 목록
@@ -915,8 +917,8 @@ export function CategoryDetail() {
     } catch (error) {
       console.error('공유 정보 로드 실패:', error);
       toast({
-        title: '공유 정보 로드 실패',
-        description: '공유 정보를 불러오지 못했습니다.',
+        title: t('documentMgmt.shareLoadFailed'),
+        description: t('documentMgmt.shareLoadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -927,7 +929,7 @@ export function CategoryDetail() {
 
   // 공유 취소
   const handleUnshare = async (shareId: string) => {
-    if (!confirm('공유를 취소하시겠습니까?')) return;
+    if (!confirm(t('documentMgmt.confirmUnshare'))) return;
 
     try {
       await unshareDocument(shareId);
@@ -936,14 +938,14 @@ export function CategoryDetail() {
       setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
       
       toast({
-        title: '공유 취소 완료',
-        description: '문서 공유가 취소되었습니다.',
+        title: t('documentMgmt.unshareComplete'),
+        description: t('documentMgmt.unshareCompleteDesc'),
       });
     } catch (error) {
       console.error('공유 취소 실패:', error);
       toast({
-        title: '공유 취소 실패',
-        description: '공유 취소 중 오류가 발생했습니다.',
+        title: t('documentMgmt.unshareFailed'),
+        description: t('documentMgmt.unshareFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -971,8 +973,8 @@ export function CategoryDetail() {
   const handleSendShare = async () => {
     if (!sharingDocumentId || selectedUserIds.length === 0) {
       toast({
-        title: '선택 오류',
-        description: '공유할 사용자를 선택해주세요.',
+        title: t('documentMgmt.selectionError'),
+        description: t('documentMgmt.selectUsersToShare'),
         variant: 'destructive',
       });
       return;
@@ -990,7 +992,7 @@ export function CategoryDetail() {
     try {
       const doc = categoryDocuments.find((d) => d.id === sharingDocumentId);
       if (!doc) {
-        throw new Error('문서를 찾을 수 없습니다.');
+        throw new Error('Document not found');
       }
 
       // 1. DB에 공유 정보 저장 (필수)
@@ -1022,7 +1024,7 @@ export function CategoryDetail() {
                 recipientEmails,
                 documentTitle: doc.name,
                 documentUrl,
-                senderName: user?.name || '알 수 없음',
+                senderName: user?.name || t('common.unknown'),
                 senderEmail: user?.email || '',
               },
             });
@@ -1033,8 +1035,8 @@ export function CategoryDetail() {
       }
 
       toast({
-        title: '공유 완료',
-        description: `${selectedUserIds.length}명에게 문서가 공유되었습니다.${sendEmailNotification ? ' 이메일도 전송되었습니다.' : ''}`,
+        title: t('documentMgmt.shareComplete'),
+        description: t('documentMgmt.shareCompleteDesc', { count: selectedUserIds.length }) + (sendEmailNotification ? ' ' + t('documentMgmt.emailSentToo') : ''),
       });
 
       setShareDialogOpen(false);
@@ -1044,8 +1046,8 @@ export function CategoryDetail() {
     } catch (error) {
       console.error('문서 공유 실패:', error);
       toast({
-        title: '공유 실패',
-        description: '문서를 공유하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.shareFailed'),
+        description: t('documentMgmt.shareFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -1072,13 +1074,13 @@ export function CategoryDetail() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">부서 코드</p>
+              <p className="text-sm font-medium text-slate-500">{t('categoryDetail.deptCode')}</p>
               <p className="text-2xl font-bold mt-2">{department?.code}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">문서 수</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.docCount')}</p>
               <p className="text-2xl font-bold mt-2">
                 {categoryDocuments.length}
               </p>
@@ -1089,9 +1091,9 @@ export function CategoryDetail() {
               <div className="flex items-start gap-2">
                 <MapPin className="h-5 w-5 text-slate-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-slate-500">보관 장소</p>
+                  <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.storageLocation')}</p>
                   <p className="text-sm font-bold mt-1">
-                    {category.storageLocation || '미지정'}
+                    {category.storageLocation || t('subcategoryDetail.unassigned')}
                   </p>
                 </div>
               </div>
@@ -1101,16 +1103,16 @@ export function CategoryDetail() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>문서 목록</CardTitle>
+            <CardTitle>{t('subcategoryDetail.documentList')}</CardTitle>
             <Button onClick={handleUploadClick} disabled={isUploading}>
               <Upload className="h-4 w-4 mr-2" />
-              문서 업로드
+              {t('subcategoryDetail.uploadDocument')}
             </Button>
           </CardHeader>
           <CardContent>
             {categoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 카테고리에 문서가 없습니다
+                {t('categoryDetail.noDocuments')}
               </div>
             ) : (
               <div className="space-y-3">
@@ -1134,7 +1136,7 @@ export function CategoryDetail() {
                           <p className="font-medium truncate flex-1 min-w-0">{doc.name}</p>
                           {doc.classified && (
                             <Badge variant="destructive" className="text-xs">
-                              기밀
+                              {t('documentMgmt.confidential')}
                             </Badge>
                           )}
                         </div>
@@ -1153,30 +1155,30 @@ export function CategoryDetail() {
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenPreviewDocument(doc.id)}
-                        title="미리보기"
+                        title={t('subcategoryDetail.preview')}
                       >
-                        <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
+                        <img src={previewIcon} alt={t('subcategoryDetail.preview')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleDownloadDocument(doc.id)}
                       >
-                        <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
+                        <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenShareDialog(doc.id)}
                       >
-                        <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
+                        <img src={shareIcon} alt={t('documentMgmt.shared')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenDeleteDialog(doc.id)}
                       >
-                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                        <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -1193,21 +1195,21 @@ export function CategoryDetail() {
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>문서 삭제</AlertDialogTitle>
+                  <AlertDialogTitle>{t('documentMgmt.deleteDoc')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    정말 삭제하시겠습니까?
+                    {t('subcategoryDetail.confirmDelete')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={isDeletingDocument}>
-                    취소
+                    {t('common.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmDeleteDocument}
                     className="bg-red-600 hover:bg-red-700 text-white"
                     disabled={isDeletingDocument}
                   >
-                    {isDeletingDocument ? '삭제 중...' : '삭제'}
+                    {isDeletingDocument ? t('documentMgmt.deleting') : t('common.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -1217,9 +1219,9 @@ export function CategoryDetail() {
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>문서 업로드</DialogTitle>
+              <DialogTitle>{t('subcategoryDetail.uploadDocument')}</DialogTitle>
               <DialogDescription>
-                이 카테고리에 새 문서를 업로드합니다. PDF, JPG, PNG 형식을 지원합니다.
+                {t('categoryDetail.uploadDialogDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1232,32 +1234,32 @@ export function CategoryDetail() {
                 <input {...getInputProps()} />
                 <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 {isDragActive ? (
-                  <p className="text-sm text-slate-600">여기로 파일을 드롭하세요...</p>
+                  <p className="text-sm text-slate-600">{t('documentMgmt.dropHere')}</p>
                 ) : (
                   <p className="text-sm text-slate-600">
-                    클릭하거나 파일을 드래그해서 업로드할 문서를 선택하세요 (여러 파일 선택 가능)
+                    {t('documentMgmt.clickOrDrag')}
                   </p>
                 )}
-                <p className="mt-1 text-xs text-slate-400">PDF, JPG, PNG · 여러 파일 선택 가능</p>
+                <p className="mt-1 text-xs text-slate-400">{t('documentMgmt.supportedFormats')}</p>
                 {uploadFiles.length > 0 && (
                   <p className="mt-2 text-xs text-slate-600">
-                    선택된 파일: {uploadFiles.length === 1 ? uploadFiles[0].name : `${uploadFiles.length}개 파일`}
+                    {t('categoryDetail.selectedFiles')}: {uploadFiles.length === 1 ? uploadFiles[0].name : t('documentMgmt.filesSelected', { count: uploadFiles.length })}
                   </p>
                 )}
               </div>
               <div className="space-y-1 text-sm">
-                <p className="text-slate-600">카테고리: {category.name}</p>
+                <p className="text-slate-600">{t('categoryDetail.category')}: {category.name}</p>
                 {uploadStatus && (
-                  <p className="text-slate-500">상태: {uploadStatus}</p>
+                  <p className="text-slate-500">{t('categoryDetail.status')}: {uploadStatus}</p>
                 )}
                 {uploadProgress > 0 && uploadProgress < 100 && (
-                  <p className="text-slate-500">진행률: {uploadProgress}%</p>
+                  <p className="text-slate-500">{t('categoryDetail.progress')}: {uploadProgress}%</p>
                 )}
                 {uploadError && (
                   <p className="text-red-500 text-xs mt-1">{uploadError}</p>
                 )}
                 {uploadSuccess && (
-                  <p className="text-emerald-600 text-xs mt-1">업로드가 완료되었습니다.</p>
+                  <p className="text-emerald-600 text-xs mt-1">{t('categoryDetail.uploadDone')}</p>
                 )}
                 {fileStatuses.length > 0 && (
                   <div className="mt-1 space-y-0.5 text-xs text-left">
@@ -1274,12 +1276,12 @@ export function CategoryDetail() {
                             className={
                               file.error
                                 ? 'text-red-500'
-                                : file.status === '완료'
+                                : file.status === t('documentMgmt.completed')
                                 ? 'text-emerald-600'
                                 : 'text-slate-600'
                             }
                           >
-                            {file.error ? '실패' : file.status}
+                            {file.error ? t('documentMgmt.failed') : file.status}
                           </span>
                         </div>
                       )
@@ -1288,16 +1290,16 @@ export function CategoryDetail() {
                 )}
                 {canEditTitle && uploadFiles.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    <Label>문서 제목</Label>
+                    <Label>{t('documentMgmt.docTitle')}</Label>
                     <Input
                       value={documentTitle}
                       onChange={(e) => setDocumentTitle(e.target.value)}
-                      placeholder="문서 제목을 입력하세요"
+                      placeholder={t('categoryDetail.enterDocTitle')}
                     />
                     <p className="text-xs text-slate-500">
                       {selectedImageFiles.length > 1
-                        ? `${selectedImageFiles.length}개 이미지를 하나의 문서로 묶어 업로드합니다.`
-                        : '원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요.'}
+                        ? t('categoryDetail.imagesAsOneDoc', { count: selectedImageFiles.length })
+                        : t('categoryDetail.defaultTitleNote')}
                     </p>
                   </div>
                 )}
@@ -1310,7 +1312,7 @@ export function CategoryDetail() {
                 onClick={() => setUploadDialogOpen(false)}
                 disabled={isUploading}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -1318,7 +1320,7 @@ export function CategoryDetail() {
                 style={{ backgroundColor: primaryColor }}
                 disabled={uploadFiles.length === 0 || isUploading}
               >
-                {isUploading ? '업로드 중...' : '업로드'}
+                {isUploading ? t('documentMgmt.uploading') : t('documentMgmt.upload')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1337,13 +1339,13 @@ export function CategoryDetail() {
           {previewDoc?.type === 'pdf' && (
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
                 {previewLoading ? (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">문서를 불러오는 중입니다...</p>
+                    <p className="text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                   </div>
                 ) : (
                   previewDoc && <PdfViewer url={previewDoc.url} />
@@ -1352,7 +1354,7 @@ export function CategoryDetail() {
 
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">PDF 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.pdfDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -1361,7 +1363,7 @@ export function CategoryDetail() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -1372,7 +1374,7 @@ export function CategoryDetail() {
           {previewDoc?.type === 'image' && (
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imageDoc')}</DialogTitle>
               </DialogHeader>
 
               {/* 상단 툴바 */}
@@ -1403,7 +1405,7 @@ export function CategoryDetail() {
                   variant="outline"
                   size="sm"
                   onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title="90도 회전"
+                  title={t('documentMgmt.rotate90')}
                 >
                   🔄
                 </Button>
@@ -1416,9 +1418,9 @@ export function CategoryDetail() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownloadDocument(previewDoc.id)}
-                      title="다운로드"
+                      title={t('documentMgmt.download')}
                     >
-                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
+                      <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-5 h-5" />
                     </Button>
 
                     <Button
@@ -1432,7 +1434,7 @@ export function CategoryDetail() {
                           }, 500);
                         }
                       }}
-                      title="인쇄"
+                      title={t('documentMgmt.print')}
                     >
                       🖨️
                     </Button>
@@ -1454,7 +1456,7 @@ export function CategoryDetail() {
                 }}
               >
                 {previewLoading ? (
-                  <p className="text-slate-500">이미지를 불러오는 중입니다...</p>
+                  <p className="text-slate-500">{t('documentMgmt.loadingImage')}</p>
                 ) : (
                   previewDoc && (
                     <img
@@ -1476,7 +1478,7 @@ export function CategoryDetail() {
               {/* 하단 푸터 */}
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">이미지 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.imageDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -1485,7 +1487,7 @@ export function CategoryDetail() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -1497,9 +1499,9 @@ export function CategoryDetail() {
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
           <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>문서 공유</DialogTitle>
+              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
               <DialogDescription>
-                공유할 사용자를 선택하거나 기존 공유를 관리하세요.
+                {t('documentMgmt.shareDocDesc')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1513,7 +1515,7 @@ export function CategoryDetail() {
                 }`}
                 onClick={() => setActiveShareTab('new')}
               >
-                새로운 공유
+                {t('documentMgmt.newShare')}
               </button>
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
@@ -1523,7 +1525,7 @@ export function CategoryDetail() {
                 }`}
                 onClick={() => setActiveShareTab('existing')}
               >
-                공유 현황 ({existingShares.length})
+                {t('documentMgmt.shareStatus')} ({existingShares.length})
               </button>
             </div>
 
@@ -1537,7 +1539,7 @@ export function CategoryDetail() {
                         onClick={handleSelectAllUsers}
                         className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
                       >
-                        {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
+                        {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     </div>
                   )}
@@ -1545,11 +1547,11 @@ export function CategoryDetail() {
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      공유할 수 있는 사용자가 없습니다.
+                      {t('documentMgmt.noUsersToShare')}
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -1587,11 +1589,11 @@ export function CategoryDetail() {
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">공유 현황 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      아직 공유한 사용자가 없습니다.
+                      {t('documentMgmt.noSharedUsers')}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1601,10 +1603,10 @@ export function CategoryDetail() {
                           className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || '알 수 없음'}</p>
+                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
                             <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
                             <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString('ko-KR')} 공유
+                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
                             </p>
                           </div>
                           <Button
@@ -1613,7 +1615,7 @@ export function CategoryDetail() {
                             onClick={() => handleUnshare(share.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            취소
+                            {t('common.cancel')}
                           </Button>
                         </div>
                       ))}
@@ -1635,7 +1637,7 @@ export function CategoryDetail() {
                     className="h-4 w-4"
                   />
                   <label htmlFor="emailNotificationCategory" className="text-sm">
-                    이메일 알림 전송
+                    {t('documentMgmt.emailNotification')}
                   </label>
                 </div>
               )}
@@ -1650,7 +1652,7 @@ export function CategoryDetail() {
                 }}
                 disabled={isSendingShare}
               >
-                닫기
+                {t('common.close')}
               </Button>
               {activeShareTab === 'new' && (
                 <Button
@@ -1661,10 +1663,10 @@ export function CategoryDetail() {
                   {isSendingShare ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      공유 중...
+                      {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {selectedUserIds.length}명에게 공유</>
+                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}

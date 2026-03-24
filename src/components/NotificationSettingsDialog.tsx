@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ export function NotificationSettingsDialog({
   open,
   onOpenChange,
 }: NotificationSettingsDialogProps) {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { preferences, isLoadingPreferences, fetchPreferences, updatePreferences, fetchNotifications } =
     useNotificationStore();
@@ -37,12 +39,12 @@ export function NotificationSettingsDialog({
       await updatePreferences({ [key]: value });
       await fetchNotifications();
       toast({
-        title: '알림 설정이 저장되었습니다',
+        title: t('notificationSettings.saved'),
       });
     } catch (error) {
       toast({
-        title: '저장 실패',
-        description: '알림 설정을 저장하는 중 오류가 발생했습니다.',
+        title: t('notificationSettings.saveFailed'),
+        description: t('notificationSettings.saveFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -54,23 +56,23 @@ export function NotificationSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>알림 설정</DialogTitle>
+          <DialogTitle>{t('notificationSettings.title')}</DialogTitle>
           <DialogDescription>
-            받고 싶은 알림 유형을 선택하세요.
+            {t('notificationSettings.description')}
           </DialogDescription>
         </DialogHeader>
 
         {isLoadingPreferences ? (
-          <div className="py-8 text-center text-slate-500">불러오는 중...</div>
+          <div className="py-8 text-center text-slate-500">{t('common.loading')}</div>
         ) : (
           <div className="space-y-6">
             {/* 섹션 1: 문서 활동 */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">문서 활동</h3>
+              <h3 className="text-sm font-semibold text-slate-900">{t('notificationSettings.documentActivity')}</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="document_created" className="text-sm text-slate-700">
-                    문서 등록 알림
+                    {t('notificationSettings.docCreated')}
                   </Label>
                   <Switch
                     id="document_created"
@@ -80,7 +82,7 @@ export function NotificationSettingsDialog({
                 </div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="document_deleted" className="text-sm text-slate-700">
-                    문서 삭제 알림
+                    {t('notificationSettings.docDeleted')}
                   </Label>
                   <Switch
                     id="document_deleted"
@@ -90,7 +92,7 @@ export function NotificationSettingsDialog({
                 </div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="document_shared" className="text-sm text-slate-700">
-                    문서 공유 알림
+                    {t('notificationSettings.docShared')}
                   </Label>
                   <Switch
                     id="document_shared"
@@ -105,15 +107,15 @@ export function NotificationSettingsDialog({
 
             {/* 섹션 2: 카테고리 변경 */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">카테고리 변경</h3>
+              <h3 className="text-sm font-semibold text-slate-900">{t('notificationSettings.categoryChanges')}</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="category_changes" className="text-sm text-slate-700">
-                      카테고리 생성/삭제 알림
+                      {t('notificationSettings.categoryCreateDelete')}
                     </Label>
                     <p className="text-xs text-slate-500">
-                      대분류 및 세부 스토리지의 추가/삭제 시 알림
+                      {t('notificationSettings.categoryCreateDeleteDesc')}
                     </p>
                   </div>
                   <Switch
@@ -129,15 +131,15 @@ export function NotificationSettingsDialog({
 
             {/* 섹션 3: 만료 관리 */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">만료 관리</h3>
+              <h3 className="text-sm font-semibold text-slate-900">{t('notificationSettings.expiryManagement')}</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="expiry_alerts" className="text-sm text-slate-700">
-                      만료 알림
+                      {t('notificationSettings.expiryAlerts')}
                     </Label>
                     <p className="text-xs text-slate-500">
-                      세부 스토리지 만료 예정 및 만료 알림 (7일/30일 전)
+                      {t('notificationSettings.expiryAlertsDesc')}
                     </p>
                   </div>
                   <Switch
@@ -154,7 +156,7 @@ export function NotificationSettingsDialog({
               <>
                 <Separator />
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-900">알림 범위</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{t('notificationSettings.notificationScope')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
@@ -162,10 +164,10 @@ export function NotificationSettingsDialog({
                           htmlFor="notify_my_department_only"
                           className="text-sm text-slate-700"
                         >
-                          내 부서 알림만 받기
+                          {t('notificationSettings.myDeptOnly')}
                         </Label>
                         <p className="text-xs text-slate-500">
-                          활성화 시 내가 소속된 부서의 알림만 표시
+                          {t('notificationSettings.myDeptOnlyDesc')}
                         </p>
                       </div>
                       <Switch

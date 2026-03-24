@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,7 @@ interface UserPermission {
 }
 
 export function UserManagement() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -177,8 +179,8 @@ export function UserManagement() {
       }
 
       toast({
-        title: '권한 저장 완료',
-        description: `${selectedUser.name}의 권한이 업데이트되었습니다.`,
+        title: t('userMgmt.permSaved'),
+        description: t('userMgmt.permSavedDesc', { name: selectedUser.name }),
       });
 
       setEditDialogOpen(false);
@@ -186,8 +188,8 @@ export function UserManagement() {
     } catch (error) {
       console.error('권한 저장 실패:', error);
       toast({
-        title: '권한 저장 실패',
-        description: '권한을 저장하는 중 오류가 발생했습니다.',
+        title: t('userMgmt.permSaveFailed'),
+        description: t('userMgmt.permSaveFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -205,8 +207,8 @@ export function UserManagement() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">팀원 관리</h1>
-          <p className="text-slate-500 mt-1">팀원별 부서 접근 권한을 관리합니다</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('userMgmt.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('userMgmt.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -224,7 +226,7 @@ export function UserManagement() {
                   {member.role === 'admin' && (
                     <Badge variant="outline" className="bg-orange-50">
                       <Shield className="h-3 w-3 mr-1" />
-                      관리자
+                      {t('common.admin')}
                     </Badge>
                   )}
                 </div>
@@ -232,7 +234,7 @@ export function UserManagement() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">소속 회사</span>
+                    <span className="text-slate-500">{t('userMgmt.company')}</span>
                     <span className="font-medium">
                       {authUser?.companyCode
                         ? authUser.companyName
@@ -242,12 +244,12 @@ export function UserManagement() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">소속 부서</span>
+                    <span className="text-slate-500">{t('userMgmt.department')}</span>
                     <span className="font-medium">{getDepartmentName(member.department_id)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">역할</span>
-                    <span className="font-medium">{member.role === 'admin' ? '관리자' : '팀원'}</span>
+                    <span className="text-slate-500">{t('userMgmt.role')}</span>
+                    <span className="font-medium">{member.role === 'admin' ? t('common.admin') : t('common.team')}</span>
                   </div>
                 </div>
 
@@ -258,7 +260,7 @@ export function UserManagement() {
                     onClick={() => handleEditPermissions(member)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
-                    권한 편집
+                    {t('userMgmt.editPermissions')}
                   </Button>
                 )}
               </CardContent>
@@ -269,7 +271,7 @@ export function UserManagement() {
         {users.length > ITEMS_PER_PAGE && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t">
             <div className="text-sm text-slate-500">
-              {startItem}-{endItem} / 총 {users.length}개
+              {startItem}-{endItem} / {t('parentCatList.totalItems', { count: users.length })}
             </div>
 
             <div className="flex items-center gap-2">
@@ -279,7 +281,7 @@ export function UserManagement() {
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
-                이전
+                {t('common.previous')}
               </Button>
 
               <div className="flex items-center gap-1">
@@ -317,7 +319,7 @@ export function UserManagement() {
                 }
                 disabled={currentPage === totalPages}
               >
-                다음
+                {t('common.next')}
               </Button>
             </div>
           </div>
@@ -326,8 +328,8 @@ export function UserManagement() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="w-[calc(100%-2rem)] max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedUser?.name} 권한 설정</DialogTitle>
-              <DialogDescription>각 부서별 접근 권한을 설정합니다</DialogDescription>
+              <DialogTitle>{t('userMgmt.permDialogTitle', { name: selectedUser?.name })}</DialogTitle>
+              <DialogDescription>{t('userMgmt.permDialogDesc')}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
@@ -342,7 +344,7 @@ export function UserManagement() {
                         <CardTitle className="text-base">{dept.name}</CardTitle>
                         {dept.id === selectedUser?.department_id && (
                           <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            소속 부서
+                            {t('userMgmt.ownDept')}
                           </Badge>
                         )}
                       </div>
@@ -350,7 +352,7 @@ export function UserManagement() {
                     <CardContent>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                         <Label className="text-sm text-slate-600 sm:min-w-[60px]">
-                          접근 권한
+                          {t('userMgmt.accessRole')}
                         </Label>
                         <Select
                           value={perm.role}
@@ -363,34 +365,34 @@ export function UserManagement() {
                             <SelectItem value="none">
                               <div className="flex items-center gap-2">
                                 <span className="text-red-600">●</span>
-                                <span>접근 불가</span>
+                                <span>{t('userMgmt.roleNone')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="viewer">
                               <div className="flex items-center gap-2">
                                 <span className="text-blue-600">●</span>
-                                <span>뷰어</span>
+                                <span>{t('userMgmt.roleViewer')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="editor">
                               <div className="flex items-center gap-2">
                                 <span className="text-green-600">●</span>
-                                <span>편집자</span>
+                                <span>{t('userMgmt.roleEditor')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="manager">
                               <div className="flex items-center gap-2">
                                 <span className="text-orange-600">●</span>
-                                <span>관리자</span>
+                                <span>{t('userMgmt.roleManager')}</span>
                               </div>
                             </SelectItem>
                           </SelectContent>
                         </Select>
                         <div className="text-xs text-slate-500">
-                          {perm.role === 'none' && '• 접근 불가'}
-                          {perm.role === 'viewer' && '• 읽기, 다운로드, 출력'}
-                          {perm.role === 'editor' && '• 뷰어 + 업로드, 수정'}
-                          {perm.role === 'manager' && '• 편집자 + 삭제, 공유, NFC'}
+                          {perm.role === 'none' && t('userMgmt.descNone')}
+                          {perm.role === 'viewer' && t('userMgmt.descViewer')}
+                          {perm.role === 'editor' && t('userMgmt.descEditor')}
+                          {perm.role === 'manager' && t('userMgmt.descManager')}
                         </div>
                       </div>
                     </CardContent>
@@ -405,14 +407,14 @@ export function UserManagement() {
                 onClick={() => setEditDialogOpen(false)}
                 disabled={isSaving}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleSavePermissions}
                 disabled={isSaving}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {isSaving ? '저장 중...' : '저장'}
+                {isSaving ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>

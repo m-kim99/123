@@ -1,4 +1,5 @@
 import { useEffect, lazy, Suspense, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
@@ -143,6 +144,7 @@ function RouteAnalytics() {
 }
 
 function DeletionWarningDialog() {
+  const { t } = useTranslation();
   const { pendingDeletion, cancelDeletion, clearPendingDeletion, logout } = useAuthStore();
   const {
     fetchDepartments,
@@ -161,8 +163,8 @@ function DeletionWarningDialog() {
 
     if (result.success) {
       toast({
-        title: '탈퇴 취소 완료',
-        description: '회원 탈퇴가 취소되었습니다. 계속 서비스를 이용하실 수 있습니다.',
+        title: t('deletion.cancelComplete'),
+        description: t('deletion.cancelCompleteDesc'),
       });
       // 데이터 새로고침
       await Promise.all([
@@ -174,8 +176,8 @@ function DeletionWarningDialog() {
       ]);
     } else {
       toast({
-        title: '탈퇴 취소 실패',
-        description: result.error || '다시 시도해주세요.',
+        title: t('deletion.cancelFailed'),
+        description: result.error || t('common.tryAgain'),
         variant: 'destructive',
       });
     }
@@ -192,24 +194,24 @@ function DeletionWarningDialog() {
     <Dialog open={!!pendingDeletion} onOpenChange={(open) => !open && handleLogout()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-red-600">⚠️ 탈퇴 신청된 계정</DialogTitle>
+          <DialogTitle className="text-red-600">{t('deletion.warningTitle')}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-sm text-amber-800 font-medium mb-2">
-              이 계정은 탈퇴가 신청된 상태입니다.
+              {t('deletion.accountPending')}
             </p>
             <div className="text-sm text-amber-700 space-y-1">
-              <p>• 삭제 예정일: <strong>{pendingDeletion.scheduledDate}</strong></p>
-              <p>• 남은 기간: <strong>{pendingDeletion.remainingDays}일</strong></p>
+              <p>• {t('deletion.scheduledDate')}: <strong>{pendingDeletion.scheduledDate}</strong></p>
+              <p>• {t('deletion.remainingDays')}: <strong>{pendingDeletion.remainingDays}{t('common.days')}</strong></p>
             </div>
           </div>
           
           <p className="text-sm text-slate-600">
-            탈퇴를 취소하시면 계속 서비스를 이용하실 수 있습니다.
+            {t('deletion.cancelInfo')}
             <br />
-            취소하지 않으시면 예정일에 계정이 삭제됩니다.
+            {t('deletion.noCancelInfo')}
           </p>
           
           <div className="flex gap-2">
@@ -219,14 +221,14 @@ function DeletionWarningDialog() {
               disabled={isCancelling}
               className="flex-1"
             >
-              로그아웃
+              {t('common.logout')}
             </Button>
             <Button
               onClick={handleCancel}
               disabled={isCancelling}
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
-              {isCancelling ? '처리 중...' : '탈퇴 취소'}
+              {isCancelling ? t('common.processing') : t('deletion.cancelDeletion')}
             </Button>
           </div>
         </div>

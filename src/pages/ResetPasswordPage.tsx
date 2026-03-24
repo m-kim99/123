@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import logo from '@/assets/logo.png';
 import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -67,8 +69,8 @@ export function ResetPasswordPage() {
 
     if (!isRecoverySession) {
       toast({
-        title: '유효하지 않은 접근',
-        description: '비밀번호 재설정 이메일 링크를 통해 접근해주세요.',
+        title: t('resetPw.invalidAccess'),
+        description: t('resetPw.useEmailLink'),
         variant: 'destructive',
       });
       return;
@@ -76,8 +78,8 @@ export function ResetPasswordPage() {
 
     if (!newPassword || !confirmPassword) {
       toast({
-        title: '입력 오류',
-        description: '모든 필드를 입력해주세요',
+        title: t('announcements.inputError'),
+        description: t('onboarding.fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -85,8 +87,8 @@ export function ResetPasswordPage() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: '비밀번호 불일치',
-        description: '비밀번호가 일치하지 않습니다',
+        title: t('resetPw.passwordMismatch'),
+        description: t('resetPw.passwordMismatchDesc'),
         variant: 'destructive',
       });
       return;
@@ -95,7 +97,7 @@ export function ResetPasswordPage() {
     // 비밀번호 검증
     if (passwordValidation && !passwordValidation.isValid) {
       toast({
-        title: '비밀번호 오류',
+        title: t('resetPw.passwordError'),
         description: passwordValidation.errors.join(', '),
         variant: 'destructive',
       });
@@ -112,8 +114,8 @@ export function ResetPasswordPage() {
       if (error) throw error;
 
       toast({
-        title: '비밀번호 재설정 완료',
-        description: '새 비밀번호로 로그인해주세요',
+        title: t('resetPw.resetComplete'),
+        description: t('resetPw.resetCompleteDesc'),
       });
 
       // 재설정 완료 후 세션 종료 및 로그인 페이지로 이동
@@ -124,8 +126,8 @@ export function ResetPasswordPage() {
     } catch (error: any) {
       console.error('비밀번호 재설정 오류:', error);
       toast({
-        title: '재설정 실패',
-        description: error?.message || '다시 시도해주세요',
+        title: t('resetPw.resetFailed'),
+        description: error?.message || t('common.tryAgain'),
         variant: 'destructive',
       });
     } finally {
@@ -137,7 +139,7 @@ export function ResetPasswordPage() {
   if (isCheckingSession) {
     return (
       <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <p className="text-slate-500">확인 중...</p>
+        <p className="text-slate-500">{t('resetPw.checking')}</p>
       </div>
     );
   }
@@ -150,14 +152,14 @@ export function ResetPasswordPage() {
             <CardTitle className="flex flex-row justify-center items-center gap-2">
               <img
                 src={logo}
-                alt="문서 관리 시스템 로고"
+                alt={t('login.logoAlt')}
                 className="h-14 sm:h-16 w-auto object-contain"
               />
             </CardTitle>
             <CardDescription className="mt-4">
               {isRecoverySession
-                ? '새로운 비밀번호를 입력해주세요'
-                : '유효하지 않은 접근입니다. 비밀번호 재설정 이메일 링크를 사용해주세요.'}
+                ? t('resetPw.enterNewPassword')
+                : t('resetPw.invalidAccessDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -167,16 +169,16 @@ export function ResetPasswordPage() {
                 variant="outline"
                 onClick={() => navigate('/', { replace: true })}
               >
-                로그인 페이지로 이동
+                {t('resetPw.goToLogin')}
               </Button>
             ) : (
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="new-password">새 비밀번호</Label>
+                  <Label htmlFor="new-password">{t('resetPw.newPassword')}</Label>
                   <Input
                     id="new-password"
                     type="password"
-                    placeholder="8자 이상, 대/소문자, 숫자, 특수문자 포함"
+                    placeholder={t('signup.passwordPlaceholder')}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     disabled={isResetting}
@@ -190,11 +192,11 @@ export function ResetPasswordPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">비밀번호 확인</Label>
+                  <Label htmlFor="confirm-password">{t('signup.confirmPassword')}</Label>
                   <Input
                     id="confirm-password"
                     type="password"
-                    placeholder="비밀번호 재입력"
+                    placeholder={t('signup.confirmPasswordPlaceholder')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isResetting}
@@ -203,7 +205,7 @@ export function ResetPasswordPage() {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isResetting}>
-                  {isResetting ? '재설정 중...' : '비밀번호 재설정'}
+                  {isResetting ? t('resetPw.resetting') : t('resetPw.resetButton')}
                 </Button>
               </form>
             )}

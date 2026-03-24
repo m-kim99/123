@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Building2, FileText, FolderOpen, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { toast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/BackButton';
 
 export function DepartmentManagement() {
+  const { t } = useTranslation();
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
   const categories = useDocumentStore((state) => state.categories);
@@ -103,7 +105,7 @@ export function DepartmentManagement() {
   // useCallback으로 최적화
   const handleGenerateCode = useCallback(() => {
     if (!newDeptName.trim()) {
-      setCodeError('먼저 부서 이름을 입력하세요');
+      setCodeError(t('departmentMgmt.enterDeptNameFirst'));
       return;
     }
 
@@ -119,14 +121,14 @@ export function DepartmentManagement() {
 
     let hasError = false;
     if (!name) {
-      setNameError('부서 이름을 입력하세요');
+      setNameError(t('departmentMgmt.enterDeptName'));
       hasError = true;
     } else {
       setNameError('');
     }
 
     if (!code) {
-      setCodeError('부서 코드를 입력하거나 자동 생성하세요');
+      setCodeError(t('departmentMgmt.enterDeptCode'));
       hasError = true;
     } else {
       setCodeError('');
@@ -139,8 +141,8 @@ export function DepartmentManagement() {
     try {
       if (!user?.companyId) {
         toast({
-          title: '회사 정보 없음',
-          description: '회사 정보를 불러오지 못했습니다. 다시 로그인해주세요.',
+          title: t('departmentMgmt.noCompanyInfo'),
+          description: t('departmentMgmt.noCompanyInfoDesc'),
           variant: 'destructive',
         });
         setIsSaving(false);
@@ -164,8 +166,8 @@ export function DepartmentManagement() {
       await fetchDepartments();
 
       toast({
-        title: '부서 추가 완료',
-        description: '새 부서가 추가되었습니다.',
+        title: t('departmentMgmt.addComplete'),
+        description: t('departmentMgmt.addCompleteDesc'),
       });
 
       setIsAddDialogOpen(false);
@@ -173,8 +175,8 @@ export function DepartmentManagement() {
     } catch (err) {
       console.error('부서 추가 실패:', err);
       toast({
-        title: '부서 추가 실패',
-        description: '부서를 추가하는 중 오류가 발생했습니다.',
+        title: t('departmentMgmt.addFailed'),
+        description: t('departmentMgmt.addFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -188,8 +190,8 @@ export function DepartmentManagement() {
         <BackButton className="mb-4" />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between md:mb-6">
           <div>
-            <h1 className="text-3xl font-bold">부서 관리</h1>
-            <p className="text-slate-500 mt-1">전체 부서 현황을 관리합니다</p>
+            <h1 className="text-3xl font-bold">{t('departmentMgmt.title')}</h1>
+            <p className="text-slate-500 mt-1">{t('departmentMgmt.subtitle')}</p>
           </div>
           {/* 데스크톱: 헤더 옆에 표시 */}
           <Button 
@@ -197,7 +199,7 @@ export function DepartmentManagement() {
             onClick={() => setIsAddDialogOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            부서 추가
+            {t('departmentMgmt.addDepartment')}
           </Button>
         </div>
 
@@ -207,7 +209,7 @@ export function DepartmentManagement() {
           onClick={() => setIsAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
-          부서 추가
+          {t('departmentMgmt.addDepartment')}
         </Button>
 
         <Dialog
@@ -221,33 +223,33 @@ export function DepartmentManagement() {
         >
           <DialogContent closeClassName="text-white data-[state=open]:text-white">
             <DialogHeader>
-              <DialogTitle>새 부서 추가</DialogTitle>
+              <DialogTitle>{t('departmentMgmt.newDepartmentTitle')}</DialogTitle>
               <DialogDescription>
-                새로운 부서를 생성하고 코드와 설명을 설정합니다.
+                {t('departmentMgmt.newDepartmentDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>부서 이름</Label>
+                <Label>{t('departmentMgmt.deptName')}</Label>
                 <Input
                   value={newDeptName}
                   onChange={(e) => setNewDeptName(e.target.value)}
-                  placeholder="예: 인사팀"
+                  placeholder={t('departmentMgmt.deptNamePlaceholder')}
                 />
                 {nameError && (
                   <p className="text-xs text-red-500 mt-1">{nameError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>부서 코드</Label>
+                <Label>{t('departmentMgmt.deptCode')}</Label>
                 <div className="flex gap-2">
                   <Input
                     value={newDeptCode}
                     onChange={(e) => setNewDeptCode(e.target.value)}
-                    placeholder="예: HR001"
+                    placeholder={t('departmentMgmt.deptCodePlaceholder')}
                   />
                   <Button type="button" variant="outline" onClick={handleGenerateCode}>
-                    자동 생성
+                    {t('departmentMgmt.autoGenerate')}
                   </Button>
                 </div>
                 {codeError && (
@@ -255,11 +257,11 @@ export function DepartmentManagement() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('departmentMgmt.description')}</Label>
                 <Textarea
                   value={newDeptDescription}
                   onChange={(e) => setNewDeptDescription(e.target.value)}
-                  placeholder="부서 역할 및 설명을 입력하세요"
+                  placeholder={t('departmentMgmt.descPlaceholder')}
                 />
               </div>
             </div>
@@ -270,14 +272,14 @@ export function DepartmentManagement() {
                 onClick={() => setIsAddDialogOpen(false)}
                 disabled={isSaving}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
               >
-                {isSaving ? '저장 중...' : '저장'}
+                {isSaving ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -315,7 +317,7 @@ export function DepartmentManagement() {
                       <div className="bg-slate-50 p-4 rounded-lg">
                         <div className="flex items-center gap-2 mb-1 h-12">
                           <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">문서</span>
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('departmentMgmt.documents')}</span>
                         </div>
                         <p className="text-2xl font-bold">{deptDocuments.length}</p>
                       </div>
@@ -323,8 +325,7 @@ export function DepartmentManagement() {
                         <div className="flex items-center gap-2 mb-1 h-12">
                           <FolderOpen className="h-4 w-4 text-slate-500 flex-shrink-0" />
                           <span className="text-xs text-slate-500 leading-tight">
-                            <span className="md:hidden">대분<br/>류</span>
-                            <span className="hidden md:inline">대분류</span>
+                            <span>{t('departmentMgmt.parentCategories')}</span>
                           </span>
                         </div>
                         <p className="text-2xl font-bold">{deptCategories.length}</p>
@@ -332,7 +333,7 @@ export function DepartmentManagement() {
                       <div className="bg-slate-50 p-4 rounded-lg">
                         <div className="flex items-center gap-2 mb-1 h-12">
                           <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">팀원</span>
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('departmentMgmt.teamMembers')}</span>
                         </div>
                         <p className="text-2xl font-bold">{memberCounts[dept.id] ?? 0}</p>
                       </div>
@@ -340,7 +341,7 @@ export function DepartmentManagement() {
 
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-slate-700">
-                        주요 대분류
+                        {t('departmentMgmt.mainParentCategories')}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {deptCategories.slice(0, 3).map((cat) => (
@@ -368,7 +369,7 @@ export function DepartmentManagement() {
         {departments.length > ITEMS_PER_PAGE && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t">
             <div className="text-sm text-slate-500">
-              {startItem}-{endItem} / 총 {departments.length}개
+              {startItem}-{endItem} / {t('parentCatList.totalItems', { count: departments.length })}
             </div>
 
             <div className="flex items-center gap-2">
@@ -378,7 +379,7 @@ export function DepartmentManagement() {
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
-                이전
+                {t('common.previous')}
               </Button>
 
               <div className="flex items-center gap-1">
@@ -416,7 +417,7 @@ export function DepartmentManagement() {
                 }
                 disabled={currentPage === totalPages}
               >
-                다음
+                {t('common.next')}
               </Button>
             </div>
           </div>

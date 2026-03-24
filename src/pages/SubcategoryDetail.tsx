@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit } from 'lucide-react';
@@ -32,6 +33,7 @@ import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
 
 export function SubcategoryDetail() {
+  const { t } = useTranslation();
   const { parentCategoryId, subcategoryId } = useParams<{
     parentCategoryId: string;
     subcategoryId: string;
@@ -169,8 +171,8 @@ export function SubcategoryDetail() {
 
     if (!isPdf && !isImage) {
       toast({
-        title: '파일 형식 오류',
-        description: 'PDF, JPG, PNG 파일만 업로드 가능합니다.',
+        title: t('documentMgmt.fileTypeError'),
+        description: t('documentMgmt.onlyPdfJpgPng'),
         variant: 'destructive',
       });
       return;
@@ -185,16 +187,16 @@ export function SubcategoryDetail() {
 
     // OCR 추출 시작
     setIsExtractingUploadOcr(true);
-    setUploadOcrStatus('OCR 텍스트 추출 중...');
+    setUploadOcrStatus(t('subcategoryDetail.ocrExtracting'));
 
     try {
       const ocrText = await extractText(file);
       setUploadOcrText(ocrText);
       setUploadOcrPreview(ocrText);
-      setUploadOcrStatus('OCR 추출 완료. 업로드 버튼을 눌러 업로드하세요.');
+      setUploadOcrStatus(t('subcategoryDetail.ocrDoneUploadReady'));
     } catch (error) {
       console.error('OCR 추출 오류:', error);
-      setUploadOcrStatus('OCR 추출 실패. 텍스트 없이 업로드됩니다.');
+      setUploadOcrStatus(t('subcategoryDetail.ocrFailedNoText'));
     } finally {
       setIsExtractingUploadOcr(false);
     }
@@ -260,7 +262,7 @@ export function SubcategoryDetail() {
   const handleCopyUploadOcrText = () => {
     const text = isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview;
     navigator.clipboard.writeText(text);
-    toast({ title: '복사 완료', description: 'OCR 텍스트가 클립보드에 복사되었습니다.' });
+    toast({ title: t('subcategoryDetail.copyDone'), description: t('documentMgmt.ocrCopied') });
   };
 
   const handleUpload = async () => {
@@ -270,8 +272,8 @@ export function SubcategoryDetail() {
 
     if (isExtractingUploadOcr) {
       toast({
-        title: 'OCR 추출 중',
-        description: 'OCR 추출이 완료될 때까지 기다려주세요.',
+        title: t('documentMgmt.extractingOcr'),
+        description: t('documentMgmt.waitForOcr'),
         variant: 'destructive',
       });
       return;
@@ -296,8 +298,8 @@ export function SubcategoryDetail() {
       });
 
       toast({
-        title: '업로드 완료',
-        description: '문서가 업로드되었습니다.',
+        title: t('documentMgmt.uploadComplete'),
+        description: t('documentMgmt.uploadCompleteDesc'),
       });
 
       setSelectedFile(null);
@@ -310,8 +312,8 @@ export function SubcategoryDetail() {
     } catch (error) {
       console.error('문서 업로드 실패:', error);
       toast({
-        title: '업로드 실패',
-        description: '문서를 업로드하는 중 오류가 발생했습니다.',
+        title: t('subcategoryDetail.uploadFailed'),
+        description: t('subcategoryDetail.uploadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -326,8 +328,8 @@ export function SubcategoryDetail() {
 
     setIsRegisteringNfc(true);
     const scanToast = toast({
-      title: 'NFC 태그 인식 대기',
-      description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+      title: t('documentMgmt.nfcWaiting'),
+      description: t('documentMgmt.nfcBringClose'),
       duration: 1000000,
     });
     try {
@@ -353,7 +355,7 @@ export function SubcategoryDetail() {
       scanToast.dismiss();
       console.error('NFC 등록 실패:', error);
 
-      let description = 'NFC 태그를 등록하는 중 오류가 발생했습니다.';
+      let description = t('documentMgmt.nfcRegFailedDesc');
       if (error instanceof Error) {
         description = error.message;
       } else if (error && typeof error === 'object' && 'message' in (error as any)) {
@@ -361,7 +363,7 @@ export function SubcategoryDetail() {
       }
 
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description,
         variant: 'destructive',
       });
@@ -385,8 +387,8 @@ export function SubcategoryDetail() {
       await registerNfcTag(subcategory.id, uid);
 
       toast({
-        title: 'NFC 등록 완료',
-        description: 'NFC에 세부 스토리지가 등록되었습니다.',
+        title: t('documentMgmt.nfcRegComplete'),
+        description: t('documentMgmt.nfcRegCompleteDesc'),
       });
 
       // 상태 초기화
@@ -395,9 +397,9 @@ export function SubcategoryDetail() {
       setNfcConfirmDialogOpen(false);
       setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
     } catch (error) {
-      console.error('NFC 등록 실패:', error);
+      console.error('NFC registration failed:', error);
 
-      let description = 'NFC 태그를 등록하는 중 오류가 발생했습니다.';
+      let description = t('documentMgmt.nfcRegFailedDesc');
       if (error instanceof Error) {
         description = error.message;
       } else if (error && typeof error === 'object' && 'message' in (error as any)) {
@@ -405,7 +407,7 @@ export function SubcategoryDetail() {
       }
 
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description,
         variant: 'destructive',
       });
@@ -439,7 +441,7 @@ export function SubcategoryDetail() {
 
     const trimmedName = editForm.name.trim();
     if (!trimmedName) {
-      setEditNameError('이름을 입력하세요');
+      setEditNameError(t('subcategoryDetail.enterName'));
       return;
     }
 
@@ -454,8 +456,8 @@ export function SubcategoryDetail() {
       });
 
       toast({
-        title: '수정 완료',
-        description: '세부 스토리지가 수정되었습니다.',
+        title: t('subcategoryDetail.editComplete'),
+        description: t('subcategoryDetail.editCompleteDesc'),
       });
 
       setEditDialogOpen(false);
@@ -480,7 +482,7 @@ export function SubcategoryDetail() {
         .single();
 
       if (error || !data) {
-        throw error || new Error('문서를 찾을 수 없습니다.');
+        throw error || new Error('Document not found');
       }
 
       const { data: publicData } = supabase.storage
@@ -490,7 +492,7 @@ export function SubcategoryDetail() {
       const publicUrl = publicData?.publicUrl;
 
       if (!publicUrl) {
-        throw new Error('파일 URL을 생성할 수 없습니다.');
+        throw new Error('Could not generate file URL');
       }
 
       const lowerPath = data.file_path.toLowerCase();
@@ -518,8 +520,8 @@ export function SubcategoryDetail() {
 
 
       toast({
-        title: '문서를 불러오지 못했습니다.',
-        description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
+        title: t('subcategoryDetail.previewFailed'),
+        description: t('subcategoryDetail.previewFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -541,7 +543,7 @@ export function SubcategoryDetail() {
         .single();
 
       if (error || !data) {
-        throw error || new Error('문서를 찾을 수 없습니다.');
+        throw error || new Error('Document not found');
       }
 
       const { data: publicData } = supabase.storage
@@ -549,24 +551,24 @@ export function SubcategoryDetail() {
         .getPublicUrl(data.file_path);
 
       if (!publicData?.publicUrl) {
-        throw new Error('파일 URL을 생성할 수 없습니다.');
+        throw new Error('Could not generate file URL');
       }
 
       await downloadFile(publicData.publicUrl, data.title || 'document');
     } catch (error) {
-      console.error('문서 다운로드 실패:', error);
+      console.error('Document download failed:', error);
 
 
       toast({
-        title: '다운로드 실패',
-        description: '문서를 다운로드하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.downloadFailed'),
+        description: t('documentMgmt.downloadFailedDesc'),
         variant: 'destructive',
       });
     }
   };
 
   const handleDeleteDocumentClick = async (documentId: string) => {
-    const confirmed = window.confirm('정말 삭제하시겠습니까?');
+    const confirmed = window.confirm(t('subcategoryDetail.confirmDelete'));
     if (!confirmed) return;
 
     const targetDoc = documents.find((d) => d.id === documentId);
@@ -613,8 +615,8 @@ export function SubcategoryDetail() {
       await fetchDocuments();
 
       toast({
-        title: '삭제 완료',
-        description: '문서가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.deleteCompleteDesc'),
       });
 
       if (user?.companyId && targetDoc) {
@@ -646,8 +648,8 @@ export function SubcategoryDetail() {
 
 
       toast({
-        title: '삭제 실패',
-        description: '문서를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.deleteFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -669,7 +671,7 @@ export function SubcategoryDetail() {
 
     try {
       if (!user?.companyId) {
-        throw new Error('회사 정보가 없습니다.');
+        throw new Error('Company info not found');
       }
 
       // 1. 공유 가능한 사용자 목록
@@ -717,8 +719,8 @@ export function SubcategoryDetail() {
     } catch (error) {
       console.error('공유 정보 로드 실패:', error);
       toast({
-        title: '공유 정보 로드 실패',
-        description: '공유 정보를 불러오지 못했습니다.',
+        title: t('documentMgmt.shareLoadFailed'),
+        description: t('documentMgmt.shareLoadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -729,7 +731,7 @@ export function SubcategoryDetail() {
 
   // 공유 취소
   const handleUnshare = async (shareId: string) => {
-    if (!confirm('공유를 취소하시겠습니까?')) return;
+    if (!confirm(t('documentMgmt.confirmUnshare'))) return;
 
     try {
       await unshareDocument(shareId);
@@ -738,14 +740,14 @@ export function SubcategoryDetail() {
       setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
       
       toast({
-        title: '공유 취소 완료',
-        description: '문서 공유가 취소되었습니다.',
+        title: t('documentMgmt.unshareComplete'),
+        description: t('documentMgmt.unshareCompleteDesc'),
       });
     } catch (error) {
       console.error('공유 취소 실패:', error);
       toast({
-        title: '공유 취소 실패',
-        description: '공유 취소 중 오류가 발생했습니다.',
+        title: t('documentMgmt.unshareFailed'),
+        description: t('documentMgmt.unshareFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -773,8 +775,8 @@ export function SubcategoryDetail() {
   const handleSendShare = async () => {
     if (!sharingDocumentId || selectedUserIds.length === 0) {
       toast({
-        title: '선택 오류',
-        description: '공유할 사용자를 선택해주세요.',
+        title: t('documentMgmt.selectionError'),
+        description: t('documentMgmt.selectUsersToShare'),
         variant: 'destructive',
       });
       return;
@@ -785,7 +787,7 @@ export function SubcategoryDetail() {
     try {
       const doc = subcategoryDocuments.find((d) => d.id === sharingDocumentId);
       if (!doc) {
-        throw new Error('문서를 찾을 수 없습니다.');
+        throw new Error('Document not found');
       }
 
       // 1. DB에 공유 정보 저장 (필수)
@@ -817,7 +819,7 @@ export function SubcategoryDetail() {
                 recipientEmails,
                 documentTitle: doc.name,
                 documentUrl,
-                senderName: user?.name || '알 수 없음',
+                senderName: user?.name || t('common.unknown'),
                 senderEmail: user?.email || '',
               },
             });
@@ -828,8 +830,8 @@ export function SubcategoryDetail() {
       }
 
       toast({
-        title: '공유 완료',
-        description: `${selectedUserIds.length}명에게 문서가 공유되었습니다.${sendEmailNotification ? ' 이메일도 전송되었습니다.' : ''}`,
+        title: t('documentMgmt.shareComplete'),
+        description: t('documentMgmt.shareCompleteDesc', { count: selectedUserIds.length }) + (sendEmailNotification ? ' ' + t('documentMgmt.emailSentToo') : ''),
       });
 
       setShareDialogOpen(false);
@@ -839,8 +841,8 @@ export function SubcategoryDetail() {
     } catch (error) {
       console.error('문서 공유 실패:', error);
       toast({
-        title: '공유 실패',
-        description: '문서를 공유하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.shareFailed'),
+        description: t('documentMgmt.shareFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -881,8 +883,8 @@ export function SubcategoryDetail() {
 
     if (!isPdf && !isImage) {
       toast({
-        title: '파일 형식 오류',
-        description: 'PDF, JPG, PNG 파일만 업로드 가능합니다.',
+        title: t('documentMgmt.fileTypeError'),
+        description: t('documentMgmt.onlyPdfJpgPng'),
         variant: 'destructive',
       });
       return;
@@ -895,15 +897,15 @@ export function SubcategoryDetail() {
       const ocrText = await extractText(file);
       setReplaceOcrText(ocrText);
       toast({
-        title: 'OCR 추출 완료',
-        description: `${ocrText.length.toLocaleString()}자가 추출되었습니다.`,
+        title: t('documentMgmt.ocrExtractComplete'),
+        description: t('documentMgmt.ocrCharsExtracted', { count: ocrText.length.toLocaleString() }),
       });
     } catch (error) {
       console.error('OCR 추출 오류:', error);
       setReplaceOcrText('');
       toast({
-        title: 'OCR 추출 실패',
-        description: '텍스트 추출에 실패했습니다. 파일은 업로드됩니다.',
+        title: t('documentMgmt.ocrFailed'),
+        description: t('documentMgmt.ocrFailedFileUploaded'),
         variant: 'destructive',
       });
     } finally {
@@ -924,8 +926,8 @@ export function SubcategoryDetail() {
   const handleReplaceFile = async () => {
     if (!replacingDocumentId || !replaceFile) {
       toast({
-        title: '파일을 선택해주세요',
-        description: '교체할 파일을 먼저 선택해주세요.',
+        title: t('documentMgmt.selectFile'),
+        description: t('documentMgmt.selectFileFirst'),
         variant: 'destructive',
       });
       return;
@@ -953,7 +955,7 @@ export function SubcategoryDetail() {
       <DashboardLayout>
         <div className="space-y-4">
           <BackButton />
-          <p className="text-slate-500">세부 스토리지를 찾을 수 없습니다.</p>
+          <p className="text-slate-500">{t('documentMgmt.subcategoryNotFound')}</p>
         </div>
       </DashboardLayout>
     );
@@ -980,11 +982,11 @@ export function SubcategoryDetail() {
 
               return [
                 {
-                  label: department?.name || '부서',
+                  label: department?.name || t('common.department'),
                   href: departmentHref || undefined,
                 },
                 {
-                  label: parentCategory?.name || '대분류',
+                  label: parentCategory?.name || t('subcategoryDetail.parentCategory'),
                   href: `${basePath}/parent-category/${parentCategoryId}`,
                 },
                 {
@@ -1004,11 +1006,11 @@ export function SubcategoryDetail() {
                 {subcategory.name}
               </h1>
               <p className="text-slate-500 mt-1">
-                {subcategory.description || '설명이 등록되어 있지 않습니다.'}
+                {subcategory.description || t('subcategoryDetail.noDescription')}
               </p>
               {parentCategory && (
                 <p className="text-sm text-slate-500 mt-1">
-                  상위 대분류: {parentCategory.name}
+                  {t('subcategoryDetail.parentCategoryLabel')}: {parentCategory.name}
                 </p>
               )}
             </div>
@@ -1020,7 +1022,7 @@ export function SubcategoryDetail() {
                 className="flex items-center gap-2 w-28 justify-center"
               >
                 <Star className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
-                {isFav ? '즐겨찾기 해제' : '즐겨찾기'}
+                {isFav ? t('subcategoryDetail.unfavorite') : t('subcategoryDetail.favorite')}
               </Button>
               <Button
                 variant="outline"
@@ -1034,7 +1036,7 @@ export function SubcategoryDetail() {
                 }`}
               >
                 <Smartphone className="h-4 w-4" />
-                {subcategory.nfcRegistered ? 'NFC 재등록' : 'NFC 등록'}
+                {subcategory.nfcRegistered ? t('subcategoryDetail.nfcReregister') : t('subcategoryDetail.nfcRegister')}
               </Button>
             </div>
           </div>
@@ -1043,7 +1045,7 @@ export function SubcategoryDetail() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">문서 수</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.docCount')}</p>
               <p className="text-2xl font-bold mt-2">
                 {subcategoryDocuments.length}
               </p>
@@ -1051,25 +1053,25 @@ export function SubcategoryDetail() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">NFC 상태</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.nfcStatus')}</p>
               <p className="text-2xl font-bold mt-2">
-                {subcategory.nfcRegistered ? '활성' : '비활성'}
+                {subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive')}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">보관 장소</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.storageLocation')}</p>
               <p className="text-2xl font-bold mt-2">
-                {subcategory.storageLocation || '미지정'}
+                {subcategory.storageLocation || t('subcategoryDetail.unassigned')}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">관리번호</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.managementNumber')}</p>
               <p className="text-2xl font-bold mt-2">
-                {subcategory.managementNumber || '미지정'}
+                {subcategory.managementNumber || t('subcategoryDetail.unassigned')}
               </p>
             </CardContent>
           </Card>
@@ -1078,16 +1080,16 @@ export function SubcategoryDetail() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>문서 목록</CardTitle>
+              <CardTitle>{t('subcategoryDetail.documentList')}</CardTitle>
               <CardDescription className="mt-1">
-                이 세부 스토리지에 속한 문서입니다.
+                {t('subcategoryDetail.documentListDesc')}
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             {subcategoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                이 세부 스토리지에 문서가 없습니다.
+                {t('subcategoryDetail.noDocuments')}
               </div>
             ) : (
               <div className="space-y-3">
@@ -1105,7 +1107,7 @@ export function SubcategoryDetail() {
                           <p className="font-medium truncate flex-1 min-w-0">{doc.name}</p>
                           {doc.classified && (
                             <Badge variant="destructive" className="text-xs">
-                              기밀
+                              {t('documentMgmt.confidential')}
                             </Badge>
                           )}
                         </div>
@@ -1121,31 +1123,31 @@ export function SubcategoryDetail() {
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenPreviewDocument(doc.id)}
-                        title="미리보기"
+                        title={t('subcategoryDetail.preview')}
                       >
-                        <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
+                        <img src={previewIcon} alt={t('subcategoryDetail.preview')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenFileReplaceDialog(doc.id)}
-                        title="파일 교체"
+                        title={t('documentMgmt.fileReplace')}
                       >
-                        <img src={changeIcon} alt="파일 교체" className="w-full h-full p-1.5" />
+                        <img src={changeIcon} alt={t('documentMgmt.fileReplace')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleDownloadDocument(doc.id)}
                       >
-                        <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
+                        <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenShareDialog(doc.id)}
                       >
-                        <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
+                        <img src={shareIcon} alt={t('documentMgmt.shared')} className="w-full h-full p-1.5" />
                       </Button>
                       <Button
                         variant="outline"
@@ -1153,7 +1155,7 @@ export function SubcategoryDetail() {
                         className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => handleDeleteDocumentClick(doc.id)}
                       >
-                        <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                        <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                       </Button>
                     </div>
                   </div>
@@ -1165,15 +1167,15 @@ export function SubcategoryDetail() {
 
         <Card>
           <CardHeader>
-            <CardTitle>문서 업로드</CardTitle>
+            <CardTitle>{t('subcategoryDetail.uploadDocument')}</CardTitle>
             <CardDescription>
-              이 세부 스토리지에 새 문서를 업로드합니다.
+              {t('subcategoryDetail.uploadDocumentDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* 파일 업로드 영역 */}
             <div className="space-y-2">
-              <Label className="font-medium">파일 업로드</Label>
+              <Label className="font-medium">{t('documentMgmt.fileUpload')}</Label>
               <div
                 {...getNewFileRootProps()}
                 className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
@@ -1189,15 +1191,15 @@ export function SubcategoryDetail() {
                   <div className="flex flex-col items-center gap-2 w-full overflow-hidden">
                     <FileText className="h-10 w-10 text-green-500" />
                     <p className="text-sm font-medium text-green-700 truncate w-full text-center">{selectedFile.name}</p>
-                    <p className="text-xs text-slate-500">다른 파일을 선택하려면 클릭하세요</p>
+                    <p className="text-xs text-slate-500">{t('documentMgmt.clickToSelectOther')}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <Upload className="h-10 w-10 text-slate-400" />
                     <p className="text-sm font-medium text-slate-600">
-                      {isNewFileDragActive ? '파일을 놓으세요' : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                      {isNewFileDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}
                     </p>
-                    <p className="text-xs text-slate-400">PDF, JPG, PNG 파일 업로드 가능 (여러 파일 선택 가능)</p>
+                    <p className="text-xs text-slate-400">{t('documentMgmt.supportedFormats')}</p>
                   </div>
                 )}
               </div>
@@ -1216,11 +1218,11 @@ export function SubcategoryDetail() {
 
             {/* 문서 제목 */}
             <div className="space-y-2">
-              <Label className="font-medium">문서 제목</Label>
+              <Label className="font-medium">{t('documentMgmt.docTitle')}</Label>
               <Input
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
-                placeholder="파일 이름이 기본값으로 사용됩니다."
+                placeholder={t('subcategoryDetail.fileNameDefault')}
               />
             </div>
 
@@ -1228,15 +1230,15 @@ export function SubcategoryDetail() {
             {uploadOcrPreview && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">OCR 추출 텍스트</CardTitle>
+                  <CardTitle className="text-base">{t('documentMgmt.ocrExtractedText')}</CardTitle>
                   <CardDescription>
-                    {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}자 {isEditingUploadOcr ? '(편집 중)' : '추출됨'}
+                    {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingUploadOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">
-                      {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}자 {isEditingUploadOcr ? '(편집 중)' : '추출됨'}
+                      {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingUploadOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
                     </span>
                     <div className="flex gap-2">
                       <Button
@@ -1245,7 +1247,7 @@ export function SubcategoryDetail() {
                         size="sm"
                         onClick={handleCopyUploadOcrText}
                       >
-                        복사
+                        {t('documentMgmt.copy')}
                       </Button>
                       {isEditingUploadOcr ? (
                         <>
@@ -1256,7 +1258,7 @@ export function SubcategoryDetail() {
                             onClick={handleCancelEditUploadOcr}
                             disabled={isSavingUploadOcr}
                           >
-                            취소
+                            {t('common.cancel')}
                           </Button>
                           <Button
                             type="button"
@@ -1268,12 +1270,12 @@ export function SubcategoryDetail() {
                             {isSavingUploadOcr ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                저장 중...
+                                {t('common.saving')}
                               </>
                             ) : lastUploadedDocId ? (
-                              '저장'
+                              t('common.save')
                             ) : (
-                              '적용'
+                              t('documentMgmt.apply')
                             )}
                           </Button>
                         </>
@@ -1285,7 +1287,7 @@ export function SubcategoryDetail() {
                           onClick={handleEditUploadOcr}
                         >
                           <Edit className="h-4 w-4 mr-1" />
-                          편집
+                          {t('common.edit')}
                         </Button>
                       )}
                     </div>
@@ -1295,7 +1297,7 @@ export function SubcategoryDetail() {
                       value={editedUploadOcrText}
                       onChange={(e) => setEditedUploadOcrText(e.target.value)}
                       className="min-h-64 text-sm font-mono"
-                      placeholder="OCR 텍스트를 편집하세요..."
+                      placeholder={t('documentMgmt.editOcrPlaceholder')}
                     />
                   ) : (
                     <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
@@ -1308,13 +1310,13 @@ export function SubcategoryDetail() {
 
             {/* 업로드 가이드라인 */}
             <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-              <h4 className="font-medium text-slate-700">업로드 가이드라인</h4>
+              <h4 className="font-medium text-slate-700">{t('documentMgmt.uploadGuideline')}</h4>
               <ul className="text-sm text-slate-600 space-y-1">
-                <li>• PDF, JPG, PNG 파일 형식을 지원합니다</li>
-                <li>• 문서명은 명확하게 작성해주세요</li>
-                <li>• 기밀 문서는 별도로 표시해주세요</li>
-                <li>• 민감한 정보가 담긴 서류는 마스킹 처리를 해주세요</li>
-                <li>• 기밀 문서는 원칙적으로 업로드 금지이며, 민감한 부분이 제외된 일부 내용만 업로드 해주세요</li>
+                <li>• {t('documentMgmt.guidelineFormats')}</li>
+                <li>• {t('documentMgmt.guidelineName')}</li>
+                <li>• {t('documentMgmt.guidelineConfidential')}</li>
+                <li>• {t('documentMgmt.guidelineMasking')}</li>
+                <li>• {t('documentMgmt.guidelineNoConfidential')}</li>
               </ul>
             </div>
 
@@ -1329,7 +1331,7 @@ export function SubcategoryDetail() {
               ) : (
                 <Upload className="h-4 w-4 mr-2" />
               )}
-              {isExtractingUploadOcr ? 'OCR 추출 중...' : isUploading ? '업로드 중...' : '업로드'}
+              {isExtractingUploadOcr ? t('documentMgmt.extractingOcr') : isUploading ? t('documentMgmt.uploading') : t('documentMgmt.upload')}
             </Button>
           </CardContent>
         </Card>
@@ -1343,27 +1345,27 @@ export function SubcategoryDetail() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>세부 스토리지 수정</DialogTitle>
+              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
               <DialogDescription>
-                이 세부 스토리지 정보를 수정합니다.
+                {t('subcategoryDetail.editSubcategoryDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>세부 스토리지 이름</Label>
+                <Label>{t('documentMgmt.subcategoryName')}</Label>
                 <Input
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="예: 채용 서류 보관함"
+                  placeholder={t('documentMgmt.namePlaceholder')}
                 />
                 {editNameError && (
                   <p className="text-xs text-red-500 mt-1">{editNameError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('common.description')}</Label>
                 <Textarea
                   value={editForm.description}
                   onChange={(e) =>
@@ -1372,11 +1374,11 @@ export function SubcategoryDetail() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 스토리지 설명"
+                  placeholder={t('documentMgmt.descriptionPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관장소(선택)</Label>
+                <Label>{t('documentMgmt.storageLocation')}</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>
@@ -1385,12 +1387,12 @@ export function SubcategoryDetail() {
                       storageLocation: e.target.value,
                     }))
                   }
-                  placeholder="예: A동 2층 캐비넷 3"
+                  placeholder={t('documentMgmt.storageLocationPlaceholder')}
                   maxLength={30}
                 />
               </div>
               <div className="space-y-2">
-                <Label>관리번호(선택)</Label>
+                <Label>{t('documentMgmt.managementNumber')}</Label>
                 <Input
                   value={editForm.managementNumber}
                   onChange={(e) =>
@@ -1413,14 +1415,14 @@ export function SubcategoryDetail() {
                 onClick={handleCloseEditDialog}
                 disabled={isSavingEdit}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveEditSubcategory}
                 disabled={isSavingEdit}
               >
-                {isSavingEdit ? '수정 중...' : '저장'}
+                {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1438,13 +1440,13 @@ export function SubcategoryDetail() {
           {previewDoc?.type === 'pdf' && (
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
                 {previewLoading ? (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">문서를 불러오는 중입니다...</p>
+                    <p className="text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                   </div>
                 ) : (
                   previewDoc && <PdfViewer url={previewDoc.url} />
@@ -1453,7 +1455,7 @@ export function SubcategoryDetail() {
 
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">PDF 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.pdfDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -1462,7 +1464,7 @@ export function SubcategoryDetail() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -1472,7 +1474,7 @@ export function SubcategoryDetail() {
           {previewDoc?.type === 'image' && (
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imageDoc')}</DialogTitle>
               </DialogHeader>
 
               <div className="flex items-center justify-center gap-2 p-2 border-b bg-slate-50">
@@ -1502,7 +1504,7 @@ export function SubcategoryDetail() {
                   variant="outline"
                   size="sm"
                   onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title="90도 회전"
+                  title={t('documentMgmt.rotate90')}
                 >
                   🔄
                 </Button>
@@ -1515,9 +1517,9 @@ export function SubcategoryDetail() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownloadDocument(previewDoc.id)}
-                      title="다운로드"
+                      title={t('documentMgmt.download')}
                     >
-                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
+                      <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-5 h-5" />
                     </Button>
 
                     <Button
@@ -1531,7 +1533,7 @@ export function SubcategoryDetail() {
                           }, 500);
                         }
                       }}
-                      title="인쇄"
+                      title={t('documentMgmt.print')}
                     >
                       🖨️
                     </Button>
@@ -1552,7 +1554,7 @@ export function SubcategoryDetail() {
                 }}
               >
                 {previewLoading ? (
-                  <p className="text-slate-500">이미지를 불러오는 중입니다...</p>
+                  <p className="text-slate-500">{t('documentMgmt.loadingImage')}</p>
                 ) : (
                   previewDoc && (
                     <img
@@ -1573,7 +1575,7 @@ export function SubcategoryDetail() {
 
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">이미지 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.imageDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -1582,7 +1584,7 @@ export function SubcategoryDetail() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -1594,23 +1596,23 @@ export function SubcategoryDetail() {
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>NFC 태그 재등록</AlertDialogTitle>
+              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
               <AlertDialogDescription>
-                이미 URL이 등록된 태그입니다.
+                {t('documentMgmt.nfcAlreadyRegistered')}
                 {existingNfcSubcategory && (
                   <span className="block mt-2 font-medium">
-                    현재 연결: {existingNfcSubcategory.name}
+                    {t('documentMgmt.currentConnection')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">계속 하시겠습니까?</span>
+                <span className="block mt-2">{t('documentMgmt.continueQuestion')}</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleNfcConfirmNo}>
-                아니오
+                {t('common.no')}
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleNfcConfirmYes}>
-                예
+                {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1620,9 +1622,9 @@ export function SubcategoryDetail() {
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
           <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>문서 공유</DialogTitle>
+              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
               <DialogDescription>
-                공유할 사용자를 선택하거나 기존 공유를 관리하세요.
+                {t('documentMgmt.shareDocDesc')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1636,7 +1638,7 @@ export function SubcategoryDetail() {
                 }`}
                 onClick={() => setActiveShareTab('new')}
               >
-                새로운 공유
+                {t('documentMgmt.newShare')}
               </button>
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
@@ -1646,7 +1648,7 @@ export function SubcategoryDetail() {
                 }`}
                 onClick={() => setActiveShareTab('existing')}
               >
-                공유 현황 ({existingShares.length})
+                {t('documentMgmt.shareStatus')} ({existingShares.length})
               </button>
             </div>
 
@@ -1660,7 +1662,7 @@ export function SubcategoryDetail() {
                         onClick={handleSelectAllUsers}
                         className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
                       >
-                        {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
+                        {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     </div>
                   )}
@@ -1668,11 +1670,11 @@ export function SubcategoryDetail() {
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      공유할 수 있는 사용자가 없습니다.
+                      {t('documentMgmt.noUsersToShare')}
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -1710,11 +1712,11 @@ export function SubcategoryDetail() {
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">공유 현황 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      아직 공유한 사용자가 없습니다.
+                      {t('documentMgmt.noSharedUsers')}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1724,10 +1726,10 @@ export function SubcategoryDetail() {
                           className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || '알 수 없음'}</p>
+                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
                             <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
                             <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString('ko-KR')} 공유
+                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
                             </p>
                           </div>
                           <Button
@@ -1736,7 +1738,7 @@ export function SubcategoryDetail() {
                             onClick={() => handleUnshare(share.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            취소
+                            {t('common.cancel')}
                           </Button>
                         </div>
                       ))}
@@ -1758,7 +1760,7 @@ export function SubcategoryDetail() {
                     className="h-4 w-4"
                   />
                   <label htmlFor="emailNotificationSubcategory" className="text-sm">
-                    이메일 알림 전송
+                    {t('documentMgmt.emailNotification')}
                   </label>
                 </div>
               )}
@@ -1773,7 +1775,7 @@ export function SubcategoryDetail() {
                 }}
                 disabled={isSendingShare}
               >
-                닫기
+                {t('common.close')}
               </Button>
               {activeShareTab === 'new' && (
                 <Button
@@ -1784,10 +1786,10 @@ export function SubcategoryDetail() {
                   {isSendingShare ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      공유 중...
+                      {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {selectedUserIds.length}명에게 공유</>
+                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}
@@ -1799,9 +1801,9 @@ export function SubcategoryDetail() {
         <Dialog open={fileReplaceDialogOpen} onOpenChange={(open) => !open && handleCloseFileReplaceDialog()}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>파일 교체</DialogTitle>
+              <DialogTitle>{t('documentMgmt.fileReplace')}</DialogTitle>
               <DialogDescription>
-                기존 문서의 파일을 새 파일로 교체합니다. AI OCR이 자동으로 적용됩니다.
+                {t('documentMgmt.fileReplaceDesc')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1821,24 +1823,24 @@ export function SubcategoryDetail() {
                 {isExtractingOcr ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-blue-600">OCR 텍스트 추출 중...</p>
+                    <p className="text-sm text-blue-600">{t('subcategoryDetail.ocrExtracting')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2 w-full overflow-hidden">
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
                     <p className="text-sm font-medium text-green-700 truncate w-full text-center">{replaceFile.name}</p>
                     <p className="text-xs text-slate-500">
-                      {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}자 추출됨` : 'OCR 텍스트 없음'}
+                      {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}${t('documentMgmt.chars')} ${t('documentMgmt.extracted')}` : t('documentMgmt.noOcrText')}
                     </p>
-                    <p className="text-xs text-slate-400">다른 파일을 선택하려면 클릭하세요</p>
+                    <p className="text-xs text-slate-400">{t('documentMgmt.clickToSelectOther')}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <Upload className="h-8 w-8 text-slate-400" />
                     <p className="text-sm text-slate-600">
-                      {isReplaceDragActive ? '파일을 놓으세요' : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                      {isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}
                     </p>
-                    <p className="text-xs text-slate-400">PDF, JPG, PNG 파일 업로드 가능</p>
+                    <p className="text-xs text-slate-400">{t('documentMgmt.supportedFormatsShort')}</p>
                   </div>
                 )}
               </div>
@@ -1847,9 +1849,9 @@ export function SubcategoryDetail() {
               {replaceFile && !isExtractingOcr && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>OCR 추출 텍스트</Label>
+                    <Label>{t('documentMgmt.ocrExtractedText')}</Label>
                     <span className="text-xs text-slate-500">
-                      {replaceOcrText.length.toLocaleString()}자
+                      {replaceOcrText.length.toLocaleString()}{t('documentMgmt.chars')}
                     </span>
                   </div>
                   <Textarea
@@ -1859,7 +1861,7 @@ export function SubcategoryDetail() {
                     className={`min-h-[128px] max-h-48 text-sm font-mono ${
                       !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
                     }`}
-                    placeholder={replaceOcrText ? undefined : 'OCR 텍스트 없음'}
+                    placeholder={replaceOcrText ? undefined : t('documentMgmt.noOcrText')}
                   />
                 </div>
               )}
@@ -1871,14 +1873,14 @@ export function SubcategoryDetail() {
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
                 disabled={!replaceFile || isReplacingFile || isExtractingOcr}
               >
-                {isEditingReplaceOcr ? '편집 완료' : '편집'}
+                {isEditingReplaceOcr ? t('documentMgmt.editDone') : t('common.edit')}
               </Button>
               <Button
                 onClick={handleReplaceFile}
@@ -1888,10 +1890,10 @@ export function SubcategoryDetail() {
                 {isReplacingFile ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    저장 중...
+                    {t('common.saving')}
                   </>
                 ) : (
-                  '저장'
+                  t('common.save')
                 )}
               </Button>
             </DialogFooter>

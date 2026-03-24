@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import downloadIcon from '@/assets/download.svg';
@@ -49,6 +50,7 @@ import { PdfViewer } from '@/components/PdfViewer';
 import { BackButton } from '@/components/BackButton';
 
 export function SharedDocuments() {
+  const { t } = useTranslation();
   const { sharedDocuments, fetchSharedDocuments, unshareDocument } =
     useDocumentStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,8 +118,8 @@ export function SharedDocuments() {
 
 
       toast({
-        title: '다운로드 실패',
-        description: '문서를 다운로드하는 중 오류가 발생했습니다.',
+        title: t('sharedDocs.downloadFailed'),
+        description: t('sharedDocs.downloadFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -177,8 +179,8 @@ export function SharedDocuments() {
 
 
       toast({
-        title: '문서를 불러오지 못했습니다.',
-        description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
+        title: t('sharedDocs.previewFailed'),
+        description: t('sharedDocs.previewFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -191,9 +193,9 @@ export function SharedDocuments() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">공유받은 문서함</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{t('sharedDocs.title')}</h1>
           <p className="text-slate-500 mt-1">
-            다른 팀원이 나에게 공유한 문서 목록입니다
+            {t('sharedDocs.subtitle')}
           </p>
         </div>
 
@@ -201,16 +203,16 @@ export function SharedDocuments() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>공유 문서 목록</CardTitle>
+                <CardTitle>{t('sharedDocs.listTitle')}</CardTitle>
                 <CardDescription className="mt-1">
-                  총 {filteredShares.length}개의 문서가 공유되었습니다
+                  {t('sharedDocs.totalShared', { count: filteredShares.length })}
                 </CardDescription>
               </div>
               <div className="w-64">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="문서 검색..."
+                    placeholder={t('sharedDocs.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -225,19 +227,19 @@ export function SharedDocuments() {
                 <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-500">
                   {searchQuery
-                    ? '검색 결과가 없습니다'
-                    : '공유받은 문서가 없습니다'}
+                    ? t('sharedDocs.noSearchResults')
+                    : t('sharedDocs.noSharedDocs')}
                 </p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>문서명</TableHead>
-                    <TableHead>공유한 사람</TableHead>
-                    <TableHead>부서</TableHead>
-                    <TableHead>카테고리</TableHead>
-                    <TableHead>공유일</TableHead>
+                    <TableHead>{t('sharedDocs.docName')}</TableHead>
+                    <TableHead>{t('sharedDocs.sharedBy')}</TableHead>
+                    <TableHead>{t('common.department')}</TableHead>
+                    <TableHead>{t('sharedDocs.category')}</TableHead>
+                    <TableHead>{t('sharedDocs.sharedDate')}</TableHead>
                     <TableHead className="text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,7 +251,7 @@ export function SharedDocuments() {
                           <p>{share.documentName}</p>
                           {share.message && (
                             <p className="text-xs text-slate-500 mt-1">
-                              메모: {share.message}
+                              {t('sharedDocs.memo')}: {share.message}
                             </p>
                           )}
                         </div>
@@ -272,7 +274,7 @@ export function SharedDocuments() {
                             className="h-8 w-8"
                             onClick={() => handleView(share.documentId)}
                           >
-                            <img src={previewIcon} alt="미리보기" className="w-4 h-4" />
+                            <img src={previewIcon} alt={t('sharedDocs.preview')} className="w-4 h-4" />
                           </Button>
                           {share.permission === 'download' && (
                             <Button
@@ -281,7 +283,7 @@ export function SharedDocuments() {
                               className="h-8 w-8"
                               onClick={() => handleDownload(share.documentId)}
                             >
-                              <img src={downloadIcon} alt="다운로드" className="w-4 h-4" />
+                              <img src={downloadIcon} alt={t('sharedDocs.download')} className="w-4 h-4" />
                             </Button>
                           )}
                           <Button
@@ -293,7 +295,7 @@ export function SharedDocuments() {
                               setDeleteDialogOpen(true);
                             }}
                           >
-                            <img src={binIcon} alt="삭제" className="w-4 h-4" />
+                            <img src={binIcon} alt={t('common.delete')} className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -320,13 +322,13 @@ export function SharedDocuments() {
           {previewDoc?.type === 'pdf' && (
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.docPreview')}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
                 {previewLoading ? (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">문서를 불러오는 중입니다...</p>
+                    <p className="text-slate-500">{t('sharedDocs.loadingDoc')}</p>
                   </div>
                 ) : (
                   previewDoc && <PdfViewer url={previewDoc.url} />
@@ -335,7 +337,7 @@ export function SharedDocuments() {
 
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">PDF 문서</span>
+                  <span className="text-sm text-slate-500">{t('sharedDocs.pdfDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -344,7 +346,7 @@ export function SharedDocuments() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -355,7 +357,7 @@ export function SharedDocuments() {
           {previewDoc?.type === 'image' && (
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.imagePreview')}</DialogTitle>
               </DialogHeader>
 
               {/* 상단 툴바 */}
@@ -386,7 +388,7 @@ export function SharedDocuments() {
                   variant="outline"
                   size="sm"
                   onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title="90도 회전"
+                  title={t('sharedDocs.rotate90')}
                 >
                   🔄
                 </Button>
@@ -399,9 +401,9 @@ export function SharedDocuments() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownload(previewDoc.id)}
-                      title="다운로드"
+                      title={t('sharedDocs.download')}
                     >
-                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
+                      <img src={downloadIcon} alt={t('sharedDocs.download')} className="w-5 h-5" />
                     </Button>
 
                     <Button
@@ -415,7 +417,7 @@ export function SharedDocuments() {
                           }, 500);
                         }
                       }}
-                      title="인쇄"
+                      title={t('sharedDocs.print')}
                     >
                       🖨️
                     </Button>
@@ -437,7 +439,7 @@ export function SharedDocuments() {
                 }}
               >
                 {previewLoading ? (
-                  <p className="text-slate-500">이미지를 불러오는 중입니다...</p>
+                  <p className="text-slate-500">{t('sharedDocs.loadingImage')}</p>
                 ) : (
                   previewDoc && (
                     <img
@@ -459,7 +461,7 @@ export function SharedDocuments() {
               {/* 하단 푸터 */}
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">이미지 문서</span>
+                  <span className="text-sm text-slate-500">{t('sharedDocs.imageDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -468,7 +470,7 @@ export function SharedDocuments() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -480,9 +482,9 @@ export function SharedDocuments() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>공유 문서 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{t('sharedDocs.deleteTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                이 문서를 공유받은 문서함에서 삭제하시겠습니까?
+                {t('sharedDocs.deleteConfirm')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -492,7 +494,7 @@ export function SharedDocuments() {
                   setDeletingShareId(null);
                 }}
               >
-                취소
+                {t('common.cancel')}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={async () => {
@@ -501,14 +503,14 @@ export function SharedDocuments() {
                   try {
                     await unshareDocument(deletingShareId);
                     toast({
-                      title: '삭제 완료',
-                      description: '공유받은 문서가 삭제되었습니다.',
+                      title: t('documentMgmt.deleteComplete'),
+                      description: t('sharedDocs.deleteCompleteDesc'),
                     });
                   } catch (error) {
                     console.error('삭제 실패:', error);
                     toast({
-                      title: '삭제 실패',
-                      description: '문서를 삭제하는 중 오류가 발생했습니다.',
+                      title: t('documentMgmt.deleteFailed'),
+                      description: t('sharedDocs.deleteFailedDesc'),
                       variant: 'destructive',
                     });
                   } finally {
@@ -522,10 +524,10 @@ export function SharedDocuments() {
                 {isDeleting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    삭제 중...
+                    {t('documentMgmt.deleting')}
                   </>
                 ) : (
-                  '삭제'
+                  t('common.delete')
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>

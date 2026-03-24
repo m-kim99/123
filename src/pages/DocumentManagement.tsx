@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -149,6 +150,7 @@ function getExpiryStatus(expiryDate: string | null): {
 }
 
 export function DocumentManagement() {
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((state) => state.user);
   
   // Selector 최적화: 상태값은 개별 selector로
@@ -632,8 +634,8 @@ export function DocumentManagement() {
 
         if (categoryName) {
           toast({
-            title: '✅ NFC 태그 인식',
-            description: `"${categoryName}" 세부 스토리지가 선택되었습니다`,
+            title: t('documentMgmt.nfcTagRecognized'),
+            description: t('documentMgmt.subcategorySelected', { name: categoryName }),
           });
         }
 
@@ -656,8 +658,8 @@ export function DocumentManagement() {
         });
 
         toast({
-          title: '✅ NFC 태그 인식',
-          description: `"${categoryName}" 대분류가 선택되었습니다`,
+          title: t('documentMgmt.nfcTagRecognized'),
+          description: t('documentMgmt.parentCategorySelected', { name: categoryName }),
         });
 
         setActiveTab('upload');
@@ -710,8 +712,8 @@ export function DocumentManagement() {
       colorLabel: null,
     });
     toast({
-      title: '세부 스토리지 등록 완료',
-      description: '세부 스토리지가 성공적으로 추가되었습니다.',
+      title: t('documentMgmt.subcategoryAdded'),
+      description: t('documentMgmt.subcategoryAddedDesc'),
     });
   };
 
@@ -741,16 +743,16 @@ export function DocumentManagement() {
 
       if (!created) {
         toast({
-          title: '세부 스토리지 생성 실패',
-          description: '세부 스토리지를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          title: t('documentMgmt.subcategoryCreateFailed'),
+          description: t('documentMgmt.subcategoryCreateFailedNfc'),
           variant: 'destructive',
         });
         return;
       }
 
       scanToast = toast({
-        title: 'NFC 태그 인식 대기',
-        description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+        title: t('documentMgmt.nfcWaiting'),
+        description: t('documentMgmt.nfcWaitingDesc'),
         duration: 1000000,
       });
       const uid = await readNFCUid();
@@ -786,9 +788,9 @@ export function DocumentManagement() {
       scanToast?.dismiss();
       console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description:
-          error?.message || '세부 스토리지 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+          error?.message || t('documentMgmt.nfcRegFailedDesc'),
         variant: 'destructive',
       });
       setNfcMode('idle'); // 에러 시 모드 초기화
@@ -821,8 +823,8 @@ export function DocumentManagement() {
       await registerNfcTag(subcategoryId, uid);
 
       toast({
-        title: 'NFC 등록 완료',
-        description: 'NFC에 세부 스토리지가 등록되었습니다.',
+        title: t('documentMgmt.nfcRegComplete'),
+        description: t('documentMgmt.nfcRegCompleteDesc'),
       });
 
       await fetchSubcategories();
@@ -836,9 +838,9 @@ export function DocumentManagement() {
     } catch (error: any) {
       console.error('NFC 등록 실패:', error);
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description:
-          error?.message || 'NFC 태그를 등록하는 중 오류가 발생했습니다.',
+          error?.message || t('documentMgmt.nfcRegErrorDesc'),
         variant: 'destructive',
       });
       setNfcMode('idle'); // 에러 시 모드 초기화
@@ -897,7 +899,7 @@ export function DocumentManagement() {
 
     const trimmedName = editCategoryForm.name.trim();
     if (!trimmedName) {
-      setEditCategoryNameError('이름을 입력하세요');
+      setEditCategoryNameError(t('documentMgmt.enterName'));
       return;
     }
 
@@ -916,16 +918,16 @@ export function DocumentManagement() {
       });
 
       toast({
-        title: '수정 완료',
-        description: '세부 스토리지가 성공적으로 수정되었습니다.',
+        title: t('documentMgmt.editComplete'),
+        description: t('documentMgmt.subcategoryEditedDesc'),
       });
 
       handleCloseEditDialog();
     } catch (error) {
       console.error('세부 스토리지 수정 실패:', error);
       toast({
-        title: '수정 실패',
-        description: '세부 스토리지를 수정하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.editFailed'),
+        description: t('documentMgmt.subcategoryEditFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -955,16 +957,16 @@ export function DocumentManagement() {
       await deleteSubcategory(deletingCategoryId);
 
       toast({
-        title: '삭제 완료',
-        description: '세부 스토리지가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.subcategoryDeletedDesc'),
       });
 
       handleCloseDeleteDialog();
     } catch (error) {
       console.error('세부 스토리지 삭제 실패:', error);
       toast({
-        title: '삭제 실패',
-        description: '세부 스토리지를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.subcategoryDeleteFailedDesc'),
         variant: 'destructive',
       });
       setIsDeletingCategory(false);
@@ -1025,8 +1027,8 @@ export function DocumentManagement() {
 
 
       toast({
-        title: '문서를 불러오지 못했습니다.',
-        description: '문서 미리보기를 여는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.previewFailed'),
+        description: t('documentMgmt.previewFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -1065,8 +1067,8 @@ export function DocumentManagement() {
 
 
       toast({
-        title: '다운로드 실패',
-        description: '문서를 다운로드하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.downloadFailed'),
+        description: t('documentMgmt.downloadFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -1079,14 +1081,14 @@ export function DocumentManagement() {
     // 권한 체크
     if (!canPerformDocumentAction(targetDoc, 'delete')) {
       toast({
-        title: '권한 없음',
-        description: '이 문서를 삭제할 권한이 없습니다.',
+        title: t('documentMgmt.noPermission'),
+        description: t('documentMgmt.noDeletePermission'),
         variant: 'destructive',
       });
       return;
     }
 
-    const confirmed = window.confirm('정말 삭제하시겠습니까?');
+    const confirmed = window.confirm(t('documentMgmt.confirmDelete'));
     if (!confirmed) return;
 
     try {
@@ -1131,8 +1133,8 @@ export function DocumentManagement() {
       await fetchDocuments();
 
       toast({
-        title: '삭제 완료',
-        description: '문서가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.docDeletedDesc'),
       });
 
       if (user?.companyId && targetDoc) {
@@ -1164,8 +1166,8 @@ export function DocumentManagement() {
 
 
       toast({
-        title: '삭제 실패',
-        description: '문서를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.docDeleteFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -1179,8 +1181,8 @@ export function DocumentManagement() {
     // 권한 체크 - share 권한 필요 (manager만)
     if (!canPerformDocumentAction(doc, 'share')) {
       toast({
-        title: '권한 없음',
-        description: '이 문서를 공유할 권한이 없습니다.',
+        title: t('documentMgmt.noPermission'),
+        description: t('documentMgmt.noSharePermission'),
         variant: 'destructive',
       });
       return;
@@ -1248,8 +1250,8 @@ export function DocumentManagement() {
     } catch (error) {
       console.error('공유 정보 로드 실패:', error);
       toast({
-        title: '공유 정보 로드 실패',
-        description: '공유 정보를 불러오지 못했습니다.',
+        title: t('documentMgmt.shareLoadFailed'),
+        description: t('documentMgmt.shareLoadFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -1260,7 +1262,7 @@ export function DocumentManagement() {
 
   // 공유 취소
   const handleUnshare = async (shareId: string) => {
-    if (!confirm('공유를 취소하시겠습니까?')) return;
+    if (!confirm(t('documentMgmt.confirmUnshare'))) return;
 
     try {
       await unshareDocument(shareId);
@@ -1269,14 +1271,14 @@ export function DocumentManagement() {
       setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
       
       toast({
-        title: '공유 취소 완료',
-        description: '문서 공유가 취소되었습니다.',
+        title: t('documentMgmt.unshareComplete'),
+        description: t('documentMgmt.unshareCompleteDesc'),
       });
     } catch (error) {
       console.error('공유 취소 실패:', error);
       toast({
-        title: '공유 취소 실패',
-        description: '공유 취소 중 오류가 발생했습니다.',
+        title: t('documentMgmt.unshareFailed'),
+        description: t('documentMgmt.unshareFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -1304,8 +1306,8 @@ export function DocumentManagement() {
   const handleSendShare = async () => {
     if (!sharingDocumentId || selectedUserIds.length === 0) {
       toast({
-        title: '선택 오류',
-        description: '공유할 사용자를 선택해주세요.',
+        title: t('documentMgmt.selectionError'),
+        description: t('documentMgmt.selectUsersToShare'),
         variant: 'destructive',
       });
       return;
@@ -1366,8 +1368,8 @@ export function DocumentManagement() {
       }
 
       toast({
-        title: '공유 완료',
-        description: `${selectedUserIds.length}명에게 문서가 공유되었습니다.${sendEmailNotification ? ' 이메일도 전송되었습니다.' : ''}`,
+        title: t('documentMgmt.shareComplete'),
+        description: t('documentMgmt.shareCompleteDesc', { count: selectedUserIds.length }) + (sendEmailNotification ? ` ${t('documentMgmt.emailAlsoSent')}` : ''),
       });
 
       setShareDialogOpen(false);
@@ -1377,8 +1379,8 @@ export function DocumentManagement() {
     } catch (error) {
       console.error('문서 공유 실패:', error);
       toast({
-        title: '공유 실패',
-        description: '문서를 공유하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.shareFailed'),
+        description: t('documentMgmt.shareFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -1394,8 +1396,8 @@ export function DocumentManagement() {
     // 권한 체크 - write 권한 필요 (editor 이상)
     if (!canPerformDocumentAction(doc, 'write')) {
       toast({
-        title: '권한 없음',
-        description: '이 문서를 수정할 권한이 없습니다.',
+        title: t('documentMgmt.noPermission'),
+        description: t('documentMgmt.noEditPermission'),
         variant: 'destructive',
       });
       return;
@@ -1430,8 +1432,8 @@ export function DocumentManagement() {
 
     if (!isPdf && !isImage) {
       toast({
-        title: '파일 형식 오류',
-        description: 'PDF, JPG, PNG 파일만 업로드 가능합니다.',
+        title: t('documentMgmt.fileTypeError'),
+        description: t('documentMgmt.onlyPdfJpgPng'),
         variant: 'destructive',
       });
       return;
@@ -1444,15 +1446,15 @@ export function DocumentManagement() {
       const ocrText = await extractText(file);
       setReplaceOcrText(ocrText);
       toast({
-        title: 'OCR 추출 완료',
-        description: `${ocrText.length.toLocaleString()}자가 추출되었습니다.`,
+        title: t('documentMgmt.ocrComplete'),
+        description: t('documentMgmt.ocrCharCount', { count: ocrText.length.toLocaleString() }),
       });
     } catch (error) {
       console.error('OCR 추출 오류:', error);
       setReplaceOcrText('');
       toast({
-        title: 'OCR 추출 실패',
-        description: '텍스트 추출에 실패했습니다. 파일은 업로드됩니다.',
+        title: t('documentMgmt.ocrFailed'),
+        description: t('documentMgmt.ocrFailedFileUploaded'),
         variant: 'destructive',
       });
     } finally {
@@ -1477,8 +1479,8 @@ export function DocumentManagement() {
   const handleReplaceFile = async () => {
     if (!replacingDocumentId || !replaceFile) {
       toast({
-        title: '파일을 선택해주세요',
-        description: '교체할 파일을 먼저 선택해주세요.',
+        title: t('documentMgmt.selectFile'),
+        description: t('documentMgmt.selectFileFirst'),
         variant: 'destructive',
       });
       return;
@@ -1676,9 +1678,9 @@ export function DocumentManagement() {
     onDropRejected: (fileRejections) => {
       const rejection = fileRejections[0];
       if (rejection?.errors[0]?.code === 'file-invalid-type') {
-        setUploadError('PDF, JPG, PNG 파일만 업로드 가능합니다.');
+        setUploadError(t('documentMgmt.onlyPdfJpgPng'));
       } else {
-        setUploadError('파일 업로드에 실패했습니다.');
+        setUploadError(t('documentMgmt.uploadFailedGeneric'));
       }
     },
   });
@@ -1690,7 +1692,7 @@ export function DocumentManagement() {
     }
 
     if (isExtractingOcr) {
-      setUploadError('OCR 추출이 완료될 때까지 기다려주세요.');
+      setUploadError(t('documentMgmt.waitForOcr'));
       return;
     }
 
@@ -1698,7 +1700,7 @@ export function DocumentManagement() {
       (s) => s.id === uploadSelection.subcategoryId,
     );
     if (!subcategory) {
-      setUploadError('세부 스토리지를 찾을 수 없습니다.');
+      setUploadError(t('documentMgmt.subcategoryNotFound'));
       return;
     }
 
@@ -1710,7 +1712,7 @@ export function DocumentManagement() {
 
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStatus('업로드 준비 중...');
+    setUploadStatus(t('documentMgmt.preparingUpload'));
     setUploadError(null);
     setUploadSuccess(false);
 
@@ -1724,7 +1726,7 @@ export function DocumentManagement() {
       setFileStatuses(
         uploadFiles.map((file) => ({
           name: file.name,
-          status: '업로드 대기 중',
+          status: t('documentMgmt.waitingUpload'),
           error: null,
         })),
       );
@@ -1738,7 +1740,7 @@ export function DocumentManagement() {
         if (pdfFiles.length === 1) {
           return getBaseNameWithoutExt(pdfFiles[0].name);
         }
-        return '문서';
+        return t('documentMgmt.document');
       };
 
       // PDF 파일 병렬 업로드
@@ -1749,7 +1751,7 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '업로드 중...' };
+              next[index] = { ...next[index], status: t('documentMgmt.uploading') };
             }
             return next;
           });
@@ -1781,25 +1783,25 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '완료', error: null };
+              next[index] = { ...next[index], status: t('documentMgmt.completed'), error: null };
             }
             return next;
           });
 
           return { success: true, fileName: file.name };
         } catch (fileError) {
-          console.error('업로드 오류:', file.name, fileError);
+          console.error('Upload error:', file.name, fileError);
 
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
               next[index] = {
                 ...next[index],
-                status: '실패',
+                status: t('documentMgmt.failed'),
                 error:
                   fileError instanceof Error
                     ? fileError.message
-                    : '문서 업로드 중 오류가 발생했습니다.',
+                    : t('documentMgmt.uploadErrorGeneric'),
               };
             }
             return next;
@@ -1824,12 +1826,12 @@ export function DocumentManagement() {
       });
 
       if (pdfFiles.length > 0) {
-        setUploadStatus(`PDF 파일 ${pdfFiles.length}개 업로드 완료`);
+        setUploadStatus(t('documentMgmt.pdfUploadComplete', { count: pdfFiles.length }));
       }
 
       // 이미지 파일들을 하나의 문서로 묶어서 업로드
       if (imageFiles.length > 1) {
-        setUploadStatus(`${imageFiles.length}개 이미지를 PDF로 변환 중...`);
+        setUploadStatus(t('documentMgmt.convertingToPdf', { count: imageFiles.length }));
 
         try {
           const { jsPDF } = await import('jspdf');
@@ -1864,7 +1866,7 @@ export function DocumentManagement() {
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
-                next[index] = { ...next[index], status: 'PDF 변환 완료' };
+                next[index] = { ...next[index], status: t('documentMgmt.pdfConvertDone') };
               }
               return next;
             });
@@ -1884,7 +1886,7 @@ export function DocumentManagement() {
             type: 'application/pdf',
           });
 
-          setUploadStatus('업로드 중...');
+          setUploadStatus(t('documentMgmt.uploading'));
 
           await uploadDocument({
             name: imageTitle,
@@ -1900,14 +1902,14 @@ export function DocumentManagement() {
           });
 
           successCount += 1;
-          setUploadStatus(`완료: ${imageFiles.length}장을 하나의 문서로 업로드했습니다!`);
+          setUploadStatus(t('documentMgmt.imageBundleComplete', { count: imageFiles.length }));
         } catch (groupError) {
-          console.error('이미지 묶음 업로드 오류:', groupError);
+          console.error('Image bundle upload error:', groupError);
           failureCount += 1;
           setUploadError(
             groupError instanceof Error
               ? groupError.message
-              : '이미지 문서 업로드 중 오류가 발생했습니다.',
+              : t('documentMgmt.imageUploadError'),
           );
         }
       } else if (imageFiles.length === 1) {
@@ -1917,7 +1919,7 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '업로드 중...' };
+              next[index] = { ...next[index], status: t('documentMgmt.uploading') };
             }
             return next;
           });
@@ -1945,12 +1947,12 @@ export function DocumentManagement() {
           setFileStatuses((prev) => {
             const next = [...prev];
             if (next[index]) {
-              next[index] = { ...next[index], status: '완료', error: null };
+              next[index] = { ...next[index], status: t('documentMgmt.completed'), error: null };
             }
             return next;
           });
         } catch (fileError) {
-          console.error('업로드 오류:', file.name, fileError);
+          console.error('Upload error:', file.name, fileError);
           failureCount += 1;
 
           setFileStatuses((prev) => {
@@ -1958,11 +1960,11 @@ export function DocumentManagement() {
             if (next[index]) {
               next[index] = {
                 ...next[index],
-                status: '실패',
+                status: t('documentMgmt.failed'),
                 error:
                   fileError instanceof Error
                     ? fileError.message
-                    : '문서 업로드 중 오류가 발생했습니다.',
+                    : t('documentMgmt.uploadErrorGeneric'),
               };
             }
             return next;
@@ -1977,12 +1979,12 @@ export function DocumentManagement() {
       if (failureCount > 0) {
         setUploadError(
           failureCount === totalFiles
-            ? '모든 파일 업로드에 실패했습니다.'
-            : `${failureCount}개 파일 업로드에 실패했습니다.`,
+            ? t('documentMgmt.allUploadsFailed')
+            : t('documentMgmt.someUploadsFailed', { count: failureCount }),
         );
       }
 
-      setUploadStatus('업로드 완료');
+      setUploadStatus(t('documentMgmt.uploadComplete'));
 
       await fetchDocuments();
       
@@ -2007,11 +2009,11 @@ export function DocumentManagement() {
         }
       }, 2000);
     } catch (error) {
-      console.error('업로드 오류:', error);
+      console.error('Upload error:', error);
       setUploadError(
         error instanceof Error
           ? error.message
-          : '문서 업로드 중 오류가 발생했습니다.',
+          : t('documentMgmt.uploadErrorGeneric'),
       );
       setUploadStatus('');
       setUploadProgress(0);
@@ -2024,10 +2026,10 @@ export function DocumentManagement() {
     if (!ocrTextPreview) return;
     try {
       await navigator.clipboard.writeText(isEditingOcr ? editedOcrText : ocrTextPreview);
-      setUploadStatus('OCR 텍스트가 클립보드에 복사되었습니다.');
+      setUploadStatus(t('documentMgmt.ocrCopied'));
     } catch (error) {
-      console.error('텍스트 복사 오류:', error);
-      setUploadError('텍스트 복사 중 오류가 발생했습니다.');
+      console.error('Copy error:', error);
+      setUploadError(t('documentMgmt.copyError'));
     }
   };
 
@@ -2051,7 +2053,7 @@ export function DocumentManagement() {
 
   const handleSaveOcrText = async () => {
     if (!lastUploadedDocId) {
-      setUploadError('저장할 문서를 찾을 수 없습니다.');
+      setUploadError(t('documentMgmt.docNotFound'));
       return;
     }
     
@@ -2074,7 +2076,7 @@ export function DocumentManagement() {
         <DocumentBreadcrumb
           items={[
             {
-              label: '문서 관리',
+              label: t('documentMgmt.title'),
               isCurrentPage: true,
             },
           ]}
@@ -2083,8 +2085,8 @@ export function DocumentManagement() {
         <BackButton className="mb-4" />
 
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">문서 관리</h1>
-          <p className="text-slate-500 mt-1">세부 스토리지와 문서를 관리하세요</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('documentMgmt.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('documentMgmt.subtitle')}</p>
         </div>
 
         <Tabs
@@ -2099,19 +2101,19 @@ export function DocumentManagement() {
               value="categories"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              세부 스토리지
+              {t('documentMgmt.subcategories')}
             </TabsTrigger>
             <TabsTrigger
               value="documents"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              전체 문서
+              {t('documentMgmt.allDocuments')}
             </TabsTrigger>
             <TabsTrigger
               value="upload"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
-              문서 업로드
+              {t('documentMgmt.uploadDocuments')}
             </TabsTrigger>
           </TabsList>
 
@@ -2119,7 +2121,7 @@ export function DocumentManagement() {
             <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="space-y-1">
-                  <Label className="text-sm font-medium text-slate-600">부서</Label>
+                  <Label className="text-sm font-medium text-slate-600">{t('documentMgmt.department')}</Label>
                   <Select
                     value={categoryFilter.departmentId}
                     onValueChange={(value) =>
@@ -2130,10 +2132,10 @@ export function DocumentManagement() {
                     }
                   >
                     <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="전체" />
+                      <SelectValue placeholder={t('documentMgmt.all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체</SelectItem>
+                      <SelectItem value="all">{t('documentMgmt.all')}</SelectItem>
                       {departments
                         .filter((dept) => accessibleDepartmentIds.includes(dept.id))
                         .map((dept) => (
@@ -2145,7 +2147,7 @@ export function DocumentManagement() {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-sm font-medium text-slate-600">대분류</Label>
+                  <Label className="text-sm font-medium text-slate-600">{t('documentMgmt.parentCategory')}</Label>
                   <Select
                     value={categoryFilter.parentCategoryId}
                     onValueChange={(value) =>
@@ -2157,10 +2159,10 @@ export function DocumentManagement() {
                     disabled={filteredParentCategoriesForFilter.length === 0}
                   >
                     <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="전체" />
+                      <SelectValue placeholder={t('documentMgmt.all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체</SelectItem>
+                      <SelectItem value="all">{t('documentMgmt.all')}</SelectItem>
                       {filteredParentCategoriesForFilter.map((pc) => (
                         <SelectItem key={pc.id} value={pc.id}>
                           {pc.name}
@@ -2175,19 +2177,19 @@ export function DocumentManagement() {
                 <DialogTrigger asChild>
                   <Button style={{ backgroundColor: primaryColor }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    세부 스토리지 추가
+                    {t('documentMgmt.addSubcategory')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[85vh] flex flex-col" closeClassName="text-white data-[state=open]:text-white">
                   <DialogHeader>
-                    <DialogTitle>새 세부 스토리지 추가</DialogTitle>
+                    <DialogTitle>{t('documentMgmt.addNewSubcategory')}</DialogTitle>
                     <DialogDescription>
-                      부서와 대분류를 선택하여 세부 스토리지를 생성합니다.
+                      {t('documentMgmt.addNewSubcategoryDesc')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 overflow-y-auto flex-1 px-4">
                     <div className="space-y-2">
-                      <Label>부서</Label>
+                      <Label>{t('documentMgmt.department')}</Label>
                       <select
                         className="w-full border rounded-md px-3 py-2 text-sm"
                         value={newCategory.departmentId}
@@ -2199,7 +2201,7 @@ export function DocumentManagement() {
                           })
                         }
                       >
-                        <option value="">부서를 선택하세요</option>
+                        <option value="">{t('documentMgmt.selectDepartment')}</option>
                         {departments
                           .filter((dept) => accessibleDepartmentIds.includes(dept.id))
                           .map((dept) => (
@@ -2210,7 +2212,7 @@ export function DocumentManagement() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label>대분류</Label>
+                      <Label>{t('documentMgmt.parentCategory')}</Label>
                       <select
                         className="w-full border rounded-md px-3 py-2 text-sm"
                         value={newCategory.parentCategoryId}
@@ -2222,7 +2224,7 @@ export function DocumentManagement() {
                         }
                         disabled={newCategoryParentOptions.length === 0}
                       >
-                        <option value="">대분류를 선택하세요</option>
+                        <option value="">{t('documentMgmt.selectParentCategory')}</option>
                         {newCategoryParentOptions.map((pc) => (
                           <option key={pc.id} value={pc.id}>
                             {pc.name}
@@ -2231,17 +2233,17 @@ export function DocumentManagement() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label>세부 스토리지 이름</Label>
+                      <Label>{t('documentMgmt.subcategoryName')}</Label>
                       <Input
                         value={newCategory.name}
                         onChange={(e) =>
                           setNewCategory({ ...newCategory, name: e.target.value })
                         }
-                        placeholder="예: 채용 서류 보관함"
+                        placeholder={t('documentMgmt.subcategoryNamePlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>설명</Label>
+                      <Label>{t('documentMgmt.description')}</Label>
                       <Textarea
                         value={newCategory.description}
                         onChange={(e) =>
@@ -2250,11 +2252,11 @@ export function DocumentManagement() {
                             description: e.target.value,
                           })
                         }
-                        placeholder="세부 스토리지 설명"
+                        placeholder={t('documentMgmt.descriptionPlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>컬러라벨(선택)</Label>
+                      <Label>{t('documentMgmt.colorLabel')}</Label>
                       <ColorLabelPicker
                         value={newCategory.colorLabel}
                         onChange={(value) =>
@@ -2263,7 +2265,7 @@ export function DocumentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>보관장소(선택)</Label>
+                      <Label>{t('documentMgmt.storageLocation')}</Label>
                       <Input
                         value={newCategory.storageLocation}
                         onChange={(e) =>
@@ -2272,11 +2274,11 @@ export function DocumentManagement() {
                             storageLocation: e.target.value,
                           })
                         }
-                        placeholder="예: A동 2층 캐비닛 3"
+                        placeholder={t('documentMgmt.storageLocationPlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>관리번호(선택)</Label>
+                      <Label>{t('documentMgmt.managementNumber')}</Label>
                       <Input
                         value={newCategory.managementNumber}
                         onChange={(e) =>
@@ -2285,11 +2287,11 @@ export function DocumentManagement() {
                             managementNumber: e.target.value,
                           })
                         }
-                        placeholder="예: MGT-2024-001"
+                        placeholder={t('documentMgmt.managementNumberPlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>기본 보관 만료일 (선택)</Label>
+                      <Label>{t('documentMgmt.defaultExpiryDate')}</Label>
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
@@ -2311,7 +2313,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          3개월
+                          {t('documentMgmt.threeMonths')}
                         </Button>
                         <Button
                           type="button"
@@ -2333,7 +2335,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          1년
+                          {t('documentMgmt.oneYear')}
                         </Button>
                         <Button
                           type="button"
@@ -2355,7 +2357,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          3년
+                          {t('documentMgmt.threeYears')}
                         </Button>
                         <Button
                           type="button"
@@ -2377,7 +2379,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          5년
+                          {t('documentMgmt.fiveYears')}
                         </Button>
                         <Button
                           type="button"
@@ -2399,7 +2401,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          7년
+                          {t('documentMgmt.sevenYears')}
                         </Button>
                         <Button
                           type="button"
@@ -2421,7 +2423,7 @@ export function DocumentManagement() {
                             }));
                           }}
                         >
-                          10년
+                          {t('documentMgmt.tenYears')}
                         </Button>
                         {newCategory.defaultExpiryDays && (
                           <Button
@@ -2437,7 +2439,7 @@ export function DocumentManagement() {
                             }
                             className="bg-white text-slate-600 hover:bg-slate-100"
                           >
-                            초기화
+                            {t('documentMgmt.reset')}
                           </Button>
                         )}
                       </div>
@@ -2454,7 +2456,7 @@ export function DocumentManagement() {
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {newCategory.expiryDate
                               ? format(new Date(newCategory.expiryDate), 'PPP', { locale: ko })
-                              : '달력에서 보관 만료일 선택'}
+                              : t('documentMgmt.selectExpiryFromCalendar')}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -2485,7 +2487,7 @@ export function DocumentManagement() {
                         </PopoverContent>
                       </Popover>
                       <p className="text-xs text-slate-500">
-                        보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                        {t('documentMgmt.noExpiryNote')}
                         {newCategory.expiryDate && ` (${format(new Date(newCategory.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                       </p>
                     </div>
@@ -2501,7 +2503,7 @@ export function DocumentManagement() {
                         !newCategory.parentCategoryId
                       }
                     >
-                      세부 스토리지만 추가
+                      {t('documentMgmt.addSubcategoryOnly')}
                     </Button>
                     <Button
                       type="button"
@@ -2514,11 +2516,11 @@ export function DocumentManagement() {
                       className="flex items-center gap-2"
                     >
                       <Smartphone className="h-4 w-4" />
-                      NFC 등록하며 추가
+                      {t('documentMgmt.addWithNfc')}
                     </Button>
                     <DialogClose asChild>
                       <Button type="button" variant="outline">
-                        취소
+                        {t('common.cancel')}
                       </Button>
                     </DialogClose>
                   </DialogFooter>
@@ -2536,14 +2538,14 @@ export function DocumentManagement() {
             >
               <DialogContent closeClassName="text-white data-[state=open]:text-white" className="max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>세부 스토리지 수정</DialogTitle>
+                  <DialogTitle>{t('documentMgmt.editSubcategory')}</DialogTitle>
                   <DialogDescription>
-                    선택한 세부 스토리지 정보를 수정합니다
+                    {t('documentMgmt.editSubcategoryDesc')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 overflow-y-auto flex-1 px-4">
                   <div className="space-y-2">
-                    <Label>세부 스토리지 이름</Label>
+                    <Label>{t('documentMgmt.subcategoryName')}</Label>
                     <Input
                       value={editCategoryForm.name}
                       onChange={(e) =>
@@ -2552,7 +2554,7 @@ export function DocumentManagement() {
                           name: e.target.value,
                         }))
                       }
-                      placeholder="예: 계약서"
+                      placeholder={t('documentMgmt.subcategoryNamePlaceholder')}
                     />
                     {editCategoryNameError && (
                       <p className="text-xs text-red-500 mt-1">
@@ -2561,7 +2563,7 @@ export function DocumentManagement() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>설명</Label>
+                    <Label>{t('documentMgmt.description')}</Label>
                     <Textarea
                       value={editCategoryForm.description}
                       onChange={(e) =>
@@ -2570,11 +2572,11 @@ export function DocumentManagement() {
                           description: e.target.value,
                         }))
                       }
-                      placeholder="카테고리 설명"
+                      placeholder={t('documentMgmt.descriptionPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>컬러라벨(선택)</Label>
+                    <Label>{t('documentMgmt.colorLabel')}</Label>
                     <ColorLabelPicker
                       value={editCategoryForm.colorLabel}
                       onChange={(value) =>
@@ -2583,7 +2585,7 @@ export function DocumentManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>보관장소(선택)</Label>
+                    <Label>{t('documentMgmt.storageLocation')}</Label>
                     <Input
                       value={editCategoryForm.storageLocation}
                       onChange={(e) =>
@@ -2592,11 +2594,11 @@ export function DocumentManagement() {
                           storageLocation: e.target.value,
                         }))
                       }
-                      placeholder="예: A동 2층 캐비닛 3"
+                      placeholder={t('documentMgmt.storageLocationPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>관리번호(선택)</Label>
+                    <Label>{t('documentMgmt.managementNumber')}</Label>
                     <Input
                       value={editCategoryForm.managementNumber}
                       onChange={(e) =>
@@ -2605,11 +2607,11 @@ export function DocumentManagement() {
                           managementNumber: e.target.value,
                         }))
                       }
-                      placeholder="예: MGT-2024-001"
+                      placeholder={t('documentMgmt.managementNumberPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>기본 보관 만료일 (선택)</Label>
+                    <Label>{t('documentMgmt.defaultExpiryDate')}</Label>
                     <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
@@ -2631,7 +2633,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        3개월
+                        {t('documentMgmt.threeMonths')}
                       </Button>
                       <Button
                         type="button"
@@ -2653,7 +2655,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        1년
+                        {t('documentMgmt.oneYear')}
                       </Button>
                       <Button
                         type="button"
@@ -2675,7 +2677,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        3년
+                        {t('documentMgmt.threeYears')}
                       </Button>
                       <Button
                         type="button"
@@ -2697,7 +2699,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        5년
+                        {t('documentMgmt.fiveYears')}
                       </Button>
                       <Button
                         type="button"
@@ -2719,7 +2721,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        7년
+                        {t('documentMgmt.sevenYears')}
                       </Button>
                       <Button
                         type="button"
@@ -2741,7 +2743,7 @@ export function DocumentManagement() {
                           }));
                         }}
                       >
-                        10년
+                        {t('documentMgmt.tenYears')}
                       </Button>
                       {editCategoryForm.defaultExpiryDays && (
                         <Button
@@ -2757,7 +2759,7 @@ export function DocumentManagement() {
                           }
                           className="bg-white text-slate-600 hover:bg-slate-100"
                         >
-                          초기화
+                          {t('documentMgmt.reset')}
                         </Button>
                       )}
                     </div>
@@ -2774,7 +2776,7 @@ export function DocumentManagement() {
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {editCategoryForm.expiryDate
                             ? format(new Date(editCategoryForm.expiryDate), 'PPP', { locale: ko })
-                            : '달력에서 보관 만료일 선택'}
+                            : t('documentMgmt.selectExpiryFromCalendar')}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -2803,7 +2805,7 @@ export function DocumentManagement() {
                       </PopoverContent>
                     </Popover>
                     <p className="text-xs text-slate-500">
-                      보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
+                      {t('documentMgmt.noExpiryNote')}
                       {editCategoryForm.expiryDate && ` (${format(new Date(editCategoryForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
                     </p>
                   </div>
@@ -2815,7 +2817,7 @@ export function DocumentManagement() {
                     onClick={handleCloseEditDialog}
                     disabled={isSavingCategory}
                   >
-                    취소
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     type="button"
@@ -2824,8 +2826,8 @@ export function DocumentManagement() {
                       let scanToast: ReturnType<typeof toast> | null = null;
                       try {
                         scanToast = toast({
-                          title: 'NFC 태그 인식 대기',
-                          description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+                          title: t('documentMgmt.nfcWaiting'),
+                          description: t('documentMgmt.nfcWaitingDesc'),
                           duration: 1000000,
                         });
                         const uid = await readNFCUid();
@@ -2848,9 +2850,9 @@ export function DocumentManagement() {
                       } catch (error: any) {
                         scanToast?.dismiss();
                         toast({
-                          title: '오류',
+                          title: t('documentMgmt.nfcRegFailed'),
                           description:
-                            error?.message || 'NFC 태그 등록 중 오류가 발생했습니다.',
+                            error?.message || t('documentMgmt.nfcRegErrorDesc'),
                           variant: 'destructive',
                         });
                         setNfcMode('idle'); // 에러 시 모드 초기화
@@ -2858,7 +2860,7 @@ export function DocumentManagement() {
                     }}
                     disabled={!editingCategoryId || isSavingCategory}
                   >
-                    📱 NFC 태그 등록
+                    📱 {t('documentMgmt.nfcRegButton')}
                   </Button>
                   <Button
                     type="button"
@@ -2866,7 +2868,7 @@ export function DocumentManagement() {
                     style={{ backgroundColor: primaryColor }}
                     disabled={isSavingCategory}
                   >
-                    {isSavingCategory ? '저장 중...' : '저장'}
+                    {isSavingCategory ? t('common.saving') : t('common.save')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -2882,29 +2884,29 @@ export function DocumentManagement() {
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>세부 스토리지 삭제</AlertDialogTitle>
+                  <AlertDialogTitle>{t('documentMgmt.deleteSubcategoryTitle')}</AlertDialogTitle>
                   <AlertDialogDescription>
                     <p>
-                      "{deletingSubcategory?.name ?? ''}"을(를) 정말 삭제하시겠습니까?
+                      {t('documentMgmt.deleteSubcategoryConfirm', { name: deletingSubcategory?.name ?? '' })}
                     </p>
                     <p className="mt-1">
-                      이 세부 스토리지에 속한 문서 {deletingCategoryDocCount}개도 함께 삭제됩니다.
+                      {t('documentMgmt.deleteSubcategoryDocCount', { count: deletingCategoryDocCount })}
                     </p>
                     <p className="mt-3 text-sm font-medium text-red-600">
-                      삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                      {t('documentMgmt.deleteIrreversible')}
                     </p>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={isDeletingCategory}>
-                    취소
+                    {t('common.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmDeleteCategory}
                     className="bg-red-600 hover:bg-red-700 text-white"
                     disabled={isDeletingCategory}
                   >
-                    {isDeletingCategory ? '삭제 중...' : '삭제'}
+                    {isDeletingCategory ? t('documentMgmt.deleting') : t('common.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -2930,7 +2932,7 @@ export function DocumentManagement() {
               </div>
             ) : paginatedSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                조건에 해당하는 세부 스토리지가 없습니다.
+                {t('documentMgmt.noSubcategories')}
               </div>
             ) : (
               <>
@@ -2959,8 +2961,8 @@ export function DocumentManagement() {
                           onClick={() => {
                             if (isExpired) {
                               toast({
-                                title: '만료된 카테고리',
-                                description: '이 카테고리는 만료되어 상세 페이지로 이동할 수 없습니다.',
+                                title: t('documentMgmt.expiredCategory'),
+                                description: t('documentMgmt.expiredCategoryDesc'),
                                 variant: 'destructive',
                               });
                               return;
@@ -3004,7 +3006,9 @@ export function DocumentManagement() {
                                       expiryStatus.status === 'warning_30' && 'bg-yellow-500 text-white'
                                     )}
                                   >
-                                    {expiryStatus.label}
+                                    {expiryStatus.status === 'expired'
+                                      ? t('documentMgmt.expired')
+                                      : t('documentMgmt.expiresInDays', { days: expiryStatus.daysLeft })}
                                   </Badge>
                                 )}
                               </div>
@@ -3013,22 +3017,22 @@ export function DocumentManagement() {
                           <CardContent className="flex flex-col justify-between flex-1">
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-500">부서</span>
+                                <span className="text-slate-500">{t('documentMgmt.department')}</span>
                                 <span className="font-medium">{dept?.name}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-500">대분류</span>
+                                <span className="text-slate-500">{t('documentMgmt.parentCategory')}</span>
                                 <span className="font-medium">{parent?.name}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-500">문서 수</span>
+                                <span className="text-slate-500">{t('documentMgmt.docCount')}</span>
                                 <span className="font-medium">
-                                  {subcategory.documentCount}개
+                                  {subcategory.documentCount}
                                 </span>
                               </div>
                               {subcategory.storageLocation && (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">보관 장소</span>
+                                  <span className="text-slate-500">{t('documentMgmt.storageLocationLabel')}</span>
                                   <span className="font-medium text-xs">
                                     {subcategory.storageLocation}
                                   </span>
@@ -3036,7 +3040,7 @@ export function DocumentManagement() {
                               )}
                               {subcategory.managementNumber && (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">관리번호</span>
+                                  <span className="text-slate-500">{t('documentMgmt.managementNumberLabel')}</span>
                                   <span className="font-medium text-xs">
                                     {subcategory.managementNumber}
                                   </span>
@@ -3044,14 +3048,14 @@ export function DocumentManagement() {
                               )}
                               {subcategory.expiryDate ? (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">보관 만료일</span>
+                                  <span className="text-slate-500">{t('documentMgmt.expiryDateLabel')}</span>
                                   <span className="font-medium">
                                     {format(new Date(subcategory.expiryDate), 'yyyy.MM.dd')}
                                   </span>
                                 </div>
                               ) : subcategory.defaultExpiryDays ? (
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">보관 만료일</span>
+                                  <span className="text-slate-500">{t('documentMgmt.expiryDateLabel')}</span>
                                   <span className="font-medium">
                                     {format(addDays(new Date(), subcategory.defaultExpiryDays), 'yyyy.MM.dd')}
                                   </span>
@@ -3069,7 +3073,7 @@ export function DocumentManagement() {
                                 onClick={() => handleOpenEditDialog(subcategory)}
                               >
                                 <Edit className="h-3 w-3 mr-1" />
-                                수정
+                                {t('common.edit')}
                               </Button>
                               <Button
                                 variant="outline"
@@ -3089,7 +3093,7 @@ export function DocumentManagement() {
                 {filteredSubcategoriesForCategoriesTab.length > 0 && (
                   <div className="flex items-center justify-between mt-6 pt-4 border-t">
                     <div className="text-sm text-slate-500">
-                      {startItem}-{endItem} / 총 {filteredSubcategoriesForCategoriesTab.length}개
+                      {startItem}-{endItem} / {t('common.total')} {filteredSubcategoriesForCategoriesTab.length}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -3099,7 +3103,7 @@ export function DocumentManagement() {
                         onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
                       >
-                        이전
+                        {t('common.previous')}
                       </Button>
 
                       <div className="flex items-center gap-1">
@@ -3137,7 +3141,7 @@ export function DocumentManagement() {
                         }
                         disabled={currentPage === totalPages}
                       >
-                        다음
+                        {t('common.next')}
                       </Button>
                     </div>
                   </div>
@@ -3149,10 +3153,10 @@ export function DocumentManagement() {
           <TabsContent value="documents" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>전체 문서 목록</CardTitle>
+                <CardTitle>{t('documentMgmt.allDocumentsList')}</CardTitle>
                 {rawQuery && (
                   <CardDescription className="mt-1">
-                    검색어: "{rawQuery}" · {filteredDocuments.length}건
+                    {t('documentMgmt.searchKeyword')}: "{rawQuery}" · {filteredDocuments.length}{t('common.items')}
                   </CardDescription>
                 )}
               </CardHeader>
@@ -3162,7 +3166,7 @@ export function DocumentManagement() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
-                        placeholder="파일명, 업로더, 카테고리, 부서로 검색..."
+                        placeholder={t('documentMgmt.searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
@@ -3175,10 +3179,10 @@ export function DocumentManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 기간</SelectItem>
-                      <SelectItem value="7days">최근 1주일</SelectItem>
-                      <SelectItem value="1month">최근 1개월</SelectItem>
-                      <SelectItem value="3months">최근 3개월</SelectItem>
+                      <SelectItem value="all">{t('documentMgmt.allPeriod')}</SelectItem>
+                      <SelectItem value="7days">{t('documentMgmt.last7days')}</SelectItem>
+                      <SelectItem value="1month">{t('documentMgmt.last1month')}</SelectItem>
+                      <SelectItem value="3months">{t('documentMgmt.last3months')}</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -3187,9 +3191,9 @@ export function DocumentManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="latest">최신순</SelectItem>
-                      <SelectItem value="oldest">오래된순</SelectItem>
-                      <SelectItem value="name">이름순</SelectItem>
+                      <SelectItem value="latest">{t('documentMgmt.sortLatest')}</SelectItem>
+                      <SelectItem value="oldest">{t('documentMgmt.sortOldest')}</SelectItem>
+                      <SelectItem value="name">{t('documentMgmt.sortName')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -3198,10 +3202,10 @@ export function DocumentManagement() {
                   <div className="text-sm text-slate-500">
                     {filteredDocuments.length > 0 ? (
                       <span>
-                        {docStartItem}-{docEndItem} / 총 {filteredDocuments.length}개 문서
+                        {docStartItem}-{docEndItem} / {t('common.total')} {filteredDocuments.length} {t('common.documents')}
                       </span>
                     ) : (
-                      <span>총 0개 문서</span>
+                      <span>{t('common.total')} 0 {t('common.documents')}</span>
                     )}
                   </div>
 
@@ -3215,7 +3219,7 @@ export function DocumentManagement() {
                         }
                         disabled={documentsPage === 1}
                       >
-                        이전
+                        {t('common.previous')}
                       </Button>
 
                       <div className="flex items-center gap-1">
@@ -3257,7 +3261,7 @@ export function DocumentManagement() {
                         }
                         disabled={documentsPage === totalDocPages}
                       >
-                        다음
+                        {t('common.next')}
                       </Button>
                     </div>
                   )}
@@ -3265,7 +3269,7 @@ export function DocumentManagement() {
 
                 {filteredDocuments.length === 0 ? (
                   <div className="text-center py-12 text-slate-500">
-                    검색 결과가 없습니다
+                    {t('documentMgmt.noResults')}
                   </div>
                 ) : (
                   <>
@@ -3301,7 +3305,7 @@ export function DocumentManagement() {
                                   <p className="font-medium truncate flex-1 min-w-0 max-w-full">{doc.name}</p>
                                   {doc.classified && (
                                     <Badge variant="destructive" className="text-xs">
-                                      기밀
+                                      {t('documentMgmt.confidential')}
                                     </Badge>
                                   )}
                                 </div>
@@ -3384,7 +3388,7 @@ export function DocumentManagement() {
                     {totalDocPages > 1 && filteredDocuments.length > 0 && (
                       <div className="flex items-center justify-between mt-6 pt-4 border-t">
                         <div className="text-sm text-slate-500">
-                          {docStartItem}-{docEndItem} / 총 {filteredDocuments.length}개
+                          {docStartItem}-{docEndItem} / {t('common.total')} {filteredDocuments.length}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -3396,7 +3400,7 @@ export function DocumentManagement() {
                             }
                             disabled={documentsPage === 1}
                           >
-                            이전
+                            {t('common.previous')}
                           </Button>
 
                           <div className="flex items-center gap-1">
@@ -3443,7 +3447,7 @@ export function DocumentManagement() {
                             }
                             disabled={documentsPage === totalDocPages}
                           >
-                            다음
+                            {t('common.next')}
                           </Button>
                         </div>
                       </div>
@@ -3457,15 +3461,15 @@ export function DocumentManagement() {
           <TabsContent value="upload" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>문서 업로드</CardTitle>
+                <CardTitle>{t('documentMgmt.uploadDocuments')}</CardTitle>
                 <CardDescription>
-                  새로운 문서를 시스템에 업로드합니다
+                  {t('documentMgmt.uploadDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>부서</Label>
+                    <Label>{t('documentMgmt.department')}</Label>
                     <Select
                       value={uploadSelection.departmentId}
                       onValueChange={(value) =>
@@ -3477,7 +3481,7 @@ export function DocumentManagement() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="부서 선택" />
+                        <SelectValue placeholder={t('documentMgmt.selectDepartment')} />
                       </SelectTrigger>
                       <SelectContent>
                         {uploadDepartments.map((dept) => (
@@ -3489,7 +3493,7 @@ export function DocumentManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>대분류</Label>
+                    <Label>{t('documentMgmt.parentCategory')}</Label>
                     <Select
                       value={uploadSelection.parentCategoryId}
                       onValueChange={(value) =>
@@ -3505,7 +3509,7 @@ export function DocumentManagement() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="대분류 선택" />
+                        <SelectValue placeholder={t('documentMgmt.selectParentCategory')} />
                       </SelectTrigger>
                       <SelectContent>
                         {uploadParentCategories.map((pc) => (
@@ -3517,7 +3521,7 @@ export function DocumentManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>세부 스토리지</Label>
+                    <Label>{t('documentMgmt.subcategories')}</Label>
                     <Select
                       value={uploadSelection.subcategoryId}
                       onValueChange={(value) =>
@@ -3532,7 +3536,7 @@ export function DocumentManagement() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="세부 스토리지 선택" />
+                        <SelectValue placeholder={t('documentMgmt.selectSubcategory')} />
                       </SelectTrigger>
                       <SelectContent>
                         {uploadSubcategories.map((sub) => (
@@ -3546,7 +3550,7 @@ export function DocumentManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>파일 업로드</Label>
+                  <Label>{t('documentMgmt.fileUpload')}</Label>
                   <div
                     {...getRootProps()}
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
@@ -3568,28 +3572,28 @@ export function DocumentManagement() {
                         {uploadFiles.length
                           ? uploadFiles.length === 1
                             ? uploadFiles[0].name
-                            : `${uploadFiles.length}개 파일 선택됨`
+                            : t('documentMgmt.filesSelected', { count: uploadFiles.length })
                           : isDragActive
-                          ? '파일을 여기에 놓으세요'
-                          : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                          ? t('documentMgmt.dropHere')
+                          : t('documentMgmt.clickOrDrag')}
                       </p>
                       <p className="text-xs text-slate-500">
-                        PDF, JPG, PNG 파일 업로드 가능 (여러 파일 선택 가능)
+                        {t('documentMgmt.supportedFormats')}
                       </p>
                     </div>
                   </div>
                   {canEditTitle && uploadFiles.length > 0 && (
                     <div className="space-y-2">
-                      <Label>문서 제목</Label>
+                      <Label>{t('documentMgmt.docTitle')}</Label>
                       <Input
                         value={documentTitle}
                         onChange={(e) => setDocumentTitle(e.target.value)}
-                        placeholder="문서 제목을 입력하세요"
+                        placeholder={t('documentMgmt.docTitlePlaceholder')}
                       />
                       <p className="text-xs text-slate-500">
                         {selectedImageFiles.length > 1
-                          ? `${selectedImageFiles.length}개 이미지를 하나의 문서로 묶어 업로드합니다.`
-                          : '원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요.'}
+                          ? t('documentMgmt.imagesBundled', { count: selectedImageFiles.length })
+                          : t('documentMgmt.defaultTitleNote')}
                       </p>
                     </div>
                   )}
@@ -3609,9 +3613,9 @@ export function DocumentManagement() {
                   {uploadSuccess && (
                     <Alert className="border-green-200 bg-green-50">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <AlertTitle className="text-green-900">업로드 완료</AlertTitle>
+                      <AlertTitle className="text-green-900">{t('documentMgmt.uploadComplete')}</AlertTitle>
                       <AlertDescription className="text-green-800">
-                        문서가 성공적으로 업로드되었습니다.
+                        {t('documentMgmt.uploadCompleteDesc')}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -3620,7 +3624,7 @@ export function DocumentManagement() {
                   {uploadError && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>업로드 오류</AlertTitle>
+                      <AlertTitle>{t('documentMgmt.uploadError')}</AlertTitle>
                       <AlertDescription>{uploadError}</AlertDescription>
                     </Alert>
                   )}
@@ -3639,12 +3643,12 @@ export function DocumentManagement() {
                               className={
                                 file.error
                                   ? 'text-red-500'
-                                  : file.status === '완료'
+                                  : file.status === t('documentMgmt.completed')
                                   ? 'text-emerald-600'
                                   : 'text-slate-600'
                               }
                             >
-                              {file.error ? '실패' : file.status}
+                              {file.error ? t('documentMgmt.failed') : file.status}
                             </span>
                           </div>
                         )
@@ -3656,15 +3660,15 @@ export function DocumentManagement() {
                 {ocrTextPreview && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>OCR 추출 텍스트</CardTitle>
+                      <CardTitle>{t('documentMgmt.ocrExtractedText')}</CardTitle>
                       <CardDescription>
-                        {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}자 {isEditingOcr ? '(편집 중)' : '추출됨'}
+                        {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">
-                          {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}자 {isEditingOcr ? '(편집 중)' : '추출됨'}
+                          {(isEditingOcr ? editedOcrText : ocrTextPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
                         </span>
                         <div className="flex gap-2">
                           <Button
@@ -3673,7 +3677,7 @@ export function DocumentManagement() {
                             size="sm"
                             onClick={handleCopyOcrText}
                           >
-                            복사
+                            {t('documentMgmt.copy')}
                           </Button>
                           {isEditingOcr ? (
                             <>
@@ -3684,7 +3688,7 @@ export function DocumentManagement() {
                                 onClick={handleCancelEditOcr}
                                 disabled={isSavingOcr}
                               >
-                                취소
+                                {t('common.cancel')}
                               </Button>
                               <Button
                                 type="button"
@@ -3696,12 +3700,12 @@ export function DocumentManagement() {
                                 {isSavingOcr ? (
                                   <>
                                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                    저장 중...
+                                    {t('common.saving')}
                                   </>
                                 ) : lastUploadedDocId ? (
-                                  '저장'
+                                  t('common.save')
                                 ) : (
-                                  '적용'
+                                  t('documentMgmt.apply')
                                 )}
                               </Button>
                             </>
@@ -3713,7 +3717,7 @@ export function DocumentManagement() {
                               onClick={handleEditOcrText}
                             >
                               <Edit className="h-4 w-4 mr-1" />
-                              편집
+                              {t('common.edit')}
                             </Button>
                           )}
                         </div>
@@ -3723,7 +3727,7 @@ export function DocumentManagement() {
                           value={editedOcrText}
                           onChange={(e) => setEditedOcrText(e.target.value)}
                           className="min-h-64 text-sm font-mono"
-                          placeholder="OCR 텍스트를 편집하세요..."
+                          placeholder={t('documentMgmt.editOcrPlaceholder')}
                         />
                       ) : (
                         <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
@@ -3736,14 +3740,14 @@ export function DocumentManagement() {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-medium text-blue-900 mb-2">
-                    업로드 가이드라인
+                    {t('documentMgmt.uploadGuideline')}
                   </h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• PDF, JPG, PNG 파일 형식을 지원합니다</li>
-                    <li>• 문서명은 명확하게 작성해주세요</li>
-                    <li>• 기밀 문서는 별도로 표시해주세요</li>
-                    <li>• 민감한 정보가 담긴 서류는 마스킹 처리를 해주세요</li>
-                    <li>• 기밀 문서는 원칙적으로 업로드 금지하며, 민감한 부분이 제외된 일부 내용만 업로드 해주세요</li>
+                    <li>• {t('documentMgmt.guidelineFormats')}</li>
+                    <li>• {t('documentMgmt.guidelineName')}</li>
+                    <li>• {t('documentMgmt.guidelineConfidential')}</li>
+                    <li>• {t('documentMgmt.guidelineMasking')}</li>
+                    <li>• {t('documentMgmt.guidelineNoConfidential')}</li>
                   </ul>
                 </div>
 
@@ -3754,16 +3758,16 @@ export function DocumentManagement() {
                   onClick={() => {
                     if (!uploadSelection.departmentId || !uploadSelection.parentCategoryId || !uploadSelection.subcategoryId) {
                       toast({
-                        title: '저장 위치를 선택해주세요',
-                        description: '문서를 저장할 부서, 대분류, 세부 스토리지를 먼저 선택해주세요.',
+                        title: t('documentMgmt.selectLocation'),
+                        description: t('documentMgmt.selectLocationDesc'),
                         variant: 'destructive',
                       });
                       return;
                     }
                     if (uploadFiles.length === 0) {
                       toast({
-                        title: '파일을 선택해주세요',
-                        description: '업로드할 파일을 먼저 선택해주세요.',
+                        title: t('documentMgmt.selectFile'),
+                        description: t('documentMgmt.selectFileToUpload'),
                         variant: 'destructive',
                       });
                       return;
@@ -3774,17 +3778,17 @@ export function DocumentManagement() {
                   {isExtractingOcr ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      OCR 추출 중...
+                      {t('documentMgmt.extractingOcr')}
                     </>
                   ) : isUploading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      업로드 중...
+                      {t('documentMgmt.uploading')}
                     </>
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      업로드
+                      {t('documentMgmt.upload')}
                     </>
                   )}
                 </Button>
@@ -3807,13 +3811,13 @@ export function DocumentManagement() {
           {previewDoc?.type === 'pdf' && (
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '문서 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
 
               <div className="flex-1 overflow-auto min-h-0">
                 {previewLoading ? (
                   <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">문서를 불러오는 중입니다...</p>
+                    <p className="text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                   </div>
                 ) : (
                   previewDoc && <PdfViewer url={previewDoc.url} />
@@ -3822,7 +3826,7 @@ export function DocumentManagement() {
 
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">PDF 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.pdfDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -3831,7 +3835,7 @@ export function DocumentManagement() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -3873,7 +3877,7 @@ export function DocumentManagement() {
                   variant="outline"
                   size="sm"
                   onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title="90도 회전"
+                  title={t('documentMgmt.rotate90')}
                 >
                   🔄
                 </Button>
@@ -3886,9 +3890,9 @@ export function DocumentManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownloadDocument(previewDoc.id)}
-                      title="다운로드"
+                      title={t('documentMgmt.download')}
                     >
-                      <img src={downloadIcon} alt="다운로드" className="w-5 h-5" />
+                      <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-5 h-5" />
                     </Button>
 
                     <Button
@@ -3902,7 +3906,7 @@ export function DocumentManagement() {
                           }, 500);
                         }
                       }}
-                      title="인쇄"
+                      title={t('documentMgmt.print')}
                     >
                       🖨️
                     </Button>
@@ -3924,7 +3928,7 @@ export function DocumentManagement() {
                 }}
               >
                 {previewLoading ? (
-                  <p className="text-slate-500">이미지를 불러오는 중입니다...</p>
+                  <p className="text-slate-500">{t('documentMgmt.loadingImage')}</p>
                 ) : (
                   previewDoc && (
                     <img
@@ -3946,7 +3950,7 @@ export function DocumentManagement() {
               {/* 하단 푸터 */}
               <DialogFooter className="border-t pt-3">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">이미지 문서</span>
+                  <span className="text-sm text-slate-500">{t('documentMgmt.imageDoc')}</span>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -3955,7 +3959,7 @@ export function DocumentManagement() {
                       setImageRotation(0);
                     }}
                   >
-                    닫기
+                    {t('common.close')}
                   </Button>
                 </div>
               </DialogFooter>
@@ -3967,23 +3971,23 @@ export function DocumentManagement() {
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>NFC 태그 재등록</AlertDialogTitle>
+              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
               <AlertDialogDescription>
-                이미 URL이 등록된 태그입니다.
+                {t('documentMgmt.nfcAlreadyRegistered')}
                 {existingNfcSubcategory && (
                   <span className="block mt-2 font-medium">
-                    현재 연결: {existingNfcSubcategory.name}
+                    {t('documentMgmt.currentConnection')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">계속 하시겠습니까?</span>
+                <span className="block mt-2">{t('documentMgmt.continueQuestion')}</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleNfcConfirmNo}>
-                아니오
+                {t('common.no')}
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleNfcConfirmYes}>
-                예
+                {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -3993,9 +3997,9 @@ export function DocumentManagement() {
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
           <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>문서 공유</DialogTitle>
+              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
               <DialogDescription>
-                공유할 사용자를 선택하거나 기존 공유를 관리하세요.
+                {t('documentMgmt.shareDocDesc')}
               </DialogDescription>
             </DialogHeader>
 
@@ -4009,7 +4013,7 @@ export function DocumentManagement() {
                 }`}
                 onClick={() => setActiveShareTab('new')}
               >
-                새로운 공유
+                {t('documentMgmt.newShare')}
               </button>
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
@@ -4019,7 +4023,7 @@ export function DocumentManagement() {
                 }`}
                 onClick={() => setActiveShareTab('existing')}
               >
-                공유 현황 ({existingShares.length})
+                {t('documentMgmt.shareStatus')} ({existingShares.length})
               </button>
             </div>
 
@@ -4033,7 +4037,7 @@ export function DocumentManagement() {
                         onClick={handleSelectAllUsers}
                         className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
                       >
-                        {selectedUserIds.length === companyUsers.length ? '전체 해제' : '전체 선택'}
+                        {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     </div>
                   )}
@@ -4041,11 +4045,11 @@ export function DocumentManagement() {
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">사용자 목록 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      공유할 수 있는 사용자가 없습니다.
+                      {t('documentMgmt.noUsersToShare')}
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -4085,11 +4089,11 @@ export function DocumentManagement() {
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                      <span className="ml-2 text-slate-500">공유 현황 로딩 중...</span>
+                      <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
-                      아직 공유한 사용자가 없습니다.
+                      {t('documentMgmt.noSharedUsers')}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -4099,10 +4103,10 @@ export function DocumentManagement() {
                           className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || '알 수 없음'}</p>
+                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
                             <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
                             <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString('ko-KR')} 공유
+                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
                             </p>
                           </div>
                           <Button
@@ -4111,7 +4115,7 @@ export function DocumentManagement() {
                             onClick={() => handleUnshare(share.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            취소
+                            {t('common.cancel')}
                           </Button>
                         </div>
                       ))}
@@ -4133,7 +4137,7 @@ export function DocumentManagement() {
                     className="h-4 w-4"
                   />
                   <label htmlFor="emailNotification" className="text-sm">
-                    이메일 알림 전송
+                    {t('documentMgmt.emailNotification')}
                   </label>
                 </div>
               )}
@@ -4148,7 +4152,7 @@ export function DocumentManagement() {
                 }}
                 disabled={isSendingShare}
               >
-                닫기
+                {t('common.close')}
               </Button>
               {activeShareTab === 'new' && (
                 <Button
@@ -4159,10 +4163,10 @@ export function DocumentManagement() {
                   {isSendingShare ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      공유 중...
+                      {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {selectedUserIds.length}명에게 공유</>
+                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}
@@ -4174,9 +4178,9 @@ export function DocumentManagement() {
         <Dialog open={fileReplaceDialogOpen} onOpenChange={(open) => !open && handleCloseFileReplaceDialog()}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>파일 교체</DialogTitle>
+              <DialogTitle>{t('documentMgmt.fileReplace')}</DialogTitle>
               <DialogDescription>
-                기존 문서의 파일을 새 파일로 교체합니다. AI OCR이 자동으로 적용됩니다.
+                {t('documentMgmt.fileReplaceDesc')}
               </DialogDescription>
             </DialogHeader>
 
@@ -4196,24 +4200,24 @@ export function DocumentManagement() {
                 {isExtractingReplaceOcr ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-blue-600">OCR 텍스트 추출 중...</p>
+                    <p className="text-sm text-blue-600">{t('documentMgmt.extractingOcr')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
                     <p className="text-sm font-medium text-green-700">{replaceFile.name}</p>
                     <p className="text-xs text-slate-500">
-                      {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}자 추출됨` : 'OCR 텍스트 없음'}
+                      {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}${t('documentMgmt.chars')} ${t('documentMgmt.extracted')}` : t('documentMgmt.noOcrText')}
                     </p>
-                    <p className="text-xs text-slate-400">다른 파일을 선택하려면 클릭하세요</p>
+                    <p className="text-xs text-slate-400">{t('documentMgmt.clickToSelectOther')}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <Upload className="h-8 w-8 text-slate-400" />
                     <p className="text-sm text-slate-600">
-                      {isReplaceDragActive ? '파일을 놓으세요' : '클릭하여 파일 선택 또는 드래그 앤 드롭'}
+                      {isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}
                     </p>
-                    <p className="text-xs text-slate-400">PDF, JPG, PNG 파일 업로드 가능</p>
+                    <p className="text-xs text-slate-400">{t('documentMgmt.supportedFormatsShort')}</p>
                   </div>
                 )}
               </div>
@@ -4222,9 +4226,9 @@ export function DocumentManagement() {
               {replaceFile && !isExtractingReplaceOcr && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>OCR 추출 텍스트</Label>
+                    <Label>{t('documentMgmt.ocrExtractedText')}</Label>
                     <span className="text-xs text-slate-500">
-                      {replaceOcrText.length.toLocaleString()}자
+                      {replaceOcrText.length.toLocaleString()}{t('documentMgmt.chars')}
                     </span>
                   </div>
                   <Textarea
@@ -4234,7 +4238,7 @@ export function DocumentManagement() {
                     className={`min-h-[128px] max-h-48 text-sm font-mono ${
                       !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
                     }`}
-                    placeholder={replaceOcrText ? undefined : 'OCR 텍스트 없음'}
+                    placeholder={replaceOcrText ? undefined : t('documentMgmt.noOcrText')}
                   />
                 </div>
               )}
@@ -4246,14 +4250,14 @@ export function DocumentManagement() {
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
                 disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
               >
-                {isEditingReplaceOcr ? '편집 완료' : '편집'}
+                {isEditingReplaceOcr ? t('documentMgmt.editDone') : t('common.edit')}
               </Button>
               <Button
                 onClick={handleReplaceFile}
@@ -4263,10 +4267,10 @@ export function DocumentManagement() {
                 {isReplacingFile ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    저장 중...
+                    {t('common.saving')}
                   </>
                 ) : (
-                  '저장'
+                  t('common.save')
                 )}
               </Button>
             </DialogFooter>

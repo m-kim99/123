@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 
 export function NaverCallback() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { checkSession } = useAuthStore();
@@ -21,10 +23,10 @@ export function NaverCallback() {
       if (error) {
         console.error('Naver OAuth error:', error, errorDescription);
         setStatus('error');
-        setErrorMessage(errorDescription || '네이버 로그인이 취소되었습니다.');
+        setErrorMessage(errorDescription || t('naverCallback.loginCancelled'));
         toast({
-          title: '네이버 로그인 실패',
-          description: errorDescription || '다시 시도해주세요.',
+          title: t('naverCallback.loginFailed'),
+          description: errorDescription || t('common.tryAgain'),
           variant: 'destructive',
         });
         setTimeout(() => navigate('/'), 2000);
@@ -33,10 +35,10 @@ export function NaverCallback() {
 
       if (!code) {
         setStatus('error');
-        setErrorMessage('인가 코드가 없습니다.');
+        setErrorMessage(t('naverCallback.noAuthCode'));
         toast({
-          title: '네이버 로그인 실패',
-          description: '인가 코드가 없습니다.',
+          title: t('naverCallback.loginFailed'),
+          description: t('naverCallback.noAuthCode'),
           variant: 'destructive',
         });
         setTimeout(() => navigate('/'), 2000);
@@ -47,10 +49,10 @@ export function NaverCallback() {
       const savedState = sessionStorage.getItem('naver_oauth_state');
       if (!savedState || savedState !== state) {
         setStatus('error');
-        setErrorMessage('잘못된 state 값입니다.');
+        setErrorMessage(t('naverCallback.invalidState'));
         toast({
-          title: '네이버 로그인 실패',
-          description: '보안 검증에 실패했습니다.',
+          title: t('naverCallback.loginFailed'),
+          description: t('naverCallback.securityFailed'),
           variant: 'destructive',
         });
         setTimeout(() => navigate('/'), 2000);
@@ -66,11 +68,11 @@ export function NaverCallback() {
         });
 
         if (fnError) {
-          throw new Error(fnError.message || '네이버 로그인 처리 실패');
+          throw new Error(fnError.message || t('naverCallback.processFailed'));
         }
 
         if (!data || !data.success) {
-          throw new Error(data?.error || '네이버 로그인 처리 실패');
+          throw new Error(data?.error || t('naverCallback.processFailed'));
         }
 
         console.log('🟢 Edge Function 응답:', { userId: data.userId, email: data.email });
@@ -101,8 +103,8 @@ export function NaverCallback() {
         await checkSession();
 
         toast({
-          title: '네이버 로그인 성공',
-          description: '환영합니다!',
+          title: t('naverCallback.loginSuccess'),
+          description: t('naverCallback.welcome'),
         });
 
         // 루트로 이동 → RootRoute에서 온보딩/대시보드 자동 분기
@@ -110,10 +112,10 @@ export function NaverCallback() {
       } catch (err) {
         console.error('❌ Naver callback error:', err);
         setStatus('error');
-        const message = err instanceof Error ? err.message : '알 수 없는 오류';
+        const message = err instanceof Error ? err.message : t('common.unknownError');
         setErrorMessage(message);
         toast({
-          title: '네이버 로그인 실패',
+          title: t('naverCallback.loginFailed'),
           description: message,
           variant: 'destructive',
         });
@@ -130,13 +132,13 @@ export function NaverCallback() {
         {status === 'processing' ? (
           <>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-lg text-slate-600">네이버 로그인 처리 중...</p>
+            <p className="text-lg text-slate-600">{t('naverCallback.processing')}</p>
           </>
         ) : (
           <>
             <div className="text-red-500 text-4xl mb-4">⚠️</div>
             <p className="text-lg text-red-600">{errorMessage}</p>
-            <p className="text-sm text-slate-500 mt-2">잠시 후 로그인 페이지로 이동합니다...</p>
+            <p className="text-sm text-slate-500 mt-2">{t('naverCallback.redirecting')}</p>
           </>
         )}
       </div>

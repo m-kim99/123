@@ -1,4 +1,5 @@
 import { FileText, Building2, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import {
   BarChart,
@@ -23,6 +24,7 @@ import { useAuthStore } from '@/store/authStore';
 import { BackButton } from '@/components/BackButton';
 
 export function Statistics() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   
   // Selector 최적화: 상태값은 개별 selector로
@@ -84,19 +86,19 @@ export function Statistics() {
 
   const stats = [
     {
-      title: '총 문서',
+      title: t('statistics.totalDocuments'),
       value: documents.length,
       icon: FileText,
       color: '#2563eb',
     },
     {
-      title: '이번 달 업로드 문서',
+      title: t('statistics.thisMonthUploads'),
       value: thisMonthCount,
       icon: FileText,
       color: '#3B82F6',
     },
     {
-      title: '전체 부서',
+      title: t('statistics.totalDepartments'),
       value: departments.length,
       icon: Building2,
       color: '#8B5CF6',
@@ -108,7 +110,7 @@ export function Statistics() {
     const monthlyData: { month: string; count: number }[] = [];
 
     for (let month = 0; month < 12; month++) {
-      const monthStr = `${month + 1}월`;
+      const monthStr = t(`months.${month + 1}`);
 
       const count = documents.filter((doc) => {
         if (!doc.uploadDate) return false;
@@ -140,13 +142,13 @@ export function Statistics() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">통계</h1>
-          <p className="text-slate-500 mt-1">문서 관리 현황을 분석합니다</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('statistics.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('statistics.subtitle')}</p>
         </div>
 
         {documents.length === 0 && (
           <p className="text-sm text-slate-500">
-            아직 업로드된 문서가 없습니다.
+            {t('statistics.noDocuments')}
           </p>
         )}
 
@@ -179,11 +181,11 @@ export function Statistics() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>월별 업로드 현황</CardTitle>
+              <CardTitle>{t('statistics.monthlyUploads')}</CardTitle>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1">
-                    {selectedYear}년
+                    {t('statistics.yearLabel', { year: selectedYear })}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -194,7 +196,7 @@ export function Statistics() {
                       onClick={() => setSelectedYear(year)}
                       className={selectedYear === year ? 'bg-accent' : ''}
                     >
-                      {year}년
+                      {t('statistics.yearLabel', { year })}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -206,7 +208,7 @@ export function Statistics() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" />
                   <YAxis allowDecimals={false} />
-                  <Tooltip formatter={(value: number) => `${value}건`} />
+                  <Tooltip formatter={(value: number) => t('statistics.count', { count: value })} />
                   <Bar dataKey="count" fill={primaryColor} />
                 </BarChart>
               </ResponsiveContainer>
@@ -215,11 +217,11 @@ export function Statistics() {
 
           <Card>
             <CardHeader>
-              <CardTitle>대분류별 문서 수</CardTitle>
+              <CardTitle>{t('statistics.docsByParentCategory')}</CardTitle>
             </CardHeader>
             <CardContent>
               {parentCategories.length === 0 ? (
-                <p className="text-sm text-slate-500">대분류를 추가하세요.</p>
+                <p className="text-sm text-slate-500">{t('statistics.addParentCategory')}</p>
               ) : (
                 <div className="space-y-4">
                   {parentCategoryStats.map((cat, index) => (
@@ -245,7 +247,7 @@ export function Statistics() {
         {isAdmin && (
           <Card>
             <CardHeader>
-              <CardTitle>부서별 문서 분포</CardTitle>
+              <CardTitle>{t('statistics.docsByDepartment')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -255,7 +257,7 @@ export function Statistics() {
                     <p className="text-3xl font-bold" style={{ color: primaryColor }}>
                       {dept.documentCount}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">문서</p>
+                    <p className="text-xs text-slate-500 mt-1">{t('common.documents')}</p>
                   </div>
                 ))}
               </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
@@ -69,6 +70,7 @@ function getExpiryStatus(expiryDate: string | null): {
 }
 
 export function ParentCategoryDetail() {
+  const { t } = useTranslation();
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
   const navigate = useNavigate();
   
@@ -207,8 +209,8 @@ export function ParentCategoryDetail() {
         colorLabel: null,
       });
       toast({
-        title: '세부 스토리지 등록 완료',
-        description: '세부 스토리지가 성공적으로 추가되었습니다.',
+        title: t('documentMgmt.subcategoryAdded'),
+        description: t('documentMgmt.subcategoryAddedDesc'),
       });
     } finally {
       setIsSaving(false);
@@ -222,8 +224,8 @@ export function ParentCategoryDetail() {
 
     setIsSaving(true);
     const scanToast = toast({
-      title: 'NFC 태그 인식 대기',
-      description: 'NFC 태그를 기기에 가까이 가져다 대세요.',
+      title: t('documentMgmt.nfcWaiting'),
+      description: t('documentMgmt.nfcWaitingDesc'),
       duration: 1000000,
     });
     try {
@@ -242,8 +244,8 @@ export function ParentCategoryDetail() {
 
       if (!created) {
         toast({
-          title: '세부 스토리지 생성 실패',
-          description: '세부 스토리지를 생성하지 못해 NFC를 등록할 수 없습니다.',
+          title: t('documentMgmt.subcategoryCreateFailed'),
+          description: t('documentMgmt.subcategoryCreateFailedNfc'),
           variant: 'destructive',
         });
         return;
@@ -282,12 +284,12 @@ export function ParentCategoryDetail() {
       scanToast.dismiss();
       console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description:
-          error?.message || '세부 스토리지 생성 또는 NFC 등록 중 오류가 발생했습니다.',
+          error?.message || t('documentMgmt.nfcRegFailedDesc'),
         variant: 'destructive',
       });
-      setNfcMode('idle'); // 에러 시 모드 초기화
+      setNfcMode('idle');
     } finally {
       setIsSaving(false);
     }
@@ -308,8 +310,8 @@ export function ParentCategoryDetail() {
       await registerNfcTag(subcategoryId, uid);
 
       toast({
-        title: 'NFC 등록 완료',
-        description: 'NFC에 세부 스토리지가 등록되었습니다.',
+        title: t('documentMgmt.nfcRegComplete'),
+        description: t('documentMgmt.nfcRegCompleteDesc'),
       });
 
       // 상태 초기화
@@ -321,12 +323,12 @@ export function ParentCategoryDetail() {
     } catch (error: any) {
       console.error('NFC 등록 실패:', error);
       toast({
-        title: 'NFC 등록 실패',
+        title: t('documentMgmt.nfcRegFailed'),
         description:
-          error?.message || 'NFC 태그를 등록하는 중 오류가 발생했습니다.',
+          error?.message || t('documentMgmt.nfcRegErrorDesc'),
         variant: 'destructive',
       });
-      setNfcMode('idle'); // 에러 시 모드 초기화
+      setNfcMode('idle');
     }
   };
 
@@ -368,7 +370,7 @@ export function ParentCategoryDetail() {
     const description = editDescription.trim();
 
     if (!name) {
-      setEditNameError('대분류 이름을 입력하세요');
+      setEditNameError(t('parentCategoryDetail.enterParentCategoryName'));
       return;
     }
     setEditNameError('');
@@ -388,16 +390,16 @@ export function ParentCategoryDetail() {
       await fetchParentCategories();
 
       toast({
-        title: '수정 완료',
-        description: '대분류 정보가 수정되었습니다.',
+        title: t('documentMgmt.editComplete'),
+        description: t('parentCategoryDetail.parentCategoryEdited'),
       });
 
       setIsEditDialogOpen(false);
     } catch (err) {
       console.error('대분류 수정 실패:', err);
       toast({
-        title: '수정 실패',
-        description: '대분류 정보를 수정하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.editFailed'),
+        description: t('parentCategoryDetail.parentCategoryEditFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -420,8 +422,8 @@ export function ParentCategoryDetail() {
       await fetchParentCategories();
 
       toast({
-        title: '삭제 완료',
-        description: '대분류가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('parentCategoryDetail.parentCategoryDeleted'),
       });
 
       setIsDeleteDialogOpen(false);
@@ -429,8 +431,8 @@ export function ParentCategoryDetail() {
     } catch (err) {
       console.error('대분류 삭제 실패:', err);
       toast({
-        title: '삭제 실패',
-        description: '대분류를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('parentCategoryDetail.parentCategoryDeleteFailed'),
         variant: 'destructive',
       });
       setIsDeleting(false);
@@ -464,7 +466,7 @@ export function ParentCategoryDetail() {
 
     const trimmedName = subEditForm.name.trim();
     if (!trimmedName) {
-      setSubEditNameError('이름을 입력하세요');
+      setSubEditNameError(t('documentMgmt.enterName'));
       return;
     }
 
@@ -483,16 +485,16 @@ export function ParentCategoryDetail() {
       });
 
       toast({
-        title: '수정 완료',
-        description: '세부 스토리지가 성공적으로 수정되었습니다.',
+        title: t('documentMgmt.editComplete'),
+        description: t('documentMgmt.subcategoryEditedDesc'),
       });
 
       handleCloseSubEditDialog();
     } catch (error) {
       console.error('세부 스토리지 수정 실패:', error);
       toast({
-        title: '수정 실패',
-        description: '세부 스토리지를 수정하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.editFailed'),
+        description: t('documentMgmt.subcategoryEditFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -513,8 +515,8 @@ export function ParentCategoryDetail() {
       await deleteSubcategory(deletingSubcategory.id);
 
       toast({
-        title: '삭제 완료',
-        description: '세부 스토리지가 삭제되었습니다.',
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.subcategoryDeletedDesc'),
       });
 
       setSubDeleteDialogOpen(false);
@@ -522,8 +524,8 @@ export function ParentCategoryDetail() {
     } catch (error) {
       console.error('세부 스토리지 삭제 실패:', error);
       toast({
-        title: '삭제 실패',
-        description: '세부 스토리지를 삭제하는 중 오류가 발생했습니다.',
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.subcategoryDeleteFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -540,7 +542,7 @@ export function ParentCategoryDetail() {
       <DashboardLayout>
         <div className="space-y-4">
           <BackButton />
-          <p className="text-slate-500">대분류를 찾을 수 없습니다.</p>
+          <p className="text-slate-500">{t('parentCategoryDetail.notFound')}</p>
         </div>
       </DashboardLayout>
     );
@@ -561,7 +563,7 @@ export function ParentCategoryDetail() {
 
               return [
                 {
-                  label: department?.name || '부서',
+                  label: department?.name || t('common.department'),
                   href: departmentHref || undefined,
                 },
                 {
@@ -579,11 +581,11 @@ export function ParentCategoryDetail() {
             <div>
               <h1 className="text-3xl font-bold">{parentCategory.name}</h1>
               <p className="text-slate-500 mt-1">
-                {parentCategory.description || '설명이 등록되어 있지 않습니다.'}
+                {parentCategory.description || t('subcategoryDetail.noDescription')}
               </p>
               {department && (
                 <p className="text-sm text-slate-500 mt-1">
-                  부서: {department.name} ({department.code})
+                  {t('common.department')}: {department.name} ({department.code})
                 </p>
               )}
             </div>
@@ -594,7 +596,7 @@ export function ParentCategoryDetail() {
                 size="icon"
                 onClick={handleOpenEditDialog}
               >
-                <img src={penIcon} alt="수정" className="w-full h-full p-1.5" />
+                <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
               </Button>
               <Button
                 variant="outline"
@@ -602,7 +604,7 @@ export function ParentCategoryDetail() {
                 onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-500 hover:text-red-600 hover:border-red-500"
               >
-                <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
               </Button>
             </div>
           </div>
@@ -611,21 +613,21 @@ export function ParentCategoryDetail() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">세부 스토리지 수</p>
+              <p className="text-sm font-medium text-slate-500">{t('parentCategoryDetail.subcategoryCount')}</p>
               <p className="text-2xl font-bold mt-2">{childSubcategories.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">문서 수</p>
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.docCount')}</p>
               <p className="text-2xl font-bold mt-2">{parentDocumentsCount}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500">NFC 등록 세부 스토리지</p>
+              <p className="text-sm font-medium text-slate-500">{t('parentCategoryDetail.nfcRegisteredSubs')}</p>
               <p className="text-2xl font-bold mt-2">
-                {childSubcategories.filter((s) => s.nfcRegistered).length}개
+                {childSubcategories.filter((s) => s.nfcRegistered).length}
               </p>
             </CardContent>
           </Card>
@@ -634,9 +636,9 @@ export function ParentCategoryDetail() {
         <Card>
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle>세부 스토리지</CardTitle>
+              <CardTitle>{t('parentCategoryDetail.subcategories')}</CardTitle>
               <CardDescription className="mt-1">
-                이 대분류에 속한 세부 스토리지 목록입니다.
+                {t('parentCategoryDetail.subcategoryListDesc')}
               </CardDescription>
             </div>
             <Button 
@@ -644,7 +646,7 @@ export function ParentCategoryDetail() {
               className="hidden md:inline-flex"
             >
               <Plus className="h-4 w-4 mr-2" />
-              세부 스토리지 추가
+              {t('parentCategoryDetail.addSubcategory')}
             </Button>
           </CardHeader>
           {/* 모바일용 세부 스토리지 추가 버튼 */}
@@ -655,13 +657,13 @@ export function ParentCategoryDetail() {
               variant="outline"
             >
               <Plus className="h-4 w-4 mr-2" />
-              세부 스토리지 추가
+              {t('parentCategoryDetail.addSubcategory')}
             </Button>
           </div>
           <CardContent>
             {childSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                등록된 세부 스토리지가 없습니다.
+                {t('parentCategoryDetail.noSubcategories')}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -698,7 +700,7 @@ export function ParentCategoryDetail() {
                           <div className="flex-1 min-w-0 overflow-hidden">
                             <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
                             <CardDescription className="mt-1 truncate">
-                              {sub.description || '설명이 없습니다.'}
+                              {sub.description || t('parentCategoryDetail.noDescription')}
                             </CardDescription>
                           </div>
                           <div className="flex flex-col gap-1 items-end">
@@ -731,22 +733,22 @@ export function ParentCategoryDetail() {
                       <CardContent className="flex flex-col justify-between flex-1">
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500">부서</span>
+                            <span className="text-slate-500">{t('common.department')}</span>
                             <span className="font-medium">
                               {department?.name ?? sub.departmentId}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500">대분류</span>
+                            <span className="text-slate-500">{t('subcategoryDetail.parentCategory')}</span>
                             <span className="font-medium">{parentCategory.name}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500">문서 수</span>
-                            <span className="font-medium">{sub.documentCount}개</span>
+                            <span className="text-slate-500">{t('subcategoryDetail.docCount')}</span>
+                            <span className="font-medium">{sub.documentCount}</span>
                           </div>
                           {sub.storageLocation && (
                             <div className="flex items-center justify-between">
-                              <span className="text-slate-500">보관 장소</span>
+                              <span className="text-slate-500">{t('subcategoryDetail.storageLocation')}</span>
                               <span className="font-medium text-xs">
                                 {sub.storageLocation}
                               </span>
@@ -754,7 +756,7 @@ export function ParentCategoryDetail() {
                           )}
                           {sub.managementNumber && (
                             <div className="flex items-center justify-between">
-                              <span className="text-slate-500">관리번호</span>
+                              <span className="text-slate-500">{t('subcategoryDetail.managementNumber')}</span>
                               <span className="font-medium text-xs">
                                 {sub.managementNumber}
                               </span>
@@ -762,14 +764,14 @@ export function ParentCategoryDetail() {
                           )}
                           {sub.expiryDate ? (
                             <div className="flex items-center justify-between">
-                              <span className="text-slate-500">보관 만료일</span>
+                              <span className="text-slate-500">{t('parentCategoryDetail.expiryDate')}</span>
                               <span className="font-medium">
                                 {format(new Date(sub.expiryDate), 'yyyy.MM.dd')}
                               </span>
                             </div>
                           ) : sub.defaultExpiryDays ? (
                             <div className="flex items-center justify-between">
-                              <span className="text-slate-500">보관 만료일</span>
+                              <span className="text-slate-500">{t('parentCategoryDetail.expiryDate')}</span>
                               <span className="font-medium">
                                 {format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}
                               </span>
@@ -787,7 +789,7 @@ export function ParentCategoryDetail() {
                             onClick={() => handleOpenSubEditDialog(sub)}
                           >
                             <Edit className="h-3 w-3 mr-1" />
-                            수정
+                            {t('common.edit')}
                           </Button>
                           <Button
                             variant="outline"
@@ -810,24 +812,24 @@ export function ParentCategoryDetail() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 세부 스토리지 추가</DialogTitle>
+              <DialogTitle>{t('parentCategoryDetail.addSubcategoryTitle')}</DialogTitle>
               <DialogDescription>
-                {parentCategory.name} 대분류에 속한 세부 스토리지를 생성합니다.
+                {t('parentCategoryDetail.addSubcategoryDesc', { name: parentCategory.name })}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>세부 스토리지 이름</Label>
+                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="예: 채용 서류 보관함"
+                  placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={form.description}
                   onChange={(e) =>
@@ -836,11 +838,11 @@ export function ParentCategoryDetail() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 스토리지 설명"
+                  placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>컬러라벨(선택)</Label>
+                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
                 <ColorLabelPicker
                   value={form.colorLabel}
                   onChange={(value) =>
@@ -849,7 +851,7 @@ export function ParentCategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관장소(선택)</Label>
+                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
                 <Input
                   value={form.storageLocation}
                   onChange={(e) =>
@@ -858,12 +860,12 @@ export function ParentCategoryDetail() {
                       storageLocation: e.target.value,
                     }))
                   }
-                  placeholder="예: A동 2층 캐비닛 3"
+                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
                   maxLength={30}
                 />
               </div>
               <div className="space-y-2">
-                <Label>관리번호(선택)</Label>
+                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
                 <Input
                   value={form.managementNumber}
                   onChange={(e) =>
@@ -872,12 +874,12 @@ export function ParentCategoryDetail() {
                       managementNumber: e.target.value,
                     }))
                   }
-                  placeholder="예: MGT-2024-001"
+                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
                   maxLength={30}
                 />
               </div>
               <div className="space-y-2">
-                <Label>기본 보관 만료일 (선택)</Label>
+                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -899,7 +901,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    3개월
+                    {t('parentCategoryDetail.months3')}
                   </Button>
                   <Button
                     type="button"
@@ -921,7 +923,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    1년
+                    {t('parentCategoryDetail.year1')}
                   </Button>
                   <Button
                     type="button"
@@ -943,7 +945,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    3년
+                    {t('parentCategoryDetail.years3')}
                   </Button>
                   <Button
                     type="button"
@@ -965,7 +967,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    5년
+                    {t('parentCategoryDetail.years5')}
                   </Button>
                   <Button
                     type="button"
@@ -987,7 +989,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    7년
+                    {t('parentCategoryDetail.years7')}
                   </Button>
                   <Button
                     type="button"
@@ -1009,7 +1011,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    10년
+                    {t('parentCategoryDetail.years10')}
                   </Button>
                   {form.defaultExpiryDays && (
                     <Button
@@ -1025,7 +1027,7 @@ export function ParentCategoryDetail() {
                       }
                       className="bg-white text-slate-600 hover:bg-slate-100"
                     >
-                      초기화
+                      {t('parentCategoryDetail.reset')}
                     </Button>
                   )}
                 </div>
@@ -1042,7 +1044,7 @@ export function ParentCategoryDetail() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {form.expiryDate
                         ? format(new Date(form.expiryDate), 'PPP', { locale: ko })
-                        : '달력에서 보관 만료일 선택'}
+                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -1073,8 +1075,8 @@ export function ParentCategoryDetail() {
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-slate-500">
-                  보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                  {form.expiryDate && ` (${format(new Date(form.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
+                  {t('parentCategoryDetail.expiryNote')}
+                  {form.expiryDate && ` (${format(new Date(form.expiryDate), 'PPP', { locale: ko })})`}
                 </p>
               </div>
             </div>
@@ -1085,7 +1087,7 @@ export function ParentCategoryDetail() {
                 variant="outline"
                 disabled={isSaving || !form.name.trim()}
               >
-                세부 스토리지만 추가
+                {t('parentCategoryDetail.addSubcategoryOnly')}
               </Button>
               <Button
                 type="button"
@@ -1094,7 +1096,7 @@ export function ParentCategoryDetail() {
                 className="flex items-center gap-2"
               >
                 <Smartphone className="h-4 w-4" />
-                NFC 등록하며 추가
+                {t('parentCategoryDetail.addWithNfc')}
               </Button>
               <Button
                 type="button"
@@ -1102,7 +1104,7 @@ export function ParentCategoryDetail() {
                 onClick={() => setAddDialogOpen(false)}
                 disabled={isSaving}
               >
-                취소
+                {t('common.cancel')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1120,36 +1122,36 @@ export function ParentCategoryDetail() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>대분류 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{t('parentCategoryDetail.deleteParentCategory')}</AlertDialogTitle>
               <AlertDialogDescription>
-                <p>"{parentCategory.name}" 대분류를 정말 삭제하시겠습니까?</p>
+                <p>{t('parentCategoryDetail.deleteConfirmMsg', { name: parentCategory.name })}</p>
                 <p className="mt-1">
-                  이 대분류에 속한 세부 스토리지 및 문서에 영향이 있을 수 있습니다.
+                  {t('parentCategoryDetail.deleteImpactWarning')}
                 </p>
                 <p className="mt-3 text-sm font-medium text-red-600">
-                  삭제 후에는 되돌릴 수 없습니다. 신중하게 진행하세요.
+                  {t('documentMgmt.deleteIrreversible')}
                 </p>
                 <div className="mt-4">
                   <p className="text-sm text-slate-600 mb-2">
-                    정말 삭제하려면 아래에 <span className="font-bold text-red-600">삭제하겠습니다</span>를 입력하세요.
+                    {t('parentCategoryDetail.typeToConfirmDelete', { text: t('parentCategoryDetail.confirmDeleteText') })}
                   </p>
                   <Input
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="삭제하겠습니다"
+                    placeholder={t('parentCategoryDetail.confirmDeleteText')}
                     className="mt-1"
                   />
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteParentCategory}
                 className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={isDeleting || deleteConfirmText !== '삭제하겠습니다'}
+                disabled={isDeleting || deleteConfirmText !== t('parentCategoryDetail.confirmDeleteText')}
               >
-                {isDeleting ? '삭제 중...' : '삭제'}
+                {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1166,29 +1168,29 @@ export function ParentCategoryDetail() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>대분류 정보 수정</DialogTitle>
+              <DialogTitle>{t('parentCategoryDetail.editParentCategory')}</DialogTitle>
               <DialogDescription>
-                대분류 이름과 설명을 수정합니다.
+                {t('parentCategoryDetail.editParentCategoryDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>대분류 이름</Label>
+                <Label>{t('parentCategoryDetail.parentCategoryName')}</Label>
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="예: 채용 문서"
+                  placeholder={t('parentCategoryDetail.parentCategoryNamePlaceholder')}
                 />
                 {editNameError && (
                   <p className="text-xs text-red-500 mt-1">{editNameError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="대분류 설명을 입력하세요"
+                  placeholder={t('parentCategoryDetail.editDescPlaceholder')}
                 />
               </div>
             </div>
@@ -1199,14 +1201,14 @@ export function ParentCategoryDetail() {
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSavingEdit}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveParentCategory}
                 disabled={isSavingEdit}
               >
-                {isSavingEdit ? '저장 중...' : '저장'}
+                {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1216,23 +1218,23 @@ export function ParentCategoryDetail() {
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>NFC 태그 재등록</AlertDialogTitle>
+              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
               <AlertDialogDescription>
-                이미 URL이 등록된 태그입니다.
+                {t('parentCategoryDetail.nfcAlreadyRegistered')}
                 {existingNfcSubcategory && (
                   <span className="block mt-2 font-medium">
-                    현재 연결: {existingNfcSubcategory.name}
+                    {t('parentCategoryDetail.currentLink')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">계속 하시겠습니까?</span>
+                <span className="block mt-2">{t('parentCategoryDetail.continueQuestion')}</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={handleNfcConfirmNo}>
-                아니오
+                {t('common.no')}
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleNfcConfirmYes}>
-                예
+                {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1242,18 +1244,20 @@ export function ParentCategoryDetail() {
         <AlertDialog open={expiredDialogOpen} onOpenChange={setExpiredDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>만료된 카테고리</AlertDialogTitle>
+              <AlertDialogTitle>{t('parentCategoryDetail.expiredCategory')}</AlertDialogTitle>
               <AlertDialogDescription>
                 {expiredSubcategory && (
                   <>
                     <p className="mb-2">
-                      "{expiredSubcategory.name}" 카테고리는{' '}
-                      {expiredSubcategory.expiryDate && 
-                        format(new Date(expiredSubcategory.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })}
-                      에 만료되었습니다.
+                      {t('parentCategoryDetail.expiredMsg', {
+                        name: expiredSubcategory.name,
+                        date: expiredSubcategory.expiryDate
+                          ? format(new Date(expiredSubcategory.expiryDate), 'PPP', { locale: ko })
+                          : ''
+                      })}
                     </p>
                     <p>
-                      내부 문서 ({expiredSubcategory.documentCount}개)에 더 이상 접근할 수 없습니다.
+                      {t('parentCategoryDetail.noAccessDocs', { count: expiredSubcategory.documentCount })}
                     </p>
                   </>
                 )}
@@ -1261,7 +1265,7 @@ export function ParentCategoryDetail() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
-                확인
+                {t('common.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1276,27 +1280,27 @@ export function ParentCategoryDetail() {
         >
           <DialogContent className="max-h-[90vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>세부 스토리지 수정</DialogTitle>
+              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
               <DialogDescription>
-                선택한 세부 스토리지 정보를 수정합니다.
+                {t('documentMgmt.editSubcategoryDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 overflow-y-auto flex-1 px-4">
               <div className="space-y-2">
-                <Label>세부 스토리지 이름</Label>
+                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
                 <Input
                   value={subEditForm.name}
                   onChange={(e) =>
                     setSubEditForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="예: 채용 서류 보관함"
+                  placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
                 />
                 {subEditNameError && (
                   <p className="text-xs text-red-500 mt-1">{subEditNameError}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>설명</Label>
+                <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={subEditForm.description}
                   onChange={(e) =>
@@ -1305,11 +1309,11 @@ export function ParentCategoryDetail() {
                       description: e.target.value,
                     }))
                   }
-                  placeholder="세부 스토리지 설명"
+                  placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>컬러라벨(선택)</Label>
+                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
                 <ColorLabelPicker
                   value={subEditForm.colorLabel}
                   onChange={(value) =>
@@ -1318,7 +1322,7 @@ export function ParentCategoryDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>보관장소(선택)</Label>
+                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
                 <Input
                   value={subEditForm.storageLocation}
                   onChange={(e) =>
@@ -1327,12 +1331,12 @@ export function ParentCategoryDetail() {
                       storageLocation: e.target.value,
                     }))
                   }
-                  placeholder="예: A동 2층 캐비닛 3"
+                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
                   maxLength={30}
                 />
               </div>
               <div className="space-y-2">
-                <Label>관리번호(선택)</Label>
+                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
                 <Input
                   value={subEditForm.managementNumber}
                   onChange={(e) =>
@@ -1341,12 +1345,12 @@ export function ParentCategoryDetail() {
                       managementNumber: e.target.value,
                     }))
                   }
-                  placeholder="예: MGT-2024-001"
+                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
                   maxLength={30}
                 />
               </div>
               <div className="space-y-2">
-                <Label>기본 보관 만료일 (선택)</Label>
+                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -1368,7 +1372,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    3개월
+                    {t('parentCategoryDetail.months3')}
                   </Button>
                   <Button
                     type="button"
@@ -1390,7 +1394,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    1년
+                    {t('parentCategoryDetail.year1')}
                   </Button>
                   <Button
                     type="button"
@@ -1412,7 +1416,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    3년
+                    {t('parentCategoryDetail.years3')}
                   </Button>
                   <Button
                     type="button"
@@ -1434,7 +1438,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    5년
+                    {t('parentCategoryDetail.years5')}
                   </Button>
                   <Button
                     type="button"
@@ -1456,7 +1460,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    7년
+                    {t('parentCategoryDetail.years7')}
                   </Button>
                   <Button
                     type="button"
@@ -1478,7 +1482,7 @@ export function ParentCategoryDetail() {
                       }));
                     }}
                   >
-                    10년
+                    {t('parentCategoryDetail.years10')}
                   </Button>
                   {subEditForm.defaultExpiryDays && (
                     <Button
@@ -1494,7 +1498,7 @@ export function ParentCategoryDetail() {
                       }
                       className="bg-white text-slate-600 hover:bg-slate-100"
                     >
-                      초기화
+                      {t('parentCategoryDetail.reset')}
                     </Button>
                   )}
                 </div>
@@ -1511,7 +1515,7 @@ export function ParentCategoryDetail() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {subEditForm.expiryDate
                         ? format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })
-                        : '달력에서 보관 만료일 선택'}
+                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -1540,8 +1544,8 @@ export function ParentCategoryDetail() {
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-slate-500">
-                  보관 만료일을 설정하지 않으면 이 카테고리의 문서는 만료되지 않습니다.
-                  {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })})`}
+                  {t('parentCategoryDetail.expiryNote')}
+                  {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })})`}
                 </p>
               </div>
             </div>
@@ -1552,14 +1556,14 @@ export function ParentCategoryDetail() {
                 onClick={handleCloseSubEditDialog}
                 disabled={isSavingSubEdit}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveSubcategory}
                 disabled={isSavingSubEdit}
               >
-                {isSavingSubEdit ? '저장 중...' : '저장'}
+                {isSavingSubEdit ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1569,28 +1573,28 @@ export function ParentCategoryDetail() {
         <AlertDialog open={subDeleteDialogOpen} onOpenChange={setSubDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>세부 스토리지 삭제</AlertDialogTitle>
+              <AlertDialogTitle>{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
               <AlertDialogDescription>
                 {deletingSubcategory && (
                   <>
                     <p className="mb-2">
-                      "{deletingSubcategory.name}" 세부 스토리지를 삭제하시겠습니까?
+                      {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory.name })}
                     </p>
                     <p className="text-red-500">
-                      이 작업은 되돌릴 수 없으며, 포함된 모든 문서({deletingSubcategory.documentCount}개)도 함께 삭제됩니다.
+                      {t('parentCategoryDetail.deleteSubWarning', { count: deletingSubcategory.documentCount })}
                     </p>
                   </>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeletingSubcategory}>취소</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeletingSubcategory}>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteSubcategory}
                 className="bg-red-600 hover:bg-red-700 text-white"
                 disabled={isDeletingSubcategory}
               >
-                {isDeletingSubcategory ? '삭제 중...' : '삭제'}
+                {isDeletingSubcategory ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
