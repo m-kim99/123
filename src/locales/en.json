@@ -598,7 +598,10 @@
     "someUploadsFailed": "{{count}} file(s) failed to upload.",
     "ocrCopied": "OCR text copied to clipboard.",
     "copyError": "Error occurred while copying text.",
-    "docNotFound": "Could not find document to save."
+    "docNotFound": "Could not find document to save.",
+    "preview": "Preview",
+    "share": "Share",
+    "imagePreview": "Image Preview"
   },
   "subcategoryDetail": {
     "ocrExtracting": "Extracting OCR text...",
@@ -657,7 +660,9 @@
     "progress": "Progress",
     "uploadDone": "Upload completed.",
     "enterDocTitle": "Enter document title",
-    "defaultTitleNote": "Original filename is used as default title. Edit if needed."
+    "defaultTitleNote": "Original filename is used as default title. Edit if needed.",
+    "imageDataReadError": "Cannot read image data.",
+    "imageReadError": "An error occurred while reading the image file."
   },
   "parentCategoryDetail": {
     "notFound": "Parent category not found.",
@@ -993,7 +998,9 @@
     "scanError": "An error occurred while scanning the NFC tag.",
     "scan": "NFC Scan",
     "scanning": "Scanning NFC",
-    "scanSuccess": "Scan Successful"
+    "scanSuccess": "Scan Successful",
+    "subcategoryNotFound": "Subcategory not found. (ID: {{id}})",
+    "categoryNotFound": "Category not found. (Code: {{code}}, Name: {{name}})"
   },
   "pdfViewer": {
     "toc": "Table of Contents",

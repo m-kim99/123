@@ -1401,7 +1401,7 @@ export function SubcategoryDetail() {
                       managementNumber: e.target.value,
                     }))
                   }
-                  placeholder="예: MGT-2024-001"
+                  placeholder={t('documentMgmt.managementNumberPlaceholder')}
                   maxLength={30}
                 />
               </div>

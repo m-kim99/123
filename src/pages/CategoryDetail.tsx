@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
+import i18n from '@/lib/i18n';
 import { createDocumentNotification } from '@/lib/notifications';
 import {
   Dialog,
@@ -79,11 +80,11 @@ function readFileAsDataURL(file: File): Promise<string> {
       if (typeof reader.result === 'string') {
         resolve(reader.result);
       } else {
-        reject(new Error('이미지 데이터를 읽을 수 없습니다.'));
+        reject(new Error(i18n.t('categoryDetail.imageDataReadError')));
       }
     };
     reader.onerror = () => {
-      reject(reader.error || new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'));
+      reject(reader.error || new Error(i18n.t('categoryDetail.imageReadError')));
     };
     reader.readAsDataURL(file);
   });

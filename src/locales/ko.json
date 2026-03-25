@@ -597,7 +597,11 @@
     "someUploadsFailed": "{{count}}개 파일 업로드에 실패했습니다.",
     "ocrCopied": "OCR 텍스트가 클립보드에 복사되었습니다.",
     "copyError": "텍스트 복사 중 오류가 발생했습니다.",
-    "docNotFound": "저장할 문서를 찾을 수 없습니다."
+    "docNotFound": "저장할 문서를 찾을 수 없습니다.",
+    "ocrProcessing": "OCR 처리 중...",
+    "preview": "미리보기",
+    "share": "공유",
+    "imagePreview": "이미지 미리보기"
   },
   "subcategoryDetail": {
     "ocrExtracting": "OCR 텍스트 추출 중...",
@@ -656,7 +660,9 @@
     "progress": "진행률",
     "uploadDone": "업로드가 완료되었습니다.",
     "enterDocTitle": "문서 제목을 입력하세요",
-    "defaultTitleNote": "원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요."
+    "defaultTitleNote": "원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요.",
+    "imageDataReadError": "이미지 데이터를 읽을 수 없습니다.",
+    "imageReadError": "이미지 파일을 읽는 중 오류가 발생했습니다."
   },
   "parentCategoryDetail": {
     "notFound": "대분류를 찾을 수 없습니다.",
@@ -992,7 +998,9 @@
     "scanError": "NFC 태그 스캔 중 오류가 발생했습니다.",
     "scan": "NFC 스캔",
     "scanning": "NFC 스캔 중",
-    "scanSuccess": "스캔 성공"
+    "scanSuccess": "스캔 성공",
+    "subcategoryNotFound": "세부 카테고리를 찾을 수 없습니다. (ID: {{id}})",
+    "categoryNotFound": "카테고리를 찾을 수 없습니다. (코드: {{code}}, 이름: {{name}})"
   },
   "pdfViewer": {
     "toc": "목차",

@@ -42,6 +42,7 @@ import { cn } from '@/lib/utils';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 import { Edit, Trash2 } from 'lucide-react';
+import i18n from '@/lib/i18n';
 
 // 만료 상태 계산
 function getExpiryStatus(expiryDate: string | null): {
@@ -59,11 +60,11 @@ function getExpiryStatus(expiryDate: string | null): {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return { status: 'expired', daysLeft: diffDays, label: '만료됨 🔒' };
+    return { status: 'expired', daysLeft: diffDays, label: i18n.t('documentMgmt.expired') };
   } else if (diffDays <= 7) {
-    return { status: 'warning_7', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+    return { status: 'warning_7', daysLeft: diffDays, label: i18n.t('documentMgmt.expiresInDays', { days: diffDays }) };
   } else if (diffDays <= 30) {
-    return { status: 'warning_30', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+    return { status: 'warning_30', daysLeft: diffDays, label: i18n.t('documentMgmt.expiresInDays', { days: diffDays }) };
   } else {
     return { status: 'normal', daysLeft: diffDays, label: null };
   }

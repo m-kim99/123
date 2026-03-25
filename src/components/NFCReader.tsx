@@ -60,7 +60,7 @@ export function NFCReader() {
 
         if (subError || !subData) {
           throw new Error(
-            `세부 카테고리를 찾을 수 없습니다. (ID: ${tagData.subcategoryId})`
+            t('nfc.subcategoryNotFound', { id: tagData.subcategoryId })
           );
         }
 
@@ -102,7 +102,7 @@ export function NFCReader() {
         // 3. 카테고리를 찾지 못한 경우
         if (!categoryId) {
           throw new Error(
-            `카테고리를 찾을 수 없습니다. (코드: ${tagData.categoryCode}, 이름: ${tagData.categoryName})`
+            t('nfc.categoryNotFound', { code: tagData.categoryCode, name: tagData.categoryName })
           );
         }
 

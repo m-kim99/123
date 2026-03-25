@@ -77,6 +77,7 @@ import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 import { hasPermission, type Role, type Action } from '@/lib/permissions';
+import i18n from '@/lib/i18n';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -114,11 +115,11 @@ function readFileAsDataURL(file: File): Promise<string> {
       if (typeof reader.result === 'string') {
         resolve(reader.result);
       } else {
-        reject(new Error('이미지 데이터를 읽을 수 없습니다.'));
+        reject(new Error(i18n.t('categoryDetail.imageDataReadError')));
       }
     };
     reader.onerror = () => {
-      reject(reader.error || new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'));
+      reject(reader.error || new Error(i18n.t('categoryDetail.imageReadError')));
     };
     reader.readAsDataURL(file);
   });
@@ -139,11 +140,11 @@ function getExpiryStatus(expiryDate: string | null): {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return { status: 'expired', daysLeft: diffDays, label: '만료됨 🔒' };
+    return { status: 'expired', daysLeft: diffDays, label: i18n.t('documentMgmt.expired') };
   } else if (diffDays <= 7) {
-    return { status: 'warning_7', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+    return { status: 'warning_7', daysLeft: diffDays, label: i18n.t('documentMgmt.expiresInDays', { days: diffDays }) };
   } else if (diffDays <= 30) {
-    return { status: 'warning_30', daysLeft: diffDays, label: `만료 ${diffDays}일 전` };
+    return { status: 'warning_30', daysLeft: diffDays, label: i18n.t('documentMgmt.expiresInDays', { days: diffDays }) };
   } else {
     return { status: 'normal', daysLeft: diffDays, label: null };
   }
@@ -3329,9 +3330,9 @@ export function DocumentManagement() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleOpenPreviewDocument(doc.id)}
-                                  title="미리보기"
+                                  title={t('documentMgmt.preview')}
                                 >
-                                  <img src={previewIcon} alt="미리보기" className="w-full h-full p-1.5" />
+                                  <img src={previewIcon} alt={t('documentMgmt.preview')} className="w-full h-full p-1.5" />
                                 </Button>
                               )}
                               {/* 파일 교체 - write 권한 (editor 이상) */}
@@ -3340,9 +3341,9 @@ export function DocumentManagement() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleOpenFileReplaceDialog(doc.id)}
-                                  title="파일 교체"
+                                  title={t('documentMgmt.fileReplace')}
                                 >
-                                  <img src={changeIcon} alt="파일 교체" className="w-full h-full p-1.5" />
+                                  <img src={changeIcon} alt={t('documentMgmt.fileReplace')} className="w-full h-full p-1.5" />
                                 </Button>
                               )}
                               {/* 다운로드 - download 권한 (viewer 이상) */}
@@ -3351,9 +3352,9 @@ export function DocumentManagement() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleDownloadDocument(doc.id)}
-                                  title="다운로드"
+                                  title={t('documentMgmt.download')}
                                 >
-                                  <img src={downloadIcon} alt="다운로드" className="w-full h-full p-1.5" />
+                                  <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-full h-full p-1.5" />
                                 </Button>
                               )}
                               {/* 공유 - share 권한 (manager만) */}
@@ -3362,9 +3363,9 @@ export function DocumentManagement() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleOpenShareDialog(doc.id)}
-                                  title="공유"
+                                  title={t('documentMgmt.share')}
                                 >
-                                  <img src={shareIcon} alt="공유" className="w-full h-full p-1.5" />
+                                  <img src={shareIcon} alt={t('documentMgmt.share')} className="w-full h-full p-1.5" />
                                 </Button>
                               )}
                               {/* 삭제 - delete 권한 (manager만) */}
@@ -3374,9 +3375,9 @@ export function DocumentManagement() {
                                   size="icon"
                                   className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                                   onClick={() => handleDeleteDocumentClick(doc.id)}
-                                  title="삭제"
+                                  title={t('common.delete')}
                                 >
-                                  <img src={binIcon} alt="삭제" className="w-full h-full p-1.5" />
+                                  <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                                 </Button>
                               )}
                             </div>
@@ -3846,7 +3847,7 @@ export function DocumentManagement() {
           {previewDoc?.type === 'image' && (
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
               <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || '이미지 미리보기'}</DialogTitle>
+                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imagePreview')}</DialogTitle>
               </DialogHeader>
 
               {/* 상단 툴바 */}
