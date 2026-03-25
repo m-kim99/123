@@ -164,6 +164,15 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  // 언어 변경 시 기본 인사 메시지(id='1')를 새 언어로 업데이트
+  useEffect(() => {
+    setMessages(prev =>
+      prev.map(m => m.id === '1' ? { ...m, content: t('chatbot.defaultMessage') } : m)
+    );
+  // currentLocale 변경 시에만 실행 (t는 locale 변경 시 함께 갱신됨)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLocale]);
+
   // 대화 내용을 sessionStorage에 저장 (페이지 이동 시 유지, 사용자별 스코프)
   useEffect(() => {
     sessionStorage.setItem(getChatStorageKey(user?.id), JSON.stringify(messages));
