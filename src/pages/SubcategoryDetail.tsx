@@ -391,6 +391,8 @@ export function SubcategoryDetail() {
         description: t('documentMgmt.nfcRegCompleteDesc'),
       });
 
+      await fetchSubcategories();
+
       // 상태 초기화
       setPendingNfcUid(null);
       setExistingNfcSubcategory(null);
