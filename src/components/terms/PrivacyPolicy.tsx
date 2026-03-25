@@ -1,4 +1,6 @@
-export const PrivacyPolicyContent = () => (
+import { useTranslation } from 'react-i18next';
+
+const PrivacyKo = () => (
   <>
     <p className="text-xs text-slate-500">제정 2026.02.09. 시행 2026.02.09.</p>
 
@@ -198,5 +200,207 @@ export const PrivacyPolicyContent = () => (
     </ul>
   </>
 );
+
+const PrivacyEn = () => (
+  <>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Effective: February 9, 2026</p>
+
+    <p>InfoCreative Co., Ltd. (hereinafter "Company") operates this Privacy Policy in accordance with Article 30 of the Personal Information Protection Act to protect the personal information of users (hereinafter "Data Subjects") who use Tray Storage Connect, the Company's service, and to promptly and smoothly address related grievances.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 1 (Purposes of Collection and Use of Personal Information)</h3>
+    <p>① The Company collects the minimum personal information necessary for service provision and collects personal information with the Data Subject's consent for the following purposes. Personal information collected shall not be used for purposes other than the following, and if the purpose of use changes, the Company shall take necessary measures such as obtaining separate consent from the Data Subject in accordance with Article 18 of the Personal Information Protection Act.</p>
+    <p>② For the provision of AI OCR and AI-based document search services, the Company may process documents registered by Members, voice command data, and usage records, which shall be used only within the scope of service provision purposes. The Company does not use Members' documents as general training data for AI models; however, it may collect and use usage patterns and feedback data, excluding sensitive information within documents, for the purpose of AI model improvement to enhance service quality.</p>
+    <p>③ The Company collects and uses personal information for the following purposes:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Purpose</th><th className="border border-slate-300 p-2 text-left">Details</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">1. Membership registration and management</td><td className="border border-slate-300 p-2">Identity verification and authentication for membership services; prevention of duplicate and fraudulent registration; maintenance and restriction of membership; various notifications and announcements; restriction of membership for children under 14 years of age</td></tr>
+        <tr><td className="border border-slate-300 p-2">2. Service provision and use</td><td className="border border-slate-300 p-2">Document registration and management; AI OCR processing; document search and information provision via AI chatbot; voice command processing; NFC tag-based document management; department-level access permission management; provision of document statistics</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. Payment and settlement</td><td className="border border-slate-300 p-2">Payment processing for paid services; invoice issuance; payment history management</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. Grievance handling</td><td className="border border-slate-300 p-2">Verification of Member grievances; identity confirmation; notification of processing results and follow-up</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. Marketing and promotions</td><td className="border border-slate-300 p-2">Provision of event and promotional information and participation opportunities (upon optional consent)</td></tr>
+      </tbody>
+    </table>
+    <p>④ Notwithstanding Paragraph 1, the Company may collect and use personal information without the Data Subject's consent where specifically provided for by law, or where personal information is inevitably generated in the course of the Data Subject's use of the Service.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 2 (Items of Personal Information Collected and Used)</h3>
+    <p>① The items of personal information collected and used by the Company are as follows:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Collection Purpose</th><th className="border border-slate-300 p-2 text-left">Details</th><th className="border border-slate-300 p-2 text-left">Items Collected</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2" rowSpan={5}>1. Membership registration and management</td><td className="border border-slate-300 p-2">Web registration – Administrator</td><td className="border border-slate-300 p-2">Company name, name, email, mobile phone number (identity verification), password</td></tr>
+        <tr><td className="border border-slate-300 p-2">Web registration – Team Member</td><td className="border border-slate-300 p-2">Company name, department name, name, email, mobile phone number (identity verification), password</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registration via Kakao account</td><td className="border border-slate-300 p-2">Required: Kakao account (ID), password</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registration via Google account</td><td className="border border-slate-300 p-2">Required: Name, email address</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registration via Naver / Apple account</td><td className="border border-slate-300 p-2">Required: ID, password</td></tr>
+        <tr><td className="border border-slate-300 p-2" rowSpan={2}>2. Service provision</td><td className="border border-slate-300 p-2">AI Service use</td><td className="border border-slate-300 p-2">Uploaded documents (images, PDFs, etc.); voice command data; document search history; AI chatbot conversation logs; NFC tag information; document storage location info</td></tr>
+        <tr><td className="border border-slate-300 p-2">Use of supplementary features</td><td className="border border-slate-300 p-2">Optional: Additional input when using supplementary features</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. Payment</td><td className="border border-slate-300 p-2">Paid service payment</td><td className="border border-slate-300 p-2">Credit card information (card number, expiration date, first 2 digits of PIN); bank account information; payment history</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. Grievance and complaint handling</td><td className="border border-slate-300 p-2">1:1 inquiries, etc.</td><td className="border border-slate-300 p-2">Required: Name, email address, contact information, inquiry details</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. Marketing (optional consent)</td><td className="border border-slate-300 p-2">Events and promotions</td><td className="border border-slate-300 p-2">Email address; mobile phone number (upon SMS consent)</td></tr>
+        <tr><td className="border border-slate-300 p-2">6. Automatically collected information</td><td className="border border-slate-300 p-2">Automatically generated during Service use</td><td className="border border-slate-300 p-2">Access logs, usage records, device information, IP address, cookies</td></tr>
+      </tbody>
+    </table>
+    <p>② The Company does not accept membership registration from children under the age of 14.</p>
+    <p>③ The Company does not directly store payment information and processes such information securely through the payment service provider, KCP (Korea Cyber Payment Co., Ltd.).</p>
+
+    <h3 className="font-semibold text-slate-900">Article 3 (Retention and Use Period of Personal Information)</h3>
+    <p>① The Company processes personal information within the retention and use period consented to at the time of collection, or within the retention and use period prescribed by applicable laws.</p>
+    <p>② The retention and use periods for personal information processed by the Company are as follows:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Category</th><th className="border border-slate-300 p-2 text-left">Items</th><th className="border border-slate-300 p-2 text-left">Period</th><th className="border border-slate-300 p-2 text-left">Exceptions</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Membership registration and management</td><td className="border border-slate-300 p-2">Items collected at registration</td><td className="border border-slate-300 p-2">Until membership withdrawal or cancellation</td><td className="border border-slate-300 p-2">Retained for 2 years after withdrawal to verify re-registration or prevent fraudulent registration</td></tr>
+        <tr><td className="border border-slate-300 p-2" rowSpan={3}>Service use</td><td className="border border-slate-300 p-2">Uploaded documents and related data</td><td className="border border-slate-300 p-2">Until membership withdrawal or cancellation</td><td className="border border-slate-300 p-2">—</td></tr>
+        <tr><td className="border border-slate-300 p-2">Voice command data</td><td className="border border-slate-300 p-2">1 year from date of collection</td><td className="border border-slate-300 p-2">For AI service quality improvement purposes</td></tr>
+        <tr><td className="border border-slate-300 p-2">Feedback data for AI model improvement</td><td className="border border-slate-300 p-2">1 year from date of collection</td><td className="border border-slate-300 p-2">Excluding sensitive information; anonymized</td></tr>
+        <tr><td className="border border-slate-300 p-2">Payment information</td><td className="border border-slate-300 p-2">Payment-related records</td><td className="border border-slate-300 p-2">5 years after membership withdrawal</td><td className="border border-slate-300 p-2">Preserved pursuant to the Act on Consumer Protection in Electronic Commerce, Etc.</td></tr>
+        <tr><td className="border border-slate-300 p-2">Grievance handling</td><td className="border border-slate-300 p-2">Information collected at time of grievance</td><td className="border border-slate-300 p-2">Until the grievance or dispute is resolved</td><td className="border border-slate-300 p-2">Records of processing and results retained for a minimum of 3 years</td></tr>
+        <tr><td className="border border-slate-300 p-2">Information and communications records</td><td className="border border-slate-300 p-2">Service access and usage logs, search records</td><td className="border border-slate-300 p-2">Until membership withdrawal or cancellation</td><td className="border border-slate-300 p-2">Retained for a minimum of 3 months pursuant to the Protection of Communications Secrets Act</td></tr>
+      </tbody>
+    </table>
+
+    <h3 className="font-semibold text-slate-900">Article 4 (Provision of Personal Information to Third Parties)</h3>
+    <p>① As a general rule, the Company does not provide the Data Subject's personal information to third parties. When the Company provides personal information to a third party, it shall inform the Data Subject of the recipient, the purpose of use by the recipient, the items of personal information provided, the retention and use period, and obtain consent.</p>
+    <p>② Notwithstanding Paragraph 1, personal information may be provided to third parties without the Data Subject's consent in the following cases:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Where specifically provided for by law;</li>
+      <li>Where government agencies, public institutions, investigative agencies, or courts request the provision of information based on applicable laws;</li>
+      <li>Where pseudonymized information is provided for statistical compilation, scientific research, or public interest record preservation;</li>
+      <li>In the event of emergencies such as disasters, infectious diseases, incidents or accidents posing imminent danger to life or bodily safety, or imminent property loss.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Article 5 (Entrustment of Personal Information Processing)</h3>
+    <p>① The Company entrusts the processing of personal information to the following external service providers for smooth service provision:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Entrusted Company</th><th className="border border-slate-300 p-2 text-left">Entrusted Tasks</th><th className="border border-slate-300 p-2 text-left">Retention and Use Period</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Supabase, Inc.</td><td className="border border-slate-300 p-2">Cloud server provision and data storage</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
+        <tr><td className="border border-slate-300 p-2">Google Cloud Platform</td><td className="border border-slate-300 p-2">AI-based document analysis service; AI voice recognition service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal (voice data: 1 year from collection)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Naver Cloud Platform</td><td className="border border-slate-300 p-2">AI OCR service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
+        <tr><td className="border border-slate-300 p-2">Kakao Corporation</td><td className="border border-slate-300 p-2">Sending notification messages (KakaoTalk alerts, SMS, etc.)</td><td className="border border-slate-300 p-2">Until message delivery is completed</td></tr>
+        <tr><td className="border border-slate-300 p-2">Korea Cyber Payment Co., Ltd. (KCP)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
+      </tbody>
+    </table>
+    <p>② When entering into entrustment contracts, the Company specifies in the contract the prohibition of processing personal information beyond the scope of the entrusted task, technical and managerial safeguards, restrictions on sub-entrustment, supervision of the entrusted party, and liability including damages, in accordance with Article 26 of the Personal Information Protection Act.</p>
+    <p>③ If the content of the entrusted tasks or the entrusted party changes, the Company shall promptly disclose such changes through this Privacy Policy.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 6 (Rights of Data Subjects and Methods of Exercise)</h3>
+    <p>① Data Subjects may exercise the following rights at any time with respect to their personal information processed by the Company:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Right to access personal information:</strong> Data Subjects may request access to their personal information held by the Company pursuant to Article 35 of the Personal Information Protection Act. Access may be restricted where prohibited by law or where there is a risk of harm to another person's interests.</li>
+      <li><strong>Right to correction and deletion:</strong> Data Subjects may request correction or deletion of their personal information pursuant to Article 36 of the Personal Information Protection Act. However, deletion may not be requested where the personal information is designated as a collection item under applicable laws.</li>
+      <li><strong>Right to suspend processing and withdraw consent:</strong> Data Subjects may request suspension of processing of their personal information or withdraw consent pursuant to Article 37 of the Personal Information Protection Act.</li>
+    </ul>
+    <p>② Data Subjects may exercise the rights under Paragraph 1 by contacting the Chief Privacy Officer (Phone: +82-2-333-7334) or by sending an email to support@traystorage.net, and the Company shall process such requests without delay.</p>
+    <p>③ Where a Data Subject requests correction or deletion of erroneous personal information, the Company shall not use or provide such personal information until the correction or deletion is completed.</p>
+    <p>④ A legal representative of the Data Subject, or a person delegated by the Data Subject, may exercise such rights on behalf of the Data Subject by submitting a written power of attorney to the Company.</p>
+    <p>⑤ <strong>Right to request explanation of AI-based personal information processing results:</strong> Data Subjects may request explanations regarding the purpose and method of AI processing, the impact of AI processing results on the Data Subject, and the key criteria underlying the AI processing results. Explanation requests may be made by written correspondence, email (support@traystorage.net), or by contacting the Chief Privacy Officer by phone (+82-2-333-7334). The Company shall respond within one (1) month of receiving the request.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 7 (Destruction of Personal Information)</h3>
+    <p>① The Company shall promptly destroy personal information when it is no longer needed, such as upon achievement of the processing purpose, expiration of the retention and use period, or termination of business.</p>
+    <p>② Notwithstanding Paragraph 1, where personal information must continue to be retained under applicable laws, such personal information shall be stored and managed separately from other personal information.</p>
+    <p>③ Where the Company is required to retain personal information for a certain period under applicable laws, the Company shall securely retain such information for the applicable period before destruction.</p>
+    <p>④ The procedures and methods for destruction of personal information are as follows:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Destruction procedure:</strong> Personal information subject to destruction is selected, and upon approval by the Chief Privacy Officer, the personal information is destroyed.</li>
+      <li><strong>Destruction methods:</strong> Personal information recorded and stored in electronic file format is permanently deleted using methods that prevent recovery. Personal information recorded on paper documents is destroyed by shredding, incineration, or masking/perforation of the relevant portions.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Article 8 (Measures to Ensure the Security of Personal Information)</h3>
+    <p>The Company takes the following measures to prevent loss, theft, leakage, falsification, alteration, or damage to Data Subjects' personal information:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Administrative measures:</strong> Establishment and implementation of an internal management plan for personal information protection, regular employee training;</li>
+      <li><strong>Technical measures:</strong> Access control and restriction of access rights to personal information processing systems, encryption of unique identification information, installation and periodic updates of security programs;</li>
+      <li><strong>Physical measures:</strong> Provision of secure storage facilities or installation of locking devices and access controls for the safe storage of personal information;</li>
+      <li><strong>Intrusion prevention:</strong> Establishment of security systems and operation of intrusion prevention systems to prevent personal information breaches caused by hacking or computer viruses;</li>
+      <li><strong>Access management:</strong> Minimization of personnel handling personal information and regular training; installation of locking devices and access restrictions for documents and auxiliary storage media.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Article 9 (Installation, Operation, and Rejection of Automatic Personal Information Collection Devices)</h3>
+    <p>① The Company uses "cookies" to store and retrieve usage information in order to provide individually customized services to Data Subjects. Cookies are small pieces of information sent by the server operating the website to the Data Subject's computer browser, and may be stored on the hard disk of the Data Subject's computer.</p>
+    <p>② The purposes and details of cookie use are as follows:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Purpose of cookie use:</strong> To provide optimized and customized information to Data Subjects by analyzing visit records, usage patterns, and other data;</li>
+      <li><strong>Methods to reject cookie settings:</strong>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li>Internet Explorer: Tools &gt; Internet Options &gt; Privacy</li>
+          <li>Google Chrome: Settings &gt; Advanced Settings &gt; Privacy</li>
+          <li>Microsoft Edge: Settings &gt; Cookies and Site Permissions</li>
+          <li>Safari: Preferences &gt; Privacy &gt; Cookies and Website Data</li>
+        </ul>
+      </li>
+      <li>Refusing to store cookies may result in difficulties using customized services.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Article 10 (Notice Regarding AI Service Use and Personal Information Processing)</h3>
+    <p>① The Company utilizes artificial intelligence (AI) technology for service quality improvement and provides the following AI services:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Automatic document text extraction via AI OCR (Optical Character Recognition);</li>
+      <li>Document search and information provision via AI chatbot;</li>
+      <li>AI-based document search via voice commands.</li>
+    </ul>
+    <p>② In accordance with the Framework Act on Artificial Intelligence, the Company provides the following notices when Data Subjects use AI services: AI technology is applied to the services used by the Data Subject; documents and voice data registered by the Data Subject may be processed during the AI processing; AI processing results are generated by automated algorithms and may contain errors.</p>
+    <p>③ The Company does not use documents registered by Members as general training data for AI models. However, the Company may collect and use the following data for service quality improvement: service usage patterns and feedback data; usage records excluding sensitive information within documents (resident registration numbers, bank account information, medical information, etc.). The above data is anonymized or pseudonymized before use and processed so as to prevent identification of specific individuals.</p>
+    <p>④ The Company plans to add a feature for automatic masking of sensitive information in the course of future AI model improvement.</p>
+    <p>⑤ The AI service providers to whom the Company entrusts AI service provision are as follows: Google Cloud Platform (AI document analysis service, voice recognition service); Naver Cloud Platform (AI OCR).</p>
+
+    <h3 className="font-semibold text-slate-900">Article 11 (Matters Concerning the Operation and Management of Video Information Processing Devices)</h3>
+    <p>① The Company installs and operates video information processing devices (CCTV) for office security and safety accident prevention.</p>
+    <p>② The Company does not install or operate video information processing devices in places where there is a concern of privacy infringement, such as restrooms and changing rooms, in order to protect the personal information of Data Subjects.</p>
+    <p>③ Data Subjects may request to view video information, and may apply in writing, by phone, or by email to the Chief Privacy Officer.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 12 (Chief Privacy Officer)</h3>
+    <p>① The Company has designated the following Chief Privacy Officer, who oversees personal information processing operations and is responsible for handling complaints, remedying damages, and facilitating the exercise of rights by Data Subjects:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <tbody>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Name</td><td className="border border-slate-300 p-2">Jeong Do-cheon</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Title</td><td className="border border-slate-300 p-2">Chief Executive Officer</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Contact</td><td className="border border-slate-300 p-2">+82-2-333-7334 / support@traystorage.net</td></tr>
+      </tbody>
+    </table>
+    <p>② Data Subjects may direct all inquiries, complaints, damage remedies, and other matters related to personal information protection arising from the use of the Company's services to the Chief Privacy Officer. The Company shall respond to and process Data Subject inquiries without delay.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 13 (Remedies for Infringement of Data Subject Rights)</h3>
+    <p>① Data Subjects may contact the following organizations for consultations, damage relief, and other inquiries regarding personal information infringement:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Organization</th><th className="border border-slate-300 p-2 text-left">Contact</th><th className="border border-slate-300 p-2 text-left">Website</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Personal Information Infringement Report Center (operated by KISA)</td><td className="border border-slate-300 p-2">(No area code) 118</td><td className="border border-slate-300 p-2">privacy.kisa.or.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Personal Information Dispute Mediation Committee</td><td className="border border-slate-300 p-2">(No area code) 1833-6972</td><td className="border border-slate-300 p-2">www.kopico.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Supreme Prosecutors' Office, Cyber Investigation Division</td><td className="border border-slate-300 p-2">(No area code) 1301</td><td className="border border-slate-300 p-2">www.spo.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">National Police Agency Cyber Crime Report System (ECRM)</td><td className="border border-slate-300 p-2">(No area code) 182</td><td className="border border-slate-300 p-2">ecrm.cyber.go.kr</td></tr>
+      </tbody>
+    </table>
+    <p>② The Company strives to provide consultations and damage relief for personal information infringement of Data Subjects. If you need consultations, please contact us:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Person in charge: Jeong Do-cheon</li>
+      <li>Phone: +82-2-333-7334</li>
+      <li>Email: support@traystorage.net</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Article 14 (Amendments to and Enforcement of the Privacy Policy)</h3>
+    <p>① When the Company amends this Privacy Policy, it shall post a comparison of the contents before and after the amendment through a notice on the Service website at least seven (7) days prior to the effective date of the amendment so that Data Subjects may be informed. However, in the event of material changes affecting the rights of Data Subjects, notice shall be posted at least thirty (30) days in advance, and the Company shall obtain renewed consent from Data Subjects if necessary.</p>
+    <p>② This Privacy Policy shall take effect on February 9, 2026.</p>
+
+    <h3 className="font-semibold text-slate-900">Supplementary Provisions</h3>
+    <p>This Privacy Policy shall apply from February 9, 2026.</p>
+
+    <h3 className="font-semibold text-slate-900">[Company Information]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Company Name: InfoCreative Co., Ltd.</li>
+      <li>Representative: Jeong Do-cheon</li>
+      <li>Address: Rooms 708 &amp; 709, Gasan Hanwha Biz Metro 2nd, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Republic of Korea</li>
+      <li>Business Registration Number: 841-86-03004</li>
+      <li>Customer Center: +82-2-333-7334</li>
+      <li>Email: support@traystorage.net</li>
+    </ul>
+  </>
+);
+
+export const PrivacyPolicyContent = () => {
+  const { i18n } = useTranslation();
+  return i18n.language === 'en' ? <PrivacyEn /> : <PrivacyKo />;
+};
 
 export default PrivacyPolicyContent;

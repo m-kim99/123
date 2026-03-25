@@ -1,4 +1,6 @@
-export const TermsOfServiceContent = () => (
+import { useTranslation } from 'react-i18next';
+
+const TermsKo = () => (
   <>
     <p className="text-xs text-slate-500">제정 2026.02.09. 시행 2026.02.09.</p>
 
@@ -270,5 +272,283 @@ export const TermsOfServiceContent = () => (
     </ul>
   </>
 );
+
+const TermsEn = () => (
+  <>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Effective: February 9, 2026</p>
+
+    <h3 className="font-semibold text-slate-900">Article 1 (Purpose)</h3>
+    <p>These Terms of Service (hereinafter "Terms") are intended to prescribe the rights, obligations, and responsibilities between InfoCreative Co., Ltd. (hereinafter "Company") and its Members, as well as the conditions, procedures, and other necessary matters pertaining to the use of Tray Storage Connect (hereinafter "Service"), a document management service provided by the Company.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 2 (Definitions)</h3>
+    <p>① The definitions of terms used in these Terms are as follows:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>"Service" refers to the online platform service provided by the Company that enables Members to store and manage their documents on a cloud-based system, and to explore, search, and analyze document information using artificial intelligence (AI) technology.</li>
+      <li>"Tray Storage Connect" refers to the web and mobile-based platform operated by the Company for the provision of the Service.</li>
+      <li>"Member" refers to any person who has agreed to these Terms and completed the membership registration process as prescribed by the Company to use the Service.</li>
+      <li>"Administrator" refers to a Member who has been granted administrative privileges within an organization, including the ability to create departments, manage access permissions, and view overall document statistics.</li>
+      <li>"Team Member" refers to a Member who may register, view, and edit documents within the scope of permissions granted by the Administrator.</li>
+      <li>"Posting" refers to any and all materials uploaded to the Service by a Member, including document files, photographs, and images.</li>
+      <li>"AI Service" refers to functionalities that provide document-related information through automated processes utilizing AI technology, including optical character recognition (OCR), document content analysis, search, summarization, classification, and question-answering. This includes third-party AI models such as Google Gemini and Naver Clova OCR.</li>
+      <li>"AI OCR" refers to optical character recognition technology that automatically recognizes and extracts textual information from images or scanned documents.</li>
+      <li>"Tray Storage Product" refers to a physical storage unit for paper documents sold by the Company, which can be linked to the Service via an attached NFC tag.</li>
+      <li>"NFC Tag" refers to a sticker-type device that links the Tray Storage Product with the Service using Near Field Communication technology.</li>
+    </ul>
+    <p>② The meanings of terms not defined in these Terms shall be interpreted in accordance with applicable laws and general commercial practices.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 3 (Posting and Revision of Terms)</h3>
+    <p>① The Company shall post the contents of these Terms on the initial screen of the Service or on the Company's website (www.traystorage.net) so that Members may easily access them.</p>
+    <p>② The Company may revise these Terms to the extent that such revision does not violate applicable laws, including the Act on the Regulation of Terms and Conditions, the Act on Promotion of Information and Communications Network Utilization and Information Protection, Etc. (hereinafter "Network Act"), and the Act on Consumer Protection in Electronic Commerce, Etc.</p>
+    <p>③ When the Company revises these Terms, it shall specify the details of the revision and the effective date, and shall post such notice on the Service and the Company's website at least seven (7) days prior to the effective date. However, if the revision involves changes that are disadvantageous or material to Members, such notice shall be posted at least thirty (30) days prior to the effective date, and individual notification shall be sent to Members via their registered email or mobile phone number.</p>
+    <p>④ If the Company posts or notifies a revised version of the Terms pursuant to Paragraph 3 and clearly states that failure to express objection by the effective date shall be deemed as consent, and the Member does not expressly object, the Member shall be deemed to have agreed to the revised Terms.</p>
+    <p>⑤ If a Member does not agree to the application of the revised Terms, the Company may not apply the revised Terms, and the Member may terminate the service agreement.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 4 (Supplementary Rules)</h3>
+    <p>① Matters not stipulated in these Terms and the interpretation of these Terms shall be governed by applicable laws, including the Act on the Regulation of Terms and Conditions, the Network Act, the Personal Information Protection Act, the Act on Consumer Protection in Electronic Commerce, Etc., the Framework Act on Artificial Intelligence, the Framework Act on Electronic Documents and Electronic Commerce, and general commercial practices.</p>
+    <p>② The Company may establish detailed service usage guidelines (operational policies) as necessary, and shall post them on the Service or notify Members through other means.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 5 (Membership Registration)</h3>
+    <p>① A prospective user shall apply for membership by filling in the membership information in the form prescribed by the Company and expressing consent to these Terms.</p>
+    <p>② The Company shall register applicants as Members unless any of the following circumstances apply:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>The applicant has previously lost membership status under these Terms; provided, however, that an exception may be made for a person who has obtained the Company's approval for re-registration after two (2) years have elapsed since the loss of membership status;</li>
+      <li>The registration information contains false, incomplete, or erroneous information;</li>
+      <li>The applicant applies for re-registration before seven (7) days have elapsed since withdrawal;</li>
+      <li>A Member whose use has been suspended has unilaterally terminated the service agreement and applies for re-registration;</li>
+      <li>Registration would otherwise significantly impede the Company's technical operations.</li>
+    </ul>
+    <p>③ The membership agreement shall be deemed to have been formed at the time the Company's acceptance reaches the Member.</p>
+    <p>④ If there are any changes to the information registered at the time of membership registration, the Member shall promptly notify the Company of such changes via email or other means.</p>
+    <p>⑤ The Company shall not be liable for any disadvantages arising from the Member's failure to notify the Company of changes pursuant to Paragraph 4.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 6 (Withdrawal and Loss of Membership)</h3>
+    <p>① A Member may request withdrawal from membership at any time, and the Company shall process such withdrawal immediately.</p>
+    <p>② If a Member falls under any of the following circumstances, the Company may restrict or suspend the Member's membership:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Registration of false information at the time of application;</li>
+      <li>Interfering with other Members' use of the Service, misappropriating their information, or otherwise threatening the order of electronic commerce;</li>
+      <li>Using the Service to engage in conduct that violates laws or these Terms, or that is contrary to public morals.</li>
+    </ul>
+    <p>③ After the Company has restricted or suspended a Member's membership, if the same conduct is repeated two (2) or more times or if the cause is not remedied within thirty (30) days, the Company may revoke the Member's membership.</p>
+    <p>④ When the Company revokes a Member's membership, it shall cancel the membership registration. In such case, the Company shall notify the Member and provide at least thirty (30) days to present a defense before cancellation.</p>
+    <p>⑤ Upon withdrawal or loss of membership, the Member's Postings and personal information shall be deleted immediately. However, information required to be retained under applicable laws and the Company's Privacy Policy shall be retained for the prescribed period before deletion.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 7 (Dormant Account Conversion)</h3>
+    <p>① If a Member does not log in to the Service for one (1) year, the Company shall convert the Member to a dormant account and store the personal information separately.</p>
+    <p>② Three (3) years after conversion to a dormant account, the Member's personal information and Postings shall be permanently deleted.</p>
+    <p>③ The Company shall notify the Member of the scheduled dormant conversion via email or other means at least thirty (30) days prior to the conversion date.</p>
+    <p>④ A dormant Member may reactivate the account and resume Service use by completing identity verification through login.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 8 (Provision and Modification of Services)</h3>
+    <p>① The Company provides the following services to Members:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Cloud-based storage and management of document files and images;</li>
+      <li>Department-based document classification and management;</li>
+      <li>Linking with physical storage units via NFC tags;</li>
+      <li>Automatic text recognition and extraction from documents via AI OCR;</li>
+      <li>AI-powered document search, analysis, summarization, and question-answering;</li>
+      <li>AI interface through chat and voice command;</li>
+      <li>Supplementary features such as document retention period settings, statistical data, and notice postings;</li>
+      <li>Access permission management (four levels: No Access / Viewer / Editor / Administrator);</li>
+      <li>Any other services additionally developed by the Company or provided to Members through partnership agreements.</li>
+    </ul>
+    <p>② The Company may modify all or part of the Service for quality improvement, technological advancement, or operational necessity.</p>
+    <p>③ If there are changes to the content, method, or hours of the Service, the Company shall post or notify Members of the reasons for change, the details of the modified Service, and the date of provision at least seven (7) days prior to the change.</p>
+    <p>④ The Company may modify, suspend, or change all or part of any Service provided free of charge as necessary for its policies and operations, and shall not provide separate compensation to Members unless otherwise required by applicable laws.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 9 (Service Hours and Suspension)</h3>
+    <p>① The Service shall be available 24 hours a day, 365 days a year, unless otherwise prevented by the Company's operational or technical circumstances.</p>
+    <p>② Notwithstanding Paragraph 1, the Company may restrict or suspend all or part of the Service in the following cases:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Maintenance, replacement, or failure of information and communication equipment, or disruption of communications;</li>
+      <li>Unavoidable construction work for service facilities;</li>
+      <li>Power outages, equipment failures, or excessive traffic that impairs normal Service use;</li>
+      <li>Circumstances such as termination of contracts with service providers that make it impossible to maintain the Service;</li>
+      <li>Force majeure events such as natural disasters or national emergencies.</li>
+    </ul>
+    <p>③ The Company shall not be liable for any damages incurred by Members or third parties due to temporary suspension of Service pursuant to Paragraph 2, unless caused by the Company's willful misconduct or gross negligence.</p>
+    <p>④ When suspending the Service, the Company shall post notice on the Service or notify Members at least seven (7) days in advance, except in cases of force majeure pursuant to Paragraph 3.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 10 (Paid Services and Payment)</h3>
+    <p>① The Company may offer certain services on a paid basis, and Members who use paid services shall pay the applicable fees.</p>
+    <p>② The Service is currently provided free of charge during the beta testing period. Upon conclusion of the beta test, the Service will transition to paid plans. The Company shall announce pricing plans and payment methods at least thirty (30) days prior to the paid transition.</p>
+    <p>③ The anticipated pricing plans after beta testing are as follows (subject to change):</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Monthly subscription: Fees charged per user (estimated at KRW 20,000 per person per month);</li>
+      <li>New Members shall receive one (1) month of free use upon initial registration.</li>
+    </ul>
+    <p>④ Members may pay service fees using the following payment methods: credit card payment; bank transfer; virtual account transfer; other payment methods designated by the Company.</p>
+    <p>⑤ If a Member does not have legitimate authorization to use the payment method, or raises an objection to or refuses the payment after it has been made, the Company may suspend the provision of the Service.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 11 (Withdrawal of Subscription and Refund)</h3>
+    <p>① A Member may withdraw the subscription within seven (7) days from the date of payment for a paid service, and the Company shall refund the full payment amount.</p>
+    <p>② Notwithstanding Paragraph 1, withdrawal of subscription may be restricted in the following cases:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>The service has been destroyed or damaged due to reasons attributable to the Member;</li>
+      <li>The value of the service has significantly decreased due to substantial use by the Member.</li>
+    </ul>
+    <p>③ If a refund is requested after seven (7) days from the payment date, the remaining balance after deducting one (1) month's usage fee shall be refunded.</p>
+    <p>④ Refunds shall, in principle, be processed through the same payment method used by the Member. If a refund through the same method is not possible, the Company shall process the refund through an alternative method determined by the Company.</p>
+    <p>⑤ Refund processing shall be completed within seven (7) business days from the date of the refund request.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 12 (Service Usage Limitations)</h3>
+    <p>① The scope and limitations of Service usage by Members are as follows:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Category</th><th className="border border-slate-300 p-2 text-left">Details</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">File Upload</td><td className="border border-slate-300 p-2">Maximum 50 MB per upload; supported formats: PDF, JPG, PNG</td></tr>
+        <tr><td className="border border-slate-300 p-2">Simultaneous Access</td><td className="border border-slate-300 p-2">Only one (1) device per account may be logged in simultaneously</td></tr>
+        <tr><td className="border border-slate-300 p-2">Free Members</td><td className="border border-slate-300 p-2">Service is available for one (1) month from the date of registration</td></tr>
+        <tr><td className="border border-slate-300 p-2">Paid Members</td><td className="border border-slate-300 p-2">Service is available without feature or capacity limitations</td></tr>
+      </tbody>
+    </table>
+    <p>② The Company may change the above limitations as necessary for the stable operation of the Service, and shall provide prior notice of any such changes.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 13 (Management of Postings)</h3>
+    <p>① The copyright of Postings made by a Member within the Service shall belong to the respective author of such Postings.</p>
+    <p>② Members shall not register Postings that fall under any of the following categories:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Content that infringes on the rights, reputation, credibility, or other legitimate interests of others;</li>
+      <li>Content deemed to be related to criminal activity;</li>
+      <li>Content that infringes on the intellectual property rights of the Company or third parties;</li>
+      <li>Content that damages the reputation or disrupts the operations of the Company or third parties;</li>
+      <li>Obscene or violent messages, images, audio, or other content contrary to public morals;</li>
+      <li>Documents containing sensitive personal information, including: personal identification numbers such as resident registration numbers, passport numbers, driver's license numbers, and alien registration numbers; documents certifying legal rights and obligations such as seal certificates and registration title deeds; documents certifying personal status such as family relation certificates and resident registration records; documents containing financial information such as copies of bank accounts and credit card information; documents containing medical information such as health checkup results and medical records; documents containing detailed personal career information such as resumes and career certificates.</li>
+    </ul>
+    <p>③ If a Member wishes to register documents containing information described in Paragraph 2, the Member must remove or mask (redact) such information before registration.</p>
+    <p>④ If a Member registers Postings in violation of Paragraph 2, the Company may delete such Postings or refuse their publication without prior notice, and may restrict the Member's use of the Service or terminate the service agreement.</p>
+    <p>⑤ If Postings registered by a Member in violation of Paragraph 2 cause damage to the Company or a third party, the Member shall be liable for such damages.</p>
+    <p>⑥ When using the NFC tag linking feature, the Company recommends that Members register only the minimum information necessary to identify the type and general contents of documents stored in the physical storage unit.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 14 (Provision and Disclaimers for AI Services)</h3>
+    <p>① The Company provides the following AI Services with respect to Postings registered by Members:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AI OCR (Optical Character Recognition): Automatic text extraction from images or scanned documents;</li>
+      <li>Document search and classification: Automated classification and search functionality based on document content analysis;</li>
+      <li>Question-answering: Document information retrieval through chat or voice commands;</li>
+      <li>Document summarization and analysis: Summarization and statistical analysis of document contents.</li>
+    </ul>
+    <p>② The Company utilizes third-party AI models, including Google Gemini Pro and Naver Clova OCR, for the provision of AI Services.</p>
+    <p>③ AI OCR processes documents in real time as Members upload Postings, and the processing results are stored on Supabase cloud servers (AWS-based).</p>
+    <p>④ The AI Services provided by the Company have the following characteristics and limitations:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AI Services serve as supplementary information tools and do not replace professional judgment in areas such as law, accounting, taxation, medicine, or human resources;</li>
+      <li>The completeness, accuracy, and currency of information provided by AI are not guaranteed; Members must verify against original documents when making final decisions;</li>
+      <li>AI analysis results shall be used as reference materials only and shall not serve as the sole basis for important decision-making.</li>
+    </ul>
+    <p>⑤ The Company shall not be liable for errors, inaccuracies, or damages arising from a Member's reliance on AI Service results, unless caused by the Company's willful misconduct or gross negligence.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 15 (Member Rights Regarding AI Processing)</h3>
+    <p>① Members may exercise the following rights with respect to results provided by the AI Service:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Right to explanation: The right to request an explanation of AI processing results;</li>
+      <li>Right to object: The right to raise an objection regarding clearly erroneous or inappropriate results;</li>
+      <li>Right to human intervention: The right to request human review of automated processing.</li>
+    </ul>
+    <p>② Upon receiving a request under Paragraph 1, the Company shall review and take necessary measures within technically feasible limits. However, due to the technical nature of AI Services, individual explanations or corrections for all processing results are not guaranteed.</p>
+    <p>③ Members may exercise the rights under Paragraph 1 through the Customer Center (support@traystorage.net, +82-2-333-7334).</p>
+
+    <h3 className="font-semibold text-slate-900">Article 16 (Use of Postings for AI Training)</h3>
+    <p>① The Company does not currently use Members' Postings as training data for general AI models.</p>
+    <p>② However, Postings may be used in the following limited cases for service quality improvement and feature enhancement: generation and analysis of de-identified statistical information from which all personally identifiable information has been completely removed; technical verification for service error correction and quality improvement.</p>
+    <p>③ If the Company wishes to use Members' Postings for AI model training in the future, it shall obtain the Member's explicit prior consent. Even in such cases, Postings containing sensitive information as described in Article 13, Paragraph 2 shall be excluded from training data.</p>
+    <p>④ Members may refuse to have their Postings used for AI training at any time, and the Company shall immediately exclude such Postings from training data.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 17 (Protection of Personal Information and Cross-Border Transfer)</h3>
+    <p>① The Company shall endeavor to protect Members' personal information in accordance with applicable laws. The protection and use of personal information shall be governed by applicable laws and the Company's Privacy Policy.</p>
+    <p>② The Company stores Members' Postings and personal information on cloud servers (Supabase, AWS-based) for service provision, and such servers may be located overseas.</p>
+    <p>③ Details regarding the cross-border transfer of personal information are as follows: personal information items transferred (member information, Postings, AI processing results); destination country (United States and other locations where Supabase servers are situated); purpose of transfer (cloud-based service provision and data storage); retention and use period (until membership withdrawal or as required by applicable laws).</p>
+    <p>④ The Company may consider transitioning to domestic servers in the future and shall provide prior notice of any change in server location.</p>
+    <p>⑤ The Company's Privacy Policy is available on the Service and the Company's website.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 18 (Member Obligations)</h3>
+    <p>① Members shall not engage in the following conduct: registering false information at the time of application or modification; misappropriating another person's information; infringing on the intellectual property rights or other rights of the Company or third parties; damaging the reputation or disrupting the operations of the Company or third parties; publicly disclosing or posting obscene or violent information, images, or audio; using the Service for commercial purposes without the Company's consent; distributing computer viruses or other malicious programs; using information obtained through the Service without the Company's prior consent or providing such information to third parties; gaining unauthorized access to the Service or collecting data using automated means; negatively affecting the Company's servers or interfering with service operations; any other conduct that violates applicable laws or is contrary to good morals and social norms.</p>
+    <p>② Administrators shall bear responsibility for department creation, access permission assignment, and team member management. The Administrator shall bear primary liability for issues arising from errors in or inappropriate assignment of permissions.</p>
+    <p>③ Members shall comply with the provisions of these Terms and applicable laws, and shall not engage in any conduct that interferes with the Company's operations.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 19 (Access Permission Management)</h3>
+    <p>① The Service operates a role-based access permission management system divided into Administrators and Team Members.</p>
+    <p>② The Administrator's permissions and responsibilities are as follows: creation and deletion of departments; creation and management of document main categories and subcategories; setting department access permissions for each Team Member (four levels: No Access / Viewer / Editor / Administrator); viewing documents and statistics across all departments. Currently, one (1) Administrator per organization is permitted; future updates may allow designation of multiple Administrators.</p>
+    <p>③ Team Member permissions are as follows: creation of document main categories and subcategories within their assigned department; registration, viewing, and editing of documents within their assigned department; limited access to documents in other departments as permitted by the Administrator.</p>
+    <p>④ The procedure for requesting access to other departments is as follows: the Team Member requests cross-department access from the Administrator → the Administrator sets the access level → upon completion, the Team Member may access the designated department.</p>
+    <p>⑤ The Administrator shall adhere to the principle of least privilege when assigning permissions, granting only the minimum permissions necessary for task performance, and shall be liable for information leaks or other issues arising from unnecessary permission assignments.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 20 (Company Obligations)</h3>
+    <p>① The Company shall not engage in conduct prohibited by applicable laws and these Terms or contrary to public morals, and shall endeavor to provide the Service on a continuous and stable basis.</p>
+    <p>② The Company shall maintain security systems to protect personal information (including credit information) to ensure Members can use the Service safely, and shall publicly disclose and comply with its Privacy Policy.</p>
+    <p>③ The Company shall address opinions or complaints raised by Members regarding Service use when deemed legitimate. The Company shall communicate the process and results of handling such opinions or complaints through bulletin boards or email.</p>
+    <p>④ The Company maintains the following insurance policies to prepare for risks that may arise during Service provision: Product Liability Insurance; Personal Information Protection Liability Insurance; Commercial General Liability Insurance; Cyber Insurance.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 21 (Ownership and Restrictions on Intellectual Property)</h3>
+    <p>① Copyright and other intellectual property rights to works created by the Company shall belong to the Company.</p>
+    <p>② Members shall not reproduce, transmit, publish, distribute, broadcast, or otherwise use for commercial purposes, or allow third parties to use, any information to which the Company holds intellectual property rights that was obtained through the Service, without the Company's prior consent.</p>
+    <p>③ The copyright of Postings made by a Member within the Service shall belong to the respective author of such Postings.</p>
+    <p>④ Members shall not commercially exploit materials posted on the Service, including processing and selling information obtained through the Service.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 22 (NFC Product Sales and Defect Handling)</h3>
+    <p>① The Company sells Tray Storage Products (including NFC tags) through the following channels: Company-owned direct sales outlets; online marketplaces (Auction, G-Market, 11st, Naver Smart Store, Cafe24 proprietary store, etc.).</p>
+    <p>② If a Tray Storage Product is defective, the Member may request free after-sales service within one (1) year from the date of purchase.</p>
+    <p>③ Inquiries regarding product defects may be submitted to the Customer Center (+82-2-333-7334, support@traystorage.net).</p>
+    <p>④ Matters regarding product exchange, return, and refund shall be governed by applicable laws, including the Act on Consumer Protection in Electronic Commerce, Etc.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 23 (Data Retention and Backup)</h3>
+    <p>① The Company shall endeavor to securely retain Members' Postings and Service usage data.</p>
+    <p>② Upon membership withdrawal, the Member's Postings and personal information shall be deleted immediately. However, the following information shall be retained for the specified periods: backup data (one year); AI processing logs (one year); information required to be preserved under applicable laws (for the period prescribed by such laws).</p>
+    <p>③ In the case of conversion to a dormant account, personal information shall be stored separately, and all data shall be permanently deleted three (3) years after dormant conversion.</p>
+    <p>④ The Company shall not be liable for data loss caused by force majeure events such as natural disasters, hacking, or system failures, unless caused by the Company's willful misconduct or gross negligence.</p>
+    <p>⑤ Members are advised to maintain separate backups of important data.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 24 (Disclaimer)</h3>
+    <p>① The Company shall not be liable for service interruptions and resulting damages caused by events beyond the Company's control, including natural disasters, war, suspension of services by telecommunications carriers, hacking, and DDoS attacks.</p>
+    <p>② The Company shall not be liable for service disruptions caused by reasons attributable to the Member.</p>
+    <p>③ The Company shall not be liable for the loss of anticipated profits from the Member's use of the Service, nor for damages arising from materials obtained through the Service.</p>
+    <p>④ The Company shall not be liable for the reliability, accuracy, or other aspects of the content of information, data, or facts posted by Members on the Service.</p>
+    <p>⑤ The Company shall not be liable for transactions or other dealings conducted between Members or between a Member and a third party through the Service.</p>
+    <p>⑥ The Company shall not be liable for matters related to the use of services provided free of charge, unless otherwise required by applicable laws.</p>
+    <p>⑦ The Company shall not be liable for errors, inaccurate information, or unexpected results inherent to the nature of AI Services, unless caused by the Company's willful misconduct or gross negligence.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 25 (Damages)</h3>
+    <p>① If the Company or a Member causes damage to the other party by violating these Terms, the party at fault shall be liable for such damages. However, this shall not apply where there is no willful misconduct or negligence.</p>
+    <p>② If a Member suffers damage due to service interruptions, errors, or other causes, the Company shall address such damages as follows: for paid Members, provision of one (1) to three (3) months of free service; for free Members, no separate compensation.</p>
+    <p>③ Compensation provided by the Company does not replace monetary damages, and Members may separately claim damages in proportion to the extent of their loss.</p>
+    <p>④ If a Member causes damage to the Company by violating these Terms, the Member shall be liable to compensate the Company for such damages.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 26 (Dispute Resolution)</h3>
+    <p>① The Company shall establish and operate a damage compensation processing body to reflect legitimate opinions or complaints raised by Members and to process damage claims.</p>
+    <p>② The Company shall prioritize processing complaints and opinions submitted by Members. However, if prompt processing is not feasible, the Company shall immediately notify the Member of the reason and the expected processing schedule.</p>
+    <p>③ In the event of an e-commerce dispute between the Company and a Member, and the Member files a request for damage relief, the dispute may be referred for mediation to a dispute resolution body commissioned by the Fair Trade Commission or a provincial governor.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 27 (Jurisdiction and Governing Law)</h3>
+    <p>① Matters not stipulated in these Terms shall be governed by applicable laws, including the Act on Consumer Protection in Electronic Commerce, Etc., the Act on the Regulation of Terms and Conditions, the Network Act, the Personal Information Protection Act, the Framework Act on Artificial Intelligence, and general commercial practices.</p>
+    <p>② Any litigation arising from the use of the Service shall be filed with the competent court under the Civil Procedure Act of the Republic of Korea.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 28 (Customer Center)</h3>
+    <p>Members may contact the following Customer Center for inquiries regarding Service use:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Phone: +82-2-333-7334</li>
+      <li>Email: support@traystorage.net</li>
+      <li>Operating hours: Weekdays 09:00 – 18:00 KST (excluding weekends and public holidays)</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Supplementary Provisions</h3>
+    <p><strong>Article 1 (Effective Date)</strong> These Terms shall take effect on February 9, 2026.</p>
+    <p><strong>Article 2 (Transitional Measures)</strong> ① Members who registered prior to the effective date of these Terms shall be subject to the revised Terms. ② Members who registered during the beta testing period may receive preferential benefits upon the transition to paid services.</p>
+
+    <h3 className="font-semibold text-slate-900">[Company Information]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Company Name: InfoCreative Co., Ltd.</li>
+      <li>Representative: Jeong Do-cheon</li>
+      <li>Address: Rooms 708 &amp; 709, Gasan Hanwha Biz Metro 2nd, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Republic of Korea</li>
+      <li>Business Registration Number: 841-86-03004</li>
+      <li>Customer Center: +82-2-333-7334</li>
+      <li>Email: support@traystorage.net</li>
+    </ul>
+  </>
+);
+
+export const TermsOfServiceContent = () => {
+  const { i18n } = useTranslation();
+  return i18n.language === 'en' ? <TermsEn /> : <TermsKo />;
+};
 
 export default TermsOfServiceContent;
