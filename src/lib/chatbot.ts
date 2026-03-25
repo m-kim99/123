@@ -954,7 +954,8 @@ export interface StreamedDocsResult {
 export async function generateResponse(
   message: string,
   history: ChatHistoryItem[] = [],
-  onPartialUpdate?: (partial: string, docs?: ChatSearchResult[]) => void
+  onPartialUpdate?: (partial: string, docs?: ChatSearchResult[]) => void,
+  locale: string = 'ko'
 ): Promise<StreamedDocsResult> {
   const text = message.trim();
   const emitFallback = (): StreamedDocsResult => {
@@ -1051,6 +1052,7 @@ export async function generateResponse(
       body: JSON.stringify({
         message: text,
         userId: user.id,
+        locale,
         history: history.map((h) => ({
           role: h.role,
           content: h.content,

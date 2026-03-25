@@ -421,7 +421,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const { message, userId, history = [] } = await req.json();
+    const { message, userId, history = [], locale = 'ko' } = await req.json();
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -453,7 +453,7 @@ serve(async (req) => {
 4단 계층: 부서 → 대분류 → 세부카테고리(세부 스토리지) → 문서
 
 ## 필수 규칙
-1. 반드시 한국어로만 답변하세요.
+1. Always respond in the language matching this locale: "${locale}". If locale is "en", respond in English. If locale is "ko", respond in Korean. When in doubt, match the language the user writes in.
 2. 함수 이름이나 내부 동작을 사용자에게 절대 노출하지 마세요.
 ${searchDataBlock}
 
