@@ -336,6 +336,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       console.error('로그아웃 실패:', error);
     } finally {
+      // 챗봇 대화 내역 등 민감 데이터를 sessionStorage에서 완전 삭제
+      try {
+        Object.keys(sessionStorage)
+          .filter(key => key.startsWith('troy_chat_'))
+          .forEach(key => sessionStorage.removeItem(key));
+      } catch { /* ignore */ }
+
       set({
         user: null,
         isAuthenticated: false,

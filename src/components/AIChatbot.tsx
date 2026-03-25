@@ -113,9 +113,17 @@ interface AIChatbotProps {
 const CHAT_STORAGE_KEY = 'troy_chat_messages';
 const CHAT_OPEN_KEY = 'troy_chat_open';
 
-function loadMessages(defaultMsg: ChatMessage): ChatMessage[] {
+function getChatStorageKey(userId: string | undefined) {
+  return userId ? `${CHAT_STORAGE_KEY}_${userId}` : CHAT_STORAGE_KEY;
+}
+
+function getChatOpenKey(userId: string | undefined) {
+  return userId ? `${CHAT_OPEN_KEY}_${userId}` : CHAT_OPEN_KEY;
+}
+
+function loadMessages(defaultMsg: ChatMessage, userId: string | undefined): ChatMessage[] {
   try {
-    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    const raw = sessionStorage.getItem(getChatStorageKey(userId));
     if (raw) {
       const parsed = JSON.parse(raw);
       return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
@@ -136,21 +144,33 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
     timestamp: new Date(Date.now() - 60000),
   };
 
-  const [isOpen, setIsOpen] = useState(() => sessionStorage.getItem(CHAT_OPEN_KEY) === 'true');
-  const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(defaultMessage));
+  const [isOpen, setIsOpen] = useState(() => sessionStorage.getItem(getChatOpenKey(user?.id)) === 'true');
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(defaultMessage, user?.id));
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 대화 내용을 sessionStorage에 저장 (페이지 이동 시 유지)
+  // 사용자 전환 감지: user.id가 바뀌면 메시지·열림상태 초기화 (방어적 리셋)
+  const prevUserIdRef = useRef<string | undefined>(user?.id);
   useEffect(() => {
-    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
+    if (prevUserIdRef.current !== user?.id) {
+      prevUserIdRef.current = user?.id;
+      setMessages(loadMessages(defaultMessage, user?.id));
+      setIsOpen(false);
+    }
+  // defaultMessage는 매 렌더마다 새 객체이므로 의존성에서 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // 대화 내용을 sessionStorage에 저장 (페이지 이동 시 유지, 사용자별 스코프)
+  useEffect(() => {
+    sessionStorage.setItem(getChatStorageKey(user?.id), JSON.stringify(messages));
+  }, [messages, user?.id]);
 
   useEffect(() => {
-    sessionStorage.setItem(CHAT_OPEN_KEY, String(isOpen));
-  }, [isOpen]);
+    sessionStorage.setItem(getChatOpenKey(user?.id), String(isOpen));
+  }, [isOpen, user?.id]);
 
   // 웹뷰 Pull-to-Refresh 방지
   useEffect(() => {
