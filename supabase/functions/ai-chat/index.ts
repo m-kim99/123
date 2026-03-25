@@ -533,38 +533,43 @@ ${searchDataBlockEn}
       
       // Gemini 실패 시 함수 결과로 직접 응답
       if (!finalText) {
+        const isEn = locale === 'en';
         const lines: string[] = [];
         for (const fr of functionResults) {
           const fn = fr.functionResponse?.name;
           const res = fr.functionResponse?.response?.result;
-          
-          if (res?.results?.length > 0) { 
-            for (const r of res.results) { 
-              lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`); 
-            } 
-          }
-          else if (res?.documents?.length > 0) { 
-            lines.push(`**${res.count}개의 문서**를 찾았습니다:`);
-            for (const d of res.documents.slice(0, 5)) { 
-              lines.push(`- **${d.title}**\n  · 경로: ${d.path || `${d.department} → ${d.parent_category} → ${d.subcategory}`}${d.link ? `\n  · 문서: ${d.link}` : ''}`); 
+
+          if (res?.results?.length > 0) {
+            for (const r of res.results) {
+              lines.push(`- **${r.name}**${r.path ? ` (${r.path})` : ''}${r.link ? ` → ${r.link}` : ''}`);
             }
-            if (res.count > 5) lines.push(`\n외 ${res.count - 5}개 문서`);
           }
-          else if (res?.error) { 
-            lines.push(res.error); 
+          else if (res?.documents?.length > 0) {
+            lines.push(isEn ? `Found **${res.count}** document(s):` : `**${res.count}개의 문서**를 찾았습니다:`);
+            for (const d of res.documents.slice(0, 5)) {
+              lines.push(`- **${d.title}**\n  · ${isEn ? 'Path' : '경로'}: ${d.path || `${d.department} → ${d.parent_category} → ${d.subcategory}`}${d.link ? `\n  · ${isEn ? 'Document' : '문서'}: ${d.link}` : ''}`);
+            }
+            if (res.count > 5) lines.push(isEn ? `\nAnd ${res.count - 5} more document(s)` : `\n외 ${res.count - 5}개 문서`);
+          }
+          else if (res?.error) {
+            lines.push(res.error);
           }
           else if (res && typeof res === 'object') {
             if (fn === 'get_total_counts') {
-              lines.push(`현재 시스템 현황입니다:\n- 부서: ${res.departments || 0}개\n- 대분류: ${res.parent_categories || 0}개\n- 세부카테고리: ${res.subcategories || 0}개\n- 문서: ${res.documents || 0}개\n- 사용자: ${res.users || 0}명`);
+              lines.push(isEn
+                ? `Current system status:\n- Departments: ${res.departments || 0}\n- Parent Categories: ${res.parent_categories || 0}\n- Subcategories: ${res.subcategories || 0}\n- Documents: ${res.documents || 0}\n- Users: ${res.users || 0}`
+                : `현재 시스템 현황입니다:\n- 부서: ${res.departments || 0}개\n- 대분류: ${res.parent_categories || 0}개\n- 세부카테고리: ${res.subcategories || 0}개\n- 문서: ${res.documents || 0}개\n- 사용자: ${res.users || 0}명`);
             } else if (fn === 'list_all' && res.items) {
-              lines.push(`총 ${res.count || res.items.length}개의 항목이 있습니다.`);
+              lines.push(isEn ? `Total of ${res.count || res.items.length} item(s).` : `총 ${res.count || res.items.length}개의 항목이 있습니다.`);
               if (res.items.length > 0 && res.items.length <= 10) {
-                lines.push(`목록: ${res.items.join(', ')}`);
+                lines.push(`${isEn ? 'List' : '목록'}: ${res.items.join(', ')}`);
               } else if (res.items.length > 10) {
-                lines.push(`목록 (일부): ${res.items.slice(0, 10).join(', ')} 외 ${res.items.length - 10}개`);
+                lines.push(isEn
+                  ? `List (partial): ${res.items.slice(0, 10).join(', ')} and ${res.items.length - 10} more`
+                  : `목록 (일부): ${res.items.slice(0, 10).join(', ')} 외 ${res.items.length - 10}개`);
               }
             } else if (res.count !== undefined) {
-              lines.push(`총 ${res.count}개입니다.`);
+              lines.push(isEn ? `Total: ${res.count} item(s).` : `총 ${res.count}개입니다.`);
             }
           }
         }
