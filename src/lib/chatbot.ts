@@ -679,11 +679,13 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
 
   // ========== 빠른 통계 응답 (로컬 데이터 기반 - 단순 includes 체크) ==========
   const t = text.toLowerCase();
-  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수');
-  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려');
+  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수')
+    || t.includes('count') || t.includes('how many') || t.includes('total') || t.includes('number of');
+  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려')
+    || t.includes('list') || t.includes('show') || t.includes('display') || t.includes('tell me');
   
   // 전체 현황/통계 요청
-  if (t.includes('현황') || t.includes('통계') || t.includes('상태')) {
+  if (t.includes('현황') || t.includes('통계') || t.includes('상태') || t.includes('status') || t.includes('statistics') || t.includes('stats') || t.includes('overview')) {
     return [
       '현재 시스템 현황입니다:',
       `- 부서: ${departments.length}개`,
@@ -694,27 +696,27 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
   }
 
   // 대분류 수 질문
-  if (t.includes('대분류') && hasCount) {
+  if ((t.includes('대분류') || t.includes('category') || t.includes('categories')) && hasCount) {
     return `현재 시스템에 등록된 대분류는 총 ${parentCategories.length}개입니다.`;
   }
 
   // 문서 수 질문
-  if (t.includes('문서') && hasCount) {
+  if ((t.includes('문서') || t.includes('document')) && hasCount) {
     return `현재 시스템에 등록된 문서는 총 ${documents.length}개입니다.`;
   }
 
   // 세부 스토리지 수 질문
-  if ((t.includes('세부') || t.includes('스토리지')) && hasCount) {
+  if ((t.includes('세부') || t.includes('스토리지') || t.includes('subcategory') || t.includes('storage')) && hasCount) {
     return `현재 시스템에 등록된 세부 스토리지는 총 ${subcategories.length}개입니다.`;
   }
 
   // 부서 수 질문
-  if (t.includes('부서') && hasCount) {
+  if ((t.includes('부서') || t.includes('department')) && hasCount) {
     return `현재 시스템에 등록된 부서는 총 ${departments.length}개입니다.`;
   }
 
   // 카테고리 수 질문
-  if (t.includes('카테고리') && hasCount) {
+  if ((t.includes('카테고리') || t.includes('category')) && hasCount) {
     return [
       '현재 시스템에 등록된 카테고리 현황:',
       `- 대분류: ${parentCategories.length}개`,
@@ -735,7 +737,7 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
   }
 
   // 대분류 목록
-  if (t.includes('대분류') && hasList) {
+  if ((t.includes('대분류') || t.includes('category') || t.includes('categories')) && hasList) {
     if (parentCategories.length === 0) return '등록된 대분류가 없습니다.';
     const items = parentCategories.slice(0, 15).map(pc => {
       const dept = departments.find(d => d.id === pc.departmentId);
@@ -746,7 +748,7 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
   }
 
   // 세부 스토리지 목록
-  if ((t.includes('세부') || t.includes('스토리지')) && hasList) {
+  if ((t.includes('세부') || t.includes('스토리지') || t.includes('subcategory') || t.includes('storage')) && hasList) {
     if (subcategories.length === 0) return '등록된 세부 스토리지가 없습니다.';
     const items = subcategories.slice(0, 15).map(sc => {
       const dept = departments.find(d => d.id === sc.departmentId);
@@ -758,7 +760,7 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
   }
 
   // 부서 목록
-  if (t.includes('부서') && hasList) {
+  if ((t.includes('부서') || t.includes('department')) && hasList) {
     if (departments.length === 0) return '등록된 부서가 없습니다.';
     const items = departments.map(d => `- ${d.name} (문서 ${d.documentCount}건)`);
     return [`부서 목록 (총 ${departments.length}개):`, ...items].join('\n');
