@@ -113,14 +113,7 @@ interface AIChatbotProps {
 const CHAT_STORAGE_KEY = 'troy_chat_messages';
 const CHAT_OPEN_KEY = 'troy_chat_open';
 
-const defaultMessage: ChatMessage = {
-  id: '1',
-  role: 'assistant',
-  content: '안녕하세요! 저는 TrayStorage Connect의 AI 어시스턴트 트로이입니다. 😊 문서 검색과 관리를 도와드릴게요!',
-  timestamp: new Date(Date.now() - 60000),
-};
-
-function loadMessages(): ChatMessage[] {
+function loadMessages(defaultMsg: ChatMessage): ChatMessage[] {
   try {
     const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
     if (raw) {
@@ -128,15 +121,23 @@ function loadMessages(): ChatMessage[] {
       return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
     }
   } catch { /* ignore */ }
-  return [defaultMessage];
+  return [defaultMsg];
 }
 
 export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+
+  const defaultMessage: ChatMessage = {
+    id: '1',
+    role: 'assistant',
+    content: t('chatbot.defaultMessage'),
+    timestamp: new Date(Date.now() - 60000),
+  };
+
   const [isOpen, setIsOpen] = useState(() => sessionStorage.getItem(CHAT_OPEN_KEY) === 'true');
-  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(defaultMessage));
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isTall, setIsTall] = useState(false);

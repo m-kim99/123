@@ -338,32 +338,41 @@ function isDateSearchIntent(text: string): boolean {
     '오늘', '어제', '그저께', '그제',
     '이번 주', '이번주', '금주', '저번 주', '저번주', '지난 주', '지난주',
     '이번 달', '이번달', '금월', '저번 달', '저번달', '지난 달', '지난달',
-    '올해', '작년', '지난해', '지난 해'
+    '올해', '작년', '지난해', '지난 해',
+    'today', 'yesterday', 'this week', 'last week', 'this month', 'last month', 'this year', 'last year'
   ];
   
-  const hasDateKeyword = dateKeywords.some(keyword => text.includes(keyword));
+  const lowerText = text.toLowerCase();
+  const hasDateKeyword = dateKeywords.some(keyword => lowerText.includes(keyword));
   const hasNDaysAgo = /\d+\s*일\s*전/.test(text);
   const hasNWeeksAgo = /\d+\s*주\s*전/.test(text);
   const hasNMonthsAgo = /\d+\s*(달|개월)\s*전/.test(text);
   const hasNYearsAgo = /\d+\s*년\s*전/.test(text);
+  const hasNDaysAgoEn = /\d+\s*days?\s*ago/i.test(text);
+  const hasNWeeksAgoEn = /\d+\s*weeks?\s*ago/i.test(text);
+  const hasNMonthsAgoEn = /\d+\s*months?\s*ago/i.test(text);
   
   const hasSpecificDate = /\d{1,2}\s*월\s*\d{1,2}\s*일/.test(text);
   
-  const hasDocumentKeyword = text.includes('문서') || text.includes('올린') || text.includes('업로드') || text.includes('등록');
+  const hasDocumentKeyword = text.includes('문서') || text.includes('올린') || text.includes('업로드') || text.includes('등록')
+    || lowerText.includes('document') || lowerText.includes('uploaded') || lowerText.includes('file');
   
-  return (hasDateKeyword || hasNDaysAgo || hasNWeeksAgo || hasNMonthsAgo || hasNYearsAgo || hasSpecificDate) && hasDocumentKeyword;
+  return (hasDateKeyword || hasNDaysAgo || hasNWeeksAgo || hasNMonthsAgo || hasNYearsAgo || hasSpecificDate
+    || hasNDaysAgoEn || hasNWeeksAgoEn || hasNMonthsAgoEn) && hasDocumentKeyword;
 }
 
 // 만기 임박 키워드 감지
 function isExpiryIntent(text: string): boolean {
-  const expiryKeywords = ['만기', '만료', '임박', '다음주 만료', '이번달 만료', '만료 예정', '만기 임박'];
-  return expiryKeywords.some(keyword => text.includes(keyword));
+  const expiryKeywords = ['만기', '만료', '임박', '다음주 만료', '이번달 만료', '만료 예정', '만기 임박',
+    'expir', 'due', 'expiring', 'expiration', 'overdue'];
+  return expiryKeywords.some(keyword => text.toLowerCase().includes(keyword));
 }
 
 // 공유 문서 키워드 감지
 function isSharedDocumentIntent(text: string): boolean {
-  const sharedKeywords = ['공유', '공유한 문서', '공유된', '공유 목록', '공유문서'];
-  return sharedKeywords.some(keyword => text.includes(keyword));
+  const sharedKeywords = ['공유', '공유한 문서', '공유된', '공유 목록', '공유문서',
+    'shared', 'share', 'shared document', 'shared with me', 'shared by me'];
+  return sharedKeywords.some(keyword => text.toLowerCase().includes(keyword));
 }
 
 // NFC 키워드 감지
@@ -656,14 +665,16 @@ async function getNfcStatus(): Promise<{ text: string; docs: ChatSearchResult[] 
 }
 
 // 기존 규칙 기반 응답 (Gemini 장애 시 폴백용)
-function generateFallbackResponse(message: string): string {
+function generateFallbackResponse(message: string, locale: string = 'ko'): string {
   console.log('fallback 로직 사용');
   const text = message.trim();
   const store = useDocumentStore.getState();
   const { documents, categories, departments, parentCategories, subcategories } = store;
 
   if (!text) {
-    return '질문을 입력해 주세요. 예: "급여 명세 문서는 어디에 있어?", "전체 문서 수 알려줘"';
+    return locale === 'en'
+      ? 'Please enter a question. e.g. "Where are the HR documents?", "How many documents are there?"'
+      : '질문을 입력해 주세요. 예: "급여 명세 문서는 어디에 있어?", "전체 문서 수 알려줘"';
   }
 
   // ========== 빠른 통계 응답 (로컬 데이터 기반 - 단순 includes 체크) ==========
@@ -910,17 +921,29 @@ function generateFallbackResponse(message: string): string {
     return ['다음 항목을 찾았습니다:', ...allLines].join('\n');
   }
 
-  return [
-    '해당 키워드와 관련된 항목을 찾지 못했어요.',
-    '다음과 같이 질문해 보세요:',
-    '- "급여 명세 문서는 어디에 있어?"',
-    '- "전체 문서 수 알려줘"',
-    '- "부서별 문서 수 알려줘"',
-    '- "카테고리 목록 보여줘"',
-    '- "만기 임박 문서 알려줘"',
-    '- "공유한 문서 목록"',
-    '- "NFC 등록 현황"',
-  ].join('\n');
+  return locale === 'en'
+    ? [
+        'No matching items found.',
+        'Try asking:',
+        '- "Where are the HR documents?"',
+        '- "How many documents are there?"',
+        '- "Show department list"',
+        '- "Show category list"',
+        '- "Show expiring items"',
+        '- "Show shared documents"',
+        '- "NFC registration status"',
+      ].join('\n')
+    : [
+        '해당 키워드와 관련된 항목을 찾지 못했어요.',
+        '다음과 같이 질문해 보세요:',
+        '- "급여 명세 문서는 어디에 있어?"',
+        '- "전체 문서 수 알려줘"',
+        '- "부서별 문서 수 알려줘"',
+        '- "카테고리 목록 보여줘"',
+        '- "만기 임박 문서 알려줘"',
+        '- "공유한 문서 목록"',
+        '- "NFC 등록 현황"',
+      ].join('\n');
 }
 
 // 비동기 폴백 응답 생성 (만기, 공유, NFC 조회용)
@@ -959,7 +982,7 @@ export async function generateResponse(
 ): Promise<StreamedDocsResult> {
   const text = message.trim();
   const emitFallback = (): StreamedDocsResult => {
-    const fallback = generateFallbackResponse(text);
+    const fallback = generateFallbackResponse(text, locale);
     if (onPartialUpdate) {
       onPartialUpdate(fallback, []);
     }
@@ -972,17 +995,23 @@ export async function generateResponse(
 
   // 빠른 답변이 필요한 질문들 (즉시 fallback 처리 - 단순 includes 체크)
   const t = text.toLowerCase();
-  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수');
-  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려');
-  const hasEntity = t.includes('문서') || t.includes('부서') || t.includes('대분류') || t.includes('세부') || t.includes('스토리지') || t.includes('카테고리');
-  const hasStatus = t.includes('현황') || t.includes('통계') || t.includes('상태');
+  const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수')
+    || t.includes('count') || t.includes('how many') || t.includes('total') || t.includes('number of');
+  const hasList = t.includes('목록') || t.includes('리스트') || t.includes('보여') || t.includes('알려')
+    || t.includes('list') || t.includes('show') || t.includes('display') || t.includes('tell me');
+  const hasEntity = t.includes('문서') || t.includes('부서') || t.includes('대분류') || t.includes('세부') || t.includes('스토리지') || t.includes('카테고리')
+    || t.includes('document') || t.includes('department') || t.includes('category') || t.includes('storage') || t.includes('subcategory');
+  const hasStatus = t.includes('현황') || t.includes('통계') || t.includes('상태')
+    || t.includes('status') || t.includes('statistics') || t.includes('stats') || t.includes('overview');
   const hasNfc = t.includes('nfc');
   
   // DB 조회가 필요한 질문들 → Edge Function으로 넘김
   const needsDbQuery = 
     t.includes('팀원') || t.includes('멤버') || t.includes('사람') || t.includes('직원') || t.includes('사용자') || t.includes('누구') ||
     // OCR 텍스트 검색 (내용 검색)
-    t.includes('내용') || t.includes('포함') || t.includes('들어있') || t.includes('있는 문서') || t.includes('찾아');
+    t.includes('내용') || t.includes('포함') || t.includes('들어있') || t.includes('있는 문서') || t.includes('찾아') ||
+    t.includes('member') || t.includes('staff') || t.includes('employee') || t.includes('who') ||
+    t.includes('contains') || t.includes('include') || t.includes('find') || t.includes('search for');
   
   const isFastReply = !needsDbQuery && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
   
