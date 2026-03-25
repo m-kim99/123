@@ -1076,7 +1076,7 @@ export async function generateResponse(
       headers: {
         'Content-Type': 'application/json',
         apikey: supabaseAnonKey,
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        Authorization: `Bearer ${accessToken ?? supabaseAnonKey}`,
       },
       body: JSON.stringify({
         message: text,
