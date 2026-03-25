@@ -134,6 +134,7 @@ function loadMessages(defaultMsg: ChatMessage, userId: string | undefined): Chat
 
 export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
   const { t, i18n } = useTranslation();
+  const currentLocale = localStorage.getItem('app-language') || i18n.language || 'ko';
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
@@ -389,7 +390,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               : m
           )
         );
-      }, i18n.language);
+      }, currentLocale);
       
       // 3. 최종 응답을 브라우저 TTS로 읽기
       if (finalText && isVoiceModeRef.current) {
@@ -425,7 +426,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       isProcessingSpeechRef.current = false;
       lastProcessedTranscriptRef.current = '';
     }
-  }, [messages, speakText]);
+  }, [messages, speakText, currentLocale]);
 
   // speakText([] deps) closure에서 항상 최신 handleUserSpeech를 참조하도록 매 렌더마다 갱신
   handleUserSpeechRef.current = handleUserSpeech;
@@ -880,7 +881,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 : m
             )
           );
-        }, i18n.language);
+        }, currentLocale);
       } finally {
         setIsTyping(false);
       }

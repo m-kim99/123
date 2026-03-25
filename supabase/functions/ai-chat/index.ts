@@ -422,7 +422,7 @@ ${searchDataBlockEn}
 - Be friendly and concise`;
     
     // locale에 따라 시스템 프롬프트 선택
-    const systemInstruction = locale === 'en' ? systemInstructionEn : systemInstructionKo;
+    const systemInstruction = locale?.startsWith('en') ? systemInstructionEn : systemInstructionKo;
     
     // ==========================================
     // Gemini API 호출
@@ -533,7 +533,7 @@ ${searchDataBlockEn}
       
       // Gemini 실패 시 함수 결과로 직접 응답
       if (!finalText) {
-        const isEn = locale === 'en';
+        const isEn = locale?.startsWith('en');
         const lines: string[] = [];
         for (const fr of functionResults) {
           const fn = fr.functionResponse?.name;

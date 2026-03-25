@@ -301,7 +301,7 @@ function cleanJsonResponse(text: string): string {
 // 기간 표현을 사람이 읽기 쉬운 형태로 변환
 function formatDateRangeDescription(text: string, locale: string = 'ko'): string {
   const lower = text.toLowerCase();
-  if (locale === 'en') {
+  if (locale?.startsWith('en')) {
     if (lower.includes('today')) return 'today';
     if (lower.includes('yesterday')) return 'yesterday';
     const daysAgoEnMatch = text.match(/(\d+)\s*days?\s*ago/i);
@@ -401,7 +401,7 @@ function isNfcIntent(text: string): boolean {
 
 // 만기 임박 세부카테고리 조회
 async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
-  const isEn = locale === 'en';
+  const isEn = locale?.startsWith('en');
   const { user } = useAuthStore.getState();
   if (!user?.companyId) {
     return { text: isEn ? 'User information not found.' : '사용자 정보를 찾을 수 없습니다.', docs: [] };
@@ -532,7 +532,7 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
 
 // 공유 문서 조회
 async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
-  const isEn = locale === 'en';
+  const isEn = locale?.startsWith('en');
   const { user } = useAuthStore.getState();
   if (!user?.id) {
     return { text: isEn ? 'User information not found.' : '사용자 정보를 찾을 수 없습니다.', docs: [] };
@@ -616,7 +616,7 @@ async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string
 
 // NFC 등록 현황 조회
 async function getNfcStatus(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
-  const isEn = locale === 'en';
+  const isEn = locale?.startsWith('en');
   const { user } = useAuthStore.getState();
   if (!user?.companyId) {
     return { text: isEn ? 'User information not found.' : '사용자 정보를 찾을 수 없습니다.', docs: [] };
@@ -703,7 +703,7 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
   const text = message.trim();
   const store = useDocumentStore.getState();
   const { documents, categories, departments, parentCategories, subcategories } = store;
-  const isEn = locale === 'en';
+  const isEn = locale?.startsWith('en');
 
   if (!text) {
     return isEn
@@ -1027,7 +1027,7 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
       : ['다음 항목을 찾았습니다:', ...allLines].join('\n');
   }
 
-  return locale === 'en'
+  return locale?.startsWith('en')
     ? [
         'No matching items found.',
         'Try asking:',
@@ -1139,7 +1139,7 @@ export async function generateResponse(
   if (isDateSearchIntent(text)) {
     const dateRange = parseDateRange(text);
     if (dateRange) {
-      const isEn = locale === 'en';
+      const isEn = locale?.startsWith('en');
       const results = searchDocumentsByDate(dateRange);
       const periodDesc = formatDateRangeDescription(text, locale);
       const dateLocale = isEn ? 'en-US' : 'ko-KR';
