@@ -702,15 +702,6 @@ export function LoginPage() {
       return;
     }
 
-    if (signupRole === 'team' && !signupForm.departmentId) {
-      toast({
-        title: t('signup.selectDepartmentError'),
-        description: t('signup.selectDepartmentDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
     if (signupRole === 'admin' && !signupForm.companyName.trim()) {
       toast({
         title: t('signup.enterCompanyName'),
@@ -746,9 +737,9 @@ export function LoginPage() {
       signupForm.password,
       signupForm.name,
       signupRole,
-      signupForm.companyCode.trim(),
-      signupForm.companyName.trim(),
-      signupRole === 'team' ? signupForm.departmentId : undefined
+      signupRole === 'admin' ? signupForm.companyCode.trim() : '',
+      signupRole === 'admin' ? signupForm.companyName.trim() : '',
+      undefined
     );
 
     if (result.success) {
@@ -1198,128 +1189,7 @@ export function LoginPage() {
                 </>
               )}
 
-              {/* 팀원: 회사 코드 + 회사명 */}
-              {signupRole === 'team' && (
-                <>
-                  <div className="space-y-2">
-                    <Label>{t('signup.companyCode')}</Label>
-                    <Input
-                      placeholder={t('signup.companyCodePlaceholder')}
-                      value={signupForm.companyCode}
-                      onChange={(e) => {
-                        setSignupForm((prev) => ({
-                          ...prev,
-                          companyCode: e.target.value,
-                        }));
-                        setCompanyCodeVerified(false);
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>{t('signup.companyName')}</Label>
-                    <Input
-                      placeholder={t('signup.companyNamePlaceholder')}
-                      value={signupForm.companyName}
-                      onChange={(e) => {
-                        setSignupForm((prev) => ({
-                          ...prev,
-                          companyName: e.target.value,
-                        }));
-                        setCompanyCodeVerified(false);
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      className={`w-full ${
-                        companyCodeVerified
-                          ? 'bg-green-600 hover:bg-green-600'
-                          : ''
-                      }`}
-                      onClick={async () => {
-                        if (
-                          signupForm.companyCode.trim() &&
-                          signupForm.companyName.trim()
-                        ) {
-                          setCompanyCodeVerified(true);
-                          setIsLoadingDepartments(true);
-                          try {
-                            const { data: company } = await supabase
-                              .from('companies')
-                              .select('*')
-                              .eq('code', signupForm.companyCode.trim())
-                              .single();
-
-                            if (company) {
-                              const { data: departments, error: deptError } =
-                                await supabase
-                                  .from('departments')
-                                  .select('*')
-                                  .eq('company_id', company.id)
-                                  .order('name');
-
-                              if (!deptError && departments) {
-                                setAvailableDepartments(departments);
-                                toast({
-                                  title: t('signup.verifyComplete'),
-                                  description: t('signup.loadedDepartments', { count: departments.length }),
-                                });
-                              } else {
-                                setAvailableDepartments([]);
-                                toast({
-                                  title: t('signup.verifyComplete'),
-                                  description: t('signup.noDeptInCompany'),
-                                });
-                              }
-                            } else {
-                              setAvailableDepartments([]);
-                              toast({
-                                title: t('signup.companyNotFound'),
-                                description: t('signup.companyNotFoundDesc'),
-                                variant: 'destructive',
-                              });
-                              setCompanyCodeVerified(false);
-                              return;
-                            }
-                          } catch (error) {
-                            console.error('부서 로드 실패:', error);
-                            setAvailableDepartments([]);
-                          } finally {
-                            setIsLoadingDepartments(false);
-                          }
-                        } else {
-                          toast({
-                            title: t('profile.companyInfoChange'),
-                            description:
-                              t('signup.enterCompanyCodeAndName'),
-                            variant: 'destructive',
-                          });
-                        }
-                      }}
-                      disabled={
-                        !signupForm.companyCode.trim() ||
-                        !signupForm.companyName.trim()
-                      }
-                      variant={companyCodeVerified ? 'default' : 'outline'}
-                    >
-                      {companyCodeVerified ? t('signup.verifiedReVerify') : t('signup.verifyButton')}
-                    </Button>
-                    {!companyCodeVerified && (
-                      <p className="text-xs text-slate-400">
-                        {t('signup.companyCodeAndNameHint')}
-                      </p>
-                    )}
-                    {companyCodeVerified && (
-                      <p className="text-xs text-green-600">
-                        {t('signup.changeCompanyHint')}
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
+              {/* 팀원: 사업자 인증 없이 가입 가능 (회사 연결은 온보딩에서 진행) */}
 
               <div className="space-y-2">
                 <Label>{t('signup.name')}</Label>
@@ -1443,52 +1313,6 @@ export function LoginPage() {
                 />
               </div>
 
-              {signupRole === 'team' && (
-                <div className="space-y-2">
-                  <Label>{t('signup.department')}</Label>
-                  <Select
-                    value={signupForm.departmentId}
-                    onValueChange={(value) =>
-                      setSignupForm((prev) => ({
-                        ...prev,
-                        departmentId: value,
-                      }))
-                    }
-                    disabled={!companyCodeVerified || isLoadingDepartments}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          !companyCodeVerified
-                            ? t('signup.verifyCompanyFirst')
-                            : isLoadingDepartments
-                            ? t('signup.loadingDepartments')
-                            : availableDepartments.length === 0
-                            ? t('signup.noDepartments')
-                            : t('signup.selectDepartment')
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDepartments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name} ({dept.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {!companyCodeVerified && (
-                    <p className="text-xs text-slate-400">
-                      {t('signup.departmentAfterVerify')}
-                    </p>
-                  )}
-                  {companyCodeVerified && availableDepartments.length === 0 && (
-                    <p className="text-xs text-red-500">
-                      {t('signup.noDeptContactAdmin')}
-                    </p>
-                  )}
-                </div>
-              )}
 
               {error && (
                 <Alert variant="destructive">
@@ -1516,8 +1340,7 @@ export function LoginPage() {
                   !signupForm.email ||
                   !signupForm.password ||
                   !signupForm.name ||
-                  (signupRole === 'admin' && (!bizVerified || !adminPhone.trim() || !adminOtpVerified)) ||
-                  (signupRole === 'team' && (!companyCodeVerified || !signupForm.departmentId))
+                  (signupRole === 'admin' && (!bizVerified || !adminPhone.trim() || !adminOtpVerified))
                 }
               >
                 {isLoading ? t('signup.signingUp') : t('signup.signupButton')}

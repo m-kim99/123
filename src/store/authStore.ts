@@ -208,52 +208,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: validation.errors.join(', ') };
       }
 
-      // 1. 회사 코드로 조회
-      const { data: existingCompany, error: checkError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('code', companyCode)
-        .single();
-
-      let company: any;
+      // 1. 회사 코드로 조회 (팀원은 회사 코드 없이 가입 가능)
+      let company: any = null;
       let isNewCompany = false;
 
-      // 2-1. 회사가 이미 존재하는 경우
-      if (existingCompany) {
-        // 회사명 일치 확인
-        if (existingCompany.name !== companyName) {
-          throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
-        }
-        // 회사명 일치 → 기존 회사 사용
-        company = existingCompany;
-        isNewCompany = false;
-        console.log('기존 회사로 가입:', company.name);
-      }
-      // 2-2. 회사가 없는 경우 (PGRST116: no rows returned)
-      else if (checkError && (checkError as any).code === 'PGRST116') {
-        if (role !== 'admin') {
-          throw new Error('새 회사 생성은 관리자만 가능합니다.');
-        }
-
-        const { data: newCompany, error: createError } = await supabase
+      if (companyCode) {
+        const { data: existingCompany, error: checkError } = await supabase
           .from('companies')
-          .insert({
-            name: companyName,
-            code: companyCode,
-          })
-          .select()
+          .select('*')
+          .eq('code', companyCode)
           .single();
 
-        if (createError) throw createError;
-        company = newCompany;
-        isNewCompany = true;
-        console.log('새 회사 생성 완료:', company.name, company.id);
-      }
-      // 2-3. 기타 에러
-      else if (checkError) {
-        throw checkError;
-      } else {
-        throw new Error('회사 정보 확인 중 알 수 없는 오류가 발생했습니다.');
+        // 2-1. 회사가 이미 존재하는 경우
+        if (existingCompany) {
+          // 회사명 일치 확인
+          if (existingCompany.name !== companyName) {
+            throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
+          }
+          // 회사명 일치 → 기존 회사 사용
+          company = existingCompany;
+          isNewCompany = false;
+          console.log('기존 회사로 가입:', company.name);
+        }
+        // 2-2. 회사가 없는 경우 (PGRST116: no rows returned)
+        else if (checkError && (checkError as any).code === 'PGRST116') {
+          if (role !== 'admin') {
+            throw new Error('새 회사 생성은 관리자만 가능합니다.');
+          }
+
+          const { data: newCompany, error: createError } = await supabase
+            .from('companies')
+            .insert({
+              name: companyName,
+              code: companyCode,
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          company = newCompany;
+          isNewCompany = true;
+          console.log('새 회사 생성 완료:', company.name, company.id);
+        }
+        // 2-3. 기타 에러
+        else if (checkError) {
+          throw checkError;
+        } else {
+          throw new Error('회사 정보 확인 중 알 수 없는 오류가 발생했습니다.');
+        }
       }
 
       // 3. 회원가입 (Supabase Auth)
@@ -296,7 +298,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           name,
           email,
           role,
-          company_id: company.id,
+          company_id: company?.id || null,
           department_id: finalDepartmentId,
         },
         { onConflict: 'id' }
