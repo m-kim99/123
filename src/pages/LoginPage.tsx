@@ -19,13 +19,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -44,7 +37,6 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
-  const [companyCodeVerified, setCompanyCodeVerified] = useState(false);
   const backgroundVideoSrc = '/login-bg.mp4';
   const socialLogoBaseClass = 'h-5 w-5 object-contain';
   const socialLogoClassByProvider: Record<'google' | 'apple' | 'kakao' | 'naver', string> = {
@@ -63,8 +55,6 @@ export function LoginPage() {
     companyName: '',
   });
   const navigate = useNavigate();
-  const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
@@ -274,10 +264,6 @@ export function LoginPage() {
       companyCode: '',
       companyName: '',
     });
-    setCompanyCodeVerified(false);
-    setAvailableDepartments([]);
-    setIsLoadingDepartments(false);
-
     setAdminPhone('');
     setAdminOtp('');
     setAdminOtpSent(false);
@@ -358,8 +344,6 @@ export function LoginPage() {
         ...prev,
         companyCode: cleanBizNo,
       }));
-      setCompanyCodeVerified(true);
-
       toast({
         title: t('signup.bizVerifyComplete'),
         description: `${t('signup.bizNumber')} ${bizInfo.b_no} (${bizInfo.b_stt})`,
@@ -1150,7 +1134,6 @@ export function LoginPage() {
                           setBizNo(value);
                           setBizVerified(false);
                           setVerifiedBizInfo(null);
-                          setCompanyCodeVerified(false);
                         }}
                         disabled={isVerifyingBiz}
                         maxLength={12}
