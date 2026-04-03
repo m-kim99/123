@@ -248,8 +248,6 @@ export function LoginPage() {
     });
   };
 
-  const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
-
   const handleLogin = async (role: 'admin' | 'team') => {
     clearError();
 
