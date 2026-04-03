@@ -71,24 +71,6 @@ export function LoginPage() {
   const [pendingLoginRole, setPendingLoginRole] = useState<'admin' | 'team' | null>(null);
   const [isCancellingDeletion, setIsCancellingDeletion] = useState(false);
 
-  const [adminPhone, setAdminPhone] = useState('');
-  const [adminOtp, setAdminOtp] = useState('');
-  const [adminOtpSent, setAdminOtpSent] = useState(false);
-  const [adminOtpVerified, setAdminOtpVerified] = useState(false);
-  const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
-  const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
-
-  // 사업자 인증 관련 상태 (관리자 전용)
-  const [bizNo, setBizNo] = useState('');
-  const [isVerifyingBiz, setIsVerifyingBiz] = useState(false);
-  const [bizVerified, setBizVerified] = useState(false);
-  const [verifiedBizInfo, setVerifiedBizInfo] = useState<{
-    b_no: string;
-    b_stt: string;
-    b_stt_cd: string;
-    tax_type: string;
-    end_dt: string;
-  } | null>(null);
 
   // 비밀번호 실시간 검증
   useEffect(() => {
@@ -264,215 +246,9 @@ export function LoginPage() {
       companyCode: '',
       companyName: '',
     });
-    setAdminPhone('');
-    setAdminOtp('');
-    setAdminOtpSent(false);
-    setAdminOtpVerified(false);
-    setIsSendingAdminOtp(false);
-    setIsVerifyingAdminOtp(false);
-
-    // 사업자 인증 초기화
-    setBizNo('');
-    setIsVerifyingBiz(false);
-    setBizVerified(false);
-    setVerifiedBizInfo(null);
   };
 
   const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
-
-  // 사업자 인증 핸들러 (국세청 상태조회 API)
-  const handleVerifyBusiness = async () => {
-    const cleanBizNo = bizNo.replace(/\D/g, '');
-
-    if (!cleanBizNo || cleanBizNo.length !== 10) {
-      toast({
-        title: t('signup.bizNoInput'),
-        description: t('signup.bizNoInputDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsVerifyingBiz(true);
-    try {
-      // Edge Function 호출 (국세청 상태조회 API)
-      const { data, error: fnError } = await supabase.functions.invoke('verify-business', {
-        body: { bizno: cleanBizNo },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || t('signup.bizVerifyFailed'));
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || t('signup.bizVerifyFailedDesc'));
-      }
-
-      const bizInfo = data.item;
-
-      // 휴폐업 체크
-      if (bizInfo.b_stt_cd === '03') {
-        toast({
-          title: t('signup.closedBiz'),
-          description: t('signup.closedBizDesc'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (bizInfo.b_stt_cd === '02') {
-        toast({
-          title: t('signup.suspendedBiz'),
-          description: t('signup.suspendedBizDesc'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // 인증 성공
-      setVerifiedBizInfo({
-        b_no: bizInfo.b_no,
-        b_stt: bizInfo.b_stt,
-        b_stt_cd: bizInfo.b_stt_cd,
-        tax_type: bizInfo.tax_type,
-        end_dt: bizInfo.end_dt,
-      });
-      setBizVerified(true);
-
-      // 사업자등록번호를 회사코드로 사용
-      setSignupForm((prev) => ({
-        ...prev,
-        companyCode: cleanBizNo,
-      }));
-      toast({
-        title: t('signup.bizVerifyComplete'),
-        description: `${t('signup.bizNumber')} ${bizInfo.b_no} (${bizInfo.b_stt})`,
-      });
-    } catch (err: any) {
-      console.error('사업자 인증 오류:', err);
-      toast({
-        title: t('signup.bizVerifyFailed'),
-        description: err?.message || t('signup.bizVerifyFailedDesc'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsVerifyingBiz(false);
-    }
-  };
-
-  const handleSendAdminOtp = async () => {
-    const phone = normalizePhone(adminPhone);
-
-    if (!phone || phone.length < 10 || phone.length > 11) {
-      toast({
-        title: t('signup.phoneInput'),
-        description: t('signup.phoneInputDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSendingAdminOtp(true);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('send-phone-otp', {
-        body: { phone, purpose: 'admin_signup' },
-      });
-
-      console.log('send-phone-otp response:', { data, fnError });
-
-      if (fnError) {
-        let errMsg = fnError.message || t('signup.smsSendFailed');
-        try {
-          const errBody = await fnError.context?.json();
-          if (errBody?.error) errMsg = errBody.error;
-        } catch {}
-        throw new Error(errMsg);
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || data?.message || t('signup.smsSendFailed'));
-      }
-
-      setAdminOtpSent(true);
-      setAdminOtpVerified(false);
-      setAdminOtp('');
-
-      toast({
-        title: t('signup.otpSent'),
-        description: t('signup.otpSentDesc'),
-      });
-    } catch (err: any) {
-      toast({
-        title: t('signup.otpSendFailed'),
-        description: err?.message || t('signup.otpSendFailedDesc'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSendingAdminOtp(false);
-    }
-  };
-
-  const handleVerifyAdminOtp = async () => {
-    const phone = normalizePhone(adminPhone);
-    const code = (adminOtp || '').trim();
-
-    if (!phone || phone.length < 10 || phone.length > 11) {
-      toast({
-        title: t('signup.phoneInput'),
-        description: t('signup.phoneCheckDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!adminOtpSent) {
-      toast({
-        title: t('signup.sendOtpFirst'),
-        description: t('signup.sendOtpFirstDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!code) {
-      toast({
-        title: t('signup.enterOtp'),
-        description: t('signup.enterOtpDesc'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsVerifyingAdminOtp(true);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('verify-phone-otp', {
-        body: { phone, code, purpose: 'admin_signup' },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || t('signup.verifyFailed'));
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || t('signup.verifyFailed'));
-      }
-
-      setAdminOtpVerified(true);
-
-      toast({
-        title: t('signup.phoneVerifyComplete'),
-        description: t('signup.phoneVerifyCompleteDesc'),
-      });
-    } catch (err: any) {
-      toast({
-        title: t('signup.verifyFailed'),
-        description: err?.message || t('signup.verifyFailedDesc'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsVerifyingAdminOtp(false);
-    }
-  };
 
   const handleLogin = async (role: 'admin' | 'team') => {
     clearError();
@@ -695,25 +471,13 @@ export function LoginPage() {
       return;
     }
 
-    if (signupRole === 'admin') {
-      const phone = normalizePhone(adminPhone);
-      if (!phone) {
-        toast({
-          title: t('signup.enterPhone'),
-          description: t('signup.enterPhoneForAdmin'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (!adminOtpVerified) {
-        toast({
-          title: t('signup.phoneVerifyNeeded'),
-          description: t('signup.phoneVerifyNeededDesc'),
-          variant: 'destructive',
-        });
-        return;
-      }
+    if (signupRole === 'admin' && !signupForm.companyCode.trim()) {
+      toast({
+        title: t('signup.enterCompanyCode'),
+        description: t('signup.enterCompanyCodeDesc'),
+        variant: 'destructive',
+      });
+      return;
     }
 
     const result = await signup(
@@ -1095,7 +859,7 @@ export function LoginPage() {
                 </TabsList>
               </Tabs>
 
-              {/* 관리자: 회사명 + 사업자 인증 */}
+              {/* 관리자: 회사명 + 회사 코드 직접 입력 */}
               {signupRole === 'admin' && (
                 <>
                   <div className="space-y-2">
@@ -1113,62 +877,18 @@ export function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{t('signup.bizNo')}</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="000-00-00000"
-                        value={bizNo}
-                        onChange={(e) => {
-                          // 숫자와 하이픈만 허용, 자동 포맷팅
-                          let value = e.target.value.replace(/[^\d-]/g, '');
-                          // 하이픈 제거 후 숫자만
-                          const numbers = value.replace(/-/g, '');
-                          // 자동 하이픈 포맷팅 (000-00-00000)
-                          if (numbers.length <= 3) {
-                            value = numbers;
-                          } else if (numbers.length <= 5) {
-                            value = `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-                          } else {
-                            value = `${numbers.slice(0, 3)}-${numbers.slice(3, 5)}-${numbers.slice(5, 10)}`;
-                          }
-                          setBizNo(value);
-                          setBizVerified(false);
-                          setVerifiedBizInfo(null);
-                        }}
-                        disabled={isVerifyingBiz}
-                        maxLength={12}
-                      />
-                      <Button
-                        type="button"
-                        variant={bizVerified ? 'default' : 'outline'}
-                        onClick={handleVerifyBusiness}
-                        disabled={isVerifyingBiz || bizNo.replace(/\D/g, '').length !== 10}
-                        className={`shrink-0 ${bizVerified ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                      >
-                        {isVerifyingBiz ? t('common.verifying') : bizVerified ? t('common.verified') : t('common.verify')}
-                      </Button>
-                    </div>
-                    {!bizVerified && (
-                      <p className="text-xs text-slate-400">
-                        {t('signup.bizNoHint')}
-                      </p>
-                    )}
+                    <Label>{t('signup.companyCode')}</Label>
+                    <Input
+                      placeholder={t('signup.companyCodePlaceholder')}
+                      value={signupForm.companyCode}
+                      onChange={(e) =>
+                        setSignupForm((prev) => ({
+                          ...prev,
+                          companyCode: e.target.value,
+                        }))
+                      }
+                    />
                   </div>
-
-                  {/* 인증된 사업자 정보 표시 */}
-                  {bizVerified && verifiedBizInfo && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
-                      <p className="text-sm font-semibold text-green-800">{t('signup.bizVerified')}</p>
-                      <div className="text-xs text-green-700 space-y-0.5">
-                        <p><span className="font-medium">{t('signup.bizNumber')}</span> {verifiedBizInfo.b_no}</p>
-                        <p><span className="font-medium">{t('signup.bizStatus')}</span> {verifiedBizInfo.b_stt}</p>
-                        <p><span className="font-medium">{t('signup.taxType')}</span> {verifiedBizInfo.tax_type}</p>
-                        {verifiedBizInfo.end_dt && (
-                          <p><span className="font-medium">{t('signup.closedDate')}</span> {verifiedBizInfo.end_dt.slice(0,4)}-{verifiedBizInfo.end_dt.slice(4,6)}-{verifiedBizInfo.end_dt.slice(6,8)}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
 
@@ -1197,69 +917,6 @@ export function LoginPage() {
                 />
               </div>
 
-              {signupRole === 'admin' && (
-                <div className="space-y-2">
-                  <Label>{t('signup.phoneVerification')}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={t('signup.phonePlaceholder')}
-                      value={adminPhone}
-                      onChange={(e) => {
-                        setAdminPhone(e.target.value);
-                        setAdminOtpVerified(false);
-                      }}
-                      disabled={isLoading}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleSendAdminOtp}
-                      disabled={isLoading || isSendingAdminOtp || !adminPhone.trim()}
-                      className="shrink-0"
-                    >
-                      {isSendingAdminOtp
-                        ? t('common.sending')
-                        : adminOtpSent
-                        ? t('signup.resend')
-                        : t('signup.sendOtp')}
-                    </Button>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={t('signup.otpPlaceholder')}
-                      value={adminOtp}
-                      onChange={(e) => setAdminOtp(e.target.value)}
-                      disabled={isLoading || !adminOtpSent || adminOtpVerified}
-                    />
-                    <Button
-                      type="button"
-                      variant={adminOtpVerified ? 'default' : 'outline'}
-                      onClick={handleVerifyAdminOtp}
-                      disabled={
-                        isLoading ||
-                        !adminOtpSent ||
-                        adminOtpVerified ||
-                        isVerifyingAdminOtp ||
-                        !adminOtp.trim()
-                      }
-                      className="shrink-0"
-                    >
-                      {adminOtpVerified
-                        ? t('signup.otpVerified')
-                        : isVerifyingAdminOtp
-                        ? t('signup.verifyingOtp')
-                        : t('signup.verifyOtp')}
-                    </Button>
-                  </div>
-
-                  {adminOtpVerified ? (
-                    <p className="text-xs text-green-600">{t('signup.phoneVerified')}</p>
-                  ) : (
-                    <p className="text-xs text-slate-400">{t('signup.phoneVerifyRequired')}</p>
-                  )}
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label>{t('signup.password')}</Label>
@@ -1323,7 +980,7 @@ export function LoginPage() {
                   !signupForm.email ||
                   !signupForm.password ||
                   !signupForm.name ||
-                  (signupRole === 'admin' && (!bizVerified || !adminPhone.trim() || !adminOtpVerified))
+                  (signupRole === 'admin' && (!signupForm.companyName.trim() || !signupForm.companyCode.trim()))
                 }
               >
                 {isLoading ? t('signup.signingUp') : t('signup.signupButton')}
