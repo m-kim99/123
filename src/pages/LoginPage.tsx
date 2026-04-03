@@ -71,6 +71,12 @@ export function LoginPage() {
   const [pendingLoginRole, setPendingLoginRole] = useState<'admin' | 'team' | null>(null);
   const [isCancellingDeletion, setIsCancellingDeletion] = useState(false);
 
+  const [adminPhone, setAdminPhone] = useState('');
+  const [adminOtp, setAdminOtp] = useState('');
+  const [adminOtpSent, setAdminOtpSent] = useState(false);
+  const [adminOtpVerified, setAdminOtpVerified] = useState(false);
+  const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
+  const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
 
   // 비밀번호 실시간 검증
   useEffect(() => {
@@ -246,6 +252,129 @@ export function LoginPage() {
       companyCode: '',
       companyName: '',
     });
+
+    setAdminPhone('');
+    setAdminOtp('');
+    setAdminOtpSent(false);
+    setAdminOtpVerified(false);
+    setIsSendingAdminOtp(false);
+    setIsVerifyingAdminOtp(false);
+  };
+
+  const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
+
+  const handleSendAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneInputDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('send-phone-otp', {
+        body: { phone, purpose: 'admin_signup' },
+      });
+
+      console.log('send-phone-otp response:', { data, fnError });
+
+      if (fnError) {
+        let errMsg = fnError.message || t('signup.smsSendFailed');
+        try {
+          const errBody = await fnError.context?.json();
+          if (errBody?.error) errMsg = errBody.error;
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || data?.message || t('signup.smsSendFailed'));
+      }
+
+      setAdminOtpSent(true);
+      setAdminOtpVerified(false);
+      setAdminOtp('');
+
+      toast({
+        title: t('signup.otpSent'),
+        description: t('signup.otpSentDesc'),
+      });
+    } catch (err: any) {
+      toast({
+        title: t('signup.otpSendFailed'),
+        description: err?.message || t('signup.otpSendFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingAdminOtp(false);
+    }
+  };
+
+  const handleVerifyAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+    const code = (adminOtp || '').trim();
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneCheckDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!adminOtpSent) {
+      toast({
+        title: t('signup.sendOtpFirst'),
+        description: t('signup.sendOtpFirstDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!code) {
+      toast({
+        title: t('signup.enterOtp'),
+        description: t('signup.enterOtpDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifyingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('verify-phone-otp', {
+        body: { phone, code, purpose: 'admin_signup' },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || t('signup.verifyFailed'));
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || t('signup.verifyFailed'));
+      }
+
+      setAdminOtpVerified(true);
+
+      toast({
+        title: t('signup.phoneVerifyComplete'),
+        description: t('signup.phoneVerifyCompleteDesc'),
+      });
+    } catch (err: any) {
+      toast({
+        title: t('signup.verifyFailed'),
+        description: err?.message || t('signup.verifyFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingAdminOtp(false);
+    }
   };
 
   const handleLogin = async (role: 'admin' | 'team') => {
@@ -473,6 +602,25 @@ export function LoginPage() {
       toast({
         title: t('signup.enterCompanyCode'),
         description: t('signup.enterCompanyCodeDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const phone = normalizePhone(adminPhone);
+    if (!phone) {
+      toast({
+        title: t('signup.enterPhone'),
+        description: t('signup.enterPhoneForAdmin'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!adminOtpVerified) {
+      toast({
+        title: t('signup.phoneVerifyNeeded'),
+        description: t('signup.phoneVerifyNeededDesc'),
         variant: 'destructive',
       });
       return;
@@ -915,6 +1063,67 @@ export function LoginPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>{t('signup.phoneVerification')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={t('signup.phonePlaceholder')}
+                    value={adminPhone}
+                    onChange={(e) => {
+                      setAdminPhone(e.target.value);
+                      setAdminOtpVerified(false);
+                    }}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendAdminOtp}
+                    disabled={isLoading || isSendingAdminOtp || !adminPhone.trim()}
+                    className="shrink-0"
+                  >
+                    {isSendingAdminOtp
+                      ? t('common.sending')
+                      : adminOtpSent
+                      ? t('signup.resend')
+                      : t('signup.sendOtp')}
+                  </Button>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={t('signup.otpPlaceholder')}
+                    value={adminOtp}
+                    onChange={(e) => setAdminOtp(e.target.value)}
+                    disabled={isLoading || !adminOtpSent || adminOtpVerified}
+                  />
+                  <Button
+                    type="button"
+                    variant={adminOtpVerified ? 'default' : 'outline'}
+                    onClick={handleVerifyAdminOtp}
+                    disabled={
+                      isLoading ||
+                      !adminOtpSent ||
+                      adminOtpVerified ||
+                      isVerifyingAdminOtp ||
+                      !adminOtp.trim()
+                    }
+                    className="shrink-0"
+                  >
+                    {adminOtpVerified
+                      ? t('signup.otpVerified')
+                      : isVerifyingAdminOtp
+                      ? t('signup.verifyingOtp')
+                      : t('signup.verifyOtp')}
+                  </Button>
+                </div>
+
+                {adminOtpVerified ? (
+                  <p className="text-xs text-green-600">{t('signup.phoneVerified')}</p>
+                ) : (
+                  <p className="text-xs text-slate-400">{t('signup.phoneVerifyRequired')}</p>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <Label>{t('signup.password')}</Label>
@@ -978,6 +1187,8 @@ export function LoginPage() {
                   !signupForm.email ||
                   !signupForm.password ||
                   !signupForm.name ||
+                  !adminPhone.trim() ||
+                  !adminOtpVerified ||
                   (signupRole === 'admin' && (!signupForm.companyName.trim() || !signupForm.companyCode.trim()))
                 }
               >
