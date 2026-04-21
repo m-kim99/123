@@ -21,11 +21,11 @@ serve(async (req) => {
   }
 
   try {
-    const CLOVA_OCR_URL = Deno.env.get('CLOVA_OCR_URL');
-    const CLOVA_OCR_SECRET = Deno.env.get('CLOVA_OCR_SECRET');
+    const NHN_OCR_APP_KEY = Deno.env.get('NHN_OCR_APP_KEY');
+    const NHN_OCR_SECRET_KEY = Deno.env.get('NHN_OCR_SECRET_KEY');
 
-    if (!CLOVA_OCR_URL || !CLOVA_OCR_SECRET) {
-      throw new Error('Naver CLOVA OCR 환경 변수가 설정되지 않았습니다. (CLOVA_OCR_URL, CLOVA_OCR_SECRET)');
+    if (!NHN_OCR_APP_KEY || !NHN_OCR_SECRET_KEY) {
+      throw new Error('NHN Cloud OCR 환경 변수가 설정되지 않았습니다.');
     }
 
     const body = await req.json().catch(() => null);
@@ -56,42 +56,34 @@ serve(async (req) => {
       format = mimeType.split('/')[1] || 'jpg';
     }
 
-    // format 정규화 (CLOVA OCR은 jpg, jpeg, png, pdf, tiff 지원)
-    if (format === 'jpeg') format = 'jpg';
+    // base64 → Uint8Array 변환 (multipart/form-data 전송용)
+    const binaryStr = atob(base64Data);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
 
-    // Naver CLOVA OCR API 요청 본문
-    const requestBody = {
-      version: 'V2',
-      requestId: crypto.randomUUID(),
-      timestamp: Date.now(),
-      lang: 'ko',
-      images: [
-        {
-          format,
-          name: 'image',
-          data: base64Data,
-        },
-      ],
-    };
+    const resolvedMime = mimeType || 'image/jpeg';
+    const ext = format === 'jpeg' ? 'jpg' : format;
+    const blob = new Blob([bytes], { type: resolvedMime });
+    const formData = new FormData();
+    formData.append('image', blob, `image.${ext}`);
 
-    console.log('=== Naver CLOVA OCR 요청 ===');
-    console.log('format:', format);
-    console.log('base64 길이:', base64Data.length);
+    const apiUrl = `https://ocr.api.nhncloudservice.com/v1.0/appkeys/${NHN_OCR_APP_KEY}/general`;
 
-    const ocrResponse = await fetch(CLOVA_OCR_URL, {
+    const ocrResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-OCR-SECRET': CLOVA_OCR_SECRET,
+        'Authorization': NHN_OCR_SECRET_KEY,
       },
-      body: JSON.stringify(requestBody),
+      body: formData,
     });
 
     if (!ocrResponse.ok) {
       const errorText = await ocrResponse.text();
-      console.error('Naver CLOVA OCR API error:', ocrResponse.status, errorText);
+      console.error('NHN Cloud OCR API error:', ocrResponse.status, errorText);
       return new Response(
-        JSON.stringify({ error: `Naver CLOVA OCR API 호출 실패: ${ocrResponse.status} - ${errorText}` }),
+        JSON.stringify({ error: `NHN Cloud OCR API 호출 실패: ${ocrResponse.status} - ${errorText}` }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -101,13 +93,10 @@ serve(async (req) => {
 
     const ocrJson = await ocrResponse.json();
 
-    // 응답 검증
-    const imageResult = ocrJson?.images?.[0];
-    if (!imageResult || imageResult.inferResult !== 'SUCCESS') {
-      const errMsg = imageResult?.message || '알 수 없는 오류';
-      console.error('Naver CLOVA OCR 처리 실패:', errMsg);
+    if (!ocrJson?.header?.isSuccessful) {
+      console.error('NHN Cloud OCR API 응답 오류:', JSON.stringify(ocrJson?.header));
       return new Response(
-        JSON.stringify({ error: `Naver CLOVA OCR 처리 실패: ${errMsg}` }),
+        JSON.stringify({ error: `NHN Cloud OCR 처리 실패: ${ocrJson?.header?.resultMessage ?? '알 수 없는 오류'}` }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -115,28 +104,23 @@ serve(async (req) => {
       );
     }
 
-    // fields에서 텍스트 추출 (lineBreak 기준으로 줄바꿈)
-    const fields = imageResult.fields || [];
-    const lineParts: string[] = [];
-    let currentLine = '';
+    const textPieces: string[] = [];
 
-    for (const field of fields) {
-      const text = field.inferText ?? '';
-      currentLine += text + ' ';
-
-      if (field.lineBreak) {
-        lineParts.push(currentLine.trim());
-        currentLine = '';
+    if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
+      for (const line of ocrJson.result.listOfInferTexts) {
+        if (Array.isArray(line?.inferTexts)) {
+          const lineText = line.inferTexts
+            .filter((t: { value?: string }) => typeof t?.value === 'string' && t.value.trim())
+            .map((t: { value: string }) => t.value.trim())
+            .join(' ');
+          if (lineText) {
+            textPieces.push(lineText);
+          }
+        }
       }
     }
 
-    // 마지막 줄 처리
-    if (currentLine.trim()) {
-      lineParts.push(currentLine.trim());
-    }
-
-    const fullText = lineParts.join('\n').trim();
-    console.log(`✅ CLOVA OCR 완료: ${fullText.length}자 추출`);
+    const fullText = textPieces.join('\n').trim();
 
     return new Response(JSON.stringify({ text: fullText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
