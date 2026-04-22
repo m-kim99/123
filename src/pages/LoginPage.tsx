@@ -55,7 +55,11 @@ export function LoginPage() {
     companyName: '',
   });
   const navigate = useNavigate();
-  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsPopupType, setTermsPopupType] = useState<'tos' | 'privacy' | null>(null);
+  const [agreeAll, setAgreeAll] = useState(false);
+  const [agreeAge, setAgreeAge] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -87,6 +91,20 @@ export function LoginPage() {
       setPasswordValidation(null);
     }
   }, [signupForm.password]);
+
+  const allAgreed = agreeAge && agreeTerms && agreePrivacy;
+
+  const handleAgreeAll = (checked: boolean) => {
+    setAgreeAll(checked);
+    setAgreeAge(checked);
+    setAgreeTerms(checked);
+    setAgreePrivacy(checked);
+  };
+
+  useEffect(() => {
+    setAgreeAll(agreeAge && agreeTerms && agreePrivacy);
+  }, [agreeAge, agreeTerms, agreePrivacy]);
+
   const { login, signup, isLoading, error, clearError, redirectAfterLogin, setRedirectAfterLogin } =
     useAuthStore();
 
@@ -740,6 +758,66 @@ export function LoginPage() {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
+                  <div className="mt-4 border-t pt-4 space-y-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={agreeAll}
+                        onChange={(e) => handleAgreeAll(e.target.checked)}
+                        className="w-4 h-4 accent-blue-600"
+                      />
+                      <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
+                    </label>
+                    <div className="border-t pt-3 space-y-2.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={agreeAge}
+                          onChange={(e) => setAgreeAge(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={agreeTerms}
+                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">
+                          [필수]{' '}
+                          <button
+                            type="button"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            onClick={() => setTermsPopupType('tos')}
+                          >
+                            서비스 이용약관
+                          </button>
+                          에 동의합니다
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={agreePrivacy}
+                          onChange={(e) => setAgreePrivacy(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">
+                          [필수]{' '}
+                          <button
+                            type="button"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            onClick={() => setTermsPopupType('privacy')}
+                          >
+                            개인정보 처리방침
+                          </button>
+                          에 동의합니다
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-xs text-center text-slate-500">
                     {t('login.noAccount')}{' '}
                     <Button
@@ -747,6 +825,14 @@ export function LoginPage() {
                       variant="link"
                       className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
+                        if (!allAgreed) {
+                          toast({
+                            title: '약관 동의 필요',
+                            description: '회원가입을 위해 모든 필수 약관에 동의해주세요.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
                         resetSignupForm();
                         setSignupRole('admin');
                         setSignupOpen(true);
@@ -815,19 +901,6 @@ export function LoginPage() {
                       </span>
                     </Button>
                   </div>
-                  <div className="mt-4 text-center">
-                    <p className="text-xs text-slate-500">
-                      {t('login.termsAgreement')}
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
-                        onClick={() => setTermsModalOpen(true)}
-                      >
-                        {t('login.viewTerms')}
-                      </Button>
-                    </p>
-                  </div>
                 </form>
               </TabsContent>
               <TabsContent value="team">
@@ -873,6 +946,66 @@ export function LoginPage() {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
+                  <div className="mt-4 border-t pt-4 space-y-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={agreeAll}
+                        onChange={(e) => handleAgreeAll(e.target.checked)}
+                        className="w-4 h-4 accent-blue-600"
+                      />
+                      <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
+                    </label>
+                    <div className="border-t pt-3 space-y-2.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={agreeAge}
+                          onChange={(e) => setAgreeAge(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={agreeTerms}
+                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">
+                          [필수]{' '}
+                          <button
+                            type="button"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            onClick={() => setTermsPopupType('tos')}
+                          >
+                            서비스 이용약관
+                          </button>
+                          에 동의합니다
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={agreePrivacy}
+                          onChange={(e) => setAgreePrivacy(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className="text-sm text-slate-600">
+                          [필수]{' '}
+                          <button
+                            type="button"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            onClick={() => setTermsPopupType('privacy')}
+                          >
+                            개인정보 처리방침
+                          </button>
+                          에 동의합니다
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-xs text-center text-slate-500">
                     {t('login.noAccount')}{' '}
                     <Button
@@ -880,6 +1013,14 @@ export function LoginPage() {
                       variant="link"
                       className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
+                        if (!allAgreed) {
+                          toast({
+                            title: '약관 동의 필요',
+                            description: '회원가입을 위해 모든 필수 약관에 동의해주세요.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
                         resetSignupForm();
                         setSignupRole('team');
                         setSignupOpen(true);
@@ -947,19 +1088,6 @@ export function LoginPage() {
                         <span className="text-sm w-[165px] text-left">{t('login.continueWithNaver')}</span>
                       </span>
                     </Button>
-                  </div>
-                  <div className="mt-4 text-center">
-                    <p className="text-xs text-slate-500">
-                      {t('login.termsAgreement')}
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="text-blue-600 hover:text-blue-800 p-0 h-auto text-xs underline bg-transparent hover:bg-transparent rounded-none"
-                        onClick={() => setTermsModalOpen(true)}
-                      >
-                        {t('login.viewTerms')}
-                      </Button>
-                    </p>
                   </div>
                 </form>
               </TabsContent>
@@ -1198,26 +1326,18 @@ export function LoginPage() {
           </Card>
         </div>
       )}
-      <Dialog open={termsModalOpen} onOpenChange={setTermsModalOpen}>
+      <Dialog open={termsPopupType !== null} onOpenChange={(open) => { if (!open) setTermsPopupType(null); }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{t('terms.title')}</DialogTitle>
+            <DialogTitle className="text-blue-600 text-lg font-bold">
+              {termsPopupType === 'tos' ? t('terms.tos') : t('terms.privacy')}
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-4 flex-1 min-h-0">
-            <div className="border rounded-lg flex flex-col min-h-0 h-1/2">
-              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">{t('terms.tos')}</h2>
-              <div className="overflow-y-auto flex-1 p-4">
-                <div className="text-sm text-slate-700 space-y-4" id="terms-content">
-                  <TermsOfServiceContent />
-                </div>
-              </div>
-            </div>
-
-            <div className="border rounded-lg flex flex-col min-h-0 h-1/2">
-              <h2 className="text-lg font-bold p-3 text-blue-600 border-b bg-slate-50 rounded-t-lg shrink-0">{t('terms.privacy')}</h2>
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="border rounded-lg flex flex-col min-h-0 flex-1">
               <div className="overflow-y-auto flex-1 p-4">
                 <div className="text-sm text-slate-700 space-y-4">
-                  <PrivacyPolicyContent />
+                  {termsPopupType === 'tos' ? <TermsOfServiceContent /> : <PrivacyPolicyContent />}
                 </div>
               </div>
             </div>
