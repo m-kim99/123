@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import { createDocumentNotification, createShareNotification, deleteShareNotification } from '@/lib/notifications';
 import { SharedDocument } from '@/types/document';
 import { trackEvent } from '@/lib/analytics';
+import { isImageFile, convertImageToPdf } from '@/lib/imageToPdf';
 
 export interface Department {
   id: string;
@@ -1181,6 +1182,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   uploadDocument: async (document) => {
     try {
+      // 이미지 파일이면 자동으로 PDF로 변환
+      if (isImageFile(document.file)) {
+        const pdfFile = await convertImageToPdf(document.file);
+        const baseName = (document.originalFileName || document.name).replace(/\.[^/.]+$/, '');
+        document = {
+          ...document,
+          file: pdfFile,
+          originalFileName: `${baseName}.pdf`,
+        };
+      }
+
       const originalNameForStorage = document.originalFileName || document.name;
       const filePath = sanitizeFileName(originalNameForStorage);
 
@@ -1423,6 +1435,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   updateDocumentFile: async (id, file, ocrText) => {
     try {
+      // 이미지 파일이면 자동으로 PDF로 변환
+      if (isImageFile(file)) {
+        file = await convertImageToPdf(file);
+      }
+
       // 1. 기존 문서 정보 조회
       const { data: existingDoc, error: fetchError } = await supabase
         .from('documents')
