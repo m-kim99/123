@@ -1,5 +1,62 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
+/**
+ * OCR 추출 텍스트에서 개인정보를 정규식 기반으로 마스킹
+ * 대상: 주민등록번호, 운전면허번호, 여권번호, 카드번호, 휴대전화, 일반전화, 이메일
+ */
+function maskPersonalInfo(text: string): string {
+  let masked = text;
+
+  // 1. 주민등록번호 (YYMMDD-GXXXXXX, G=1~4)
+  masked = masked.replace(
+    /(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))\s*[-–]\s*([1-4]\d{6})/g,
+    '$1-*******',
+  );
+
+  // 2. 운전면허번호 (지역코드2자리-6자리-2자리)
+  masked = masked.replace(
+    /(\d{2})-(\d{6})-(\d{2})/g,
+    '$1-******-$3',
+  );
+
+  // 3. 여권번호 (알파벳 1~2자 + 숫자 7~8자)
+  masked = masked.replace(
+    /\b([A-Z]{1,2})(\d{7,8})\b/g,
+    (_: string, prefix: string, nums: string) => {
+      return prefix + nums[0] + '*'.repeat(nums.length - 2) + nums[nums.length - 1];
+    },
+  );
+
+  // 4. 신용카드번호 (16자리, 4-4-4-4)
+  masked = masked.replace(
+    /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/g,
+    '$1-****-****-$4',
+  );
+
+  // 5. 휴대전화번호 (010-XXXX-XXXX 등)
+  masked = masked.replace(
+    /(01[016789])[-.]?\s?(\d{3,4})[-.]?\s?(\d{4})/g,
+    '$1-****-$3',
+  );
+
+  // 6. 일반전화번호 (02-XXXX-XXXX, 031-XXX-XXXX 등)
+  masked = masked.replace(
+    /(0[2-6]\d?)[-.]\s?(\d{3,4})[-.]\s?(\d{4})/g,
+    '$1-****-$3',
+  );
+
+  // 7. 이메일 주소
+  masked = masked.replace(
+    /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g,
+    (_: string, local: string, domain: string) => {
+      if (local.length <= 2) return '**@' + domain;
+      return local[0] + '*'.repeat(local.length - 2) + local[local.length - 1] + '@' + domain;
+    },
+  );
+
+  return masked;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -122,7 +179,10 @@ serve(async (req) => {
 
     const fullText = textPieces.join('\n').trim();
 
-    return new Response(JSON.stringify({ text: fullText }), {
+    // 개인정보 마스킹 적용
+    const maskedText = maskPersonalInfo(fullText);
+
+    return new Response(JSON.stringify({ text: maskedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
