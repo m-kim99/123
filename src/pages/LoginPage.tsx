@@ -758,81 +758,13 @@ export function LoginPage() {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
-                  <div className="mt-4 border-t pt-4 space-y-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={agreeAll}
-                        onChange={(e) => handleAgreeAll(e.target.checked)}
-                        className="w-4 h-4 accent-blue-600"
-                      />
-                      <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
-                    </label>
-                    <div className="border-t pt-3 space-y-2.5">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={agreeAge}
-                          onChange={(e) => setAgreeAge(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">
-                          [필수]{' '}
-                          <button
-                            type="button"
-                            className="text-blue-600 underline hover:text-blue-800"
-                            onClick={() => setTermsPopupType('tos')}
-                          >
-                            서비스 이용약관
-                          </button>
-                          에 동의합니다
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={agreePrivacy}
-                          onChange={(e) => setAgreePrivacy(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">
-                          [필수]{' '}
-                          <button
-                            type="button"
-                            className="text-blue-600 underline hover:text-blue-800"
-                            onClick={() => setTermsPopupType('privacy')}
-                          >
-                            개인정보 처리방침
-                          </button>
-                          에 동의합니다
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-center text-slate-500">
+                  <p className="text-xs text-center text-slate-500 mt-4">
                     {t('login.noAccount')}{' '}
                     <Button
                       type="button"
                       variant="link"
                       className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
-                        if (!allAgreed) {
-                          toast({
-                            title: '약관 동의 필요',
-                            description: '회원가입을 위해 모든 필수 약관에 동의해주세요.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
                         resetSignupForm();
                         setSignupRole('admin');
                         setSignupOpen(true);
@@ -946,81 +878,13 @@ export function LoginPage() {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
-                  <div className="mt-4 border-t pt-4 space-y-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={agreeAll}
-                        onChange={(e) => handleAgreeAll(e.target.checked)}
-                        className="w-4 h-4 accent-blue-600"
-                      />
-                      <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
-                    </label>
-                    <div className="border-t pt-3 space-y-2.5">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={agreeAge}
-                          onChange={(e) => setAgreeAge(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">
-                          [필수]{' '}
-                          <button
-                            type="button"
-                            className="text-blue-600 underline hover:text-blue-800"
-                            onClick={() => setTermsPopupType('tos')}
-                          >
-                            서비스 이용약관
-                          </button>
-                          에 동의합니다
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={agreePrivacy}
-                          onChange={(e) => setAgreePrivacy(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
-                        />
-                        <span className="text-sm text-slate-600">
-                          [필수]{' '}
-                          <button
-                            type="button"
-                            className="text-blue-600 underline hover:text-blue-800"
-                            onClick={() => setTermsPopupType('privacy')}
-                          >
-                            개인정보 처리방침
-                          </button>
-                          에 동의합니다
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-center text-slate-500">
+                  <p className="text-xs text-center text-slate-500 mt-4">
                     {t('login.noAccount')}{' '}
                     <Button
                       type="button"
                       variant="link"
                       className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
-                        if (!allAgreed) {
-                          toast({
-                            title: '약관 동의 필요',
-                            description: '회원가입을 위해 모든 필수 약관에 동의해주세요.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
                         resetSignupForm();
                         setSignupRole('team');
                         setSignupOpen(true);
@@ -1289,6 +1153,67 @@ export function LoginPage() {
               </div>
 
 
+              <div className="mt-4 border-t pt-4 space-y-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeAll}
+                    onChange={(e) => handleAgreeAll(e.target.checked)}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
+                </label>
+                <div className="border-t pt-3 space-y-2.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreeAge}
+                      onChange={(e) => setAgreeAge(e.target.checked)}
+                      className="w-4 h-4 accent-blue-600"
+                    />
+                    <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="w-4 h-4 accent-blue-600"
+                    />
+                    <span className="text-sm text-slate-600">
+                      [필수]{' '}
+                      <button
+                        type="button"
+                        className="text-blue-600 underline hover:text-blue-800"
+                        onClick={() => setTermsPopupType('tos')}
+                      >
+                        서비스 이용약관
+                      </button>
+                      에 동의합니다
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={agreePrivacy}
+                      onChange={(e) => setAgreePrivacy(e.target.checked)}
+                      className="w-4 h-4 accent-blue-600"
+                    />
+                    <span className="text-sm text-slate-600">
+                      [필수]{' '}
+                      <button
+                        type="button"
+                        className="text-blue-600 underline hover:text-blue-800"
+                        onClick={() => setTermsPopupType('privacy')}
+                      >
+                        개인정보 처리방침
+                      </button>
+                      에 동의합니다
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -1317,6 +1242,7 @@ export function LoginPage() {
                   !signupForm.name ||
                   !adminPhone.trim() ||
                   !adminOtpVerified ||
+                  !allAgreed ||
                   (signupRole === 'admin' && (!signupForm.companyName.trim() || !signupForm.companyCode.trim()))
                 }
               >
