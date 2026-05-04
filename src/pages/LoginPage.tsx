@@ -671,7 +671,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-screen flex items-center justify-center md:justify-start bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:pl-16 md:pr-4 overflow-hidden">
+    <div className="relative min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 overflow-hidden">
       <video
         className="absolute inset-0 h-full w-full object-cover"
         autoPlay
@@ -685,7 +685,7 @@ export function LoginPage() {
       </video>
       <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
 
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center md:items-start">
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center">
         <Card className="w-full">
           <CardHeader className="text-center">
             <CardTitle className="flex flex-row justify-center items-center gap-2 max-w-full overflow-hidden">
@@ -959,7 +959,7 @@ export function LoginPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-4 w-full text-center md:text-left">
+        <div className="mt-4 w-full text-center">
           <p className="text-xs text-white">
             {t('login.copyright')}
           </p>
