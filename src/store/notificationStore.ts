@@ -1,6 +1,10 @@
 import { create } from 'zustand';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { showLocalNotification } from '@/lib/pushNotification';
+
+let realtimeChannel: RealtimeChannel | null = null;
 
 export type NotificationEventType =
   | 'document_created'
@@ -57,6 +61,8 @@ interface NotificationState {
   updatePreferences: (preferences: Partial<NotificationPreferences>) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   dismissNotification: (id: string) => Promise<void>;
+  startRealtimeSubscription: () => void;
+  stopRealtimeSubscription: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
@@ -279,6 +285,76 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       }));
     } catch (err) {
       console.error('읽음 처리 실패:', err);
+    }
+  },
+
+  startRealtimeSubscription: () => {
+    const { user } = useAuthStore.getState();
+    if (!user?.companyId || !user?.id) return;
+    if (realtimeChannel) return;
+
+    realtimeChannel = supabase
+      .channel(`notifications:${user.companyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `company_id=eq.${user.companyId}`,
+        },
+        (payload: any) => {
+          const n = payload.new;
+          if (!n) return;
+
+          const { preferences } = useNotificationStore.getState();
+
+          // 개인 알림: 나에게 온 것만
+          if (n.target_user_id && n.target_user_id !== user.id) return;
+
+          // 부서 필터 (일반 알림)
+          if (!n.target_user_id) {
+            if (user.role !== 'admin' && n.department_id && n.department_id !== user.departmentId) return;
+            if (user.role === 'admin' && preferences.notify_my_department_only && n.department_id && n.department_id !== user.departmentId) return;
+          }
+
+          // 알림 타입 필터
+          const type = n.type as NotificationEventType;
+          if (!preferences.document_created && type === 'document_created') return;
+          if (!preferences.document_deleted && type === 'document_deleted') return;
+          if (!preferences.document_shared && type === 'document_shared') return;
+          if (!preferences.category_changes && ['parent_category_created','parent_category_deleted','subcategory_created','subcategory_deleted'].includes(type)) return;
+          if (!preferences.expiry_alerts && ['subcategory_expiring_soon','subcategory_expiring_very_soon','subcategory_expired'].includes(type)) return;
+
+          // 로컬 알림 표시
+          showLocalNotification(type, n.message);
+
+          // 스토어 목록에도 추가
+          const newNotif: Notification = {
+            id: n.id,
+            type,
+            message: n.message,
+            documentId: n.document_id ?? null,
+            departmentId: n.department_id ?? null,
+            parentCategoryId: n.parent_category_id ?? null,
+            subcategoryId: n.subcategory_id ?? null,
+            companyId: n.company_id,
+            isRead: false,
+            isDismissed: false,
+            createdAt: n.created_at,
+          };
+          useNotificationStore.setState((state) => ({
+            notifications: [newNotif, ...state.notifications].slice(0, 50),
+          }));
+        }
+      )
+      .subscribe();
+  },
+
+  stopRealtimeSubscription: () => {
+    if (realtimeChannel) {
+      supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
     }
   },
 

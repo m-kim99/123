@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect, useRef, useCallback, useMemo } from 're
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { requestLocalNotificationPermission } from '@/lib/pushNotification';
 import {
   FileText,
   Home,
@@ -128,11 +129,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Selector 최적화: notifications만 변경 시 리렌더링
   const notifications = useNotificationStore((state) => state.notifications);
   const isLoadingNotifications = useNotificationStore((state) => state.isLoading);
-  const { fetchNotifications, markAsRead, dismissNotification } = useNotificationStore();
+  const { fetchNotifications, markAsRead, dismissNotification, fetchPreferences, startRealtimeSubscription, stopRealtimeSubscription } = useNotificationStore();
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
+
+  // 푸시 알림 권한 요청 + Realtime 구독 시작
+  useEffect(() => {
+    if (!user?.id) return;
+    const init = async () => {
+      await fetchPreferences();
+      await requestLocalNotificationPermission();
+      startRealtimeSubscription();
+    };
+    init();
+    return () => { stopRealtimeSubscription(); };
+  }, [user?.id]);
 
   // 사용자 부서명 가져오기
   useEffect(() => {
