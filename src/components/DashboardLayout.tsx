@@ -695,7 +695,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-[55px] w-auto max-w-[220px] object-contain mx-auto"
+              className="h-12 w-auto max-w-[200px] object-contain mx-auto"
             />
           </button>
         </div>
