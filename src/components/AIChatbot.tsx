@@ -1076,7 +1076,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       )}
 
       {isOpen && (
-        <Card className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain">
+        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
             <CardTitle className="flex items-center gap-2">
               <div className="p-1 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
@@ -1328,20 +1328,22 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   <img src={sendIcon} alt={t('chatbot.send')} className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
               </div>
-              {/* 음성 대화 버튼 (숨김 처리 — 기능은 유지) */}
-              <button
-                type="button"
-                onClick={toggleLiveVoice}
-                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor, display: 'none' }}
-                title={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
-              >
-                <img
-                  src={isVoiceMode ? micOnIcon : micIcon}
-                  alt={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
-                  className="h-5 w-5 block object-contain pointer-events-none"
-                />
-              </button>
+              {/* 음성 대화 버튼 (네이티브 앱에서만 표시) */}
+              {Capacitor.isNativePlatform() && (
+                <button
+                  type="button"
+                  onClick={toggleLiveVoice}
+                  className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
+                  style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor }}
+                  title={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
+                >
+                  <img
+                    src={isVoiceMode ? micOnIcon : micIcon}
+                    alt={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
+                    className="h-5 w-5 block object-contain pointer-events-none"
+                  />
+                </button>
+              )}
             </form>
             {isSpeaking && (
               <div className="text-xs text-green-600 animate-pulse text-center pb-2">{t('chatbot.aiSpeaking')}</div>
