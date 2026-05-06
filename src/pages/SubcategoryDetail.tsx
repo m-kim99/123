@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
@@ -74,6 +75,8 @@ export function SubcategoryDetail() {
   const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
   const [isSavingUploadOcr, setIsSavingUploadOcr] = useState(false);
   const [isRegisteringNfc, setIsRegisteringNfc] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrGenerated, setQrGenerated] = useState(false);
   const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
   const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
@@ -120,6 +123,13 @@ export function SubcategoryDetail() {
   const [replaceOcrText, setReplaceOcrText] = useState('');
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
   const [isEditingReplaceOcr, setIsEditingReplaceOcr] = useState(false);
+
+  useEffect(() => {
+    if (subcategoryId) {
+      const saved = localStorage.getItem(`qr_generated_${subcategoryId}`);
+      setQrGenerated(!!saved);
+    }
+  }, [subcategoryId]);
 
   useEffect(() => {
     if (!parentCategoryId) return;
@@ -422,6 +432,25 @@ export function SubcategoryDetail() {
   const handleNfcConfirmYes = async () => {
     if (!pendingNfcUid) return;
     await proceedNfcRegistration(pendingNfcUid);
+  };
+
+  const handleQrCode = () => {
+    if (!subcategoryId) return;
+    if (!qrGenerated) {
+      localStorage.setItem(`qr_generated_${subcategoryId}`, 'true');
+      setQrGenerated(true);
+    }
+    setQrDialogOpen(true);
+  };
+
+  const handleQrDownload = () => {
+    const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr-${subcategory?.name || subcategoryId}.png`;
+    a.click();
   };
 
   const handleNfcConfirmNo = () => {
@@ -1039,6 +1068,15 @@ export function SubcategoryDetail() {
               >
                 <Smartphone className="h-4 w-4" />
                 {subcategory.nfcRegistered ? t('subcategoryDetail.nfcReregister') : t('subcategoryDetail.nfcRegister')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleQrCode}
+                className="flex items-center gap-2 w-28 justify-center"
+              >
+                <QrCode className="h-4 w-4" />
+                {qrGenerated ? t('subcategoryDetail.qrView') : t('subcategoryDetail.qrGenerate')}
               </Button>
             </div>
           </div>
@@ -1901,6 +1939,37 @@ export function SubcategoryDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('subcategoryDetail.qrCodeTitle')}</DialogTitle>
+            <DialogDescription>{t('subcategoryDetail.qrCodeDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {subcategoryId && (
+              <QRCodeCanvas
+                id="qr-code-canvas"
+                value={`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
+                size={220}
+                level="H"
+                includeMargin
+              />
+            )}
+            <p className="text-xs text-slate-400 break-all text-center">
+              {`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
+            </p>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setQrDialogOpen(false)}>
+              {t('common.close')}
+            </Button>
+            <Button onClick={handleQrDownload} className="bg-blue-600 hover:bg-blue-700">
+              {t('subcategoryDetail.qrDownload')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       </div>
     </DashboardLayout>
   );
