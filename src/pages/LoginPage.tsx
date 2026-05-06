@@ -83,6 +83,30 @@ export function LoginPage() {
   const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
   const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
 
+  // 회원가입 팝업 열릴 때 배경 스크롤 잠금
+  useEffect(() => {
+    if (signupOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) window.scrollTo(0, -parseInt(scrollY, 10));
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [signupOpen]);
+
   // 비밀번호 실시간 검증
   useEffect(() => {
     if (signupForm.password) {
