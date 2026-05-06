@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, FormEvent, ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { SpeechPlugin } from '@/plugins/speech-plugin';
 import { MessageSquare } from 'lucide-react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuthStore } from '@/store/authStore';
@@ -640,6 +642,50 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
   useEffect(() => {
     speechRecognitionRef.current = speechRecognition;
   }, [speechRecognition]);
+
+  // Android 네이티브 STT 이벤트 리스너
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+    let resultHandle: any = null;
+    let errorHandle: any = null;
+    const setup = async () => {
+      resultHandle = await SpeechPlugin.addListener('speechResult', (data) => {
+        if (data.isFinal && isVoiceModeRef.current) {
+          if (nativeSTTWatchdogRef.current) {
+            clearTimeout(nativeSTTWatchdogRef.current);
+            nativeSTTWatchdogRef.current = null;
+          }
+          isVoiceModeRef.current = false;
+          setIsVoiceMode(false);
+          if (data.transcript) handleUserSpeechRef.current?.(data.transcript);
+        }
+      });
+      errorHandle = await SpeechPlugin.addListener('speechError', (data) => {
+        if (!isVoiceModeRef.current) return;
+        if (nativeSTTWatchdogRef.current) {
+          clearTimeout(nativeSTTWatchdogRef.current);
+          nativeSTTWatchdogRef.current = null;
+        }
+        isVoiceModeRef.current = false;
+        setIsVoiceMode(false);
+        if (data.error !== 'no_match' && data.error !== 'speech_timeout' && data.error !== 'client_error') {
+          setMessages(prev => [...prev, {
+            id: `${Date.now()}-system`,
+            role: 'assistant' as const,
+            content: t('chatbot.micUnavailable'),
+            timestamp: new Date(),
+          }]);
+        }
+      });
+    };
+    setup();
+    return () => {
+      resultHandle?.remove?.();
+      errorHandle?.remove?.();
+      SpeechPlugin.stopListening().catch(() => {});
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // 주: hasEverStartedRef는 onStart 콜백에서 동기적으로 설정 (useEffect 타이밍 버그 제거)
 
   // 컴포넌트 언마운트 시 음성 리소스 전체 정리
@@ -778,8 +824,10 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
         clearTimeout(nativeSTTWatchdogRef.current);
         nativeSTTWatchdogRef.current = null;
       }
-      // Android 앱은 window.webkit 없음 → stopNativeSTT() no-op → speechRecognition.stopListening() 필요
-      if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+      const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+      if (isAndroidNative) {
+        SpeechPlugin.stopListening().catch(() => {});
+      } else if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
         stopNativeSTT();
       } else {
         speechRecognition.stopListening();
@@ -817,8 +865,38 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
       // 네이티브 브릿지 존재 여부로 iOS 앱 vs 브라우저/Android 앱 분기
       const hasNativeBridge = isRunningInApp() && !!window.webkit?.messageHandlers?.cordova_iab;
+      const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
-      if (hasNativeBridge) {
+      if (isAndroidNative) {
+        // Android 앱: 네이티브 SpeechRecognizer 사용
+        const lang = currentLocale.startsWith('ko') ? 'ko-KR' : 'en-US';
+        isVoiceModeRef.current = true;
+        setIsVoiceMode(true);
+        nativeSTTWatchdogRef.current = setTimeout(() => {
+          nativeSTTWatchdogRef.current = null;
+          if (isVoiceModeRef.current) {
+            isVoiceModeRef.current = false;
+            setIsVoiceMode(false);
+            setMessages(prev => [...prev, {
+              id: `${Date.now()}-system`,
+              role: 'assistant' as const,
+              content: t('chatbot.voiceTimeout'),
+              timestamp: new Date(),
+            }]);
+          }
+        }, 30000);
+        SpeechPlugin.startListening({ language: lang }).catch((e: any) => {
+          console.error('Android STT 시작 오류:', e);
+          if (nativeSTTWatchdogRef.current) {
+            clearTimeout(nativeSTTWatchdogRef.current);
+            nativeSTTWatchdogRef.current = null;
+          }
+          isVoiceModeRef.current = false;
+          setIsVoiceMode(false);
+        });
+        playSound('/sounds/start.wav', '시작');
+        console.log('✅ Android 네이티브 STT 시작됨');
+      } else if (hasNativeBridge) {
         // iOS 앱: 네이티브 STT 사용 (앱케이크 WKWebView 브릿지)
         startNativeSTTWithWatchdog();
         isVoiceModeRef.current = true;
