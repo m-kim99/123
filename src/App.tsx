@@ -80,8 +80,13 @@ function ProtectedRoute({
   children: React.ReactNode;
   requiredRole?: 'admin' | 'team';
 }) {
-  const { isAuthenticated, user, needsOnboarding, setRedirectAfterLogin } = useAuthStore();
+  const { isAuthenticated, isLoading, user, needsOnboarding, setRedirectAfterLogin } = useAuthStore();
   const location = useLocation();
+
+  // 세션 확인 중에는 로딩 표시 (새로고침 시 즉시 리다이렉트 방지)
+  if (isLoading) {
+    return <PageLoader />;
+  }
 
   if (needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
