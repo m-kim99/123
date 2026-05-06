@@ -1,5 +1,6 @@
 package com.dms.app;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,14 +11,22 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 import java.util.ArrayList;
 
-@CapacitorPlugin(name = "SpeechPlugin")
+@CapacitorPlugin(
+    name = "SpeechPlugin",
+    permissions = {
+        @Permission(alias = "microphone", strings = { Manifest.permission.RECORD_AUDIO })
+    }
+)
 public class SpeechPlugin extends Plugin {
 
     private static final String TAG = "SpeechPlugin";
@@ -34,6 +43,23 @@ public class SpeechPlugin extends Plugin {
 
     @PluginMethod
     public void startListening(PluginCall call) {
+        if (getPermissionState("microphone") != PermissionState.GRANTED) {
+            requestPermissionForAlias("microphone", call, "microphonePermissionCallback");
+            return;
+        }
+        doStartListening(call);
+    }
+
+    @PermissionCallback
+    private void microphonePermissionCallback(PluginCall call) {
+        if (getPermissionState("microphone") == PermissionState.GRANTED) {
+            doStartListening(call);
+        } else {
+            call.reject("Microphone permission denied");
+        }
+    }
+
+    private void doStartListening(PluginCall call) {
         String language = call.getString("language", "ko-KR");
         mainHandler.post(() -> {
             try {

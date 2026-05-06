@@ -5,6 +5,9 @@
  * - 푸시키(pushId) 가져오기
  */
 
+import { Capacitor } from '@capacitor/core';
+import { DownloadPlugin } from '@/plugins/download-plugin';
+
 /**
  * 현재 앱(웹뷰) 환경인지 체크
  */
@@ -14,14 +17,18 @@ export function isRunningInApp(): boolean {
 
 /**
  * 앱/웹 환경에 따라 파일 다운로드
- * - 앱: webkit messageHandler를 통해 네이티브 다운로드
+ * - Android 네이티브: DownloadManager (Downloads 폴더 저장)
+ * - iOS 앱: webkit messageHandler를 통해 네이티브 다운로드
  * - 웹: Blob 방식 다운로드
  * @param downloadUrl 다운로드할 파일의 전체 URL
  * @param filename 저장될 파일명 (확장자 포함)
  */
 export async function downloadFile(downloadUrl: string, filename: string): Promise<void> {
-  if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-    // 앱 환경: 네이티브 다운로드
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    // Android 네이티브: 시스템 DownloadManager로 Downloads 폴더에 저장
+    await DownloadPlugin.downloadFile({ url: downloadUrl, filename });
+  } else if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
+    // iOS 앱 환경: 네이티브 다운로드
     const param = {
       action: 'filedownload',
       downloadurl: downloadUrl,
