@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import {
   FileText,
   Home,
@@ -728,7 +729,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className={`absolute left-0 right-0 ${Capacitor.isNativePlatform() ? 'bottom-14' : 'bottom-0'}`}>
           {/* 가로바 + 저작권: 프로필 아래 */}
           <div className="border-t" />
 
