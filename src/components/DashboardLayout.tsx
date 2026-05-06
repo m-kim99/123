@@ -700,20 +700,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
 
-        <div className="md:hidden px-6 pt-4 pb-2">
-          <button
-            type="button"
-            onClick={() => navigate(basePath)}
-            className="flex items-center justify-center w-full bg-white focus:outline-none"
-          >
-            <img
-              src={logo}
-              alt="TrayStorage"
-              className="h-[46px] w-auto object-contain mx-auto"
-            />
-          </button>
-        </div>
-
         <nav className="p-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
