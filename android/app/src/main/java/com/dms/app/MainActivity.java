@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NfcPlugin.class);
         registerPlugin(SpeechPlugin.class);
         registerPlugin(DownloadPlugin.class);
+        registerPlugin(NotificationPlugin.class);
         super.onCreate(savedInstanceState);
     }
 
