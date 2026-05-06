@@ -10,14 +10,22 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-@CapacitorPlugin(name = "NotificationPlugin")
+@CapacitorPlugin(
+    name = "NotificationPlugin",
+    permissions = {
+        @Permission(alias = "notifications", strings = { "android.permission.POST_NOTIFICATIONS" })
+    }
+)
 public class NotificationPlugin extends Plugin {
 
     private static final String TAG = "NotificationPlugin";
@@ -51,8 +59,49 @@ public class NotificationPlugin extends Plugin {
         }
     }
 
+    private boolean needsPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false;
+        return getPermissionState("notifications") != PermissionState.GRANTED;
+    }
+
+    @PluginMethod
+    public void requestPermission(PluginCall call) {
+        if (needsPermission()) {
+            requestPermissionForAlias("notifications", call, "permissionCallback");
+        } else {
+            JSObject r = new JSObject();
+            r.put("granted", true);
+            call.resolve(r);
+        }
+    }
+
+    @PermissionCallback
+    private void permissionCallback(PluginCall call) {
+        boolean granted = !needsPermission();
+        Log.d(TAG, "permissionCallback: granted=" + granted);
+        if ("requestPermission".equals(call.getMethodName())) {
+            JSObject r = new JSObject();
+            r.put("granted", granted);
+            call.resolve(r);
+        } else {
+            if (granted) {
+                doShow(call);
+            } else {
+                call.reject("Notification permission denied");
+            }
+        }
+    }
+
     @PluginMethod
     public void show(PluginCall call) {
+        if (needsPermission()) {
+            requestPermissionForAlias("notifications", call, "permissionCallback");
+            return;
+        }
+        doShow(call);
+    }
+
+    private void doShow(PluginCall call) {
         String title = call.getString("title", "알림");
         String body  = call.getString("body",  "");
 

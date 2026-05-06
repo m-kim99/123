@@ -135,15 +135,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
 
-  // 푸시 알림 권한 요청 + Realtime 구독 시작
+  // Realtime 구독 시작 (권한 요청은 알림 버튼 클릭 시)
   useEffect(() => {
     if (!user?.id) return;
-    const init = async () => {
-      await fetchPreferences();
-      await requestLocalNotificationPermission();
-      startRealtimeSubscription();
-    };
-    init();
+    fetchPreferences();
+    startRealtimeSubscription();
     return () => { stopRealtimeSubscription(); };
   }, [user?.id]);
 
@@ -900,7 +896,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               variant="outline"
               size="icon"
               className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
-              onClick={() => setIsNotificationOpen((prev) => !prev)}
+              onClick={async () => {
+                if (!isNotificationOpen) {
+                  await requestLocalNotificationPermission();
+                }
+                setIsNotificationOpen((prev) => !prev);
+              }}
             >
               <img src={bellIcon} alt={t('header.notifications')} className="h-7 w-7 block object-contain" />
               {unreadCount > 0 && (

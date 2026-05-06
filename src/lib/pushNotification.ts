@@ -16,7 +16,13 @@ const NOTIF_TITLES: Record<NotificationEventType, string> = {
 };
 
 export async function requestLocalNotificationPermission(): Promise<boolean> {
-  return Capacitor.isNativePlatform();
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    const { granted } = await NotificationPlugin.requestPermission();
+    return granted;
+  } catch {
+    return false;
+  }
 }
 
 export async function showLocalNotification(
