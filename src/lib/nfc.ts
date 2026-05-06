@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { NfcPlugin } from '@/plugins/nfc-plugin';
+
 /**
  * NFC 태그 데이터 타입
  */
@@ -52,30 +55,34 @@ export function getNfcMode(): NfcMode {
 }
 
 /**
- * Web NFC API 지원 여부 확인
- * @returns NFC 지원 여부
+ * NFC 지원 여부 확인
+ * - 네이티브 Android: NFC 하드웨어 존재 여부 (항상 true, 비활성화 시 각 함수에서 에러 처리)
+ * - 브라우저: Web NFC API(NDEFReader) 지원 여부
  */
 export function isNFCSupported(): boolean {
+  if (Capacitor.isNativePlatform()) {
+    return true;
+  }
   // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
   return 'NDEFReader' in window;
 }
 
 /**
  * NFC 권한 요청
- * @returns 권한 허용 여부
+ * - 네이티브: NFC 활성화 여부 확인
+ * - 브라우저: Web NFC API 지원 확인
  */
 export async function requestNFCPermission(): Promise<boolean> {
   try {
     if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+      throw new Error('NFC가 지원되지 않습니다.');
     }
-
-    // Web NFC API는 권한 요청이 필요 없지만, 실제 사용 시 권한을 확인할 수 있음
-    // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
+    if (Capacitor.isNativePlatform()) {
+      const { enabled } = await NfcPlugin.isEnabled();
+      return enabled;
+    }
+    // @ts-ignore
     const ndef = new NDEFReader();
-    
-    // NFC 읽기 시도로 권한 확인 (실제 태그가 없어도 에러 없이 진행되어야 함)
-    // 권한이 없으면 에러가 발생할 수 있음
     return true;
   } catch (error) {
     console.error('NFC 권한 요청 오류:', error);
@@ -84,23 +91,16 @@ export async function requestNFCPermission(): Promise<boolean> {
 }
 
 /**
- * NFC 태그에 데이터 쓰기
- * @param data 카테고리 정보 (categoryCode, categoryName, storageLocation, documentCount)
+ * NFC 태그에 데이터 쓰기 (JSON 형식)
+ * @param data 카테고리 정보
  * @returns 쓰기 성공 여부
  */
 export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
   try {
     if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+      throw new Error('NFC가 지원되지 않습니다.');
     }
 
-    // NFC 권한 확인
-    const hasPermission = await requestNFCPermission();
-    if (!hasPermission) {
-      throw new Error('NFC 권한이 없습니다.');
-    }
-
-    // 데이터를 JSON 문자열로 변환
     const jsonData = JSON.stringify({
       categoryCode: data.categoryCode,
       categoryName: data.categoryName,
@@ -109,47 +109,36 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
       timestamp: new Date().toISOString(),
     });
 
-    // NDEF 메시지 생성
-    // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-    const ndef = new NDEFReader();
-
-    // NDEF 레코드 생성 (텍스트 레코드)
-    const encoder = new TextEncoder();
-    const payload = encoder.encode(jsonData);
-
-    // @ts-ignore - NDEFRecord는 TypeScript 타입 정의가 없을 수 있음
-    const record = {
-      recordType: 'mime',
-      mediaType: 'application/json',
-      data: payload,
-    };
-
     console.log('NFC 태그에 데이터 쓰기 시작...', data);
 
-    // NFC 태그에 쓰기 (사용자가 태그를 기기에 가져다 대야 함)
-    // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-    await ndef.write({
-      records: [record],
-    });
+    if (Capacitor.isNativePlatform()) {
+      await NfcPlugin.writeData({ data: jsonData });
+      console.log('NFC 태그에 데이터 쓰기 완료 (네이티브)');
+      return true;
+    }
 
-    console.log('NFC 태그에 데이터 쓰기 완료');
+    // 브라우저: Web NFC API
+    // @ts-ignore
+    const ndef = new NDEFReader();
+    const encoder = new TextEncoder();
+    // @ts-ignore
+    await ndef.write({
+      records: [{
+        recordType: 'mime',
+        mediaType: 'application/json',
+        data: encoder.encode(jsonData),
+      }],
+    });
+    console.log('NFC 태그에 데이터 쓰기 완료 (Web NFC)');
     return true;
   } catch (error) {
     console.error('NFC 태그 쓰기 오류:', error);
-    
     if (error instanceof Error) {
-      // 권한 오류
       if (error.message.includes('permission') || error.message.includes('권한')) {
-        throw new Error('NFC 권한이 필요합니다. 브라우저 설정에서 NFC 권한을 허용해주세요.');
+        throw new Error('NFC 권한이 필요합니다.');
       }
-      // 태그 없음
-      if (error.message.includes('No NFC') || error.message.includes('태그')) {
-        throw new Error('NFC 태그를 감지할 수 없습니다. 태그를 기기에 가져다 대주세요.');
-      }
-      // 기타 오류
       throw new Error(`NFC 태그 쓰기 실패: ${error.message}`);
     }
-    
     throw new Error('NFC 태그 쓰기 중 알 수 없는 오류가 발생했습니다.');
   }
 }
@@ -169,42 +158,34 @@ export async function writeNFCUrl(
   setNfcMode('writing');
   try {
     if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+      throw new Error('NFC가 지원되지 않습니다.');
     }
 
-    // URL 생성: 세부 스토리지로 연결되는 리다이렉트 엔드포인트
     const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
-
     console.log('NFC URL 쓰기 시작:', uploadUrl);
 
-    // @ts-ignore - NDEFReader
+    if (Capacitor.isNativePlatform()) {
+      await NfcPlugin.writeUrl({ url: uploadUrl });
+      console.log('NFC URL 쓰기 완료 (네이티브)');
+      return true;
+    }
+
+    // 브라우저: Web NFC API
+    // @ts-ignore
     const ndef = new NDEFReader();
-
-    // URL 레코드 생성
     await ndef.write({
-      records: [
-        {
-          recordType: 'url',
-          data: uploadUrl,
-        },
-      ],
+      records: [{ recordType: 'url', data: uploadUrl }],
     });
-
-    console.log('NFC URL 쓰기 완료');
+    console.log('NFC URL 쓰기 완료 (Web NFC)');
     return true;
   } catch (error) {
     console.error('NFC URL 쓰기 오류:', error);
-
     if (error instanceof Error) {
       if (error.message.includes('permission') || error.message.includes('권한')) {
         throw new Error('NFC 권한이 필요합니다.');
       }
-      if (error.message.includes('No NFC') || error.message.includes('태그')) {
-        throw new Error('NFC 태그를 감지할 수 없습니다.');
-      }
       throw new Error(`NFC 쓰기 실패: ${error.message}`);
     }
-
     throw new Error('NFC 쓰기 중 알 수 없는 오류가 발생했습니다.');
   } finally {
     setNfcMode('idle');
@@ -212,163 +193,165 @@ export async function writeNFCUrl(
 }
 
 /**
- * NFC 태그 읽기
+ * NFC 태그 읽기 (NDEF 데이터)
  * @returns 태그 데이터
  */
 export async function readNFCTag(): Promise<NFCTagData> {
-  try {
-    if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
-    }
-
-    // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-    const ndef = new NDEFReader();
-
-    console.log('NFC 태그 읽기 시작... 태그를 기기에 가져다 대주세요.');
-
-    // scan() 메서드를 호출하여 NFC 스캔 시작
-    // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-    await ndef.scan();
-
-    // 이벤트 리스너를 통해 태그 데이터 수신
-    return new Promise((resolve, reject) => {
-      let timeoutId: NodeJS.Timeout;
-
-      // 태그 읽기 성공 이벤트 핸들러
-      // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-      ndef.onreading = (event: any) => {
-        try {
-          console.log('NFC 태그 감지:', event);
-
-          // 타임아웃 취소
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-
-          const { message } = event;
-          const { records } = message;
-
-          if (!records || records.length === 0) {
-            reject(new Error('NFC 태그에서 데이터를 읽을 수 없습니다.'));
-            return;
-          }
-
-          // 첫 번째 레코드 읽기
-          const record = records[0];
-
-          if (!record.data) {
-            reject(new Error('NFC 태그에 데이터가 없습니다.'));
-            return;
-          }
-
-          // 데이터 디코딩
-          let decodedData: string;
-
-          try {
-            const decoder = new TextDecoder();
-            decodedData = decoder.decode(record.data);
-          } catch (decodeError) {
-            reject(new Error('NFC 태그 데이터를 디코딩할 수 없습니다.'));
-            return;
-          }
-
-          // URL 레코드인지 확인 (writeNFCUrl로 기록된 태그)
-          if (record.recordType === 'url' || decodedData.includes('/nfc-redirect?subcategoryId=')) {
-            try {
-              const url = new URL(decodedData, window.location.origin);
-              const subcategoryId = url.searchParams.get('subcategoryId');
-              if (subcategoryId) {
-                const tagData: NFCTagData = {
-                  categoryCode: '',
-                  categoryName: '',
-                  storageLocation: '',
-                  documentCount: 0,
-                  subcategoryId,
-                };
-                console.log('NFC URL 태그 데이터 읽기 완료 (subcategoryId):', tagData);
-                resolve(tagData);
-                return;
-              }
-            } catch (urlError) {
-              // URL 파싱 실패 시 JSON 파싱으로 폴백
-              console.warn('NFC URL 파싱 실패, JSON 파싱 시도:', urlError);
-            }
-          }
-
-          // JSON 파싱 (writeNFCTag로 기록된 레거시 태그)
-          let data: any;
-          try {
-            data = JSON.parse(decodedData);
-          } catch (parseError) {
-            reject(new Error('NFC 태그에 유효한 데이터가 없습니다.'));
-            return;
-          }
-
-          // NFCTagData 형식으로 변환
-          const tagData: NFCTagData = {
-            categoryCode: data.categoryCode || '',
-            categoryName: data.categoryName || '',
-            storageLocation: data.storageLocation || '',
-            documentCount: data.documentCount || 0,
-          };
-
-          console.log('NFC 태그 데이터 읽기 완료:', tagData);
-          resolve(tagData);
-        } catch (parseError) {
-          console.error('NFC 태그 데이터 파싱 오류:', parseError);
-          reject(new Error('NFC 태그 데이터를 파싱할 수 없습니다.'));
-        }
-      };
-
-      // 태그 읽기 오류 이벤트 핸들러
-      // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
-      ndef.onreadingerror = (error: any) => {
-        console.error('NFC 태그 읽기 오류:', error);
-        
-        // 타임아웃 취소
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        reject(new Error('NFC 태그 읽기 중 오류가 발생했습니다.'));
-      };
-
-      // 타임아웃 설정 (30초)
-      timeoutId = setTimeout(() => {
-        reject(new Error('NFC 태그 읽기 시간이 초과되었습니다. 태그를 기기에 가져다 대주세요.'));
-      }, 30000);
-    });
-  } catch (error) {
-    console.error('NFC 태그 읽기 오류:', error);
-    
-    if (error instanceof Error) {
-      // 권한 오류
-      if (error.message.includes('permission') || error.message.includes('권한')) {
-        throw new Error('NFC 권한이 필요합니다. 브라우저 설정에서 NFC 권한을 허용해주세요.');
-      }
-      // 태그 없음
-      if (error.message.includes('No NFC') || error.message.includes('태그')) {
-        throw new Error('NFC 태그를 감지할 수 없습니다. 태그를 기기에 가져다 대주세요.');
-      }
-      // 기타 오류
-      throw new Error(`NFC 태그 읽기 실패: ${error.message}`);
-    }
-    
-    throw new Error('NFC 태그 읽기 중 알 수 없는 오류가 발생했습니다.');
+  if (!isNFCSupported()) {
+    throw new Error('NFC가 지원되지 않습니다.');
   }
+
+  if (Capacitor.isNativePlatform()) {
+    return new Promise(async (resolve, reject) => {
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          listenerHandle?.remove();
+          NfcPlugin.stopScan().catch(() => {});
+          reject(new Error('NFC 태그 읽기 시간이 초과되었습니다.'));
+        }
+      }, 30000);
+
+      const listenerHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeout);
+        listenerHandle.remove();
+        NfcPlugin.stopScan().catch(() => {});
+
+        const tagData = parseTagPayload(tag.payload, tag.recordType);
+        console.log('NFC 태그 읽기 완료 (네이티브):', tagData);
+        resolve(tagData);
+      });
+
+      try {
+        await NfcPlugin.startScan();
+      } catch (e) {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          listenerHandle.remove();
+          reject(e);
+        }
+      }
+    });
+  }
+
+  // 브라우저: Web NFC API
+  console.log('NFC 태그 읽기 시작 (Web NFC)...');
+  // @ts-ignore
+  const ndef = new NDEFReader();
+  // @ts-ignore
+  await ndef.scan();
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error('NFC 태그 읽기 시간이 초과되었습니다.'));
+    }, 30000);
+
+    ndef.onreading = (event: any) => {
+      clearTimeout(timeoutId);
+      try {
+        const records = event.message?.records || [];
+        if (records.length === 0) {
+          reject(new Error('NFC 태그에서 데이터를 읽을 수 없습니다.'));
+          return;
+        }
+        const record = records[0];
+        let decodedData = '';
+        try {
+          decodedData = new TextDecoder().decode(record.data);
+        } catch (_) {}
+        const tagData = parseTagPayload(decodedData, record.recordType);
+        resolve(tagData);
+      } catch (parseError) {
+        reject(new Error('NFC 태그 데이터를 파싱할 수 없습니다.'));
+      }
+    };
+
+    ndef.onreadingerror = () => {
+      clearTimeout(timeoutId);
+      reject(new Error('NFC 태그 읽기 중 오류가 발생했습니다.'));
+    };
+  });
+}
+
+function parseTagPayload(payload: string | undefined, recordType: string | undefined): NFCTagData {
+  if (payload && (recordType === 'url' || payload.includes('/nfc-redirect?subcategoryId='))) {
+    try {
+      const url = new URL(payload, window.location.origin);
+      const subcategoryId = url.searchParams.get('subcategoryId');
+      if (subcategoryId) {
+        return { categoryCode: '', categoryName: '', storageLocation: '', documentCount: 0, subcategoryId };
+      }
+    } catch (_) {}
+  }
+  if (payload) {
+    try {
+      const data = JSON.parse(payload);
+      return {
+        categoryCode: data.categoryCode || '',
+        categoryName: data.categoryName || '',
+        storageLocation: data.storageLocation || '',
+        documentCount: data.documentCount || 0,
+      };
+    } catch (_) {}
+  }
+  return { categoryCode: '', categoryName: '', storageLocation: '', documentCount: 0 };
 }
 
 /**
  * NFC 태그의 UID만 읽기 (범용 ID 방식용)
  * @returns 태그의 고유 ID (UID)
+ * 주의: 성공 시 setNfcMode('idle') 호출 책임은 호출자에게 있음
  */
 export async function readNFCUid(): Promise<string> {
   setNfcMode('writing');
   try {
     if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않는 브라우저입니다.');
+      throw new Error('NFC가 지원되지 않습니다.');
     }
 
+    if (Capacitor.isNativePlatform()) {
+      return await new Promise(async (resolve, reject) => {
+        let resolved = false;
+
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            listenerHandle?.remove();
+            NfcPlugin.stopScan().catch(() => {});
+            setNfcMode('idle');
+            reject(new Error('NFC 태그 읽기 시간 초과 (30초)'));
+          }
+        }, 30000);
+
+        const listenerHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeout);
+          listenerHandle.remove();
+          NfcPlugin.stopScan().catch(() => {});
+          console.log('NFC UID 읽음 (네이티브):', tag.uid);
+          resolve(tag.uid);
+        });
+
+        try {
+          await NfcPlugin.startScan();
+        } catch (e) {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            listenerHandle.remove();
+            setNfcMode('idle');
+            reject(e);
+          }
+        }
+      });
+    }
+
+    // 브라우저: Web NFC API
     // @ts-ignore
     const ndef = new NDEFReader();
     await ndef.scan();
@@ -379,27 +362,22 @@ export async function readNFCUid(): Promise<string> {
       }, 30000);
 
       // @ts-ignore
-      ndef.addEventListener("reading", ({ serialNumber }) => {
+      ndef.addEventListener('reading', ({ serialNumber }: any) => {
         clearTimeout(timeout);
-        // serialNumber 예: "04:e3:2a:5b:8c:91:80"
         const uid = serialNumber.replace(/:/g, '').toUpperCase();
-        console.log('NFC UID 읽음:', uid);
+        console.log('NFC UID 읽음 (Web NFC):', uid);
         resolve(uid);
       });
 
       // @ts-ignore
-      ndef.addEventListener("readingerror", (error) => {
+      ndef.addEventListener('readingerror', () => {
         clearTimeout(timeout);
-        console.error('NFC 읽기 오류:', error);
         reject(new Error('NFC 태그 읽기 실패'));
       });
     });
   } catch (error) {
     console.error('NFC UID 읽기 실패:', error);
-    // 에러 시에만 모드를 idle로 복귀 (성공 시에는 호출자가 관리)
     setNfcMode('idle');
     throw new Error('NFC UID를 읽을 수 없습니다.');
   }
-  // 주의: 성공 시에는 setNfcMode('idle')을 호출하지 않음
-  // 호출자가 전체 NFC 등록 프로세스 완료 후 setNfcMode('idle')을 호출해야 함
 }

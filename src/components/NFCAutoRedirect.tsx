@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { isNFCSupported, getNfcMode } from '@/lib/nfc';
+import { NfcPlugin } from '@/plugins/nfc-plugin';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
@@ -11,188 +14,149 @@ export function NFCAutoRedirect() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const ndefReaderRef = useRef<any>(null);
+  const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    // NFC 지원 여부 및 사용자 확인
     if (!isNFCSupported() || !user || isInitializedRef.current) {
       return;
     }
 
-    const startNFCScanning = async () => {
-      console.log('🔵 NFC 자동 스캔 시작');
-
+    const processTag = async (uid: string, payload?: string, recordType?: string) => {
       try {
-        // @ts-ignore - NDEFReader
-        const ndef = new NDEFReader();
-        ndefReaderRef.current = ndef;
-        isInitializedRef.current = true;
+        if (getNfcMode() === 'writing') {
+          console.log('NFC 쓰기 모드 중 - 자동 리다이렉트 스킵');
+          return;
+        }
 
-        // NFC 스캔 시작
-        await ndef.scan();
-        console.log('✅ NFC 스캔 활성화 완료');
+        console.log('NFC 태그 감지! UID:', uid);
+        const basePath = user.role === 'admin' ? '/admin' : '/team';
 
-        // 이벤트 핸들러 정의
-        const handleReading = async (event: any) => {
+        if (payload && (recordType === 'url' || payload.includes('/nfc-redirect?subcategoryId='))) {
+          let urlString = payload;
           try {
-            // NFC 쓰기 모드일 때는 자동 리다이렉트 비활성화
-            if (getNfcMode() === 'writing') {
-              console.log('NFC 쓰기 모드 활성화 중: 자동 리다이렉트 건너뜀');
-              return;
-            }
+            const url = new URL(urlString, window.location.origin);
+            const subcategoryId = url.searchParams.get('subcategoryId');
+            let parentCategoryId = url.searchParams.get('parentCategoryId');
 
-            const { serialNumber, message } = event;
-            const uid = serialNumber.replace(/:/g, '').toUpperCase();
-            console.log('📱 NFC 태그 감지! UID:', uid);
-
-            const basePath = user.role === 'admin' ? '/admin' : '/team';
-
-            // 0차: 태그 안에 저장된 URL을 우선 활용 (새로운 URL 기반 플로우)
-            if (message && Array.isArray(message.records) && message.records.length > 0) {
-              for (const record of message.records) {
-                try {
-                  if (record.recordType !== 'url') continue;
-
-                  let urlString = '';
-
-                  if (typeof record.data === 'string') {
-                    urlString = record.data;
-                  } else if (record.data) {
-                    try {
-                      const decoder = new TextDecoder();
-                      urlString = decoder.decode(record.data);
-                    } catch (e) {
-                      console.error('NFC URL 디코딩 오류:', e);
-                    }
-                  }
-
-                  if (!urlString) {
-                    continue;
-                  }
-
-                  console.log('NFC 태그 내 URL 레코드:', urlString);
-
-                  let url: URL;
-                  try {
-                    // 절대/상대 URL 모두 처리
-                    url = new URL(urlString, window.location.origin);
-                  } catch (e) {
-                    console.error('NFC URL 파싱 오류:', e);
-                    continue;
-                  }
-
-                  const params = url.searchParams;
-                  const subcategoryId = params.get('subcategoryId');
-                  let parentCategoryId = params.get('parentCategoryId');
-
-                  if (subcategoryId) {
-                    // parentCategoryId가 URL에 없으면 Supabase에서 조회
-                    if (!parentCategoryId) {
-                      const { data, error } = await supabase
-                        .from('subcategories')
-                        .select('parent_category_id')
-                        .eq('id', subcategoryId)
-                        .single();
-
-                      if (!error && data) {
-                        parentCategoryId = (data as any).parent_category_id;
-                      }
-                    }
-
-                    if (parentCategoryId) {
-                      toast({
-                        title: t('nfc.tagRecognized'),
-                        description: t('nfc.navigatingToSubcategory'),
-                      });
-
-                      navigate(
-                        `${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`,
-                      );
-                      return;
-                    }
-                  }
-                } catch (recordError) {
-                  console.error('NFC URL 레코드 처리 오류:', recordError);
+            if (subcategoryId) {
+              if (!parentCategoryId) {
+                const { data, error } = await supabase
+                  .from('subcategories')
+                  .select('parent_category_id')
+                  .eq('id', subcategoryId)
+                  .single();
+                if (!error && data) {
+                  parentCategoryId = (data as any).parent_category_id;
                 }
               }
+              if (parentCategoryId) {
+                toast({ title: t('nfc.tagRecognized'), description: t('nfc.navigatingToSubcategory') });
+                navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`);
+                return;
+              }
             }
-
-            // 1차: 세부 스토리지(subcategories)에서 UID 기반 매핑
-            const { data: sub, error: subError } = await supabase
-              .from('subcategories')
-              .select('id, parent_category_id')
-              .eq('nfc_tag_id', uid)
-              .single();
-
-            if (!subError && sub) {
-              toast({
-                title: t('nfc.tagRecognized'),
-                description: t('nfc.navigatingToSubcategory'),
-              });
-
-              navigate(
-                `${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}` 
-              );
-              return;
-            }
-
-            // 등록되지 않은 태그
-            toast({
-              title: t('nfc.unregisteredTag'),
-              description: t('nfc.unregisteredTagDesc'),
-              variant: 'destructive',
-            });
-          } catch (error) {
-            console.error('NFC 처리 오류:', error);
-            toast({
-              title: t('common.error'),
-              description: t('nfc.processingError'),
-              variant: 'destructive',
-            });
+          } catch (e) {
+            console.error('NFC URL 파싱 오류:', e);
           }
-        };
+        }
 
-        const handleReadingError = (error: any) => {
-          console.error('NFC 읽기 오류:', error);
-        };
+        const { data: sub, error: subError } = await supabase
+          .from('subcategories')
+          .select('id, parent_category_id')
+          .eq('nfc_tag_id', uid)
+          .single();
 
-        // 이벤트 리스너 등록
-        ndef.addEventListener('reading', handleReading);
-        ndef.addEventListener('readingerror', handleReadingError);
+        if (!subError && sub) {
+          toast({ title: t('nfc.tagRecognized'), description: t('nfc.navigatingToSubcategory') });
+          navigate(`${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`);
+          return;
+        }
 
-        // cleanup 함수를 위해 핸들러 저장
-        (ndefReaderRef.current as any).handleReading = handleReading;
-        (ndefReaderRef.current as any).handleReadingError = handleReadingError;
-
+        toast({ title: t('nfc.unregisteredTag'), description: t('nfc.unregisteredTagDesc'), variant: 'destructive' });
       } catch (error) {
-        console.error('❌ NFC 스캔 시작 실패:', error);
+        console.error('NFC 처리 오류:', error);
+        toast({ title: t('common.error'), description: t('nfc.processingError'), variant: 'destructive' });
+      }
+    };
+
+    const startNFCScanning = async () => {
+      console.log('NFC 자동 스캔 시작');
+      try {
+        isInitializedRef.current = true;
+
+        if (Capacitor.isNativePlatform()) {
+          await NfcPlugin.startScan();
+          console.log('NFC 스캔 시작 (네이티브)');
+
+          nativeListenerRef.current = await NfcPlugin.addListener(
+            'nfcTagDetected',
+            async (tag) => {
+              await processTag(tag.uid, tag.payload, tag.recordType);
+            },
+          );
+        } else {
+          // @ts-ignore - NDEFReader is not in TypeScript types
+          const ndef = new (window as any).NDEFReader();
+          ndefReaderRef.current = ndef;
+          await ndef.scan();
+          console.log('NFC 스캔 시작 (Web NFC)');
+
+          const handleReading = async (event: any) => {
+            const { serialNumber, message } = event;
+            const uid = serialNumber.replace(/:/g, '').toUpperCase();
+
+            let payload: string | undefined;
+            let recordType: string | undefined;
+            if (message?.records?.length > 0) {
+              const record = message.records[0];
+              recordType = record.recordType;
+              try {
+                payload = typeof record.data === 'string'
+                  ? record.data
+                  : new TextDecoder().decode(record.data);
+              } catch (_) {}
+            }
+            await processTag(uid, payload, recordType);
+          };
+
+          const handleReadingError = (error: any) => {
+            console.error('NFC 읽기 오류:', error);
+          };
+
+          ndef.addEventListener('reading', handleReading);
+          ndef.addEventListener('readingerror', handleReadingError);
+          (ndefReaderRef.current as any).handleReading = handleReading;
+          (ndefReaderRef.current as any).handleReadingError = handleReadingError;
+        }
+      } catch (error) {
+        console.error('NFC 스캔 시작 실패:', error);
         isInitializedRef.current = false;
       }
     };
 
     startNFCScanning();
 
-    // Cleanup: 이벤트 리스너 제거
     return () => {
-      if (ndefReaderRef.current) {
+      if (Capacitor.isNativePlatform()) {
+        nativeListenerRef.current?.remove();
+        nativeListenerRef.current = null;
+        NfcPlugin.stopScan().catch(() => {});
+        console.log('NFC 네이티브 스캔 정리 완료');
+      } else if (ndefReaderRef.current) {
         try {
           const ndef = ndefReaderRef.current as any;
-          if (ndef.handleReading) {
-            ndef.removeEventListener('reading', ndef.handleReading);
-          }
-          if (ndef.handleReadingError) {
-            ndef.removeEventListener('readingerror', ndef.handleReadingError);
-          }
-          console.log('🧹 NFC 이벤트 리스너 정리 완료');
-        } catch (error) {
-          console.error('NFC cleanup 오류:', error);
+          if (ndef.handleReading) ndef.removeEventListener('reading', ndef.handleReading);
+          if (ndef.handleReadingError) ndef.removeEventListener('readingerror', ndef.handleReadingError);
+          console.log('NFC Web NFC 이벤트 정리 완료');
+        } catch (e) {
+          console.error('NFC cleanup 오류:', e);
         }
         ndefReaderRef.current = null;
-        isInitializedRef.current = false;
       }
+      isInitializedRef.current = false;
     };
-  }, [user, navigate]); // isScanning 제거 - 무한 루프 방지
+  }, [user, navigate]);
 
-  // UI를 렌더링하지 않음
   return null;
 }
