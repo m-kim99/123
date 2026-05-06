@@ -166,6 +166,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     fetchUserDepartment();
   }, [user?.departmentId]);
 
+  // 알림 패널 열릴 때 배경 스크롤 잠금
+  useEffect(() => {
+    if (isNotificationOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) window.scrollTo(0, -parseInt(scrollY, 10));
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [isNotificationOpen]);
+
   // 역할 + 부서명 표시 헬퍼 (useCallback으로 최적화)
   const getRoleDisplay = useCallback(() => {
     const roleText = isAdmin ? t('common.admin') : t('common.team');
@@ -1191,8 +1215,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {isNotificationOpen && (
-        <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between px-3 py-2 border-b bg-white">
+        <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-[10px] shadow-lg">
+          <div className="flex items-center justify-between px-3 py-2 border-b bg-white rounded-t-[10px]">
             <span className="text-sm font-semibold text-slate-900">{t('header.notifications')}</span>
             <button
               type="button"
@@ -1202,7 +1226,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {t('common.close')}
             </button>
           </div>
-          <div className="max-h-80 overflow-y-auto bg-white">
+          <div className="max-h-80 overflow-y-auto overscroll-contain bg-white rounded-b-[10px]">
             {isLoadingNotifications ? (
               <div className="p-3 text-sm text-slate-500">{t('common.loading')}</div>
             ) : notifications.length === 0 ? (
