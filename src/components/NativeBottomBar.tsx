@@ -32,23 +32,19 @@ export function NativeBottomBar() {
     >
       <div className="flex items-stretch h-14 px-1">
         <button onClick={handleBack} className={btnBase} aria-label="뒤로가기">
-          <ChevronLeft className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">뒤로</span>
+          <ChevronLeft className="w-6 h-6 text-gray-500" />
         </button>
 
         <button onClick={handleForward} className={btnBase} aria-label="앞으로가기">
-          <ChevronRight className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">앞으로</span>
+          <ChevronRight className="w-6 h-6 text-gray-500" />
         </button>
 
         <button onClick={handleHome} className={btnBase} aria-label="홈">
-          <Home className="w-5 h-5 text-blue-500" />
-          <span className="text-[10px] text-blue-400 font-medium">홈</span>
+          <Home className="w-6 h-6 text-blue-500" />
         </button>
 
         <button onClick={handleRefresh} className={btnBase} aria-label="새로고침">
-          <RotateCw className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">새로고침</span>
+          <RotateCw className="w-6 h-6 text-gray-500" />
         </button>
       </div>
     </div>
