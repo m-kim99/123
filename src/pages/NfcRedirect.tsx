@@ -10,7 +10,7 @@ export function NfcRedirect() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, setRedirectAfterLogin } = useAuthStore();
+  const { user, isLoading, setRedirectAfterLogin } = useAuthStore();
   const [isWritingMode, setIsWritingMode] = useState(false);
 
   useEffect(() => {
@@ -71,8 +71,9 @@ export function NfcRedirect() {
       }
     };
 
+    if (isLoading) return;
     redirectToSubcategory();
-  }, [searchParams, navigate, user]);
+  }, [searchParams, navigate, user, isLoading]);
 
   // NFC 쓰기 모드일 때는 다른 UI 표시
   if (isWritingMode) {
