@@ -1,6 +1,8 @@
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { Toaster } from '@/components/ui/toaster';
@@ -281,6 +283,7 @@ function App() {
     <>
       <BrowserRouter>
         <RouteAnalytics />
+        <div className={Capacitor.isNativePlatform() ? 'pb-14' : ''}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<RootRoute />} />
@@ -486,8 +489,9 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-        {/* DeletionWarningDialog는 BrowserRouter 내부에 위치해야 Router 컨텍스트를 사용할 수 있음 */}
+        </div>
         <DeletionWarningDialog />
+        <NativeBottomBar />
       </BrowserRouter>
       <Toaster />
     </>
