@@ -695,7 +695,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-12 w-auto max-w-[200px] object-contain"
+              className="h-[55px] w-auto max-w-[220px] object-contain mx-auto"
             />
           </button>
         </div>
@@ -704,12 +704,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={() => navigate(basePath)}
-            className="flex items-center gap-2 bg-white focus:outline-none"
+            className="flex items-center justify-center w-full bg-white focus:outline-none"
           >
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-10 w-auto object-contain"
+              className="h-[46px] w-auto object-contain mx-auto"
             />
           </button>
         </div>
