@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -110,11 +111,10 @@ export function LoginPage() {
 
   const handleGoogleLogin = async () => {
     console.log('🔵 Google 로그인 시작');
-    console.log('🔵 Supabase 객체:', supabase);
-    console.log('🔵 window.location.origin:', window.location.origin);
-
     try {
-      const redirectTo = `${window.location.origin}`;
+      const redirectTo = Capacitor.isNativePlatform()
+        ? 'com.dms.app://login-callback'
+        : `${window.location.origin}`;
 
       console.log('🔵 signInWithOAuth 호출 전');
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -152,7 +152,9 @@ export function LoginPage() {
     console.log('🟡 window.location.origin:', window.location.origin);
 
     try {
-      const redirectTo = `${window.location.origin}`;
+      const redirectTo = Capacitor.isNativePlatform()
+        ? 'com.dms.app://login-callback'
+        : `${window.location.origin}`;
 
       console.log('🟡 signInWithOAuth 호출 전');
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -228,7 +230,9 @@ export function LoginPage() {
     console.log('🍎 window.location.origin:', window.location.origin);
 
     try {
-      const redirectTo = `${window.location.origin}`;
+      const redirectTo = Capacitor.isNativePlatform()
+        ? 'com.dms.app://login-callback'
+        : `${window.location.origin}`;
 
       console.log('🍎 signInWithOAuth 호출 전');
       const { data, error } = await supabase.auth.signInWithOAuth({
