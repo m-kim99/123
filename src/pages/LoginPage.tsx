@@ -137,7 +137,7 @@ export function LoginPage() {
     console.log('🔵 Google 로그인 시작');
     try {
       const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.traystorage.connect://login-callback'
+        ? 'com.infocreative.traystorageconnect://login-callback'
         : `${window.location.origin}`;
 
       console.log('🔵 signInWithOAuth 호출 전');
@@ -177,7 +177,7 @@ export function LoginPage() {
 
     try {
       const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.traystorage.connect://login-callback'
+        ? 'com.infocreative.traystorageconnect://login-callback'
         : `${window.location.origin}`;
 
       console.log('🟡 signInWithOAuth 호출 전');
@@ -255,7 +255,7 @@ export function LoginPage() {
 
     try {
       const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.traystorage.connect://login-callback'
+        ? 'com.infocreative.traystorageconnect://login-callback'
         : `${window.location.origin}`;
 
       console.log('🍎 signInWithOAuth 호출 전');

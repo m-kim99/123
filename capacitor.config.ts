@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.traystorage.connect',
+  appId: 'com.infocreative.traystorageconnect',
   appName: 'TrayStorage Connect',
   webDir: 'dist',
   android: {
