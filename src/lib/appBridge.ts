@@ -24,11 +24,11 @@ export function isRunningInApp(): boolean {
  * @param filename 저장될 파일명 (확장자 포함)
  */
 export async function downloadFile(downloadUrl: string, filename: string): Promise<void> {
-  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
-    // Android 네이티브: 시스템 DownloadManager로 Downloads 폴더에 저장
+  if (Capacitor.isNativePlatform()) {
+    // Android / iOS 네이티브: Capacitor DownloadPlugin 사용
     await DownloadPlugin.downloadFile({ url: downloadUrl, filename });
   } else if (isRunningInApp() && window.webkit?.messageHandlers?.cordova_iab) {
-    // iOS 앱 환경: 네이티브 다운로드
+    // 레거시 iOS 앱케이크 환경: webkit 브릿지 fallback
     const param = {
       action: 'filedownload',
       downloadurl: downloadUrl,

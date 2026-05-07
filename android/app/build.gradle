@@ -4,7 +4,7 @@ android {
     namespace = "com.dms.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.dms.app"
+        applicationId "com.traystorage.connect"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.dms.app',
+  appId: 'com.traystorage.connect',
   appName: 'TrayStorage Connect',
   webDir: 'dist',
   android: {
@@ -11,6 +11,10 @@ const config: CapacitorConfig = {
       keystoreAlias: undefined,
       keystoreAliasPassword: undefined,
     },
+  },
+  ios: {
+    scheme: 'TrayStorageConnect',
+    contentInset: 'automatic',
   },
   plugins: {
     SplashScreen: {
