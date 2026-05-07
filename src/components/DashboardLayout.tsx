@@ -1194,7 +1194,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         <main className="flex-1 overflow-auto w-full">
-          <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
+          <div className={`max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'pb-20' : ''}`}>
             {children}
           </div>
         </main>
