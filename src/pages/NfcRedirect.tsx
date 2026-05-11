@@ -38,6 +38,14 @@ export function NfcRedirect() {
           return;
         }
 
+        // 로그인 안 된 상태라면, 현재 nfc-redirect URL 전체를 저장하고 로그인으로 보낸다
+        if (!user) {
+          const currentFullPath = `/nfc-redirect?subcategoryId=${subcategoryId}`;
+          setRedirectAfterLogin(currentFullPath);
+          navigate('/', { replace: true });
+          return;
+        }
+
         // DB에서 parent_category_id 조회
         const { data, error } = await supabase
           .from('subcategories')
@@ -47,24 +55,15 @@ export function NfcRedirect() {
 
         if (error || !data) {
           console.error('NFC Redirect: 세부 스토리지 조회 실패', error);
-          navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');
+          navigate(user.role === 'admin' ? '/admin' : '/team');
           return;
         }
 
         const parentCategoryId = (data as any).parent_category_id;
-        const targetRelativePath = `/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`;
-
-        // 로그인 안 된 상태라면, 로그인 후 돌아올 경로를 저장하고 루트(로그인)로 보낸다
-        if (!user) {
-          setRedirectAfterLogin(targetRelativePath);
-          navigate('/', { replace: true });
-          return;
-        }
-
         const basePath = user.role === 'admin' ? '/admin' : '/team';
 
         // 세부 스토리지 페이지로 리다이렉트
-        navigate(`${basePath}${targetRelativePath}`, { replace: true });
+        navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`, { replace: true });
       } catch (error) {
         console.error('NFC Redirect 오류:', error);
         navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');
