@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
-import penIcon from '@/assets/pen.svg';
-import binIcon from '@/assets/bin.svg';
+import { Plus, Smartphone, CalendarIcon, Edit, Trash2 } from 'lucide-react';
+
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -602,7 +601,7 @@ export function SubcategoryManagement() {
               </div>
             ) : (
               <>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {paginatedSubcategories.map((sub) => {
                   const dept = departments.find((d) => d.id === sub.departmentId);
                   const parent = parentCategories.find((pc) => pc.id === sub.parentCategoryId);
@@ -623,77 +622,123 @@ export function SubcategoryManagement() {
                   };
 
                   return (
-                    <div
-                      key={sub.id}
-                      className={cn(
-                        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg transition-colors",
-                        !isExpired && "hover:bg-slate-50 cursor-pointer",
-                        expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300 cursor-not-allowed",
-                        expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
-                        expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
-                      )}
-                    >
-                      <div
-                        className="flex-1 min-w-0"
-                        onClick={handleClick}
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <p className="font-medium truncate flex-1 min-w-0">{sub.name}</p>
-                        </div>
-                        <p className="text-sm text-slate-500 truncate">
-                          {parent ? `${parent.name} · ` : ''}
-                          {dept ? dept.name : sub.departmentId}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {t('subcategoryMgmt.docsCount', { count: sub.documentCount })} · NFC{' '}
-                          {sub.nfcRegistered ? t('subcategoryMgmt.registered') : t('subcategoryMgmt.unregistered')}
-                          {sub.expiryDate
-                            ? ` · ${t('parentCategoryDetail.expiryDate')} ${format(new Date(sub.expiryDate), 'yyyy.MM.dd')}`
-                            : sub.defaultExpiryDays
-                              ? ` · ${t('parentCategoryDetail.expiryDate')} ${format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}`
-                              : ''}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 self-end sm:self-auto sm:ml-3 flex-wrap">
-                        {expiryStatus.label && (
-                          <Badge
-                            variant={
-                              expiryStatus.status === 'expired' ? 'destructive' :
-                              expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
-                            }
-                            className={cn(
-                              "flex-shrink-0",
-                              expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
-                              expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                  <Card
+                    key={sub.id}
+                    className={cn(
+                      "hover:shadow-lg transition-shadow cursor-pointer flex flex-col",
+                      expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300",
+                      expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
+                      expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
+                    )}
+                  >
+                    <div className="flex flex-col h-full" onClick={handleClick}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
+                            <CardDescription className="mt-1 truncate">
+                              {sub.description || t('parentCategoryDetail.noDescription')}
+                            </CardDescription>
+                          </div>
+                          <div className="flex flex-col gap-1 items-end">
+                            <div className="flex items-center gap-2">
+                              {sub.nfcRegistered && (
+                                <Badge variant="outline">
+                                  <Smartphone className="h-3 w-3 mr-1" />
+                                  NFC
+                                </Badge>
+                              )}
+                              <ColorLabelBadge colorLabel={sub.colorLabel} />
+                            </div>
+                            {expiryStatus.label && (
+                              <Badge
+                                variant={
+                                  expiryStatus.status === 'expired' ? 'destructive' :
+                                  expiryStatus.status === 'warning_7' ? 'default' : 'secondary'
+                                }
+                                className={cn(
+                                  expiryStatus.status === 'warning_7' && "bg-orange-500 text-white",
+                                  expiryStatus.status === 'warning_30' && "bg-yellow-500 text-white"
+                                )}
+                              >
+                                {expiryStatus.label}
+                              </Badge>
                             )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col justify-between flex-1">
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">{t('common.department')}</span>
+                            <span className="font-medium">
+                              {dept?.name ?? sub.departmentId}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">{t('subcategoryDetail.parentCategory')}</span>
+                            <span className="font-medium">{parent?.name ?? '-'}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">{t('subcategoryDetail.docCount')}</span>
+                            <span className="font-medium">{sub.documentCount}</span>
+                          </div>
+                          {sub.storageLocation && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">{t('subcategoryDetail.storageLocation')}</span>
+                              <span className="font-medium text-xs">
+                                {sub.storageLocation}
+                              </span>
+                            </div>
+                          )}
+                          {sub.managementNumber && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">{t('subcategoryDetail.managementNumber')}</span>
+                              <span className="font-medium text-xs">
+                                {sub.managementNumber}
+                              </span>
+                            </div>
+                          )}
+                          {sub.expiryDate ? (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">{t('parentCategoryDetail.expiryDate')}</span>
+                              <span className="font-medium">
+                                {format(new Date(sub.expiryDate), 'yyyy.MM.dd')}
+                              </span>
+                            </div>
+                          ) : sub.defaultExpiryDays ? (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500">{t('parentCategoryDetail.expiryDate')}</span>
+                              <span className="font-medium">
+                                {format(addDays(new Date(), sub.defaultExpiryDays), 'yyyy.MM.dd')}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div
+                          className="flex gap-2 mt-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleOpenEditDialog(sub)}
                           >
-                            {expiryStatus.label}
-                          </Badge>
-                        )}
-                        {sub.nfcRegistered && (
-                          <Badge variant="outline" className="flex-shrink-0">
-                            <Smartphone className="h-3 w-3 mr-1" />
-                            NFC
-                          </Badge>
-                        )}
-                        <ColorLabelBadge colorLabel={sub.colorLabel} />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleOpenEditDialog(sub)}
-                        >
-                          <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDelete(sub.id)}
-                          className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                        >
-                          <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
-                        </Button>
-                      </div>
+                            <Edit className="h-3 w-3 mr-1" />
+                            {t('common.edit')}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(sub.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
                     </div>
+                  </Card>
                   );
                 })}
               </div>
