@@ -968,7 +968,12 @@
     "writeMode": "NFC 쓰기 모드",
     "goingBack": "이전 페이지로 돌아갑니다...",
     "tagDetected": "NFC 태그 인식됨",
-    "navigating": "페이지로 이동 중..."
+    "navigating": "페이지로 이동 중...",
+    "accessDenied": "접근 권한이 없습니다",
+    "differentCompany": "다른 회사의 세부 카테고리에는 접근할 수 없습니다.",
+    "noPermission": "해당 부서에 대한 접근 권한이 없습니다. 관리자에게 권한을 요청하세요.",
+    "redirecting": "잠시 후 메인 페이지로 이동합니다...",
+    "goToDashboard": "메인으로 이동"
   },
   "nfc": {
     "androidOnly": "NFC는 Android Chrome에서만 지원됩니다.",

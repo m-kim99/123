@@ -968,7 +968,12 @@
     "writeMode": "NFC Write Mode",
     "goingBack": "Returning to previous page...",
     "tagDetected": "NFC Tag Detected",
-    "navigating": "Navigating to page..."
+    "navigating": "Navigating to page...",
+    "accessDenied": "Access Denied",
+    "differentCompany": "You cannot access subcategories from a different company.",
+    "noPermission": "You do not have permission to access this department. Please request access from an administrator.",
+    "redirecting": "Redirecting to main page shortly...",
+    "goToDashboard": "Go to Dashboard"
   },
   "nfc": {
     "androidOnly": "NFC is only supported on Android Chrome.",
