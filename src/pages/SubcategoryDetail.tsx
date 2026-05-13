@@ -32,6 +32,7 @@ import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
+import { checkUserAccess, hasPermission, type Role, type Action } from '@/lib/permissions';
 
 export function SubcategoryDetail() {
   const { t } = useTranslation();
@@ -123,6 +124,32 @@ export function SubcategoryDetail() {
   const [replaceOcrText, setReplaceOcrText] = useState('');
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
   const [isEditingReplaceOcr, setIsEditingReplaceOcr] = useState(false);
+
+  // 권한 상태
+  const [departmentRole, setDepartmentRole] = useState<Role>('none');
+  const isAdmin = user?.role === 'admin';
+
+  // 권한 조회
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user?.id || !subcategoryId) return;
+      if (isAdmin) {
+        setDepartmentRole('manager');
+        return;
+      }
+      const sub = subcategories.find((s) => s.id === subcategoryId);
+      if (!sub?.departmentId) return;
+      const { role } = await checkUserAccess(user.id, sub.departmentId, user.departmentId);
+      setDepartmentRole(role);
+    };
+    fetchRole();
+  }, [user?.id, user?.departmentId, subcategoryId, subcategories, isAdmin]);
+
+  // 권한 체크 헬퍼
+  const canDo = (action: Action): boolean => {
+    if (isAdmin) return true;
+    return hasPermission(departmentRole, action);
+  };
 
   useEffect(() => {
     if (subcategoryId) {
@@ -1059,7 +1086,7 @@ export function SubcategoryDetail() {
                 variant="outline"
                 size="sm"
                 onClick={handleRegisterNfc}
-                disabled={isRegisteringNfc}
+                disabled={isRegisteringNfc || !canDo('share')}
                 className={`flex items-center gap-2 w-28 justify-center ${
                   subcategory.nfcRegistered 
                     ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#2563eb]' 
@@ -1172,6 +1199,7 @@ export function SubcategoryDetail() {
                         size="icon"
                         onClick={() => handleOpenFileReplaceDialog(doc.id)}
                         title={t('documentMgmt.fileReplace')}
+                        disabled={!canDo('write')}
                       >
                         <img src={changeIcon} alt={t('documentMgmt.fileReplace')} className="w-full h-full p-1.5" />
                       </Button>
@@ -1186,6 +1214,7 @@ export function SubcategoryDetail() {
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenShareDialog(doc.id)}
+                        disabled={!canDo('share')}
                       >
                         <img src={shareIcon} alt={t('documentMgmt.shared')} className="w-full h-full p-1.5" />
                       </Button>
@@ -1194,6 +1223,7 @@ export function SubcategoryDetail() {
                         size="icon"
                         className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
                         onClick={() => handleDeleteDocumentClick(doc.id)}
+                        disabled={!canDo('delete')}
                       >
                         <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
                       </Button>
@@ -1363,7 +1393,7 @@ export function SubcategoryDetail() {
             {/* 업로드 버튼 */}
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || isUploading || isExtractingUploadOcr}
+              disabled={!selectedFile || isUploading || isExtractingUploadOcr || !canDo('upload')}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {isExtractingUploadOcr ? (

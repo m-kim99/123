@@ -40,6 +40,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { BackButton } from '@/components/BackButton';
+import { useAuthStore } from '@/store/authStore';
+import { checkUserAccess, hasPermission, type Role, type Action } from '@/lib/permissions';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 import { Edit, Trash2 } from 'lucide-react';
 import i18n from '@/lib/i18n';
@@ -74,6 +76,8 @@ export function ParentCategoryDetail() {
   const { t } = useTranslation();
   const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
   
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
@@ -142,6 +146,9 @@ export function ParentCategoryDetail() {
   const [deletingSubcategory, setDeletingSubcategory] = useState<any>(null);
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
 
+  // 권한 상태
+  const [departmentRole, setDepartmentRole] = useState<Role>('none');
+
   useEffect(() => {
     if (!parentCategoryId) return;
     fetchParentCategories();
@@ -163,6 +170,26 @@ export function ParentCategoryDetail() {
         : undefined,
     [departments, parentCategory]
   );
+
+  // 권한 조회
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user?.id || !parentCategory?.departmentId) return;
+      if (isAdmin) {
+        setDepartmentRole('manager');
+        return;
+      }
+      const { role } = await checkUserAccess(user.id, parentCategory.departmentId, user.departmentId);
+      setDepartmentRole(role);
+    };
+    fetchRole();
+  }, [user?.id, user?.departmentId, parentCategory?.departmentId, isAdmin]);
+
+  // 권한 체크 헬퍼
+  const canDo = (action: Action): boolean => {
+    if (isAdmin) return true;
+    return hasPermission(departmentRole, action);
+  };
 
   const childSubcategories = useMemo(
     () =>
@@ -647,6 +674,7 @@ export function ParentCategoryDetail() {
             <Button 
               onClick={() => setAddDialogOpen(true)}
               className="hidden md:inline-flex"
+              disabled={!canDo('write')}
             >
               <Plus className="h-4 w-4 mr-2" />
               {t('parentCategoryDetail.addSubcategory')}
@@ -658,6 +686,7 @@ export function ParentCategoryDetail() {
               onClick={() => setAddDialogOpen(true)}
               className="w-full"
               variant="outline"
+              disabled={!canDo('write')}
             >
               <Plus className="h-4 w-4 mr-2" />
               {t('parentCategoryDetail.addSubcategory')}
@@ -790,6 +819,7 @@ export function ParentCategoryDetail() {
                             size="sm"
                             className="flex-1"
                             onClick={() => handleOpenSubEditDialog(sub)}
+                            disabled={!canDo('write')}
                           >
                             <Edit className="h-3 w-3 mr-1" />
                             {t('common.edit')}
@@ -798,6 +828,7 @@ export function ParentCategoryDetail() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenSubDeleteDialog(sub)}
+                            disabled={!canDo('delete')}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

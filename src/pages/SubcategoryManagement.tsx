@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
+import { hasPermission, type Role, type Action } from '@/lib/permissions';
 import i18n from '@/lib/i18n';
 
 // 만료 상태 계산
@@ -129,6 +130,8 @@ export function SubcategoryManagement() {
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
   // 팀원용: 권한 있는 부서 ID 목록
   const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
+  // 부서별 권한 매핑
+  const [departmentPermissions, setDepartmentPermissions] = useState<Map<string, Role>>(new Map());
 
   // 만료된 카테고리 안내 다이얼로그 상태
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
@@ -149,36 +152,56 @@ export function SubcategoryManagement() {
     useDocumentStore.getState().fetchSubcategories();
   }, []);
 
-  // 팀원용: 권한 있는 부서 목록 조회
+  // 팀원용: 권한 있는 부서 목록 조회 + 권한 레벨 매핑
   useEffect(() => {
     const fetchAccessibleDepartments = async () => {
       if (isAdmin || !user?.id) {
-        // 관리자는 모든 부서 접근 가능
+        // 관리자는 모든 부서에 manager 권한
         setAccessibleDepartmentIds(departments.map((d) => d.id));
+        const adminPerms = new Map<string, Role>();
+        departments.forEach(d => adminPerms.set(d.id, 'manager'));
+        setDepartmentPermissions(adminPerms);
         return;
       }
 
-      // 1. 소속 부서는 자동 접근 가능
+      const permissions = new Map<string, Role>();
+      const deptIds = new Set<string>();
+
+      // 1. 소속 부서는 자동 manager 권한
       const ownDeptId = user.departmentId;
+      if (ownDeptId) {
+        deptIds.add(ownDeptId);
+        permissions.set(ownDeptId, 'manager');
+      }
 
       // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
       const { data: permissionData } = await supabase
         .from('user_permissions')
-        .select('department_id')
+        .select('department_id, role')
         .eq('user_id', user.id)
         .neq('role', 'none');
 
-      const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
-      const allIds = new Set<string>([
-        ...(ownDeptId ? [ownDeptId] : []),
-        ...permDeptIds,
-      ]);
+      permissionData?.forEach((p: any) => {
+        deptIds.add(p.department_id);
+        if (p.department_id !== ownDeptId) {
+          permissions.set(p.department_id, p.role as Role);
+        }
+      });
 
-      setAccessibleDepartmentIds(Array.from(allIds));
+      setAccessibleDepartmentIds(Array.from(deptIds));
+      setDepartmentPermissions(permissions);
     };
 
     fetchAccessibleDepartments();
   }, [isAdmin, user?.id, user?.departmentId, departments]);
+
+  // 세부 카테고리별 권한 체크 헬퍼
+  const canDoForSub = (sub: { departmentId: string }, action: Action): boolean => {
+    if (isAdmin) return true;
+    const role = departmentPermissions.get(sub.departmentId);
+    if (!role) return false;
+    return hasPermission(role, action);
+  };
 
   const filteredParentCategories = useMemo(
     () => {
@@ -724,6 +747,7 @@ export function SubcategoryManagement() {
                             size="sm"
                             className="flex-1"
                             onClick={() => handleOpenEditDialog(sub)}
+                            disabled={!canDoForSub(sub, 'write')}
                           >
                             <Edit className="h-3 w-3 mr-1" />
                             {t('common.edit')}
@@ -732,6 +756,7 @@ export function SubcategoryManagement() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(sub.id)}
+                            disabled={!canDoForSub(sub, 'delete')}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
