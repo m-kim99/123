@@ -111,8 +111,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
-  const [myPermissionsOpen, setMyPermissionsOpen] = useState(false);
-  const [myPermissions, setMyPermissions] = useState<{ departmentName: string; role: Role }[]>([]);
+  const [myPermissions, setMyPermissions] = useState<{ departmentId: string; departmentName: string; role: Role }[]>([]);
   const [newPasswordValidation, setNewPasswordValidation] = useState<PasswordValidation | null>(null);
 
   const FAQIcon = ({ className }: { className?: string }) => (
@@ -675,57 +674,68 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       : []),
   ];
 
-  const handleOpenMyPermissions = async () => {
-    if (!user?.id) return;
-    setMyPermissionsOpen(true);
+  // 팀원: 나의 권한 데이터 미리 로드
+  useEffect(() => {
+    const fetchMyPermissions = async () => {
+      if (!user?.id || user.role === 'admin') return;
 
-    // 소속 부서 포함
-    const perms: { departmentName: string; role: Role }[] = [];
+      const perms: { departmentId: string; departmentName: string; role: Role }[] = [];
 
-    // 1. 소속 부서 = manager
-    if (user.departmentId) {
-      const { data: ownDept } = await supabase
-        .from('departments')
-        .select('name')
-        .eq('id', user.departmentId)
-        .single();
-      if (ownDept) {
-        perms.push({ departmentName: ownDept.name, role: 'manager' });
-      }
-    }
-
-    // 2. 추가 권한 부여된 부서
-    const { data: permData } = await supabase
-      .from('user_permissions')
-      .select('department_id, role')
-      .eq('user_id', user.id)
-      .neq('role', 'none');
-
-    if (permData) {
-      // 부서 이름 조회
-      const deptIds = permData
-        .filter((p) => p.department_id !== user.departmentId)
-        .map((p) => p.department_id);
-
-      if (deptIds.length > 0) {
-        const { data: depts } = await supabase
+      // 1. 소속 부서 = manager
+      if (user.departmentId) {
+        const { data: ownDept } = await supabase
           .from('departments')
-          .select('id, name')
-          .in('id', deptIds);
-
-        const deptMap = new Map(depts?.map((d) => [d.id, d.name]) || []);
-        permData
-          .filter((p) => p.department_id !== user.departmentId)
-          .forEach((p) => {
-            const name = deptMap.get(p.department_id);
-            if (name) {
-              perms.push({ departmentName: name, role: p.role as Role });
-            }
-          });
+          .select('name')
+          .eq('id', user.departmentId)
+          .single();
+        if (ownDept) {
+          perms.push({ departmentId: user.departmentId, departmentName: ownDept.name, role: 'manager' });
+        }
       }
-    }
 
-    setMyPermissions(perms);
+      // 2. 추가 권한 부여된 부서
+      const { data: permData } = await supabase
+        .from('user_permissions')
+        .select('department_id, role')
+        .eq('user_id', user.id)
+        .neq('role', 'none');
+
+      if (permData) {
+        const deptIds = permData
+          .filter((p) => p.department_id !== user.departmentId)
+          .map((p) => p.department_id);
+
+        if (deptIds.length > 0) {
+          const { data: depts } = await supabase
+            .from('departments')
+            .select('id, name')
+            .in('id', deptIds);
+
+          const deptMap = new Map(depts?.map((d) => [d.id, d.name]) || []);
+          permData
+            .filter((p) => p.department_id !== user.departmentId)
+            .forEach((p) => {
+              const name = deptMap.get(p.department_id);
+              if (name) {
+                perms.push({ departmentId: p.department_id, departmentName: name, role: p.role as Role });
+              }
+            });
+        }
+      }
+
+      setMyPermissions(perms);
+    };
+
+    fetchMyPermissions();
+  }, [user?.id, user?.departmentId, user?.role]);
+
+  const getRoleBadgeClass = (role: Role) => {
+    switch (role) {
+      case 'manager': return 'bg-blue-100 text-blue-700';
+      case 'editor': return 'bg-green-100 text-green-700';
+      case 'viewer': return 'bg-yellow-100 text-yellow-700';
+      default: return 'bg-slate-100 text-slate-500';
+    }
   };
 
   const handleLogout = async () => {
@@ -1033,11 +1043,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {t('header.profileSettings')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
-              {user?.role === 'team' && (
-                <DropdownMenuItem onClick={handleOpenMyPermissions}>
-                  <Shield className="h-4 w-4 mr-2" />
-                  {t('header.myPermissions')}
-                </DropdownMenuItem>
+              {user?.role === 'team' && myPermissions.length > 0 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Shield className="h-4 w-4 mr-2" />
+                    <span>{t('header.myPermissions')}</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="min-w-[200px]">
+                    {myPermissions.map((perm) => (
+                      <DropdownMenuItem
+                        key={perm.departmentId}
+                        onClick={() => navigate(`${basePath}/department/${perm.departmentId}`)}
+                        className="flex items-center justify-between gap-3"
+                      >
+                        <span className="truncate">{perm.departmentName}</span>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${getRoleBadgeClass(perm.role)}`}>
+                          {ROLE_LABELS[perm.role]}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               )}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -1247,11 +1273,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     {t('header.profileSettings')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
-                  {user?.role === 'team' && (
-                    <DropdownMenuItem onClick={handleOpenMyPermissions}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      {t('header.myPermissions')}
-                    </DropdownMenuItem>
+                  {user?.role === 'team' && myPermissions.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Shield className="h-4 w-4 mr-2" />
+                        <span>{t('header.myPermissions')}</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="min-w-[200px]">
+                        {myPermissions.map((perm) => (
+                          <DropdownMenuItem
+                            key={perm.departmentId}
+                            onClick={() => navigate(`${basePath}/department/${perm.departmentId}`)}
+                            className="flex items-center justify-between gap-3"
+                          >
+                            <span className="truncate">{perm.departmentName}</span>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${getRoleBadgeClass(perm.role)}`}>
+                              {ROLE_LABELS[perm.role]}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                   )}
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
@@ -1622,49 +1664,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         onOpenChange={setIsNotificationSettingsOpen}
       />
 
-      {/* 나의 권한 보기 다이얼로그 */}
-      <Dialog open={myPermissionsOpen} onOpenChange={setMyPermissionsOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              {t('header.myPermissions')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('header.myPermissionsDesc')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-2">
-            {myPermissions.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">
-                {t('header.noPermissions')}
-              </p>
-            ) : (
-              myPermissions.map((perm, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-lg border bg-slate-50"
-                >
-                  <span className="text-sm font-medium text-slate-700">{perm.departmentName}</span>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      perm.role === 'manager'
-                        ? 'bg-blue-100 text-blue-700'
-                        : perm.role === 'editor'
-                        ? 'bg-green-100 text-green-700'
-                        : perm.role === 'viewer'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {ROLE_LABELS[perm.role]}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
