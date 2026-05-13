@@ -140,6 +140,7 @@
     "teamTab": "팀원",
     "email": "이메일",
     "password": "비밀번호",
+    "rememberEmail": "이메일 저장",
     "forgotPassword": "비밀번호를 잊으셨나요?",
     "loggingIn": "로그인 중...",
     "adminLogin": "관리자 로그인",

@@ -140,6 +140,7 @@
     "teamTab": "Team",
     "email": "Email",
     "password": "Password",
+    "rememberEmail": "Remember email",
     "forgotPassword": "Forgot password?",
     "loggingIn": "Logging in...",
     "adminLogin": "Admin Login",

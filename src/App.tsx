@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
+import { supabase } from '@/lib/supabase';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import { trackPageView } from '@/lib/analytics';
@@ -257,6 +258,19 @@ function App() {
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
     checkSession();
+
+    // 세션 상태 변경 감지 (토큰 갱신, 로그아웃 등)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
+      if (event === 'SIGNED_OUT') {
+        useAuthStore.getState().logout();
+      } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        useAuthStore.getState().checkSession();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

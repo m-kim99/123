@@ -34,8 +34,14 @@ import { PrivacyPolicyContent } from '@/components/terms/PrivacyPolicy';
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    const saved = localStorage.getItem('saved_login_email');
+    return saved || '';
+  });
   const [password, setPassword] = useState('');
+  const [rememberEmail, setRememberEmail] = useState(() => {
+    return localStorage.getItem('remember_email') === 'true';
+  });
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
   const backgroundVideoSrc = '/login-bg.mp4';
@@ -426,6 +432,15 @@ export function LoginPage() {
   const handleLogin = async (role: 'admin' | 'team') => {
     clearError();
 
+    // 이메일 저장 처리
+    if (rememberEmail) {
+      localStorage.setItem('saved_login_email', email);
+      localStorage.setItem('remember_email', 'true');
+    } else {
+      localStorage.removeItem('saved_login_email');
+      localStorage.removeItem('remember_email');
+    }
+
     // 먼저 로그인 시도
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -773,7 +788,16 @@ export function LoginPage() {
                       required
                     />
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberEmail}
+                        onChange={(e) => setRememberEmail(e.target.checked)}
+                        className="w-4 h-4 accent-blue-600 rounded"
+                      />
+                      <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
+                    </label>
                     <Button
                       type="button"
                       variant="link"
@@ -893,7 +917,16 @@ export function LoginPage() {
                       required
                     />
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberEmail}
+                        onChange={(e) => setRememberEmail(e.target.checked)}
+                        className="w-4 h-4 accent-blue-600 rounded"
+                      />
+                      <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
+                    </label>
                     <Button
                       type="button"
                       variant="link"

@@ -13,7 +13,14 @@ const isSupabaseConfigured =
 // Supabase 클라이언트 초기화
 // 환경변수 미설정 시 null as any 대신 Proxy를 사용해 즉시 명확한 에러를 던짐
 export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'troy-auth-token',
+        storage: localStorage,
+      },
+    })
   : (new Proxy({} as SupabaseClient, {
       get(_target, prop) {
         throw new Error(
