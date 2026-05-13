@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.infocreative.traystorageconnect',
   appName: 'TrayStorage Connect',
   webDir: 'dist',
+  server: {
+    url: 'https://traystorageconnect.com',
+    cleartext: false,
+  },
   android: {
     buildOptions: {
       keystorePath: undefined,
