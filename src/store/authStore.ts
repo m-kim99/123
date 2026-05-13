@@ -332,6 +332,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    // 이미 로그아웃 상태면 무한 재귀 방지
+    if (!get().user && !get().isAuthenticated) return;
+
     try {
       trackEvent('logout', {});
       await supabase.auth.signOut();
