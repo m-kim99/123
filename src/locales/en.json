@@ -62,7 +62,8 @@
     "sharedDocuments": "Shared Documents",
     "statistics": "Statistics",
     "announcements": "Announcements",
-    "customerService": "Support"
+    "trash": "Trash",
+    "customerService": "Customer Service"
   },
   "header": {
     "searchPlaceholder": "Search documents...",
@@ -1094,5 +1095,25 @@
     "10": "Oct",
     "11": "Nov",
     "12": "Dec"
+  },
+  "trash": {
+    "title": "Trash",
+    "subtitle": "Restore or permanently delete documents.",
+    "deletedDocuments": "Deleted Documents",
+    "totalCount": "Total {{count}}",
+    "searchPlaceholder": "Search documents...",
+    "documentName": "Document Name",
+    "deletedAt": "Deleted At",
+    "actions": "Actions",
+    "restore": "Restore",
+    "permanentDelete": "Delete Permanently",
+    "emptyTrash": "Empty Trash",
+    "empty": "Trash is empty.",
+    "noSearchResults": "No search results.",
+    "permanentDeleteTitle": "Permanent Delete",
+    "permanentDeleteDesc": "Are you sure you want to permanently delete this document? This action cannot be undone.",
+    "emptyTrashTitle": "Empty Trash",
+    "emptyTrashDesc": "Are you sure you want to permanently delete all {{count}} documents? This action cannot be undone.",
+    "emptyTrashConfirm": "Delete All"
   }
 }

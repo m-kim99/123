@@ -47,6 +47,7 @@ export interface Document {
   classified: boolean;
   fileUrl: string;
   ocrText?: string | null;
+  deletedAt?: string | null;
 }
 
 export interface ParentCategory {
@@ -80,6 +81,7 @@ interface DocumentState {
   parentCategories: ParentCategory[];
   subcategories: Subcategory[];
   documents: Document[];
+  trashedDocuments: Document[];
   sharedDocuments: SharedDocument[];
   isLoading: boolean;
   /** 동시 fetch 개수 추적 — isLoading은 이 값이 0보다 클 때 true (경쟁 조건 방지) */
@@ -90,6 +92,7 @@ interface DocumentState {
   fetchParentCategories: () => Promise<void>;
   fetchSubcategories: (parentCategoryId?: string) => Promise<void>;
   fetchDocuments: () => Promise<void>;
+  fetchTrashedDocuments: () => Promise<void>;
   fetchSharedDocuments: () => Promise<void>;
   shareDocument: (
     documentId: string,
@@ -121,6 +124,9 @@ interface DocumentState {
     }
   ) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
+  restoreDocument: (id: string) => Promise<void>;
+  permanentlyDeleteDocument: (id: string) => Promise<void>;
+  emptyTrash: () => Promise<void>;
   updateDocumentOcrText: (id: string, ocrText: string) => Promise<void>;
   updateDocumentFile: (id: string, file: File, ocrText?: string) => Promise<void>;
   checkPermission: (
@@ -162,6 +168,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   parentCategories: [],
   subcategories: [],
   documents: [],
+  trashedDocuments: [],
   sharedDocuments: [],
   isLoading: false,
   _loadingCount: 0,
@@ -543,6 +550,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .from('documents')
         .select('*')
         .in('department_id', deptIds)
+        .is('deleted_at', null)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
@@ -566,6 +574,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               supabase.storage.from('123').getPublicUrl(doc.file_path).data
                 .publicUrl || '#',
             ocrText: doc.ocr_text || null,
+            deletedAt: null,
           };
         });
         set({ documents });
@@ -580,6 +589,78 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         variant: 'destructive',
       });
       set({ documents: [], error: null });
+    } finally {
+      endLoading(set);
+    }
+  },
+
+  fetchTrashedDocuments: async () => {
+    startLoading(set);
+    set({ error: null });
+    try {
+      const { user } = useAuthStore.getState();
+
+      if (!user?.companyId) {
+        set({ trashedDocuments: [] });
+        return;
+      }
+
+      const { data: deptData, error: deptError } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('company_id', user.companyId);
+
+      if (deptError) throw deptError;
+
+      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+
+      if (deptIds.length === 0) {
+        set({ trashedDocuments: [] });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .in('department_id', deptIds)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const trashedDocuments: Document[] = (data as SupabaseDocument[]).map((doc) => {
+          const parentCategoryId = (doc as SupabaseDocument & { parent_category_id?: string }).parent_category_id || '';
+          const subcategoryId = (doc as SupabaseDocument & { subcategory_id?: string }).subcategory_id || '';
+
+          return {
+            id: doc.id,
+            name: doc.title,
+            categoryId: (doc as SupabaseDocument & { category_id?: string }).category_id || undefined,
+            parentCategoryId,
+            subcategoryId,
+            departmentId: doc.department_id,
+            uploadDate: doc.uploaded_at,
+            uploader: doc.uploaded_by || '',
+            classified: doc.is_classified,
+            fileUrl:
+              supabase.storage.from('123').getPublicUrl(doc.file_path).data
+                .publicUrl || '#',
+            ocrText: doc.ocr_text || null,
+            deletedAt: (doc as any).deleted_at || null,
+          };
+        });
+        set({ trashedDocuments });
+      } else {
+        set({ trashedDocuments: [] });
+      }
+    } catch (err) {
+      console.error('Failed to fetch trashed documents:', err);
+      toast({
+        title: '휴지통 데이터를 불러오지 못했습니다.',
+        variant: 'destructive',
+      });
+      set({ trashedDocuments: [], error: null });
     } finally {
       endLoading(set);
     }
@@ -1339,6 +1420,85 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   deleteDocument: async (id) => {
     try {
+      // Soft delete: deleted_at 설정
+      const { error } = await supabase
+        .from('documents')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 로컬 상태에서 제거 (휴지통으로 이동)
+      const deletedDoc = get().documents.find((doc) => doc.id === id);
+      set((state) => ({
+        documents: state.documents.filter((doc) => doc.id !== id),
+        trashedDocuments: deletedDoc 
+          ? [{ ...deletedDoc, deletedAt: new Date().toISOString() }, ...state.trashedDocuments]
+          : state.trashedDocuments,
+      }));
+
+      trackEvent('document_move_to_trash', {
+        document_id: id,
+      });
+
+      toast({
+        title: '휴지통으로 이동',
+        description: '문서가 휴지통으로 이동되었습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to move document to trash:', err);
+
+      toast({
+        title: '삭제 실패',
+        description: '문서를 휴지통으로 이동하지 못했습니다. 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+      
+      throw err;
+    }
+  },
+
+  restoreDocument: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ deleted_at: null })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 휴지통에서 문서 목록으로 복구
+      const restoredDoc = get().trashedDocuments.find((doc) => doc.id === id);
+      set((state) => ({
+        trashedDocuments: state.trashedDocuments.filter((doc) => doc.id !== id),
+        documents: restoredDoc
+          ? [{ ...restoredDoc, deletedAt: null }, ...state.documents]
+          : state.documents,
+      }));
+
+      trackEvent('document_restore', {
+        document_id: id,
+      });
+
+      toast({
+        title: '문서 복구 완료',
+        description: '문서가 복구되었습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to restore document:', err);
+
+      toast({
+        title: '복구 실패',
+        description: '문서를 복구하지 못했습니다. 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+      
+      throw err;
+    }
+  },
+
+  permanentlyDeleteDocument: async (id) => {
+    try {
       let filePath: string | null = null;
 
       try {
@@ -1352,16 +1512,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       } catch {
       }
 
+      // 스토리지에서 파일 삭제
       if (filePath) {
         const { error: storageError } = await supabase.storage
           .from('123')
           .remove([filePath]);
 
         if (storageError) {
-          console.error('Failed to delete file from Supabase Storage:', storageError);
+          console.error('Failed to delete file from storage:', storageError);
         }
       }
 
+      // DB에서 영구 삭제
       const { error } = await supabase
         .from('documents')
         .delete()
@@ -1369,26 +1531,85 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (error) throw error;
 
-      // DB 삭제 성공 시에만 로컬 상태에서 제거
       set((state) => ({
-        documents: state.documents.filter((doc) => doc.id !== id),
+        trashedDocuments: state.trashedDocuments.filter((doc) => doc.id !== id),
       }));
 
-      trackEvent('document_delete', {
+      trackEvent('document_permanent_delete', {
         document_id: id,
       });
 
       toast({
-        title: '문서 삭제 완료',
-        description: '문서가 성공적으로 삭제되었습니다.',
+        title: '영구 삭제 완료',
+        description: '문서가 영구적으로 삭제되었습니다.',
       });
     } catch (err) {
-      console.error('Failed to delete document from Supabase:', err);
+      console.error('Failed to permanently delete document:', err);
 
-      // DB 삭제 실패 시 로컬 상태는 유지
       toast({
-        title: '문서 삭제 실패',
-        description: '네트워크 오류로 인해 문서를 삭제하지 못했습니다. 다시 시도해주세요.',
+        title: '영구 삭제 실패',
+        description: '문서를 삭제하지 못했습니다. 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+      
+      throw err;
+    }
+  },
+
+  emptyTrash: async () => {
+    try {
+      const { user } = useAuthStore.getState();
+      if (!user?.companyId) return;
+
+      const { data: deptData } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('company_id', user.companyId);
+
+      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      if (deptIds.length === 0) return;
+
+      // 휴지통에 있는 모든 문서의 파일 경로 조회
+      const { data: trashedDocs } = await supabase
+        .from('documents')
+        .select('id, file_path')
+        .in('department_id', deptIds)
+        .not('deleted_at', 'is', null);
+
+      if (trashedDocs && trashedDocs.length > 0) {
+        // 스토리지에서 파일들 삭제
+        const filePaths = trashedDocs
+          .map((doc: any) => doc.file_path)
+          .filter((path: string | null) => path);
+        
+        if (filePaths.length > 0) {
+          await supabase.storage.from('123').remove(filePaths);
+        }
+
+        // DB에서 영구 삭제
+        const docIds = trashedDocs.map((doc: any) => doc.id);
+        await supabase
+          .from('documents')
+          .delete()
+          .in('id', docIds);
+      }
+
+      set({ trashedDocuments: [] });
+
+      trackEvent('trash_empty', {
+        count: trashedDocs?.length || 0,
+      });
+
+      toast({
+        title: '휴지통 비우기 완료',
+        description: '모든 문서가 영구적으로 삭제되었습니다.',
+      });
+    } catch (err) {
+      console.error('Failed to empty trash:', err);
+
+      toast({
+        title: '휴지통 비우기 실패',
+        description: '다시 시도해주세요.',
         variant: 'destructive',
       });
       

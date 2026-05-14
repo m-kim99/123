@@ -62,6 +62,7 @@
     "sharedDocuments": "공유받은 문서함",
     "statistics": "통계",
     "announcements": "공지사항",
+    "trash": "휴지통",
     "customerService": "고객센터"
   },
   "header": {
@@ -1094,5 +1095,25 @@
     "10": "10월",
     "11": "11월",
     "12": "12월"
+  },
+  "trash": {
+    "title": "휴지통",
+    "subtitle": "삭제된 문서를 복구하거나 영구 삭제할 수 있습니다.",
+    "deletedDocuments": "삭제된 문서",
+    "totalCount": "총 {{count}}개",
+    "searchPlaceholder": "문서 검색...",
+    "documentName": "문서명",
+    "deletedAt": "삭제 일시",
+    "actions": "작업",
+    "restore": "복구",
+    "permanentDelete": "영구 삭제",
+    "emptyTrash": "휴지통 비우기",
+    "empty": "휴지통이 비어 있습니다.",
+    "noSearchResults": "검색 결과가 없습니다.",
+    "permanentDeleteTitle": "영구 삭제",
+    "permanentDeleteDesc": "이 문서를 영구적으로 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.",
+    "emptyTrashTitle": "휴지통 비우기",
+    "emptyTrashDesc": "휴지통의 모든 문서({{count}}개)를 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "emptyTrashConfirm": "모두 삭제"
   }
 }

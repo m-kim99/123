@@ -73,6 +73,9 @@ const AdminAnnouncements = lazy(() =>
 const TeamAnnouncements = lazy(() =>
   import('./pages/TeamAnnouncements').then((m) => ({ default: m.TeamAnnouncements })),
 );
+const Trash = lazy(() =>
+  import('./pages/Trash').then((m) => ({ default: m.Trash })),
+);
 
 function ProtectedRoute({
   children,
@@ -400,6 +403,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/trash"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Trash />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/category/:categoryId"
               element={
                 <ProtectedRoute requiredRole="admin">
@@ -493,6 +504,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="team">
                   <TeamAnnouncements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team/trash"
+              element={
+                <ProtectedRoute requiredRole="team">
+                  <Trash />
                 </ProtectedRoute>
               }
             />

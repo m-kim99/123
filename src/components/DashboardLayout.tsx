@@ -22,6 +22,7 @@ import {
   Megaphone,
   Globe,
   Shield,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -681,6 +682,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       : []),
     { name: t('nav.statistics'), href: `${basePath}/statistics`, icon: BarChart3 },
     { name: t('nav.announcements'), href: `${basePath}/announcements`, icon: Megaphone },
+    { name: t('nav.trash'), href: `${basePath}/trash`, icon: Trash2 },
     ...(isAdmin
       ? [
           {
