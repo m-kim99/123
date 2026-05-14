@@ -221,11 +221,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         // 2-1. 회사가 이미 존재하는 경우
         if (existingCompany) {
-          // 회사명 일치 확인
-          if (existingCompany.name !== companyName) {
+          // 관리자인 경우 회사명 일치 확인 필수
+          if (role === 'admin' && existingCompany.name !== companyName) {
             throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
           }
-          // 회사명 일치 → 기존 회사 사용
+          // 팀원은 회사명 없이 코드만으로 기존 회사에 가입 가능
           company = existingCompany;
           isNewCompany = false;
           console.log('기존 회사로 가입:', company.name);
@@ -233,7 +233,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // 2-2. 회사가 없는 경우 (PGRST116: no rows returned)
         else if (checkError && (checkError as any).code === 'PGRST116') {
           if (role !== 'admin') {
-            throw new Error('새 회사 생성은 관리자만 가능합니다.');
+            throw new Error('존재하지 않는 회사 코드입니다. 관리자에게 올바른 회사 코드를 확인하세요.');
           }
 
           const { data: newCompany, error: createError } = await supabase
@@ -289,9 +289,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
-      // 5. users 테이블에 추가 (upsert로 중복 방지)
-      const finalDepartmentId = role === 'team' ? departmentId || null : null;
+      // 5. 팀원 가입 시 기본 부서 자동 배치
+      let finalDepartmentId = role === 'team' ? departmentId || null : null;
+      
+      if (company?.id && role === 'team' && !finalDepartmentId) {
+        // 회사에 속한 첫 번째 부서를 기본 부서로 배치
+        const { data: defaultDept } = await supabase
+          .from('departments')
+          .select('id')
+          .eq('company_id', company.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .single();
+        
+        if (defaultDept) {
+          finalDepartmentId = defaultDept.id;
+          console.log('팀원 기본 부서 배치:', finalDepartmentId);
+        }
+      }
 
+      // 6. users 테이블에 추가 (upsert로 중복 방지)
       const { error: insertError } = await supabase.from('users').upsert(
         {
           id: authData.user.id,

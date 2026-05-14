@@ -672,7 +672,7 @@ export function LoginPage() {
     if (!phone) {
       toast({
         title: t('signup.enterPhone'),
-        description: t('signup.enterPhoneForAdmin'),
+        description: signupRole === 'admin' ? t('signup.enterPhoneForAdmin') : t('signup.enterPhoneForTeam'),
         variant: 'destructive',
       });
       return;
@@ -687,13 +687,18 @@ export function LoginPage() {
       return;
     }
 
+    // 팀원 가입 시 회사 코드가 있으면 해당 회사로 연결
+    const companyCodeToUse = signupForm.companyCode.trim();
+    // 팀원은 회사명 입력 없이 코드만으로 가입 가능 (기존 회사 참조)
+    const companyNameToUse = signupRole === 'admin' ? signupForm.companyName.trim() : '';
+
     const result = await signup(
       signupForm.email,
       signupForm.password,
       signupForm.name,
       signupRole,
-      signupRole === 'admin' ? signupForm.companyCode.trim() : '',
-      signupRole === 'admin' ? signupForm.companyName.trim() : '',
+      companyCodeToUse,
+      companyNameToUse,
       undefined
     );
 
@@ -1091,7 +1096,25 @@ export function LoginPage() {
                 </>
               )}
 
-              {/* 팀원: 사업자 인증 없이 가입 가능 (회사 연결은 온보딩에서 진행) */}
+              {/* 팀원: 기존 회사 코드로 가입 (선택) */}
+              {signupRole === 'team' && (
+                <div className="space-y-2">
+                  <Label>{t('signup.companyCodeOptional')}</Label>
+                  <Input
+                    placeholder={t('signup.companyCodeOptionalPlaceholder')}
+                    value={signupForm.companyCode}
+                    onChange={(e) =>
+                      setSignupForm((prev) => ({
+                        ...prev,
+                        companyCode: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-slate-500">
+                    {t('signup.companyCodeOptionalHint')}
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>{t('signup.name')}</Label>

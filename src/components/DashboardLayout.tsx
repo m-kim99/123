@@ -584,8 +584,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       if (updateError) throw updateError;
 
-      // 3. 비밀번호 변경 (입력된 경우)
-      if (newPassword) {
+      // 3. 비밀번호 변경 (입력된 경우, 소셜 사용자는 제외)
+      if (newPassword && !isOAuthUser) {
+        // 현재 비밀번호 입력 확인
+        if (!currentPassword.trim()) {
+          setProfileError(t('profile.currentPasswordRequired'));
+          setIsSavingProfile(false);
+          return;
+        }
+
+        // 현재 비밀번호 검증
+        const { error: currentPasswordError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+
+        if (currentPasswordError) {
+          setProfileError(t('profile.currentPasswordWrong'));
+          setIsSavingProfile(false);
+          return;
+        }
+
         if (newPassword !== confirmPassword) {
           setProfileError(t('profile.newPasswordMismatch'));
           setIsSavingProfile(false);
@@ -1581,44 +1600,47 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 disabled
               />
             </div>
-            <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium text-slate-700">{t('profile.passwordChange')}</p>
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="current-password">{t('profile.currentPassword')}</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="new-password">{t('profile.newPassword')}</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    placeholder={t('profile.newPasswordPlaceholder')}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
-                    <p className="text-[11px] text-red-500 mt-1">
-                      ⚠️ {newPasswordValidation.errors.join(' / ')}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="confirm-password">{t('profile.confirmPassword')}</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
+            {/* 소셜 로그인 사용자는 비밀번호 변경 불가 */}
+            {!isOAuthUser && (
+              <div className="space-y-3 pt-2">
+                <p className="text-sm font-medium text-slate-700">{t('profile.passwordChange')}</p>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="current-password">{t('profile.currentPassword')}</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="new-password">{t('profile.newPassword')}</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder={t('profile.newPasswordPlaceholder')}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
+                      <p className="text-[11px] text-red-500 mt-1">
+                        ⚠️ {newPasswordValidation.errors.join(' / ')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="confirm-password">{t('profile.confirmPassword')}</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             {profileError && (
               <p className="text-xs text-red-500">{profileError}</p>
             )}
