@@ -1298,7 +1298,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           file_path: filePath,
           file_size: document.file.size,
           ocr_text: document.ocrText || null, // OCR 텍스트
-          uploaded_by: useAuthStore.getState().user?.id ?? null,
+          uploaded_by: useAuthStore.getState().user?.name ?? null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
           uploaded_at: new Date().toISOString(), // 클라이언트 현재 시간을 ISO 형식으로 전송 (타임존 정보 포함)
         })
