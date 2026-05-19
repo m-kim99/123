@@ -556,6 +556,26 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (error) throw error;
 
       if (data && data.length > 0) {
+        // uploaded_by(UUID)를 사용자 이름으로 변환하기 위한 매핑
+        const uploaderIds = [...new Set(
+          (data as SupabaseDocument[])
+            .map((doc) => doc.uploaded_by)
+            .filter((id): id is string => !!id)
+        )];
+
+        let uploaderMap: Record<string, string> = {};
+        if (uploaderIds.length > 0) {
+          const { data: usersData } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', uploaderIds);
+          if (usersData) {
+            uploaderMap = Object.fromEntries(
+              usersData.map((u: { id: string; name: string }) => [u.id, u.name])
+            );
+          }
+        }
+
         const documents: Document[] = (data as SupabaseDocument[]).map((doc) => {
           const parentCategoryId = (doc as SupabaseDocument & { parent_category_id?: string }).parent_category_id || '';
           const subcategoryId = (doc as SupabaseDocument & { subcategory_id?: string }).subcategory_id || '';
@@ -568,7 +588,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             subcategoryId,
             departmentId: doc.department_id,
             uploadDate: doc.uploaded_at,
-            uploader: doc.uploaded_by || '',
+            uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
             fileUrl:
               supabase.storage.from('123').getPublicUrl(doc.file_path).data
@@ -629,6 +649,26 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (error) throw error;
 
       if (data && data.length > 0) {
+        // uploaded_by(UUID)를 사용자 이름으로 변환
+        const uploaderIds = [...new Set(
+          (data as SupabaseDocument[])
+            .map((doc) => doc.uploaded_by)
+            .filter((id): id is string => !!id)
+        )];
+
+        let uploaderMap: Record<string, string> = {};
+        if (uploaderIds.length > 0) {
+          const { data: usersData } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', uploaderIds);
+          if (usersData) {
+            uploaderMap = Object.fromEntries(
+              usersData.map((u: { id: string; name: string }) => [u.id, u.name])
+            );
+          }
+        }
+
         const trashedDocuments: Document[] = (data as SupabaseDocument[]).map((doc) => {
           const parentCategoryId = (doc as SupabaseDocument & { parent_category_id?: string }).parent_category_id || '';
           const subcategoryId = (doc as SupabaseDocument & { subcategory_id?: string }).subcategory_id || '';
@@ -641,7 +681,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             subcategoryId,
             departmentId: doc.department_id,
             uploadDate: doc.uploaded_at,
-            uploader: doc.uploaded_by || '',
+            uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
             fileUrl:
               supabase.storage.from('123').getPublicUrl(doc.file_path).data
@@ -1298,7 +1338,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           file_path: filePath,
           file_size: document.file.size,
           ocr_text: document.ocrText || null, // OCR 텍스트
-          uploaded_by: useAuthStore.getState().user?.name ?? null,
+          uploaded_by: useAuthStore.getState().user?.id ?? null,
           is_classified: document.classified ?? false, // classified를 is_classified로 매핑
           uploaded_at: new Date().toISOString(), // 클라이언트 현재 시간을 ISO 형식으로 전송 (타임존 정보 포함)
         })
@@ -1354,7 +1394,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               subcategoryId: subcategoryIdFromDb,
               departmentId: data.department_id,
               uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
-              uploader: data.uploaded_by || '', // uploaded_by를 uploader로 매핑
+              uploader: useAuthStore.getState().user?.name || '', // 업로드한 본인의 이름 표시
               classified: data.is_classified, // is_classified를 classified로 매핑
               fileUrl,
               ocrText: data.ocr_text || null,
