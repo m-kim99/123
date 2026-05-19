@@ -612,7 +612,8 @@
     "docNotFound": "Could not find document to save.",
     "preview": "Preview",
     "share": "Share",
-    "imagePreview": "Image Preview"
+    "imagePreview": "Image Preview",
+    "uploader": "Uploaded by"
   },
   "subcategoryDetail": {
     "ocrExtracting": "Extracting OCR text...",

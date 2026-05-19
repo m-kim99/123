@@ -612,7 +612,8 @@
     "ocrProcessing": "OCR 처리 중...",
     "preview": "미리보기",
     "share": "공유",
-    "imagePreview": "이미지 미리보기"
+    "imagePreview": "이미지 미리보기",
+    "uploader": "작성자"
   },
   "subcategoryDetail": {
     "ocrExtracting": "OCR 텍스트 추출 중...",

@@ -3313,7 +3313,7 @@ export function DocumentManagement() {
                                 <p className="text-sm text-slate-500 truncate max-w-full">
                                   {[
                                     formatDateTimeSimple(doc.uploadDate),
-                                    doc.uploader || null,
+                                    doc.uploader ? `${t('documentMgmt.uploader')}: ${doc.uploader}` : null,
                                     parentCategory?.name || null,
                                     subcategory?.name || null,
                                     department?.name || null,
