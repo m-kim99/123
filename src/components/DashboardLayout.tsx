@@ -1794,7 +1794,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </Dialog>
 
       <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-yellow-500" />
@@ -1807,106 +1807,81 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             </div>
           ) : subscriptionInfo ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
                   <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
                     {subscriptionInfo.displayName}
                   </span>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium text-slate-700">{t('subscription.usage')}</h4>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.members')}</span>
-                    <span className="font-medium">
-                      {subscriptionInfo.currentMembers} / {subscriptionInfo.maxMembers ?? '∞'}
-                    </span>
+                <div className="mt-3 grid grid-cols-3 gap-3 text-center text-xs">
+                  <div>
+                    <p className="text-slate-500">{t('subscription.members')}</p>
+                    <p className="font-semibold text-sm">{subscriptionInfo.currentMembers}/{subscriptionInfo.maxMembers ?? '∞'}</p>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        subscriptionInfo.maxMembers && subscriptionInfo.currentMembers >= subscriptionInfo.maxMembers
-                          ? 'bg-red-500' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${subscriptionInfo.maxMembers ? Math.min(100, (subscriptionInfo.currentMembers / subscriptionInfo.maxMembers) * 100) : 0}%` }}
-                    />
+                  <div>
+                    <p className="text-slate-500">{t('subscription.documents')}</p>
+                    <p className="font-semibold text-sm">{subscriptionInfo.currentDocuments}/{subscriptionInfo.maxDocuments ?? '∞'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('subscription.departments')}</p>
+                    <p className="font-semibold text-sm">{subscriptionInfo.currentDepartments}/{subscriptionInfo.maxDepartments ?? '∞'}</p>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.documents')}</span>
-                    <span className="font-medium">
-                      {subscriptionInfo.currentDocuments} / {subscriptionInfo.maxDocuments ?? '∞'}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        subscriptionInfo.maxDocuments && subscriptionInfo.currentDocuments >= subscriptionInfo.maxDocuments
-                          ? 'bg-red-500' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${subscriptionInfo.maxDocuments ? Math.min(100, (subscriptionInfo.currentDocuments / subscriptionInfo.maxDocuments) * 100) : 0}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.departments')}</span>
-                    <span className="font-medium">
-                      {subscriptionInfo.currentDepartments} / {subscriptionInfo.maxDepartments ?? '∞'}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        subscriptionInfo.maxDepartments && subscriptionInfo.currentDepartments >= subscriptionInfo.maxDepartments
-                          ? 'bg-red-500' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${subscriptionInfo.maxDepartments ? Math.min(100, (subscriptionInfo.currentDepartments / subscriptionInfo.maxDepartments) * 100) : 0}%` }}
-                    />
-                  </div>
-                </div>
-
-                {subscriptionInfo.maxStorageMb && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.storage')}</span>
-                    <span className="font-medium">
-                      {subscriptionInfo.maxStorageMb >= 1024
-                        ? `${(subscriptionInfo.maxStorageMb / 1024).toFixed(0)} GB`
-                        : `${subscriptionInfo.maxStorageMb} MB`}
-                    </span>
-                  </div>
-                )}
-
-                {subscriptionInfo.maxAiQueries !== null && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.aiQueries')}</span>
-                    <span className="font-medium">{subscriptionInfo.maxAiQueries}{t('subscription.perMonth')}</span>
-                  </div>
-                )}
               </div>
 
               {isAdmin && (
-                <div className="pt-4 border-t">
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-                    onClick={() => {
-                      toast({
-                        title: t('subscription.upgradeTitle'),
-                        description: t('subscription.upgradeDesc'),
-                      });
-                    }}
-                  >
-                    <Crown className="h-4 w-4 mr-2" />
-                    {t('subscription.upgrade')}
-                  </Button>
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free' },
+                      { name: 'basic', display: t('subscription.basic'), price: '5,900', members: '3', highlight: subscriptionInfo.planName === 'basic' },
+                      { name: 'pro', display: 'Pro', price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
+                      { name: 'enterprise', display: 'Enterprise', price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
+                    ].map((plan) => (
+                      <div
+                        key={plan.name}
+                        className={`relative p-3 rounded-lg border-2 text-center transition-all ${
+                          plan.highlight
+                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        {plan.highlight && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
+                            {t('subscription.current')}
+                          </span>
+                        )}
+                        <p className="font-semibold text-sm mt-1">{plan.display}</p>
+                        <p className="text-lg font-bold text-slate-900 mt-1">
+                          {plan.name === 'enterprise' ? plan.price : `₩${plan.price}`}
+                        </p>
+                        {plan.name !== 'enterprise' && (
+                          <p className="text-[11px] text-slate-500">{t('subscription.perMonth')}</p>
+                        )}
+                        <div className="mt-2 pt-2 border-t text-xs text-slate-600">
+                          <p>{t('subscription.members')} {plan.members}{t('subscription.personUnit')}</p>
+                        </div>
+                        {!plan.highlight && plan.name !== 'free' && (
+                          <Button
+                            size="sm"
+                            variant={plan.name === 'enterprise' ? 'outline' : 'default'}
+                            className="w-full mt-2 text-xs h-7"
+                            onClick={() => {
+                              toast({
+                                title: t('subscription.upgradeTitle'),
+                                description: t('subscription.upgradeDesc'),
+                              });
+                            }}
+                          >
+                            {plan.name === 'enterprise' ? t('subscription.contactUs') : t('subscription.selectPlan')}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -56,6 +56,7 @@
     "description": "View your current plan and usage.",
     "currentPlan": "Current Plan",
     "free": "Free",
+    "basic": "Basic",
     "usage": "Usage",
     "members": "Members",
     "documents": "Documents",
@@ -63,11 +64,17 @@
     "storage": "Storage",
     "aiQueries": "AI Queries",
     "perMonth": "/mo",
+    "personUnit": "",
     "upgrade": "Upgrade Plan",
     "upgradeTitle": "Upgrade Coming Soon",
     "upgradeDesc": "Payment integration is coming soon. Please contact your administrator.",
     "loadError": "Failed to load subscription info.",
-    "memberLimitReached": "This company has reached its member limit."
+    "memberLimitReached": "This company has reached its member limit.",
+    "planComparison": "Compare Plans",
+    "current": "Current",
+    "contact": "Contact Us",
+    "contactUs": "Contact",
+    "selectPlan": "Select"
   },
   "nav": {
     "home": "Home",
