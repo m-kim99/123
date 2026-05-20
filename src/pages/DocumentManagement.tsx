@@ -276,6 +276,8 @@ export function DocumentManagement() {
 
   const [activeTab, setActiveTab] = useState<'categories' | 'documents' | 'upload'>('categories');
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploadSuccessDialogOpen, setUploadSuccessDialogOpen] = useState(false);
+  const [uploadSuccessCount, setUploadSuccessCount] = useState(0);
 
   // NFC 재등록 확인 다이얼로그 상태
   const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
@@ -1973,10 +1975,6 @@ export function DocumentManagement() {
         }
       }
 
-      if (successCount > 0) {
-        setUploadSuccess(true);
-      }
-
       if (failureCount > 0) {
         setUploadError(
           failureCount === totalFiles
@@ -1995,20 +1993,22 @@ export function DocumentManagement() {
         if (latestDocs.length > 0) {
           setLastUploadedDocId(latestDocs[0].id);
         }
+        // 업로드 성공 팝업 표시
+        setUploadSuccessCount(successCount);
+        setUploadSuccessDialogOpen(true);
       }
 
-      setTimeout(() => {
-        setUploadFiles([]);
-        setDocumentTitle('');
-        setUploadProgress(0);
-        setUploadStatus('');
-        setUploadSuccess(false);
-        setFileStatuses([]);
-        const fileInput = document.getElementById('file-upload') as HTMLInputElement | null;
-        if (fileInput) {
-          fileInput.value = '';
-        }
-      }, 2000);
+      // 즉시 폼 초기화
+      setUploadFiles([]);
+      setDocumentTitle('');
+      setUploadProgress(0);
+      setUploadStatus('');
+      setUploadSuccess(false);
+      setFileStatuses([]);
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement | null;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError(
@@ -4273,6 +4273,32 @@ export function DocumentManagement() {
                 ) : (
                   t('common.save')
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 업로드 성공 팝업 */}
+        <Dialog open={uploadSuccessDialogOpen} onOpenChange={setUploadSuccessDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+                {t('documentMgmt.uploadComplete')}
+              </DialogTitle>
+              <DialogDescription>
+                {t('documentMgmt.uploadSuccessDesc', { count: uploadSuccessCount })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setUploadSuccessDialogOpen(false);
+                  setActiveTab('documents');
+                }}
+              >
+                {t('documentMgmt.viewAllDocuments')}
               </Button>
             </DialogFooter>
           </DialogContent>

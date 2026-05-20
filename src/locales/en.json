@@ -575,6 +575,8 @@
     "defaultTitleNote": "Original filename is used as default title. Edit if needed.",
     "uploadComplete": "Upload Complete",
     "uploadCompleteDesc": "Document has been successfully uploaded.",
+    "uploadSuccessDesc": "{{count}} document(s) uploaded successfully.",
+    "viewAllDocuments": "View All Documents",
     "uploadError": "Upload Error",
     "ocrExtractedText": "OCR Extracted Text",
     "chars": " chars",

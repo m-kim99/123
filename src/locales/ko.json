@@ -574,6 +574,8 @@
     "defaultTitleNote": "원본 파일명을 기본 제목으로 사용합니다. 필요하면 수정하세요.",
     "uploadComplete": "업로드 완료",
     "uploadCompleteDesc": "문서가 성공적으로 업로드되었습니다.",
+    "uploadSuccessDesc": "{{count}}개의 문서가 성공적으로 업로드되었습니다.",
+    "viewAllDocuments": "전체 문서 보기",
     "uploadError": "업로드 오류",
     "ocrExtractedText": "OCR 추출 텍스트",
     "chars": "자",
