@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale';
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { v1Card, V1CardHeader } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -95,18 +95,18 @@ export function Trash() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-              <Trash2 className="h-8 w-8" />
+          <div className="min-w-0">
+            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900 flex items-center gap-2">
+              <Trash2 className="h-7 w-7 shrink-0" />
               {t('trash.title')}
             </h1>
-            <p className="text-slate-500 mt-1">{t('trash.subtitle')}</p>
+            <p className="text-sm text-slate-500 mt-1.5">{t('trash.subtitle')}</p>
           </div>
           {trashedDocuments.length > 0 && (
             <Button
               variant="destructive"
               onClick={() => setEmptyTrashDialogOpen(true)}
-              className="hidden md:flex"
+              className="hidden md:flex h-9 rounded-[10px] text-[13px] font-semibold"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {t('trash.emptyTrash')}
@@ -118,36 +118,42 @@ export function Trash() {
           <Button
             variant="destructive"
             onClick={() => setEmptyTrashDialogOpen(true)}
-            className="md:hidden w-full"
+            className="md:hidden w-full h-9 rounded-[10px] text-[13px] font-semibold"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             {t('trash.emptyTrash')}
           </Button>
         )}
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{t('trash.deletedDocuments')}</CardTitle>
-                <CardDescription className="mt-1">
-                  {t('trash.totalCount', { count: filteredDocuments.length })}
-                </CardDescription>
-              </div>
-              <div className="w-64">
+        {/* V1 Warning Banner */}
+        {trashedDocuments.length > 0 && (
+          <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-[10px]">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">{t('trash.subtitle')}</p>
+          </div>
+        )}
+
+        <div className={v1Card}>
+          <V1CardHeader
+            title={t('trash.deletedDocuments')}
+            sub={t('trash.totalCount', { count: filteredDocuments.length })}
+            icon={Trash2}
+            iconColor="#ef4444"
+            action={
+              <div className="w-48 sm:w-64">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder={t('trash.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 rounded-[10px]"
                   />
                 </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+            }
+          />
+          <div className="p-5 sm:p-6">
             {isLoading ? (
               <div className="text-center py-12">
                 <p className="text-slate-500">{t('common.loading')}</p>
@@ -217,8 +223,8 @@ export function Trash() {
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* 영구 삭제 확인 다이얼로그 */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, FileText, Users } from 'lucide-react';
+import { V1Chip, v1Card } from '@/components/ui/v1-components';
+import { Building2, FileText, Users, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useDocumentStore } from '@/store/documentStore';
@@ -113,9 +113,9 @@ export function TeamDepartments() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('teamDepts.title')}</h1>
-          <p className="text-slate-500 mt-1">{t('teamDepts.subtitle')}</p>
+        <div className="min-w-0">
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('teamDepts.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1.5">{t('teamDepts.subtitle')}</p>
         </div>
 
         {isLoading ? (
@@ -123,15 +123,15 @@ export function TeamDepartments() {
             <p className="text-slate-500">{t('teamDepts.loadingDepts')}</p>
           </div>
         ) : departments.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
+          <div className={v1Card}>
+            <div className="py-12 text-center">
               <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500">{t('teamDepts.noDepts')}</p>
               <p className="text-sm text-slate-400 mt-2">
                 {t('teamDepts.requestAccess')}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {departments.map((dept) => {
@@ -143,74 +143,67 @@ export function TeamDepartments() {
               );
 
               return (
-                <Card
+                <div
                   key={dept.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  className={`${v1Card} cursor-pointer hover:shadow-md transition-shadow`}
                   onClick={() => navigate(`/team/department/${dept.id}`)}
                 >
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-[#2563eb] p-3 rounded-xl">
-                        <Building2 className="h-6 w-6 text-white" />
+                  <div className="px-5 py-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center flex-shrink-0">
+                      <Building2 className="h-5 w-5 text-[#2563eb]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-semibold text-slate-900 truncate">{dept.name}</p>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{dept.code}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
+                  </div>
+                  <div className="px-5 pb-5">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-slate-50 rounded-[10px] p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="text-[10px] text-slate-500 leading-tight">{t('common.documents')}</span>
+                        </div>
+                        <p className="text-xl font-bold text-slate-900">{deptDocuments.length}</p>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl">{dept.name}</CardTitle>
-                        <p className="text-sm text-slate-500">{dept.code}</p>
+                      <div className="bg-slate-50 rounded-[10px] p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="text-[10px] text-slate-500 leading-tight">{t('sharedDocs.category')}</span>
+                        </div>
+                        <p className="text-xl font-bold text-slate-900">{deptCategories.length}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-[10px] p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="text-[10px] text-slate-500 leading-tight">{t('common.team')}</span>
+                        </div>
+                        <p className="text-xl font-bold text-slate-900">{dept.member_count ?? 0}</p>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-slate-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1 h-12">
-                            <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('common.documents')}</span>
-                          </div>
-                          <p className="text-2xl font-bold">{deptDocuments.length}</p>
-                        </div>
-                        <div className="bg-slate-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1 h-12">
-                            <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-500 leading-tight">
-                              <span className="md:hidden">{t('sharedDocs.category')}</span>
-                              <span className="hidden md:inline">{t('sharedDocs.category')}</span>
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold">{deptCategories.length}</p>
-                        </div>
-                        <div className="bg-slate-50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1 h-12">
-                            <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('common.team')}</span>
-                          </div>
-                          <p className="text-2xl font-bold">{dept.member_count ?? 0}</p>
-                        </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-slate-700">
+                    {deptCategories.length > 0 && (
+                      <div className="space-y-2 pt-3">
+                        <p className="text-[11px] font-medium text-slate-500">
                           {t('teamDepts.mainCategories')}
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {deptCategories.slice(0, 3).map((cat) => (
-                            <span
-                              key={cat.id}
-                              className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
-                            >
+                            <V1Chip key={cat.id} variant="blue">
                               {cat.name}
-                            </span>
+                            </V1Chip>
                           ))}
                           {deptCategories.length > 3 && (
-                            <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">
+                            <V1Chip variant="neutral">
                               +{deptCategories.length - 3}
-                            </span>
+                            </V1Chip>
                           )}
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>

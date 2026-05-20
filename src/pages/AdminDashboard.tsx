@@ -8,39 +8,9 @@ import { useFavoriteStore } from '@/store/favoriteStore';
 import { useAuthStore } from '@/store/authStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
 
-const card = 'bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
-
-function StatTile({
-  title,
-  value,
-  icon: Icon,
-  color,
-}: {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  color: string;
-}) {
-  return (
-    <div className={card}>
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: `${color}18` }}
-          >
-            <Icon className="h-[15px] w-[15px]" style={{ color }} />
-          </div>
-          <span className="text-xs font-medium text-slate-500 leading-tight">{title}</span>
-        </div>
-        <div className="text-[30px] font-bold leading-none tracking-tight text-slate-900">
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
+const card = v1Card;
 
 export function AdminDashboard() {
   const { t, i18n } = useTranslation();
@@ -70,10 +40,10 @@ export function AdminDashboard() {
   });
 
   const stats = [
-    { title: t('dashboard.totalDocuments'),       value: documents.length,       icon: FileText,  color: '#2563eb' },
-    { title: t('dashboard.totalSubcategories'),   value: subcategories.length,   icon: Archive,   color: '#8b5cf6' },
-    { title: t('dashboard.totalParentCategories'), value: parentCategories.length, icon: FolderOpen, color: '#10b981' },
-    { title: t('dashboard.totalDepartments'),     value: departments.length,     icon: Building2, color: '#f59e0b' },
+    { title: t('dashboard.totalDocuments'),       value: documents.length,       icon: FileText,  color: '#2563eb', data: [0, 0, 0, 0, 0, 0, 0, documents.length] },
+    { title: t('dashboard.totalSubcategories'),   value: subcategories.length,   icon: Archive,   color: '#8b5cf6', data: [0, 0, 0, 0, 0, 0, 0, subcategories.length] },
+    { title: t('dashboard.totalParentCategories'), value: parentCategories.length, icon: FolderOpen, color: '#10b981', data: [0, 0, 0, 0, 0, 0, 0, parentCategories.length] },
+    { title: t('dashboard.totalDepartments'),     value: departments.length,     icon: Building2, color: '#f59e0b', data: [0, 0, 0, 0, 0, 0, 0, departments.length] },
   ];
 
   return (
@@ -93,7 +63,7 @@ export function AdminDashboard() {
         {/* KPI tiles — 2열 모바일, 4열 데스크탑 */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((s) => (
-            <StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} />
+            <V1StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} data={s.data} />
           ))}
         </div>
 
@@ -101,18 +71,19 @@ export function AdminDashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6">
           {/* 부서별 문서 현황 */}
           <div className={card}>
-            <div className="px-5 sm:px-6 py-4 flex items-center justify-between border-b border-slate-100">
-              <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-[#2563eb]" />
-                {t('dashboard.deptDocStatus')}
-              </h2>
-              <button
-                onClick={() => navigate('/admin/departments')}
-                className="text-xs font-medium text-slate-500 border border-[#e5e7eb] rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors"
-              >
-                {t('common.viewAll')}
-              </button>
-            </div>
+            <V1CardHeader
+              title={t('dashboard.deptDocStatus')}
+              icon={Building2}
+              iconColor="#2563eb"
+              action={
+                <button
+                  onClick={() => navigate('/admin/departments')}
+                  className="text-xs font-medium text-slate-500 border border-[#e5e7eb] rounded-[10px] px-3 py-1.5 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                >
+                  {t('common.viewAll')}
+                </button>
+              }
+            />
             <div>
               {departments.length === 0 ? (
                 <p className="text-sm text-slate-400 text-center py-8">

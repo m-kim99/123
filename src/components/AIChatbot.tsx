@@ -1094,8 +1094,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       {!isOpen && (
         <Button
           size="icon"
-          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110"
-          style={{ backgroundColor: primaryColor }}
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-[0_4px_14px_rgba(37,99,235,0.35)] z-40 transition-all duration-300 hover:scale-110 bg-[#2563eb] hover:bg-[#1d4ed8]"
           onClick={() => setIsOpen(true)}
         >
           <MessageSquare className="h-6 w-6" />
@@ -1103,20 +1102,22 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
       )}
 
       {isOpen && (
-        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
-            <CardTitle className="flex items-center gap-2">
-              <div className="p-1 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
-                <MessageSquare className="h-4 w-4" style={{ color: primaryColor }} />
+        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain rounded-[14px] border-[#e5e7eb]`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-slate-100 px-4 pt-4">
+            <CardTitle className="flex items-center gap-2.5 text-sm font-semibold">
+              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center bg-[#eff6ff]">
+                <MessageSquare className="h-4 w-4 text-[#2563eb]" />
               </div>
-              {t('chatbot.title')}
+              <div>
+                <span className="text-slate-900">{t('chatbot.title')}</span>
+                <p className="text-[10px] font-normal text-emerald-500 mt-0.5">Online</p>
+              </div>
             </CardTitle>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setIsTall((prev) => !prev)}
-                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                style={{ backgroundColor: primaryColor }}
+                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
               >
                 <img
                   src={isTall ? reduceIcon : expandIcon}
@@ -1168,8 +1169,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                   }
                   setIsOpen(false);
                 }}
-                className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                style={{ backgroundColor: primaryColor }}
+                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
               >
                 <img src={closeIcon} alt={t('common.close')} className="h-5 w-5 block object-contain pointer-events-none" />
               </button>
@@ -1188,16 +1188,11 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                     }`}
                   >
                     <div
-                      className={`max-w-xs px-4 py-2 rounded-lg ${
+                      className={`max-w-xs px-4 py-2.5 ${
                         message.role === 'user'
-                          ? 'text-white'
-                          : 'text-slate-700'
+                          ? 'text-white rounded-[14px] rounded-br-[4px] bg-[#2563eb]'
+                          : 'text-slate-700 rounded-[14px] rounded-bl-[4px] bg-[#f1f5f9]'
                       }`}
-                      style={
-                        message.role === 'user'
-                          ? { backgroundColor: primaryColor }
-                          : { backgroundColor: '#f1f5f9' }
-                      }
                     >
                       <div className="text-sm break-words whitespace-pre-line">
                         {message.role === 'assistant'
@@ -1307,49 +1302,45 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
               <div ref={scrollRef} />
             </ScrollArea>
 
-            <div className="px-4 pb-2 flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
+            <div className="px-4 pb-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ1'))}
               >
                 {t('chatbot.quickQ1')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
+              </button>
+              <button
+                type="button"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ2'))}
               >
                 {t('chatbot.quickQ2')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
+              </button>
+              <button
+                type="button"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ3'))}
               >
                 {t('chatbot.quickQ3')}
-              </Button>
+              </button>
             </div>
 
             <form
               onSubmit={handleSendMessage}
-              className="p-4 border-t flex items-center gap-2"
+              className="p-3 border-t border-slate-100 flex items-center gap-2"
             >
               <div className="relative flex-1">
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isVoiceMode ? t('chatbot.voicePlaceholder') : t('chatbot.inputPlaceholder')}
-                  className="text-sm pr-10"
+                  className="text-sm pr-10 rounded-[10px]"
                   disabled={isVoiceMode && !isRunningInApp()}
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                  style={{ backgroundColor: primaryColor }}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
                   disabled={isVoiceMode && !isRunningInApp()}
                 >
                   <img src={sendIcon} alt={t('chatbot.send')} className="h-5 w-5 block object-contain pointer-events-none" />
@@ -1360,8 +1351,7 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
                 <button
                   type="button"
                   onClick={toggleLiveVoice}
-                  className="h-7 w-7 flex items-center justify-center rounded-md focus:outline-none p-0 border-0"
-                  style={{ backgroundColor: isVoiceMode ? '#ef4444' : primaryColor }}
+                  className={`h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 transition-colors ${isVoiceMode ? 'bg-red-500 hover:bg-red-600' : 'bg-[#2563eb] hover:bg-[#1d4ed8]'}`}
                   title={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
                 >
                   <img

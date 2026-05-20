@@ -4,14 +4,8 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import downloadIcon from '@/assets/download.svg';
 import binIcon from '@/assets/bin.svg';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { v1Card, V1CardHeader } from '@/components/ui/v1-components';
 import {
   Table,
   TableBody,
@@ -192,36 +186,34 @@ export function SharedDocuments() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('sharedDocs.title')}</h1>
-          <p className="text-slate-500 mt-1">
+        <div className="min-w-0">
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('sharedDocs.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1.5">
             {t('sharedDocs.subtitle')}
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{t('sharedDocs.listTitle')}</CardTitle>
-                <CardDescription className="mt-1">
-                  {t('sharedDocs.totalShared', { count: filteredShares.length })}
-                </CardDescription>
-              </div>
-              <div className="w-64">
+        <div className={v1Card}>
+          <V1CardHeader
+            title={t('sharedDocs.listTitle')}
+            sub={t('sharedDocs.totalShared', { count: filteredShares.length })}
+            icon={FileText}
+            iconColor="#2563eb"
+            action={
+              <div className="w-48 sm:w-64">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder={t('sharedDocs.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 rounded-[10px]"
                   />
                 </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+            }
+          />
+          <div className="p-5 sm:p-6">
             {filteredShares.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -304,8 +296,8 @@ export function SharedDocuments() {
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* 문서 미리보기 다이얼로그 */}
         <Dialog
@@ -320,7 +312,7 @@ export function SharedDocuments() {
         >
           {/* PDF 미리보기 */}
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.docPreview')}</DialogTitle>
               </DialogHeader>
@@ -355,7 +347,7 @@ export function SharedDocuments() {
 
           {/* 이미지 미리보기 */}
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.imagePreview')}</DialogTitle>
               </DialogHeader>

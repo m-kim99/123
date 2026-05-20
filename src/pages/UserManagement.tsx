@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { V1Chip, v1Card } from '@/components/ui/v1-components';
 import {
   Select,
   SelectContent,
@@ -216,9 +217,9 @@ export function UserManagement() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">{t('userMgmt.title')}</h1>
-            <p className="text-slate-500 mt-1">{t('userMgmt.subtitle')}</p>
+          <div className="min-w-0">
+            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('userMgmt.title')}</h1>
+            <p className="text-sm text-slate-500 mt-1.5">{t('userMgmt.subtitle')}</p>
           </div>
           {memberLimit && memberLimit.limit !== null && (
             <div className="flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-lg shadow-sm">
@@ -248,29 +249,31 @@ export function UserManagement() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedUsers.map((member) => (
-            <Card key={member.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5 flex-shrink-0" />
-                      <span className="truncate">{member.name}</span>
-                    </CardTitle>
-                    <CardDescription className="mt-1 truncate">{member.email}</CardDescription>
+            <div key={member.id} className={v1Card}>
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-sm font-bold">{member.name?.charAt(0) || '?'}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{member.name}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{member.email}</p>
+                    </div>
                   </div>
-                  {member.role === 'admin' && (
-                    <Badge variant="outline" className="bg-orange-50">
-                      <Shield className="h-3 w-3 mr-1" />
+                  {member.role === 'admin' ? (
+                    <V1Chip variant="amber">
+                      <Shield className="h-3 w-3" />
                       {t('common.admin')}
-                    </Badge>
+                    </V1Chip>
+                  ) : (
+                    <V1Chip variant="blue">{t('common.team')}</V1Chip>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-2 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">{t('userMgmt.company')}</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-slate-900 truncate ml-2">
                       {authUser?.companyCode
                         ? authUser.companyName
                           ? `${authUser.companyCode} (${authUser.companyName})`
@@ -280,26 +283,22 @@ export function UserManagement() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">{t('userMgmt.department')}</span>
-                    <span className="font-medium">{getDepartmentName(member.department_id)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">{t('userMgmt.role')}</span>
-                    <span className="font-medium">{member.role === 'admin' ? t('common.admin') : t('common.team')}</span>
+                    <span className="font-medium text-slate-900">{getDepartmentName(member.department_id)}</span>
                   </div>
                 </div>
 
                 {member.role === 'team' && (
                   <Button
                     variant="outline"
-                    className="w-full mt-4"
+                    className="w-full mt-4 rounded-[10px] h-9 text-[13px]"
                     onClick={() => handleEditPermissions(member)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     {t('userMgmt.editPermissions')}
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
@@ -439,6 +438,7 @@ export function UserManagement() {
             <DialogFooter>
               <Button
                 variant="outline"
+                className="rounded-[10px] h-9"
                 onClick={() => setEditDialogOpen(false)}
                 disabled={isSaving}
               >
@@ -447,7 +447,7 @@ export function UserManagement() {
               <Button
                 onClick={handleSavePermissions}
                 disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isSaving ? t('common.saving') : t('common.save')}
               </Button>

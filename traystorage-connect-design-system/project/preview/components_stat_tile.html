@@ -1,0 +1,120 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_shared.css">
+<style>
+  .tile {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    padding: 18px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+  .tile-head { display: flex; align-items: center; justify-content: space-between; }
+  .tile-meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .tile-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .tile-label { font-size: 12px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile-delta { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; flex: none; }
+  .delta-up   { color: #15803d; background: #dcfce7; }
+  .delta-down { color: #b91c1c; background: #fee2e2; }
+  .tile-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .tile-value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; color: #0f172a; font-feature-settings: "tnum"; }
+  .tile-spark { display: block; flex: none; }
+</style>
+</head>
+<body>
+<div class="card" style="gap:14px;">
+
+  <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;">
+
+    <!-- 1. 총 문서 — blue -->
+    <div class="tile">
+      <div class="tile-head">
+        <div class="tile-meta">
+          <div class="tile-icon" style="background:#2563eb15;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="tile-label">총 문서</span>
+        </div>
+        <span class="tile-delta delta-up">+12</span>
+      </div>
+      <div class="tile-body">
+        <div class="tile-value">128</div>
+        <svg class="tile-spark" width="86" height="34" viewBox="0 0 86 34">
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity="0.28"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+          <polygon fill="url(#g1)" points="0,34 0,26 12.3,22 24.6,18 36.9,14 49.1,10 61.4,7 73.7,4 86,2 86,34"/>
+          <polyline fill="none" stroke="#2563eb" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" points="0,26 12.3,22 24.6,18 36.9,14 49.1,10 61.4,7 73.7,4 86,2"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 2. 총 세부 스토리지 — violet -->
+    <div class="tile">
+      <div class="tile-head">
+        <div class="tile-meta">
+          <div class="tile-icon" style="background:#8b5cf615;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="5" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9M10 13h4"/></svg>
+          </div>
+          <span class="tile-label">총 세부 스토리지</span>
+        </div>
+        <span class="tile-delta delta-up">+3</span>
+      </div>
+      <div class="tile-body">
+        <div class="tile-value">47</div>
+        <svg class="tile-spark" width="86" height="34" viewBox="0 0 86 34">
+          <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"/><stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs>
+          <polygon fill="url(#g2)" points="0,34 0,20 12.3,19 24.6,17 36.9,17 49.1,14 61.4,12 73.7,9 86,7 86,34"/>
+          <polyline fill="none" stroke="#8b5cf6" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" points="0,20 12.3,19 24.6,17 36.9,17 49.1,14 61.4,12 73.7,9 86,7"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 3. NFC 활성 태그 — emerald -->
+    <div class="tile">
+      <div class="tile-head">
+        <div class="tile-meta">
+          <div class="tile-icon" style="background:#10b98115;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5c2.5-2.5 8.5-2.5 11 0M9 9c1.5-1.5 4.5-1.5 6 0M11.5 11.5c.5-.5 1.5-.5 2 0"/><path d="M3 21V3"/></svg>
+          </div>
+          <span class="tile-label">NFC 활성 태그</span>
+        </div>
+        <span class="tile-delta delta-up">+5</span>
+      </div>
+      <div class="tile-body">
+        <div class="tile-value">38</div>
+        <svg class="tile-spark" width="86" height="34" viewBox="0 0 86 34">
+          <defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.28"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient></defs>
+          <polygon fill="url(#g3)" points="0,34 0,24 12.3,22 24.6,20 36.9,18 49.1,16 61.4,12 73.7,8 86,5 86,34"/>
+          <polyline fill="none" stroke="#10b981" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" points="0,24 12.3,22 24.6,20 36.9,18 49.1,16 61.4,12 73.7,8 86,5"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 4. 이번 달 업로드 — amber, DOWN -->
+    <div class="tile">
+      <div class="tile-head">
+        <div class="tile-meta">
+          <div class="tile-icon" style="background:#f59e0b15;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <span class="tile-label">이번 달 업로드</span>
+        </div>
+        <span class="tile-delta delta-down">−2</span>
+      </div>
+      <div class="tile-body">
+        <div class="tile-value">24</div>
+        <svg class="tile-spark" width="86" height="34" viewBox="0 0 86 34">
+          <defs><linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.28"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient></defs>
+          <polygon fill="url(#g4)" points="0,34 0,6 12.3,9 24.6,12 36.9,16 49.1,14 61.4,18 73.7,16 86,17 86,34"/>
+          <polyline fill="none" stroke="#f59e0b" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" points="0,6 12.3,9 24.6,12 36.9,16 49.1,14 61.4,18 73.7,16 86,17"/>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="label">STAT TILE · sparkline + delta badge. 4 brand colors (blue / violet / emerald / amber). 어제 대비 증감을 한눈에.</div>
+
+</div>
+</body></html>

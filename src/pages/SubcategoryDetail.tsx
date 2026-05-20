@@ -1059,7 +1059,7 @@ export function SubcategoryDetail() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">
                 {subcategory.name}
               </h1>
               <p className="text-slate-500 mt-1">
@@ -1304,7 +1304,7 @@ export function SubcategoryDetail() {
                             size="sm"
                             onClick={lastUploadedDocId ? handleSaveUploadOcrText : handleApplyUploadOcrEdit}
                             disabled={isSavingUploadOcr}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-[#2563eb] hover:bg-[#1d4ed8]"
                           >
                             {isSavingUploadOcr ? (
                               <>
@@ -1477,7 +1477,7 @@ export function SubcategoryDetail() {
           }}
         >
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
@@ -1511,7 +1511,7 @@ export function SubcategoryDetail() {
           )}
 
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imageDoc')}</DialogTitle>
               </DialogHeader>
@@ -1729,7 +1729,7 @@ export function SubcategoryDetail() {
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-600 border-blue-600"
+                              ? "bg-[#2563eb] border-blue-600"
                               : "border-slate-300"
                           }`}>
                             {selectedUserIds.includes(companyUser.id) && (
@@ -1820,7 +1820,7 @@ export function SubcategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>
@@ -1924,7 +1924,7 @@ export function SubcategoryDetail() {
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingOcr}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isReplacingFile ? (
                   <>
@@ -1962,7 +1962,7 @@ export function SubcategoryDetail() {
             <Button variant="outline" onClick={() => setQrDialogOpen(false)}>
               {t('common.close')}
             </Button>
-            <Button onClick={handleQrDownload} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleQrDownload} className="bg-[#2563eb] hover:bg-[#1d4ed8]">
               {t('subcategoryDetail.qrDownload')}
             </Button>
           </DialogFooter>

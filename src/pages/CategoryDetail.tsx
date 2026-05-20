@@ -1064,7 +1064,7 @@ export function CategoryDetail() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">
                 {category.name}
               </h1>
               <p className="text-slate-500 mt-1">{category.description}</p>
@@ -1338,7 +1338,7 @@ export function CategoryDetail() {
         >
           {/* PDF 미리보기: 기존 브라우저 뷰어 유지 */}
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
@@ -1373,7 +1373,7 @@ export function CategoryDetail() {
 
           {/* 이미지 미리보기: 전문 뷰어 레이아웃 */}
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imageDoc')}</DialogTitle>
               </DialogHeader>
@@ -1568,7 +1568,7 @@ export function CategoryDetail() {
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-600 border-blue-600"
+                              ? "bg-[#2563eb] border-blue-600"
                               : "border-slate-300"
                           }`}>
                             {selectedUserIds.includes(companyUser.id) && (
@@ -1659,7 +1659,7 @@ export function CategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>V1 system — all pages + dialogs + chatbot</title>
+  <link rel="stylesheet" href="../../colors_and_type.css"/>
+  <style>
+    html, body, #root { height: 100%; }
+    body { margin: 0; background: #f0eee9; }
+    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes pulse1 {
+      0%   { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1.4);  opacity: 0;   }
+    }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="../../ui_kits/web/components/Icon.jsx"></script>
+  <script type="text/babel" src="../design-canvas.jsx"></script>
+  <script type="text/babel" src="Shell.jsx"></script>
+  <script type="text/babel" src="P1Subcategory.jsx"></script>
+  <script type="text/babel" src="P2Documents.jsx"></script>
+  <script type="text/babel" src="P3ParentCategory.jsx"></script>
+  <script type="text/babel" src="P4Statistics.jsx"></script>
+  <script type="text/babel" src="ListPages.jsx"></script>
+  <script type="text/babel" src="ContentPages.jsx"></script>
+  <script type="text/babel" src="AuthPages.jsx"></script>
+  <script type="text/babel" src="Chatbot.jsx"></script>
+  <script type="text/babel" src="Modals.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const _waitForGlobals = () => {
+      const ready =
+        window.DesignCanvas && window.Icon && window.V1Shell &&
+        window.P1Subcategory && window.P2Documents && window.P3ParentCategory && window.P4Statistics &&
+        window.P5Departments && window.P6DepartmentDetail && window.P7Users &&
+        window.P8Announcements && window.P9Trash && window.P10Shared &&
+        window.P11Login && window.P12Signup && window.P13Onboarding &&
+        window.V1Chatbot && window.ChatbotOnDashboard &&
+        window.M1UploadDialog && window.M2AddSubcategoryDialog && window.M3ShareDialog &&
+        window.M4PreviewDialog && window.M5NfcDialog && window.M6DeleteConfirmDialog &&
+        window.M7NotificationDropdown && window.ModalOnPage;
+      if (!ready) { setTimeout(_waitForGlobals, 30); return; }
+
+      const W = 1280, H = 900;
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      const noop = () => {};
+
+      root.render(
+        <DesignCanvas>
+          <DCSection
+            id="v1-main4"
+            title="① 핵심 4페이지"
+            subtitle="이전 단계에서 만든 V1 적용본. 같은 사이드바·헤더·KPI 타일 패턴."
+          >
+            <DCArtboard id="p1" label="① 세부 스토리지 상세" width={W} height={H}><P1Subcategory     onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p2" label="② 문서 관리"         width={W} height={H}><P2Documents       onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p3" label="③ 대분류 상세"       width={W} height={H}><P3ParentCategory  onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p4" label="④ 통계"              width={W} height={H}><P4Statistics      onNavigate={noop}/></DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="v1-rest"
+            title="② 나머지 9개 페이지"
+            subtitle="부서·팀원·공지·휴지통·공유받은 문서함 + 인증 페이지 3개."
+          >
+            <DCArtboard id="p5"  label="⑤ 부서 관리"           width={W} height={H}><P5Departments       onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p6"  label="⑥ 부서 상세"           width={W} height={H}><P6DepartmentDetail  onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p7"  label="⑦ 팀원 관리"           width={W} height={H}><P7Users             onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p8"  label="⑧ 공지사항"             width={W} height={H}><P8Announcements     onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p9"  label="⑨ 휴지통"               width={W} height={H}><P9Trash             onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p10" label="⑩ 공유받은 문서함"     width={W} height={H}><P10Shared           onNavigate={noop}/></DCArtboard>
+            <DCArtboard id="p11" label="⑪ 로그인"               width={W} height={H}><P11Login/></DCArtboard>
+            <DCArtboard id="p12" label="⑫ 회원가입"             width={W} height={H}><P12Signup/></DCArtboard>
+            <DCArtboard id="p13" label="⑬ 온보딩 (회사 정보)"    width={W} height={H}><P13Onboarding/></DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="v1-dialogs"
+            title="③ 챗봇 + 팝업·다이얼로그"
+            subtitle="각각 기존 페이지 위에 오버레이된 상태로 렌더링. 모두 V1 스타일에 맞춰 재작업."
+          >
+            <DCArtboard id="cb"  label="챗봇 · 트로이 (인사이트)"   width={W} height={H}><ChatbotOnDashboard/></DCArtboard>
+            <DCArtboard id="m1"  label="문서 업로드"                 width={W} height={H}><ModalOnPage page="P1" modal={<M1UploadDialog/>}/></DCArtboard>
+            <DCArtboard id="m2"  label="세부 스토리지 추가"          width={W} height={H}><ModalOnPage page="P3" modal={<M2AddSubcategoryDialog/>}/></DCArtboard>
+            <DCArtboard id="m3"  label="문서 공유"                   width={W} height={H}><ModalOnPage page="P1" modal={<M3ShareDialog/>}/></DCArtboard>
+            <DCArtboard id="m4"  label="문서 미리보기"               width={W} height={H}><ModalOnPage page="P1" modal={<M4PreviewDialog/>}/></DCArtboard>
+            <DCArtboard id="m5"  label="NFC 태그 등록"               width={W} height={H}><ModalOnPage page="P1" modal={<M5NfcDialog/>}/></DCArtboard>
+            <DCArtboard id="m6"  label="삭제 확인 (대분류)"          width={W} height={H}><ModalOnPage page="P3" modal={<M6DeleteConfirmDialog/>}/></DCArtboard>
+            <DCArtboard id="m7"  label="알림 드롭다운"               width={W} height={H}><ModalOnPage page="P1" modal={<M7NotificationDropdown/>}/></DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    };
+    _waitForGlobals();
+  </script>
+</body>
+</html>

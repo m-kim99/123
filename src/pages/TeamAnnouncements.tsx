@@ -221,9 +221,9 @@ export function TeamAnnouncements() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('teamAnnouncements.title')}</h1>
-          <p className="text-slate-500 mt-1">{t('teamAnnouncements.subtitle')}</p>
+        <div className="min-w-0">
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('teamAnnouncements.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1.5">{t('teamAnnouncements.subtitle')}</p>
         </div>
 
         {isLoading ? (
@@ -339,7 +339,7 @@ export function TeamAnnouncements() {
                         />
                         <Button
                           onClick={() => handleAddComment(announcement.id)}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-[#2563eb] hover:bg-[#1d4ed8]"
                         >
                           <Send className="h-4 w-4" />
                         </Button>

@@ -8,7 +8,8 @@ import { ko } from 'date-fns/locale';
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { v1Card } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -304,34 +305,34 @@ export function AdminAnnouncements() {
     }
   };
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <BackButton className="mb-4" />
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">{t('announcements.title')}</h1>
-            <p className="text-slate-500 mt-1">{t('announcements.subtitle')}</p>
-          </div>
-
-          {/* 데스크톱: 헤더 옆에 표시 */}
-          <Button 
-            className="hidden md:flex bg-blue-600 hover:bg-blue-700"
-            onClick={() => setAddDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('announcements.write')}
-          </Button>
+return (
+  <DashboardLayout>
+    <div className="space-y-6">
+      <BackButton className="mb-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('announcements.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1.5">{t('announcements.subtitle')}</p>
         </div>
 
-        {/* 모바일: 전체 너비 버튼 */}
+        {/* 데스크탑: 헤더 옆에 표시 */}
         <Button 
-          className="md:hidden w-full bg-blue-600 hover:bg-blue-700"
+          className="hidden md:flex h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
           onClick={() => setAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           {t('announcements.write')}
         </Button>
+      </div>
+
+      {/* 모바일: 전체 너비 버튼 */}
+      <Button 
+        className="md:hidden w-full h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
+        onClick={() => setAddDialogOpen(true)}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        {t('announcements.write')}
+      </Button>
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">
@@ -370,14 +371,14 @@ export function AdminAnnouncements() {
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
+                <Button type="button" variant="outline" className="rounded-[10px] h-9" onClick={() => setAddDialogOpen(false)}>
                   {t('common.cancel')}
                 </Button>
                 <Button
                   type="button"
                   onClick={handleAdd}
                   disabled={isAdding}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isAdding ? t('announcements.adding') : t('common.add')}
                 </Button>
@@ -396,8 +397,8 @@ export function AdminAnnouncements() {
         ) : (
           <div className="space-y-4">
             {announcements.map((announcement) => (
-              <Card key={announcement.id}>
-                <CardHeader>
+              <div key={announcement.id} className={v1Card}>
+                <div className="px-5 sm:px-6 pt-5 pb-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0 overflow-hidden">
                       <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
@@ -424,8 +425,8 @@ export function AdminAnnouncements() {
                       </Button>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div className="px-5 sm:px-6 pb-5">
                   <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
                   <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-1">
@@ -459,8 +460,8 @@ export function AdminAnnouncements() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -502,14 +503,14 @@ export function AdminAnnouncements() {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button type="button" variant="outline" className="rounded-[10px] h-9" onClick={() => setEditDialogOpen(false)}>
                 {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleEdit}
                 disabled={isEditing}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isEditing ? t('common.processing') : t('common.confirm')}
               </Button>

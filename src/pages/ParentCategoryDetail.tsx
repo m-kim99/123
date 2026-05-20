@@ -609,7 +609,7 @@ export function ParentCategoryDetail() {
 
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold">{parentCategory.name}</h1>
+              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{parentCategory.name}</h1>
               <p className="text-slate-500 mt-1">
                 {parentCategory.description || t('subcategoryDetail.noDescription')}
               </p>
@@ -919,7 +919,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addMonths(new Date(), 3);
                       const today = new Date();
@@ -941,7 +941,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 1);
                       const today = new Date();
@@ -963,7 +963,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 3);
                       const today = new Date();
@@ -985,7 +985,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 5);
                       const today = new Date();
@@ -1007,7 +1007,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 7);
                       const today = new Date();
@@ -1029,7 +1029,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 10);
                       const today = new Date();
@@ -1390,7 +1390,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addMonths(new Date(), 3);
                       const today = new Date();
@@ -1412,7 +1412,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 1);
                       const today = new Date();
@@ -1434,7 +1434,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 3);
                       const today = new Date();
@@ -1456,7 +1456,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 5);
                       const today = new Date();
@@ -1478,7 +1478,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 7);
                       const today = new Date();
@@ -1500,7 +1500,7 @@ export function ParentCategoryDetail() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                     onClick={() => {
                       const target = addYears(new Date(), 10);
                       const today = new Date();

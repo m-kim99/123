@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,8 +142,8 @@ export function Statistics() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('statistics.title')}</h1>
-          <p className="text-slate-500 mt-1">{t('statistics.subtitle')}</p>
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('statistics.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1.5">{t('statistics.subtitle')}</p>
         </div>
 
         {documents.length === 0 && (
@@ -152,36 +152,17 @@ export function Statistics() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">
-                        {stat.title}
-                      </p>
-                      <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                    </div>
-                    <div
-                      className="p-3 rounded-xl"
-                      style={{ backgroundColor: `${stat.color}20` }}
-                    >
-                      <Icon className="h-6 w-6" style={{ color: stat.color }} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {stats.map((stat) => (
+            <V1StatTile key={stat.title} title={stat.title} value={stat.value} icon={stat.icon} color={stat.color} />
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>{t('statistics.monthlyUploads')}</CardTitle>
+          <div className={v1Card}>
+            <V1CardHeader
+              title={t('statistics.monthlyUploads')}
+              action={
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1">
@@ -201,8 +182,9 @@ export function Statistics() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </CardHeader>
-            <CardContent>
+              }
+            />
+            <div className="p-5 sm:p-6">
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -212,14 +194,12 @@ export function Statistics() {
                   <Bar dataKey="count" fill={primaryColor} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('statistics.docsByParentCategory')}</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className={v1Card}>
+            <V1CardHeader title={t('statistics.docsByParentCategory')} />
+            <div className="p-5 sm:p-6">
               {parentCategories.length === 0 ? (
                 <p className="text-sm text-slate-500">{t('statistics.addParentCategory')}</p>
               ) : (
@@ -240,29 +220,27 @@ export function Statistics() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {isAdmin && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('statistics.docsByDepartment')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className={v1Card}>
+            <V1CardHeader title={t('statistics.docsByDepartment')} />
+            <div className="p-5 sm:p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {departments.map((dept) => (
-                  <div key={dept.id} className="text-center p-4 bg-slate-50 rounded-lg">
+                  <div key={dept.id} className="text-center p-4 bg-slate-50 rounded-[10px]">
                     <p className="text-sm text-slate-500 mb-2">{dept.name}</p>
-                    <p className="text-3xl font-bold" style={{ color: primaryColor }}>
+                    <p className="text-[28px] font-bold text-[#2563eb]">
                       {dept.documentCount}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">{t('common.documents')}</p>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
     </DashboardLayout>

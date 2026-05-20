@@ -12,13 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+// Card components removed – signup uses V1-styled plain div
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
@@ -733,8 +727,9 @@ export function LoginPage() {
           playsInline
         />
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
-        <div className="relative z-10">
+        <div className="relative z-10 flex items-end gap-2.5">
           <img src={rootLogo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
+          <span className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-[6px] tracking-wide -translate-y-[25%]">BETA</span>
         </div>
         <div className="relative z-10">
           <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
@@ -752,16 +747,15 @@ export function LoginPage() {
       {/* 우측 폼 패널 */}
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8">
         {/* 모바일 전용 로고 */}
-        <div className="md:hidden mb-8 flex items-center gap-2">
+        <div className="md:hidden mb-8 flex items-end gap-2">
           <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">BETA</span>
+          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded -translate-y-[25%]">BETA</span>
         </div>
 
         <div className="w-full max-w-[420px]">
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="mb-1.5">
               <h2 className="text-[26px] font-bold text-slate-900 tracking-tight">로그인</h2>
-              <span className="hidden md:inline text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">BETA</span>
             </div>
             <p className="text-sm text-slate-500">TrayStorage CONNECT에 오신 것을 환영합니다.</p>
           </div>
@@ -817,7 +811,7 @@ export function LoginPage() {
                         type="checkbox"
                         checked={rememberEmail}
                         onChange={(e) => setRememberEmail(e.target.checked)}
-                        className="w-4 h-4 accent-blue-600 rounded"
+                        className="w-4 h-4 accent-[#2563eb] rounded"
                       />
                       <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
                     </label>
@@ -931,7 +925,7 @@ export function LoginPage() {
                         type="checkbox"
                         checked={rememberEmail}
                         onChange={(e) => setRememberEmail(e.target.checked)}
-                        className="w-4 h-4 accent-blue-600 rounded"
+                        className="w-4 h-4 accent-[#2563eb] rounded"
                       />
                       <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
                     </label>
@@ -1015,26 +1009,26 @@ export function LoginPage() {
 
       {signupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <Card className="w-full max-w-md my-auto flex flex-col max-h-[90vh]">
-            <CardHeader className="shrink-0">
-              <CardTitle>{t('signup.title')}</CardTitle>
-              <CardDescription>{t('signup.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 flex-1 min-h-0 overflow-y-auto">
+          <div className="w-full max-w-md my-auto flex flex-col max-h-[90vh] bg-white rounded-[14px] border border-[#e5e7eb] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+            <div className="shrink-0 px-6 pt-6 pb-4">
+              <h3 className="text-xl font-bold text-slate-900">{t('signup.title')}</h3>
+              <p className="text-sm text-slate-500 mt-1">{t('signup.description')}</p>
+            </div>
+            <div className="space-y-4 flex-1 min-h-0 overflow-y-auto px-6">
               <Tabs
                 value={signupRole}
                 onValueChange={(v) => setSignupRole(v as 'admin' | 'team')}
               >
-                <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-100 p-1 rounded-xl h-auto">
                   <TabsTrigger
                     value="admin"
-                    className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
                   >
                     {t('signup.adminTab')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="team"
-                    className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
                   >
                     {t('signup.teamTab')}
                   </TabsTrigger>
@@ -1221,7 +1215,7 @@ export function LoginPage() {
                     type="checkbox"
                     checked={agreeAll}
                     onChange={(e) => handleAgreeAll(e.target.checked)}
-                    className="w-4 h-4 accent-blue-600"
+                    className="w-4 h-4 accent-[#2563eb]"
                   />
                   <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
                 </label>
@@ -1231,7 +1225,7 @@ export function LoginPage() {
                       type="checkbox"
                       checked={agreeAge}
                       onChange={(e) => setAgreeAge(e.target.checked)}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-[#2563eb]"
                     />
                     <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
                   </label>
@@ -1240,13 +1234,13 @@ export function LoginPage() {
                       type="checkbox"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-[#2563eb]"
                     />
                     <span className="text-sm text-slate-600">
                       [필수]{' '}
                       <button
                         type="button"
-                        className="text-blue-600 underline hover:text-blue-800"
+                        className="text-[#2563eb] underline hover:text-[#1d4ed8]"
                         onClick={() => setTermsPopupType('tos')}
                       >
                         서비스 이용약관
@@ -1259,13 +1253,13 @@ export function LoginPage() {
                       type="checkbox"
                       checked={agreePrivacy}
                       onChange={(e) => setAgreePrivacy(e.target.checked)}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-[#2563eb]"
                     />
                     <span className="text-sm text-slate-600">
                       [필수]{' '}
                       <button
                         type="button"
-                        className="text-blue-600 underline hover:text-blue-800"
+                        className="text-[#2563eb] underline hover:text-[#1d4ed8]"
                         onClick={() => setTermsPopupType('privacy')}
                       >
                         개인정보 처리방침
@@ -1281,10 +1275,11 @@ export function LoginPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-            </CardContent>
-            <div className="flex justify-end gap-2 px-6 pb-6">
+            </div>
+            <div className="flex gap-2.5 px-6 py-5 border-t border-[#e5e7eb]">
               <Button
                 variant="outline"
+                className="flex-1 h-11 rounded-[10px]"
                 onClick={() => {
                   setSignupOpen(false);
                   resetSignupForm();
@@ -1296,7 +1291,7 @@ export function LoginPage() {
               </Button>
               <Button
                 onClick={handleSignup}
-                className="w-full"
+                className="flex-[2] h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold"
                 disabled={
                   isLoading ||
                   !signupForm.email ||
@@ -1311,7 +1306,7 @@ export function LoginPage() {
                 {isLoading ? t('signup.signingUp') : t('signup.signupButton')}
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
       <Dialog open={termsPopupType !== null} onOpenChange={(open) => { if (!open) setTermsPopupType(null); }}>

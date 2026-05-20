@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, FileText, FolderOpen, Users, ChevronRight } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
@@ -40,7 +40,6 @@ export function DepartmentDetail() {
   // 함수는 한 번에 가져오기 (참조 안정적)
   const { addParentCategory, fetchDepartments } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
-  const primaryColor = '#2563eb';
 
   const department = departments.find((d) => d.id === departmentId);
 
@@ -242,19 +241,20 @@ export function DepartmentDetail() {
 
           <BackButton className="mb-4" />
 
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">{department.name}</h1>
-              <p className="text-sm text-slate-500">{t('deptDetail.deptCode')}: {department.code}</p>
-              <p className="text-slate-500 mt-1">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+            <div className="min-w-0">
+              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{department.name}</h1>
+              <p className="text-sm text-slate-500 mt-0.5">{t('deptDetail.deptCode')}: <span className="font-mono">{department.code}</span></p>
+              <p className="text-sm text-slate-500 mt-1">
                 {department.description || t('deptDetail.noDescription')}
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="icon"
+                className="rounded-[10px]"
                 onClick={() => {
                   setEditDeptName(department.name);
                   setEditDeptCode(department.code);
@@ -271,7 +271,7 @@ export function DepartmentDetail() {
                 variant="outline"
                 size="icon"
                 onClick={() => setIsDeleteDialogOpen(true)}
-                className="text-red-500 hover:text-red-600 hover:border-red-500"
+                className="rounded-[10px] text-red-500 hover:text-red-600 hover:border-red-500"
               >
                 <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
               </Button>
@@ -279,47 +279,27 @@ export function DepartmentDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.docCount')}</p>
-              <p className="text-2xl font-bold mt-2">{departmentDocuments.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
-              <p className="text-2xl font-bold mt-2">{departmentParentCategories.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.teamMemberCount')}</p>
-              <p className="text-2xl font-bold mt-2">{teamMembersCount}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm font-medium text-slate-500 whitespace-nowrap">{t('deptDetail.parentCategoryCount')}</p>
-              <p className="text-2xl font-bold mt-2">{nfcCategoryCount}</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <V1StatTile title={t('deptDetail.docCount')} value={departmentDocuments.length} icon={FileText} color="#2563eb" />
+          <V1StatTile title={t('deptDetail.parentCategoryCount')} value={departmentParentCategories.length} icon={FolderOpen} color="#10b981" />
+          <V1StatTile title={t('deptDetail.teamMemberCount')} value={teamMembersCount} icon={Users} color="#8b5cf6" />
+          <V1StatTile title={t('deptDetail.parentCategoryCount')} value={nfcCategoryCount} icon={FolderOpen} color="#f59e0b" />
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>{t('deptDetail.parentCategoryList')}</CardTitle>
-              <CardDescription className="mt-1">
-                {t('deptDetail.parentCategoryListDesc', { name: department.name })}
-              </CardDescription>
-            </div>
-            <Button style={{ backgroundColor: primaryColor }} onClick={handleOpenAddDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('deptDetail.addParentCategory')}
-            </Button>
-          </CardHeader>
-          <CardContent>
+        <div className={v1Card}>
+          <V1CardHeader
+            title={t('deptDetail.parentCategoryList')}
+            sub={t('deptDetail.parentCategoryListDesc', { name: department.name })}
+            icon={FolderOpen}
+            iconColor="#2563eb"
+            action={
+              <Button className="h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]" onClick={handleOpenAddDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('deptDetail.addParentCategory')}
+              </Button>
+            }
+          />
+          <div className="p-5 sm:p-6">
             {departmentParentCategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 {t('deptDetail.noParentCategories')}
@@ -327,39 +307,38 @@ export function DepartmentDetail() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {departmentParentCategories.map((pc) => (
-                  <Card
+                  <div
                     key={pc.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                    className={`${v1Card} hover:shadow-lg transition-shadow cursor-pointer`}
                     onClick={() => navigate(`/admin/parent-category/${pc.id}`)}
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
-                          <CardDescription className="mt-1 truncate">
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-semibold text-slate-900 truncate">{pc.name}</p>
+                          <p className="text-xs text-slate-500 mt-1 truncate">
                             {pc.description || t('parentCategoryDetail.noDescription')}
-                          </CardDescription>
+                          </p>
                         </div>
+                        <ChevronRight className="h-4 w-4 text-slate-300 shrink-0 mt-1" />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
+                      <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-500">{t('deptDetail.subcategories')}</span>
-                          <span className="font-medium">{pc.subcategoryCount}</span>
+                          <span className="font-semibold text-slate-900">{pc.subcategoryCount}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-500">{t('deptDetail.docCount')}</span>
-                          <span className="font-medium">{pc.documentCount}</span>
+                          <span className="font-semibold text-slate-900">{pc.documentCount}</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <Dialog
           open={isEditDialogOpen}
@@ -414,6 +393,7 @@ export function DepartmentDetail() {
               <Button
                 type="button"
                 variant="outline"
+                className="rounded-[10px] h-9"
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSaving}
               >
@@ -421,6 +401,7 @@ export function DepartmentDetail() {
               </Button>
               <Button
                 type="button"
+                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
               >
@@ -507,6 +488,7 @@ export function DepartmentDetail() {
               <Button
                 type="button"
                 variant="outline"
+                className="rounded-[10px] h-9"
                 onClick={() => setAddDialogOpen(false)}
               >
                 {t('common.cancel')}
@@ -514,7 +496,7 @@ export function DepartmentDetail() {
               <Button
                 type="button"
                 onClick={handleAddCategory}
-                style={{ backgroundColor: primaryColor }}
+                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
                 disabled={!newParentCategoryName.trim()}
               >
                 {t('common.add')}

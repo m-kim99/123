@@ -2298,7 +2298,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addMonths(new Date(), 3);
                             const today = new Date();
@@ -2320,7 +2320,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addYears(new Date(), 1);
                             const today = new Date();
@@ -2342,7 +2342,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addYears(new Date(), 3);
                             const today = new Date();
@@ -2364,7 +2364,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addYears(new Date(), 5);
                             const today = new Date();
@@ -2386,7 +2386,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addYears(new Date(), 7);
                             const today = new Date();
@@ -2408,7 +2408,7 @@ export function DocumentManagement() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                          className={newCategory.expiryDate && Math.abs(new Date(newCategory.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                           onClick={() => {
                             const target = addYears(new Date(), 10);
                             const today = new Date();
@@ -2618,7 +2618,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addMonths(new Date(), 3);
                           const today = new Date();
@@ -2640,7 +2640,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 1);
                           const today = new Date();
@@ -2662,7 +2662,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 3);
                           const today = new Date();
@@ -2684,7 +2684,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 5);
                           const today = new Date();
@@ -2706,7 +2706,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 7);
                           const today = new Date();
@@ -2728,7 +2728,7 @@ export function DocumentManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                        className={editCategoryForm.expiryDate && Math.abs(new Date(editCategoryForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
                         onClick={() => {
                           const target = addYears(new Date(), 10);
                           const today = new Date();
@@ -3810,7 +3810,7 @@ export function DocumentManagement() {
         >
           {/* PDF 미리보기: 기존 브라우저 뷰어 유지 */}
           {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
               </DialogHeader>
@@ -3845,7 +3845,7 @@ export function DocumentManagement() {
 
           {/* 이미지 미리보기: 전문 뷰어 레이아웃 */}
           {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
               <DialogHeader>
                 <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imagePreview')}</DialogTitle>
               </DialogHeader>
@@ -4068,7 +4068,7 @@ export function DocumentManagement() {
                           <div className={cn(
                             "w-5 h-5 rounded border-2 flex items-center justify-center",
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-600 border-blue-600"
+                              ? "bg-[#2563eb] border-blue-600"
                               : "border-slate-300"
                           )}>
                             {selectedUserIds.includes(companyUser.id) && (
@@ -4159,7 +4159,7 @@ export function DocumentManagement() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>
@@ -4263,7 +4263,7 @@ export function DocumentManagement() {
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isReplacingFile ? (
                   <>
@@ -4292,7 +4292,7 @@ export function DocumentManagement() {
             </DialogHeader>
             <DialogFooter>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-[#2563eb] hover:bg-[#1d4ed8]"
                 onClick={() => {
                   setUploadSuccessDialogOpen(false);
                   setActiveTab('documents');
