@@ -11,6 +11,7 @@ import {
   MessageSquare,
   LogOut,
   ChevronDown,
+  ChevronUp,
   Users,
   Menu,
   X,
@@ -131,6 +132,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     billingCycle: string;
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [mobilePermExpanded, setMobilePermExpanded] = useState(false);
+  const [mobileLangExpanded, setMobileLangExpanded] = useState(false);
 
   const FAQIcon = ({ className }: { className?: string }) => (
     <MessageSquare className={className} />
@@ -1146,39 +1149,59 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsNotificationSettingsOpen(true)}>{t('header.notificationSettings')}</DropdownMenuItem>
               {user?.role === 'team' && myPermissions.length > 0 && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Shield className="h-4 w-4 mr-2" />
-                    <span>{t('header.myPermissions')}</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="min-w-[180px] max-w-[calc(100vw-2rem)]" sideOffset={2} collisionPadding={16}>
-                    {myPermissions.map((perm) => (
-                      <DropdownMenuItem
-                        key={perm.departmentId}
-                        onClick={() => navigate(`${basePath}/department/${perm.departmentId}`)}
-                        className="flex items-center justify-between gap-3"
-                      >
-                        <span className="truncate">{perm.departmentName}</span>
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${getRoleBadgeClass(perm.role)}`}>
-                          {ROLE_LABELS[perm.role]}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <>
+                  <DropdownMenuItem
+                    onClick={(e) => { e.preventDefault(); setMobilePermExpanded(!mobilePermExpanded); }}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center">
+                      <Shield className="h-4 w-4 mr-2" />
+                      <span>{t('header.myPermissions')}</span>
+                    </div>
+                    {mobilePermExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </DropdownMenuItem>
+                  {mobilePermExpanded && (
+                    <div className="bg-slate-50 border-y">
+                      {myPermissions.map((perm) => (
+                        <DropdownMenuItem
+                          key={perm.departmentId}
+                          onClick={() => navigate(`${basePath}/department/${perm.departmentId}`)}
+                          className="flex items-center justify-between gap-3 pl-8"
+                        >
+                          <span className="truncate">{perm.departmentName}</span>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${getRoleBadgeClass(perm.role)}`}>
+                            {ROLE_LABELS[perm.role]}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+              <DropdownMenuItem
+                onClick={(e) => { e.preventDefault(); setMobileLangExpanded(!mobileLangExpanded); }}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-2" />
                   <span>{t('language.settings')}</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent sideOffset={2} collisionPadding={16}>
-                  <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
-                    <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+                </div>
+                {mobileLangExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </DropdownMenuItem>
+              {mobileLangExpanded && (
+                <div className="bg-slate-50 border-y">
+                  <DropdownMenuItem onClick={() => changeLanguage('ko')} className="pl-8">
+                    <span className={i18n.language === 'ko' ? 'font-semibold text-blue-600' : ''}>
+                      {t('language.korean')}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeLanguage('en')} className="pl-8">
+                    <span className={i18n.language === 'en' ? 'font-semibold text-blue-600' : ''}>
+                      {t('language.english')}
+                    </span>
+                  </DropdownMenuItem>
+                </div>
+              )}
               <DropdownMenuItem onClick={openSubscriptionDialog}>
                 <Crown className="h-4 w-4 mr-2" />
                 {t('subscription.title')}
