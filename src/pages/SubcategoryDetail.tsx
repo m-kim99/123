@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
@@ -15,6 +15,7 @@ import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { v1Card, V1CardHeader, V1PageHeader, V1Chip } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,7 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
-import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
+
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
 import { downloadFile } from '@/lib/appBridge';
@@ -1020,113 +1021,100 @@ export function SubcategoryDetail() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div>
-          <DocumentBreadcrumb
-            items={(() => {
-              const isAdmin = window.location.pathname.startsWith('/admin');
-              const basePath = isAdmin ? '/admin' : '/team';
+      <div className="space-y-6">
+        <BackButton className="mb-4" />
 
-              const department =
-                subcategory &&
-                departments.find((dept) => dept.id === subcategory.departmentId);
-
-              const departmentHref =
-                department?.id &&
-                (isAdmin
-                  ? `/admin/departments/${department.id}`
-                  : `/team/department/${department.id}`);
-
-              return [
-                {
-                  label: department?.name || t('common.department'),
-                  href: departmentHref || undefined,
-                },
-                {
-                  label: parentCategory?.name || t('subcategoryDetail.parentCategory'),
-                  href: `${basePath}/parent-category/${parentCategoryId}`,
-                },
-                {
-                  label: subcategory.name,
-                  isCurrentPage: true,
-                },
-              ];
-            })()}
-            className="mb-2"
-          />
-
-          <BackButton className="mb-4" />
-
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">
-                {subcategory.name}
-              </h1>
-              <p className="text-slate-500 mt-1">
-                {subcategory.description || t('subcategoryDetail.noDescription')}
-              </p>
-              {parentCategory && (
-                <p className="text-sm text-slate-500 mt-1">
-                  {t('subcategoryDetail.parentCategoryLabel')}: {parentCategory.name}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-2">
+        <V1PageHeader
+          breadcrumb={(() => {
+            const department = subcategory && departments.find((dept) => dept.id === subcategory.departmentId);
+            return [
+              department?.name || t('common.department'),
+              parentCategory?.name || t('subcategoryDetail.parentCategory'),
+              subcategory.name,
+            ];
+          })()}
+          title={subcategory.name}
+          sub={subcategory.description || t('subcategoryDetail.noDescription')}
+          right={
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant={isFav ? 'default' : 'outline'}
                 size="sm"
                 onClick={handleToggleFavorite}
-                className="flex items-center gap-2 w-28 justify-center"
+                className="h-8 rounded-[10px] text-xs font-semibold gap-1.5"
               >
-                <Star className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
+                <Star className={`h-3.5 w-3.5 ${isFav ? 'fill-current' : ''}`} />
                 {isFav ? t('subcategoryDetail.unfavorite') : t('subcategoryDetail.favorite')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditForm({
+                    name: subcategory.name,
+                    description: subcategory.description || '',
+                    storageLocation: subcategory.storageLocation || '',
+                    managementNumber: subcategory.managementNumber || '',
+                  });
+                  setEditDialogOpen(true);
+                }}
+                className="h-8 rounded-[10px] text-xs font-semibold gap-1.5 border-[#e5e7eb]"
+              >
+                <Edit className="h-3.5 w-3.5" />
+                {t('common.edit')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRegisterNfc}
                 disabled={isRegisteringNfc || !canDo('share')}
-                className={`flex items-center gap-2 w-28 justify-center ${
-                  subcategory.nfcRegistered 
-                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#2563eb]' 
-                    : ''
+                className={`h-8 rounded-[10px] text-xs font-semibold gap-1.5 ${
+                  subcategory.nfcRegistered
+                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#2563eb]'
+                    : 'border-[#e5e7eb]'
                 }`}
               >
-                <Smartphone className="h-4 w-4" />
+                <Smartphone className="h-3.5 w-3.5" />
                 {subcategory.nfcRegistered ? t('subcategoryDetail.nfcReregister') : t('subcategoryDetail.nfcRegister')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleQrCode}
-                className="flex items-center gap-2 w-28 justify-center"
+                className="h-8 rounded-[10px] text-xs font-semibold gap-1.5 border-[#e5e7eb]"
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-3.5 w-3.5" />
                 {qrGenerated ? t('subcategoryDetail.qrView') : t('subcategoryDetail.qrGenerate')}
               </Button>
             </div>
-          </div>
+          }
+        />
+
+        {/* V1 Chip Row */}
+        <div className="flex flex-wrap gap-2">
+          <V1Chip variant="blue" icon={FileText}>{t('subcategoryDetail.docCount')}: {subcategoryDocuments.length}</V1Chip>
+          <V1Chip variant={subcategory.nfcRegistered ? 'emerald' : 'neutral'} icon={Smartphone}>
+            NFC: {subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive')}
+          </V1Chip>
+          {subcategory.storageLocation && (
+            <V1Chip variant="neutral" icon={MapPin}>{subcategory.storageLocation}</V1Chip>
+          )}
+          {subcategory.managementNumber && (
+            <V1Chip variant="neutral" icon={Hash}>{subcategory.managementNumber}</V1Chip>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            { label: t('subcategoryDetail.docCount'), value: subcategoryDocuments.length },
-            { label: t('subcategoryDetail.nfcStatus'), value: subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive') },
-            { label: t('subcategoryDetail.storageLocation'), value: subcategory.storageLocation || t('subcategoryDetail.unassigned') },
-            { label: t('subcategoryDetail.managementNumber'), value: subcategory.managementNumber || t('subcategoryDetail.unassigned') },
-          ].map((tile) => (
-            <div key={tile.label} className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
-              <p className="text-xs font-medium text-slate-500 mb-3">{tile.label}</p>
-              <p className="text-[26px] font-bold leading-none tracking-tight text-slate-900 truncate">{tile.value}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-900">{t('subcategoryDetail.documentList')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('subcategoryDetail.documentListDesc')}</p>
-          </div>
+        {/* ─── V1 2-Column Layout ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Left Column: Documents + Upload */}
+          <div className="space-y-6">
+        <div className={v1Card}>
+          <V1CardHeader
+            title={t('subcategoryDetail.documentList')}
+            icon={FileText}
+            iconColor="#2563eb"
+            sub={t('subcategoryDetail.documentListDesc')}
+          />
           <div className="p-4 sm:p-6">
             {subcategoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
@@ -1209,11 +1197,13 @@ export function SubcategoryDetail() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-900">{t('subcategoryDetail.uploadDocument')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('subcategoryDetail.uploadDocumentDesc')}</p>
-          </div>
+        <div className={v1Card}>
+          <V1CardHeader
+            title={t('subcategoryDetail.uploadDocument')}
+            icon={Upload}
+            iconColor="#2563eb"
+            sub={t('subcategoryDetail.uploadDocumentDesc')}
+          />
           <div className="p-4 sm:p-6 space-y-6">
             {/* 파일 업로드 영역 */}
             <div className="space-y-2">
@@ -1374,6 +1364,113 @@ export function SubcategoryDetail() {
             </Button>
           </div>
         </div>
+          </div>
+          {/* ─── End Left Column ─── */}
+
+          {/* ─── Right Sidebar ─── */}
+          <div className="flex flex-col gap-4">
+            {/* NFC / QR Card */}
+            <div className={v1Card}>
+              <V1CardHeader title="NFC / QR" icon={Smartphone} iconColor="#2563eb" />
+              <div className="px-5 py-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-[12.5px] text-slate-500">NFC</span>
+                  <V1Chip variant={subcategory.nfcRegistered ? 'emerald' : 'neutral'}>
+                    {subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive')}
+                  </V1Chip>
+                </div>
+                <div className="flex items-center justify-between py-2 border-t border-slate-100">
+                  <span className="text-[12.5px] text-slate-500">QR</span>
+                  <V1Chip variant={qrGenerated ? 'blue' : 'neutral'}>
+                    {qrGenerated ? t('subcategoryDetail.qrView', { defaultValue: '생성됨' }) : t('subcategoryDetail.qrGenerate', { defaultValue: '미생성' })}
+                  </V1Chip>
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRegisterNfc}
+                    disabled={isRegisteringNfc || !canDo('share')}
+                    className={`flex-1 h-8 rounded-[10px] text-xs font-semibold ${
+                      subcategory.nfcRegistered
+                        ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white border-[#2563eb]'
+                        : 'border-[#e5e7eb]'
+                    }`}
+                  >
+                    <Smartphone className="h-3.5 w-3.5 mr-1" />
+                    NFC
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleQrCode}
+                    className="flex-1 h-8 rounded-[10px] text-xs font-semibold border-[#e5e7eb]"
+                  >
+                    <QrCode className="h-3.5 w-3.5 mr-1" />
+                    QR
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Timeline */}
+            <div className={v1Card}>
+              <V1CardHeader title={t('subcategoryDetail.recentActivity', { defaultValue: '최근 활동' })} icon={Activity} iconColor="#2563eb" />
+              <div className="px-5 py-3">
+                {subcategoryDocuments.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">{t('subcategoryDetail.noDocuments')}</p>
+                ) : (
+                  <div className="flex flex-col">
+                    {subcategoryDocuments.slice(0, 5).map((doc, i) => (
+                      <div key={doc.id} className={`flex gap-3 py-2.5 ${i > 0 ? 'border-t border-slate-50' : ''}`}>
+                        <div className="flex flex-col items-center shrink-0 mt-0.5">
+                          <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
+                          {i < Math.min(subcategoryDocuments.length, 5) - 1 && (
+                            <div className="w-px flex-1 bg-slate-200 mt-1" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-slate-900 truncate">{doc.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                            <span className="text-[10px] text-slate-400 font-mono">{formatDateTimeSimple(doc.uploadDate)}</span>
+                          </div>
+                          {doc.uploader && (
+                            <span className="text-[10px] text-slate-500 mt-0.5 block">{doc.uploader}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Storage Info */}
+            <div className={v1Card}>
+              <V1CardHeader title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })} icon={MapPin} iconColor="#2563eb" />
+              <div className="px-5 py-3 flex flex-col gap-2.5">
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.storageLocation')}</span>
+                  <span className="text-xs font-semibold text-slate-900">{subcategory.storageLocation || t('subcategoryDetail.unassigned')}</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                  <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.managementNumber')}</span>
+                  <span className="text-xs font-semibold text-slate-900 font-mono">{subcategory.managementNumber || t('subcategoryDetail.unassigned')}</span>
+                </div>
+                {parentCategory && (
+                  <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                    <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.parentCategoryLabel')}</span>
+                    <span className="text-xs font-semibold text-slate-900">{parentCategory.name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          {/* ─── End Right Sidebar ─── */}
+        </div>
+        {/* ─── End 2-Column Grid ─── */}
+
         <Dialog
           open={editDialogOpen}
           onOpenChange={(open) => {

@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import downloadIcon from '@/assets/download.svg';
 import binIcon from '@/assets/bin.svg';
 import { Button } from '@/components/ui/button';
-import { v1Card, V1CardHeader } from '@/components/ui/v1-components';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { v1Card, V1CardHeader, V1PageHeader, V1StatTile, V1Chip } from '@/components/ui/v1-components';
 import {
   Dialog,
   DialogContent,
@@ -31,11 +23,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileText, Search, Loader2 } from 'lucide-react';
+import { FileText, Search, Loader2, Share2, Bell, Users, Clock, MessageCircle } from 'lucide-react';
 import previewIcon from '@/assets/preview.svg';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { downloadFile } from '@/lib/appBridge';
@@ -182,121 +173,142 @@ export function SharedDocuments() {
     }
   };
 
+  const unreadCount = useMemo(() =>
+    sharedDocuments.filter(s => {
+      const sharedDate = new Date(s.sharedAt);
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      return sharedDate > twoDaysAgo;
+    }).length
+  , [sharedDocuments]);
+
+  const uniqueSharers = useMemo(() =>
+    new Set(sharedDocuments.map(s => s.sharedByUserId)).size
+  , [sharedDocuments]);
+
+  const thisWeekCount = useMemo(() => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return sharedDocuments.filter(s => new Date(s.sharedAt) > weekAgo).length;
+  }, [sharedDocuments]);
+
+  const isNewShare = (sharedAt: string) => {
+    const sharedDate = new Date(sharedAt);
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    return sharedDate > twoDaysAgo;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div className="min-w-0">
-          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('sharedDocs.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1.5">
-            {t('sharedDocs.subtitle')}
-          </p>
+
+        <V1PageHeader
+          title={t('sharedDocs.title')}
+          sub={t('sharedDocs.subtitle')}
+          right={
+            <div className="flex gap-2">
+              <div className="relative w-48 sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder={t('sharedDocs.searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9 rounded-[10px] border-[#e5e7eb] text-[13px]"
+                />
+              </div>
+            </div>
+          }
+        />
+
+        {/* ─── 4 KPI Stat Tiles ─── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <V1StatTile title={t('sharedDocs.receivedDocs', { defaultValue: '받은 문서' })} value={sharedDocuments.length} icon={Share2} color="#2563eb" delta={thisWeekCount > 0 ? `+${thisWeekCount}` : undefined} />
+          <V1StatTile title={t('sharedDocs.unread', { defaultValue: '읽지 않음' })} value={unreadCount} icon={Bell} color="#8b5cf6" delta={unreadCount > 0 ? `+${unreadCount}` : undefined} />
+          <V1StatTile title={t('sharedDocs.sharers', { defaultValue: '공유자' })} value={uniqueSharers} icon={Users} color="#10b981" />
+          <V1StatTile title={t('sharedDocs.thisWeek', { defaultValue: '이번 주' })} value={thisWeekCount} icon={Clock} color="#f59e0b" delta={thisWeekCount > 0 ? `+${thisWeekCount}` : undefined} />
         </div>
 
+        {/* ─── V1 Document List ─── */}
         <div className={v1Card}>
           <V1CardHeader
             title={t('sharedDocs.listTitle')}
-            sub={t('sharedDocs.totalShared', { count: filteredShares.length })}
-            icon={FileText}
+            icon={Share2}
             iconColor="#2563eb"
-            action={
-              <div className="w-48 sm:w-64">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder={t('sharedDocs.searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 rounded-[10px]"
-                  />
-                </div>
-              </div>
-            }
+            sub={t('sharedDocs.totalShared', { count: filteredShares.length })}
           />
-          <div className="p-5 sm:p-6">
-            {filteredShares.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">
-                  {searchQuery
-                    ? t('sharedDocs.noSearchResults')
-                    : t('sharedDocs.noSharedDocs')}
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('sharedDocs.docName')}</TableHead>
-                    <TableHead>{t('sharedDocs.sharedBy')}</TableHead>
-                    <TableHead>{t('common.department')}</TableHead>
-                    <TableHead>{t('sharedDocs.category')}</TableHead>
-                    <TableHead>{t('sharedDocs.sharedDate')}</TableHead>
-                    <TableHead className="text-right"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredShares.map((share) => (
-                    <TableRow key={share.id}>
-                      <TableCell className="font-medium">
-                        <div>
-                          <p>{share.documentName}</p>
-                          {share.message && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              {t('sharedDocs.memo')}: {share.message}
-                            </p>
-                          )}
+
+          {filteredShares.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500">{searchQuery ? t('sharedDocs.noSearchResults') : t('sharedDocs.noSharedDocs')}</p>
+            </div>
+          ) : (
+            <div>
+              {filteredShares.map((share, idx) => {
+                const unread = isNewShare(share.sharedAt);
+                return (
+                  <div
+                    key={share.id}
+                    className={`grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] gap-3 sm:gap-4 px-5 sm:px-6 py-4 items-center relative ${
+                      idx < filteredShares.length - 1 ? 'border-b border-slate-100' : ''
+                    } ${unread ? 'bg-[#eff6ff]' : ''}`}
+                  >
+                    {unread && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#2563eb] rounded-r" />}
+
+                    {/* Icon */}
+                    <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
+                      <FileText className="h-[18px] w-[18px] text-[#1e40af]" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-sm text-slate-900 truncate">{share.documentName}</span>
+                        {unread && <V1Chip variant="blue">NEW</V1Chip>}
+                      </div>
+                      <div className="text-xs text-slate-500 mb-1">
+                        <strong className="font-semibold text-slate-900">{share.sharedByUserName}</strong>
+                        {share.departmentName ? ` (${share.departmentName})` : ''}
+                        {t('sharedDocs.sharedSuffix', { defaultValue: '님이 공유' })}
+                        {' · '}
+                        <span className="font-mono">{format(new Date(share.sharedAt), 'yyyy-MM-dd')}</span>
+                      </div>
+                      {share.message && (
+                        <div className="text-xs text-slate-500 italic flex items-center gap-1.5">
+                          <MessageCircle className="h-3 w-3 text-slate-400 shrink-0" />
+                          "{share.message}"
                         </div>
-                      </TableCell>
-                      <TableCell>{share.sharedByUserName}</TableCell>
-                      <TableCell>{share.departmentName}</TableCell>
-                      <TableCell>{share.categoryName}</TableCell>
-                      <TableCell>
-                        {format(
-                          new Date(share.sharedAt),
-                          'yyyy-MM-dd HH:mm',
-                          { locale: ko }
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => handleView(share.documentId)}
-                          >
-                            <img src={previewIcon} alt={t('sharedDocs.preview')} className="w-4 h-4" />
-                          </Button>
-                          {share.permission === 'download' && (
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              className="h-8 w-8"
-                              onClick={() => handleDownload(share.documentId)}
-                            >
-                              <img src={downloadIcon} alt={t('sharedDocs.download')} className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setDeletingShareId(share.id);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <img src={binIcon} alt={t('common.delete')} className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
+                      )}
+                    </div>
+
+                    {/* Preview button */}
+                    <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs rounded-md border-[#e5e7eb]" onClick={() => handleView(share.documentId)}>
+                      <img src={previewIcon} alt={t('sharedDocs.preview')} className="w-3.5 h-3.5 mr-1" />
+                      {t('sharedDocs.preview', { defaultValue: '미리보기' })}
+                    </Button>
+
+                    {/* Download + Delete */}
+                    <div className="flex gap-1.5">
+                      {share.permission === 'download' && (
+                        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs rounded-md border-[#e5e7eb]" onClick={() => handleDownload(share.documentId)}>
+                          <img src={downloadIcon} alt={t('sharedDocs.download')} className="w-3.5 h-3.5 mr-1" />
+                          {t('sharedDocs.download', { defaultValue: '다운로드' })}
+                        </Button>
+                      )}
+                      <button
+                        className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-red-50 border border-[#e5e7eb] transition-colors"
+                        onClick={() => { setDeletingShareId(share.id); setDeleteDialogOpen(true); }}
+                      >
+                        <img src={binIcon} alt={t('common.delete')} className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 문서 미리보기 다이얼로그 */}

@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare, Megaphone } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { v1Card } from '@/components/ui/v1-components';
+import { v1Card, V1PageHeader, V1CardHeader } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -305,34 +304,44 @@ export function AdminAnnouncements() {
     }
   };
 
+  const totalComments = useMemo(() =>
+    Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
+  , [comments]);
+
+  const recentComments = useMemo(() => {
+    const all = Object.values(comments).flat();
+    return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4);
+  }, [comments]);
+
 return (
   <DashboardLayout>
     <div className="space-y-6">
       <BackButton className="mb-4" />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('announcements.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1.5">{t('announcements.subtitle')}</p>
-        </div>
 
-        {/* 데스크탑: 헤더 옆에 표시 */}
-        <Button 
-          className="hidden md:flex h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
-          onClick={() => setAddDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t('announcements.write')}
-        </Button>
-      </div>
-
-      {/* 모바일: 전체 너비 버튼 */}
-      <Button 
-        className="md:hidden w-full h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
-        onClick={() => setAddDialogOpen(true)}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        {t('announcements.write')}
-      </Button>
+      <V1PageHeader
+        title={t('announcements.title')}
+        sub={t('announcements.subtitle')}
+        right={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-[10px] border-[#e5e7eb] text-slate-700 text-[13px] font-semibold md:hidden"
+              onClick={() => setAddDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              {t('announcements.write')}
+            </Button>
+            <Button
+              className="hidden md:flex h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
+              onClick={() => setAddDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              {t('announcements.write')}
+            </Button>
+          </div>
+        }
+      />
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">
@@ -386,85 +395,118 @@ return (
           </DialogContent>
         </Dialog>
 
-        {isLoading ? (
-          <p className="text-slate-500">{t('common.loading')}</p>
-        ) : announcements.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-slate-500">{t('announcements.noAnnouncements')}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className={v1Card}>
-                <div className="px-5 sm:px-6 pt-5 pb-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                      <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
-                      <p className="text-sm text-slate-500 mt-1 truncate">
-                        {t('announcements.author')}: {announcement.authorName} ·{' '}
-                        {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => openEditDialog(announcement)}
-                      >
-                        <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                        onClick={() => openDeleteDialog(announcement.id)}
-                      >
-                        <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-5 sm:px-6 pb-5">
-                  <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
-                  <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="h-4 w-4" />
-                      {t('announcements.commentsCount', { count: comments[announcement.id]?.length || 0 })} {announcement.allowComments ? '' : `(${t('announcements.commentsDisabled')})`}
-                    </div>
-                  </div>
-
-                  {/* 댓글 목록 */}
-                  {comments[announcement.id] && comments[announcement.id].length > 0 && (
-                    <div className="mt-4 pt-4 border-t space-y-3">
-                      <p className="text-sm font-medium text-slate-700">{t('announcements.commentList')}</p>
-                      {comments[announcement.id].map((comment) => (
-                        <div key={comment.id} className="bg-slate-50 rounded-lg p-3 flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-700">{comment.userName}</p>
-                            <p className="text-sm text-slate-600 mt-1">{comment.content}</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                            onClick={() => handleDeleteComment(comment.id, announcement.id)}
-                          >
-                            <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+        {/* ─── V1 2-Column Layout ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* Left: Announcement List */}
+          <div className={v1Card}>
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Megaphone className="h-[18px] w-[18px] text-[#2563eb]" />
+                <h2 className="text-base font-semibold text-slate-900">{t('announcements.allAnnouncements', { defaultValue: '전체 공지' })}</h2>
+                <span className="text-xs font-semibold text-[#1e40af] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
               </div>
-            ))}
+            </div>
+
+            {isLoading ? (
+              <div className="p-12 text-center"><p className="text-slate-500">{t('common.loading')}</p></div>
+            ) : announcements.length === 0 ? (
+              <div className="p-12 text-center"><p className="text-slate-500">{t('announcements.noAnnouncements')}</p></div>
+            ) : (
+              <div>
+                {announcements.map((announcement, idx) => (
+                  <article
+                    key={announcement.id}
+                    className={`px-5 sm:px-6 py-5 flex flex-col gap-2 relative ${
+                      idx < announcements.length - 1 ? 'border-b border-slate-100' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base font-semibold text-slate-900 tracking-tight flex-1 min-w-0 truncate">{announcement.title}</h3>
+                      <div className="flex gap-1.5 shrink-0">
+                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => openEditDialog(announcement)}>
+                          <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500" onClick={() => openDeleteDialog(announcement.id)}>
+                          <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2">{announcement.content}</p>
+                    <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-[18px] h-[18px] rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-white flex items-center justify-center font-bold text-[9px]">{announcement.authorName?.[0]}</span>
+                        {announcement.authorName}
+                      </span>
+                      <span className="font-mono">{format(new Date(announcement.createdAt), 'yyyy-MM-dd')}</span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {comments[announcement.id]?.length || 0}
+                      </span>
+                    </div>
+
+                    {/* 댓글 목록 */}
+                    {comments[announcement.id] && comments[announcement.id].length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                        <p className="text-xs font-medium text-slate-500">{t('announcements.commentList')}</p>
+                        {comments[announcement.id].map((comment) => (
+                          <div key={comment.id} className="bg-slate-50 rounded-lg p-3 flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-700">{comment.userName}</p>
+                              <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{comment.content}</p>
+                              <p className="text-[10px] text-slate-400 mt-1">
+                                {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
+                              </p>
+                            </div>
+                            <Button variant="outline" size="icon" className="h-6 w-6 shrink-0 text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500" onClick={() => handleDeleteComment(comment.id, announcement.id)}>
+                              <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-0.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: Stats + Recent Comments Sidebar */}
+          <div className="flex flex-col gap-4">
+            {/* Monthly Stats */}
+            <div className={v1Card}>
+              <V1CardHeader title={t('announcements.monthlyStats', { defaultValue: '이번 달 통계' })} icon={Megaphone} iconColor="#2563eb" />
+              <div className="px-5 py-3 flex flex-col gap-3">
+                {[
+                  [t('announcements.writtenAnnouncements', { defaultValue: '작성된 공지' }), announcements.length, '#2563eb'],
+                  [t('announcements.totalComments', { defaultValue: '댓글' }), totalComments, '#8b5cf6'],
+                ].map(([label, value, color], i) => (
+                  <div key={i} className={`flex justify-between items-center py-2 ${i > 0 ? 'border-t border-slate-100' : ''}`}>
+                    <span className="text-[12.5px] text-slate-500">{label as string}</span>
+                    <span className="text-base font-bold tabular-nums" style={{ color: color as string }}>{value as number}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Comments */}
+            <div className={v1Card}>
+              <V1CardHeader title={t('announcements.recentComments', { defaultValue: '최근 댓글' })} icon={MessageSquare} iconColor="#2563eb" />
+              <div>
+                {recentComments.length === 0 ? (
+                  <div className="px-5 py-6 text-center text-xs text-slate-400">{t('announcements.noComments', { defaultValue: '댓글이 없습니다.' })}</div>
+                ) : recentComments.map((c, i) => (
+                  <div key={c.id} className={`px-5 py-3 ${i > 0 ? 'border-t border-slate-50' : ''}`}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[12.5px] font-semibold text-slate-900">{c.userName}</span>
+                      <span className="text-[11px] text-slate-400">{formatDistanceToNow(new Date(c.createdAt), { locale: ko, addSuffix: true })}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{c.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl" closeClassName="text-white data-[state=open]:text-white">

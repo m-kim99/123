@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ─── V1 Design Tokens ───────────────────────────────────────
@@ -283,7 +283,7 @@ export function V1PrimaryButton({
 
 // ─── V1 PageHeader ──────────────────────────────────────────
 interface V1PageHeaderProps {
-  title: string;
+  title: React.ReactNode;
   sub?: string;
   eyebrow?: string;
   breadcrumb?: string[];
@@ -295,12 +295,25 @@ export function V1PageHeader({
   title,
   sub,
   eyebrow,
+  breadcrumb,
   right,
   className,
 }: V1PageHeaderProps) {
   return (
     <div className={cn('flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6', className)}>
       <div className="min-w-0">
+        {breadcrumb && breadcrumb.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2 flex-wrap">
+            {breadcrumb.map((item, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />}
+                <span className={i === breadcrumb.length - 1 ? 'text-slate-900 font-medium' : 'text-slate-500'}>
+                  {item}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
         {eyebrow && (
           <p className="text-xs font-medium text-slate-500 mb-1">{eyebrow}</p>
         )}
