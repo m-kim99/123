@@ -132,6 +132,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     billingCycle: string;
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [mobilePermExpanded, setMobilePermExpanded] = useState(false);
   const [mobileLangExpanded, setMobileLangExpanded] = useState(false);
 
@@ -1793,102 +1794,186 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) setSelectedPlan(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500" />
-              {t('subscription.title')}
-            </DialogTitle>
-            <DialogDescription>{t('subscription.description')}</DialogDescription>
-          </DialogHeader>
-          {isLoadingSubscription ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            </div>
-          ) : subscriptionInfo ? (
-            <div className="space-y-5">
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
-                  <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
-                    {subscriptionInfo.displayName}
-                  </span>
+          {selectedPlan ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                  {selectedPlan === 'basic' && t('subscription.basic')}
+                  {selectedPlan === 'pro' && 'Pro'}
+                  {selectedPlan === 'enterprise' && 'Enterprise'}
+                  {' '}{t('subscription.planDetail')}
+                </DialogTitle>
+                <DialogDescription>{t('subscription.planDetailDesc')}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {selectedPlan === 'basic' && (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-slate-50 rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold">{t('subscription.basic')}</span>
+                        <span className="text-2xl font-bold text-blue-600">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        <li className="flex items-center gap-2">✓ {t('subscription.members')} 3{t('subscription.personUnit')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.documents')} 200</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.departments')} 2</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.storage')} 2GB</li>
+                        <li className="flex items-center gap-2 text-slate-400">✗ AI {t('chatbot.title')}</li>
+                        <li className="flex items-center gap-2 text-slate-400">✗ NFC</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                {selectedPlan === 'pro' && (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold">Pro</span>
+                        <span className="text-2xl font-bold text-blue-600">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        <li className="flex items-center gap-2">✓ {t('subscription.members')} 10{t('subscription.personUnit')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.documents')} 1,000</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.departments')} 10</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.storage')} 10GB</li>
+                        <li className="flex items-center gap-2">✓ AI {t('chatbot.title')}</li>
+                        <li className="flex items-center gap-2">✓ NFC</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.vectorSearch')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.advancedStats')}</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                {selectedPlan === 'enterprise' && (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold">Enterprise</span>
+                        <span className="text-xl font-bold text-indigo-600">{t('subscription.contact')}</span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        <li className="flex items-center gap-2">✓ {t('subscription.members')} {t('subscription.unlimited')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.documents')} {t('subscription.unlimited')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.departments')} {t('subscription.unlimited')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.storage')} {t('subscription.unlimited')}</li>
+                        <li className="flex items-center gap-2">✓ AI {t('chatbot.title')}</li>
+                        <li className="flex items-center gap-2">✓ NFC</li>
+                        <li className="flex items-center gap-2">✓ API {t('subscription.access')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.auditLog')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.customBranding')}</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
+                  🚧 {t('subscription.paymentNotReady')}
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-center text-xs">
-                  <div>
-                    <p className="text-slate-500">{t('subscription.members')}</p>
-                    <p className="font-semibold text-sm">{subscriptionInfo.currentMembers}/{subscriptionInfo.maxMembers ?? '∞'}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">{t('subscription.documents')}</p>
-                    <p className="font-semibold text-sm">{subscriptionInfo.currentDocuments}/{subscriptionInfo.maxDocuments ?? '∞'}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">{t('subscription.departments')}</p>
-                    <p className="font-semibold text-sm">{subscriptionInfo.currentDepartments}/{subscriptionInfo.maxDepartments ?? '∞'}</p>
-                  </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setSelectedPlan(null)}>
+                    {t('common.back')}
+                  </Button>
+                  <Button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white" disabled>
+                    {t('subscription.subscribe')}
+                  </Button>
                 </div>
               </div>
-
-              {isAdmin && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free' },
-                      { name: 'basic', display: t('subscription.basic'), price: '5,900', members: '3', highlight: subscriptionInfo.planName === 'basic' },
-                      { name: 'pro', display: 'Pro', price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
-                      { name: 'enterprise', display: 'Enterprise', price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
-                    ].map((plan) => (
-                      <div
-                        key={plan.name}
-                        className={`relative p-3 rounded-lg border-2 text-center transition-all ${
-                          plan.highlight
-                            ? 'border-blue-500 bg-blue-50 shadow-sm'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        {plan.highlight && (
-                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
-                            {t('subscription.current')}
-                          </span>
-                        )}
-                        <p className="font-semibold text-sm mt-1">{plan.display}</p>
-                        <p className="text-lg font-bold text-slate-900 mt-1">
-                          {plan.name === 'enterprise' ? plan.price : `₩${plan.price}`}
-                        </p>
-                        {plan.name !== 'enterprise' && (
-                          <p className="text-[11px] text-slate-500">{t('subscription.perMonth')}</p>
-                        )}
-                        <div className="mt-2 pt-2 border-t text-xs text-slate-600">
-                          <p>{t('subscription.members')} {plan.members}{t('subscription.personUnit')}</p>
-                        </div>
-                        {!plan.highlight && plan.name !== 'free' && (
-                          <Button
-                            size="sm"
-                            variant={plan.name === 'enterprise' ? 'outline' : 'default'}
-                            className="w-full mt-2 text-xs h-7"
-                            onClick={() => {
-                              toast({
-                                title: t('subscription.upgradeTitle'),
-                                description: t('subscription.upgradeDesc'),
-                              });
-                            }}
-                          >
-                            {plan.name === 'enterprise' ? t('subscription.contactUs') : t('subscription.selectPlan')}
-                          </Button>
-                        )}
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                  {t('subscription.title')}
+                </DialogTitle>
+                <DialogDescription>{t('subscription.description')}</DialogDescription>
+              </DialogHeader>
+              {isLoadingSubscription ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                </div>
+              ) : subscriptionInfo ? (
+                <div className="space-y-5">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
+                      <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
+                        {subscriptionInfo.displayName}
+                      </span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-3 text-center text-xs">
+                      <div>
+                        <p className="text-slate-500">{t('subscription.members')}</p>
+                        <p className="font-semibold text-sm">{subscriptionInfo.currentMembers}/{subscriptionInfo.maxMembers ?? '∞'}</p>
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-slate-500">{t('subscription.documents')}</p>
+                        <p className="font-semibold text-sm">{subscriptionInfo.currentDocuments}/{subscriptionInfo.maxDocuments ?? '∞'}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">{t('subscription.departments')}</p>
+                        <p className="font-semibold text-sm">{subscriptionInfo.currentDepartments}/{subscriptionInfo.maxDepartments ?? '∞'}</p>
+                      </div>
+                    </div>
                   </div>
+
+                  {isAdmin && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                          { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free' },
+                          { name: 'basic', display: t('subscription.basic'), price: '5,900', members: '3', highlight: subscriptionInfo.planName === 'basic' },
+                          { name: 'pro', display: 'Pro', price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
+                          { name: 'enterprise', display: 'Enterprise', price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
+                        ].map((plan) => (
+                          <div
+                            key={plan.name}
+                            className={`relative p-3 rounded-lg border-2 text-center transition-all ${
+                              plan.highlight
+                                ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            {plan.highlight && (
+                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
+                                {t('subscription.current')}
+                              </span>
+                            )}
+                            <p className="font-semibold text-sm mt-1">{plan.display}</p>
+                            <p className="text-lg font-bold text-slate-900 mt-1">
+                              {plan.name === 'enterprise' ? plan.price : `₩${plan.price}`}
+                            </p>
+                            {plan.name !== 'enterprise' && (
+                              <p className="text-[11px] text-slate-500">{t('subscription.perMonth')}</p>
+                            )}
+                            <div className="mt-2 pt-2 border-t text-xs text-slate-600">
+                              <p>{t('subscription.members')} {plan.members}{t('subscription.personUnit')}</p>
+                            </div>
+                            {!plan.highlight && plan.name !== 'free' && (
+                              <Button
+                                size="sm"
+                                variant={plan.name === 'enterprise' ? 'outline' : 'default'}
+                                className="w-full mt-2 text-xs h-7"
+                                onClick={() => setSelectedPlan(plan.name)}
+                              >
+                                {plan.name === 'enterprise' ? t('subscription.contactUs') : t('subscription.selectPlan')}
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-4 text-center text-sm text-slate-500">
+                  {t('subscription.loadError')}
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="py-4 text-center text-sm text-slate-500">
-              {t('subscription.loadError')}
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

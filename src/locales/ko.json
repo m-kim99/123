@@ -74,7 +74,17 @@
     "current": "현재",
     "contact": "별도 협의",
     "contactUs": "문의하기",
-    "selectPlan": "선택하기"
+    "selectPlan": "선택하기",
+    "planDetail": "플랜 상세",
+    "planDetailDesc": "선택한 플랜의 상세 기능을 확인하세요.",
+    "unlimited": "무제한",
+    "vectorSearch": "벡터 검색",
+    "advancedStats": "고급 통계",
+    "access": "접근",
+    "auditLog": "감사 로그",
+    "customBranding": "커스텀 브랜딩",
+    "paymentNotReady": "결제 기능은 현재 준비 중입니다. 곧 제공될 예정입니다.",
+    "subscribe": "구독하기"
   },
   "nav": {
     "home": "홈",

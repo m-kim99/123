@@ -74,7 +74,17 @@
     "current": "Current",
     "contact": "Contact Us",
     "contactUs": "Contact",
-    "selectPlan": "Select"
+    "selectPlan": "Select",
+    "planDetail": "Plan Details",
+    "planDetailDesc": "Review the features included in this plan.",
+    "unlimited": "Unlimited",
+    "vectorSearch": "Vector Search",
+    "advancedStats": "Advanced Statistics",
+    "access": "Access",
+    "auditLog": "Audit Log",
+    "customBranding": "Custom Branding",
+    "paymentNotReady": "Payment feature is currently under development. Coming soon.",
+    "subscribe": "Subscribe"
   },
   "nav": {
     "home": "Home",
