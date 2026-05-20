@@ -14,10 +14,11 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
-import { Users, Shield, Edit } from 'lucide-react';
+import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { BackButton } from '@/components/BackButton';
+import { checkMemberLimit } from '@/lib/subscription';
 
 interface User {
   id: string;
@@ -52,6 +53,7 @@ export function UserManagement() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user: authUser } = useAuthStore();
+  const [memberLimit, setMemberLimit] = useState<{ current: number; limit: number | null } | null>(null);
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,7 +73,14 @@ export function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchDepartments();
+    fetchMemberLimit();
   }, []);
+
+  const fetchMemberLimit = async () => {
+    if (!authUser?.companyId) return;
+    const result = await checkMemberLimit(authUser.companyId);
+    setMemberLimit({ current: result.current, limit: result.limit });
+  };
 
   const fetchUsers = async () => {
     if (!authUser?.companyId) {
@@ -206,9 +215,35 @@ export function UserManagement() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('userMgmt.title')}</h1>
-          <p className="text-slate-500 mt-1">{t('userMgmt.subtitle')}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">{t('userMgmt.title')}</h1>
+            <p className="text-slate-500 mt-1">{t('userMgmt.subtitle')}</p>
+          </div>
+          {memberLimit && memberLimit.limit !== null && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-slate-500" />
+                <span className="text-sm text-slate-600">{t('subscription.members')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-lg font-bold ${
+                  memberLimit.current >= memberLimit.limit ? 'text-red-600' :
+                  memberLimit.current >= memberLimit.limit * 0.8 ? 'text-amber-600' : 'text-blue-600'
+                }`}>
+                  {memberLimit.current}
+                </span>
+                <span className="text-slate-400">/</span>
+                <span className="text-lg font-semibold text-slate-700">{memberLimit.limit}</span>
+              </div>
+              {memberLimit.current >= memberLimit.limit && (
+                <Badge variant="destructive" className="text-xs">
+                  <Crown className="h-3 w-3 mr-1" />
+                  {t('subscription.upgrade')}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
