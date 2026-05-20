@@ -14,6 +14,7 @@ import { createDocumentNotification, createShareNotification, deleteShareNotific
 import { SharedDocument } from '@/types/document';
 import { trackEvent } from '@/lib/analytics';
 import { isImageFile, convertImageToPdf } from '@/lib/imageToPdf';
+import { checkDocumentLimit } from '@/lib/subscription';
 
 export interface Department {
   id: string;
@@ -1303,6 +1304,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   uploadDocument: async (document) => {
     try {
+      // ★ 구독 플랜 문서 수 제한 체크
+      const { user } = useAuthStore.getState();
+      if (user?.companyId) {
+        const limitCheck = await checkDocumentLimit(user.companyId);
+        if (!limitCheck.allowed) {
+          toast({
+            title: '문서 업로드 제한',
+            description: `현재 플랜의 문서 한도(${limitCheck.limit}개)에 도달했습니다. 플랜을 업그레이드하거나 기존 문서를 삭제해주세요. (현재: ${limitCheck.current}개)`,
+            variant: 'destructive',
+          });
+          throw new Error('PLAN_DOCUMENT_LIMIT_REACHED');
+        }
+      }
+
       // 이미지 파일이면 자동으로 PDF로 변환
       if (isImageFile(document.file)) {
         const pdfFile = await convertImageToPdf(document.file);
@@ -1500,6 +1515,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   restoreDocument: async (id) => {
     try {
+      // ★ 복구도 "문서 추가"이므로 플랜 제한 체크
+      const { user } = useAuthStore.getState();
+      if (user?.companyId) {
+        const limitCheck = await checkDocumentLimit(user.companyId);
+        if (!limitCheck.allowed) {
+          toast({
+            title: '문서 복구 제한',
+            description: `현재 플랜의 문서 한도(${limitCheck.limit}개)에 도달했습니다. 다른 문서를 삭제하거나 플랜을 업그레이드하세요.`,
+            variant: 'destructive',
+          });
+          throw new Error('PLAN_DOCUMENT_LIMIT_REACHED');
+        }
+      }
+
       const { error } = await supabase
         .from('documents')
         .update({ deleted_at: null })

@@ -276,6 +276,85 @@ CREATE TABLE public.companies (
 ALTER TABLE public.companies OWNER TO postgres;
 
 --
+-- Name: plans; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.plans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    display_name text NOT NULL,
+    price_monthly integer DEFAULT 0 NOT NULL,
+    price_yearly integer DEFAULT 0 NOT NULL,
+    currency text DEFAULT 'KRW'::text NOT NULL,
+    max_members integer DEFAULT 5,
+    max_departments integer DEFAULT 2,
+    max_documents integer DEFAULT 100,
+    max_storage_mb integer DEFAULT 1024,
+    max_ai_queries_monthly integer DEFAULT 20,
+    max_nfc_tags integer DEFAULT 0,
+    feature_ai_chat boolean DEFAULT false,
+    feature_vector_search boolean DEFAULT false,
+    feature_nfc boolean DEFAULT false,
+    feature_ocr_advanced boolean DEFAULT false,
+    feature_external_share boolean DEFAULT false,
+    feature_statistics_advanced boolean DEFAULT false,
+    feature_api_access boolean DEFAULT false,
+    feature_audit_log boolean DEFAULT false,
+    feature_custom_branding boolean DEFAULT false,
+    is_active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.plans OWNER TO postgres;
+
+--
+-- Name: subscriptions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    company_id uuid NOT NULL,
+    plan_id uuid NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    billing_cycle text DEFAULT 'monthly'::text NOT NULL,
+    payment_provider text,
+    payment_customer_id text,
+    payment_subscription_id text,
+    trial_ends_at timestamp with time zone,
+    current_period_start timestamp with time zone DEFAULT now(),
+    current_period_end timestamp with time zone,
+    canceled_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT subscriptions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'past_due'::text, 'canceled'::text, 'trialing'::text]))),
+    CONSTRAINT subscriptions_billing_cycle_check CHECK ((billing_cycle = ANY (ARRAY['monthly'::text, 'yearly'::text])))
+);
+
+
+ALTER TABLE public.subscriptions OWNER TO postgres;
+
+--
+-- Name: usage_tracking; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.usage_tracking (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    company_id uuid NOT NULL,
+    period_start date NOT NULL,
+    documents_uploaded integer DEFAULT 0 NOT NULL,
+    ai_queries_used integer DEFAULT 0 NOT NULL,
+    storage_used_mb numeric(10,2) DEFAULT 0.00 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.usage_tracking OWNER TO postgres;
+
+--
 -- Name: departments; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -3267,6 +3346,40 @@ CREATE POLICY "Users can view their own recent visits" ON public.user_recent_vis
 
 
 --
+-- Name: plans Anyone can view active plans; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Anyone can view active plans" ON public.plans FOR SELECT USING ((is_active = true));
+
+
+--
+-- Name: subscriptions Admins can manage subscriptions; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can manage subscriptions" ON public.subscriptions FOR ALL TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.users
+  WHERE ((users.id = auth.uid()) AND ((users.role)::text = 'admin'::text) AND (users.company_id = subscriptions.company_id)))));
+
+
+--
+-- Name: subscriptions Users can view own company subscription; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can view own company subscription" ON public.subscriptions FOR SELECT TO authenticated USING ((company_id = ( SELECT users.company_id
+   FROM public.users
+  WHERE (users.id = auth.uid()))));
+
+
+--
+-- Name: usage_tracking Users can view own company usage; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can view own company usage" ON public.usage_tracking FOR SELECT TO authenticated USING ((company_id = ( SELECT users.company_id
+   FROM public.users
+  WHERE (users.id = auth.uid()))));
+
+
+--
 -- Name: account_deletion_requests; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -3343,6 +3456,24 @@ ALTER TABLE public.permission_requests ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.phone_verifications ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: plans; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: subscriptions; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: usage_tracking; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: search_history; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -3583,6 +3714,42 @@ GRANT ALL ON TABLE public.permission_requests TO service_role;
 GRANT ALL ON TABLE public.phone_verifications TO anon;
 GRANT ALL ON TABLE public.phone_verifications TO authenticated;
 GRANT ALL ON TABLE public.phone_verifications TO service_role;
+
+
+--
+-- Name: TABLE plans; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.plans TO anon;
+GRANT ALL ON TABLE public.plans TO authenticated;
+GRANT ALL ON TABLE public.plans TO service_role;
+
+
+--
+-- Name: TABLE subscriptions; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.subscriptions TO anon;
+GRANT ALL ON TABLE public.subscriptions TO authenticated;
+GRANT ALL ON TABLE public.subscriptions TO service_role;
+
+
+--
+-- Name: TABLE usage_tracking; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.usage_tracking TO anon;
+GRANT ALL ON TABLE public.usage_tracking TO authenticated;
+GRANT ALL ON TABLE public.usage_tracking TO service_role;
+
+
+--
+-- Name: FUNCTION check_document_limit(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.check_document_limit() TO anon;
+GRANT ALL ON FUNCTION public.check_document_limit() TO authenticated;
+GRANT ALL ON FUNCTION public.check_document_limit() TO service_role;
 
 
 --

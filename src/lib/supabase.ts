@@ -102,3 +102,59 @@ export interface User {
   department_id: string | null;
   created_at: string;
 }
+
+export interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  price_monthly: number;
+  price_yearly: number;
+  currency: string;
+  max_members: number | null;
+  max_departments: number | null;
+  max_documents: number | null;
+  max_storage_mb: number | null;
+  max_ai_queries_monthly: number | null;
+  max_nfc_tags: number | null;
+  feature_ai_chat: boolean;
+  feature_vector_search: boolean;
+  feature_nfc: boolean;
+  feature_ocr_advanced: boolean;
+  feature_external_share: boolean;
+  feature_statistics_advanced: boolean;
+  feature_api_access: boolean;
+  feature_audit_log: boolean;
+  feature_custom_branding: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  company_id: string;
+  plan_id: string;
+  status: 'active' | 'past_due' | 'canceled' | 'trialing';
+  billing_cycle: 'monthly' | 'yearly';
+  payment_provider: string | null;
+  payment_customer_id: string | null;
+  payment_subscription_id: string | null;
+  trial_ends_at: string | null;
+  current_period_start: string;
+  current_period_end: string | null;
+  canceled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageTracking {
+  id: string;
+  company_id: string;
+  period_start: string;
+  documents_uploaded: number;
+  ai_queries_used: number;
+  storage_used_mb: number;
+  created_at: string;
+  updated_at: string;
+}
