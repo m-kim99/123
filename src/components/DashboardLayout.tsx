@@ -1151,7 +1151,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Shield className="h-4 w-4 mr-2" />
                     <span>{t('header.myPermissions')}</span>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="min-w-[200px]">
+                  <DropdownMenuSubContent className="min-w-[180px] max-w-[calc(100vw-2rem)]" sideOffset={2} collisionPadding={16}>
                     {myPermissions.map((perm) => (
                       <DropdownMenuItem
                         key={perm.departmentId}
@@ -1172,7 +1172,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Globe className="h-4 w-4 mr-2" />
                   <span>{t('language.settings')}</span>
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
+                <DropdownMenuSubContent sideOffset={2} collisionPadding={16}>
                   <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
                     <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
