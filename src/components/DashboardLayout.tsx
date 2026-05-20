@@ -23,6 +23,7 @@ import {
   Globe,
   Shield,
   Trash2,
+  Crown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,6 +115,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userDepartmentName, setUserDepartmentName] = useState<string | null>(null);
   const [myPermissions, setMyPermissions] = useState<{ departmentId: string; departmentName: string; role: Role }[]>([]);
   const [newPasswordValidation, setNewPasswordValidation] = useState<PasswordValidation | null>(null);
+  const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    planName: string;
+    displayName: string;
+    maxMembers: number | null;
+    maxDocuments: number | null;
+    maxDepartments: number | null;
+    maxStorageMb: number | null;
+    maxAiQueries: number | null;
+    currentMembers: number;
+    currentDocuments: number;
+    currentDepartments: number;
+    status: string;
+    billingCycle: string;
+  } | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
 
   const FAQIcon = ({ className }: { className?: string }) => (
     <MessageSquare className={className} />
@@ -202,6 +219,70 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     return roleText;
   }, [isAdmin, userDepartmentName, t]);
+
+  const openSubscriptionDialog = useCallback(async () => {
+    if (!user?.companyId) return;
+    setSubscriptionDialogOpen(true);
+    setIsLoadingSubscription(true);
+    try {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('*, plans(*)')
+        .eq('company_id', user.companyId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      let plan: any = null;
+      if (sub && (sub as any).plans) {
+        plan = (sub as any).plans;
+      } else {
+        const { data: freePlan } = await supabase
+          .from('plans')
+          .select('*')
+          .eq('name', 'free')
+          .single();
+        plan = freePlan;
+      }
+
+      const { count: memberCount } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', user.companyId);
+
+      const { count: docCount } = await supabase
+        .from('documents')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', user.companyId)
+        .is('deleted_at', null);
+
+      const { count: deptCount } = await supabase
+        .from('departments')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', user.companyId);
+
+      setSubscriptionInfo({
+        planName: plan?.name || 'free',
+        displayName: plan?.display_name || t('subscription.free'),
+        maxMembers: plan?.max_members ?? null,
+        maxDocuments: plan?.max_documents ?? null,
+        maxDepartments: plan?.max_departments ?? null,
+        maxStorageMb: plan?.max_storage_mb ?? null,
+        maxAiQueries: plan?.max_ai_queries_monthly ?? null,
+        currentMembers: memberCount ?? 0,
+        currentDocuments: docCount ?? 0,
+        currentDepartments: deptCount ?? 0,
+        status: sub?.status || 'free',
+        billingCycle: sub?.billing_cycle || 'monthly',
+      });
+    } catch (err) {
+      console.error('구독 정보 조회 실패:', err);
+      setSubscriptionInfo(null);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  }, [user?.companyId, t]);
 
   // useMemo로 계산 최적화
   const unreadCount = useMemo(
@@ -1098,6 +1179,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+              <DropdownMenuItem onClick={openSubscriptionDialog}>
+                <Crown className="h-4 w-4 mr-2" />
+                {t('subscription.title')}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -1328,6 +1413,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
+                  <DropdownMenuItem onClick={openSubscriptionDialog}>
+                    <Crown className="h-4 w-4 mr-2" />
+                    {t('subscription.title')}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -1677,6 +1766,131 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500" />
+              {t('subscription.title')}
+            </DialogTitle>
+            <DialogDescription>{t('subscription.description')}</DialogDescription>
+          </DialogHeader>
+          {isLoadingSubscription ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            </div>
+          ) : subscriptionInfo ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
+                  <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
+                    {subscriptionInfo.displayName}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-700">{t('subscription.usage')}</h4>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">{t('subscription.members')}</span>
+                    <span className="font-medium">
+                      {subscriptionInfo.currentMembers} / {subscriptionInfo.maxMembers ?? '∞'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        subscriptionInfo.maxMembers && subscriptionInfo.currentMembers >= subscriptionInfo.maxMembers
+                          ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${subscriptionInfo.maxMembers ? Math.min(100, (subscriptionInfo.currentMembers / subscriptionInfo.maxMembers) * 100) : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">{t('subscription.documents')}</span>
+                    <span className="font-medium">
+                      {subscriptionInfo.currentDocuments} / {subscriptionInfo.maxDocuments ?? '∞'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        subscriptionInfo.maxDocuments && subscriptionInfo.currentDocuments >= subscriptionInfo.maxDocuments
+                          ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${subscriptionInfo.maxDocuments ? Math.min(100, (subscriptionInfo.currentDocuments / subscriptionInfo.maxDocuments) * 100) : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">{t('subscription.departments')}</span>
+                    <span className="font-medium">
+                      {subscriptionInfo.currentDepartments} / {subscriptionInfo.maxDepartments ?? '∞'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        subscriptionInfo.maxDepartments && subscriptionInfo.currentDepartments >= subscriptionInfo.maxDepartments
+                          ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${subscriptionInfo.maxDepartments ? Math.min(100, (subscriptionInfo.currentDepartments / subscriptionInfo.maxDepartments) * 100) : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {subscriptionInfo.maxStorageMb && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">{t('subscription.storage')}</span>
+                    <span className="font-medium">
+                      {subscriptionInfo.maxStorageMb >= 1024
+                        ? `${(subscriptionInfo.maxStorageMb / 1024).toFixed(0)} GB`
+                        : `${subscriptionInfo.maxStorageMb} MB`}
+                    </span>
+                  </div>
+                )}
+
+                {subscriptionInfo.maxAiQueries !== null && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">{t('subscription.aiQueries')}</span>
+                    <span className="font-medium">{subscriptionInfo.maxAiQueries}{t('subscription.perMonth')}</span>
+                  </div>
+                )}
+              </div>
+
+              {isAdmin && (
+                <div className="pt-4 border-t">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                    onClick={() => {
+                      toast({
+                        title: t('subscription.upgradeTitle'),
+                        description: t('subscription.upgradeDesc'),
+                      });
+                    }}
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    {t('subscription.upgrade')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-4 text-center text-sm text-slate-500">
+              {t('subscription.loadError')}
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -187,7 +187,7 @@ export async function checkMemberLimit(companyId: string): Promise<UsageCheckRes
       remaining: Math.max(0, maxMembers - currentCount),
     };
   } catch {
-    return { allowed: true, current: 0, limit: 5, remaining: 5 };
+    return { allowed: true, current: 0, limit: 10, remaining: 10 };
   }
 }
 

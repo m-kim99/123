@@ -51,6 +51,24 @@
     "korean": "한국어",
     "english": "English"
   },
+  "subscription": {
+    "title": "Subscription Plan",
+    "description": "View your current plan and usage.",
+    "currentPlan": "Current Plan",
+    "free": "Free",
+    "usage": "Usage",
+    "members": "Members",
+    "documents": "Documents",
+    "departments": "Departments",
+    "storage": "Storage",
+    "aiQueries": "AI Queries",
+    "perMonth": "/mo",
+    "upgrade": "Upgrade Plan",
+    "upgradeTitle": "Upgrade Coming Soon",
+    "upgradeDesc": "Payment integration is coming soon. Please contact your administrator.",
+    "loadError": "Failed to load subscription info.",
+    "memberLimitReached": "This company has reached its member limit."
+  },
   "nav": {
     "home": "Home",
     "documentManagement": "Documents",

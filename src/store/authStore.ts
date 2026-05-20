@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { trackEvent } from '@/lib/analytics';
+import { checkMemberLimit } from '@/lib/subscription';
 import { requestPushId } from '@/lib/appBridge';
 
 export type UserRole = 'admin' | 'team';
@@ -225,6 +226,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (role === 'admin' && existingCompany.name !== companyName) {
             throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
           }
+
+          // 멤버 수 제한 체크
+          const memberCheck = await checkMemberLimit(existingCompany.id);
+          if (!memberCheck.allowed) {
+            throw new Error(`이 회사의 멤버 수 제한에 도달했습니다. (현재: ${memberCheck.current}명 / 최대: ${memberCheck.limit}명) 관리자에게 플랜 업그레이드를 요청하세요.`);
+          }
+
           // 팀원은 회사명 없이 코드만으로 기존 회사에 가입 가능
           company = existingCompany;
           isNewCompany = false;
@@ -547,6 +555,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (existingCompany.name !== companyName) {
           throw new Error('회사 코드는 존재하지만 회사명이 일치하지 않습니다.');
         }
+
+        // 멤버 수 제한 체크
+        const memberCheck = await checkMemberLimit(existingCompany.id);
+        if (!memberCheck.allowed) {
+          throw new Error(`이 회사의 멤버 수 제한에 도달했습니다. (현재: ${memberCheck.current}명 / 최대: ${memberCheck.limit}명) 관리자에게 플랜 업그레이드를 요청하세요.`);
+        }
+
         company = existingCompany;
       } else if (checkError && (checkError as any).code === 'PGRST116') {
         if (role !== 'admin') {

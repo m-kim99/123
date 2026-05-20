@@ -160,6 +160,65 @@ $$;
 
 ALTER FUNCTION public.update_user_permissions_updated_at() OWNER TO postgres;
 
+--
+-- Name: check_member_limit(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_member_limit() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_company_id uuid;
+  v_current_count integer;
+  v_max_members integer;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    v_company_id := NEW.company_id;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF (NEW.company_id IS NULL) OR (OLD.company_id IS NOT DISTINCT FROM NEW.company_id) THEN
+      RETURN NEW;
+    END IF;
+    v_company_id := NEW.company_id;
+  END IF;
+
+  IF v_company_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT COUNT(*) INTO v_current_count
+  FROM public.users
+  WHERE company_id = v_company_id
+    AND id != NEW.id;
+
+  SELECT p.max_members INTO v_max_members
+  FROM public.subscriptions s
+  JOIN public.plans p ON s.plan_id = p.id
+  WHERE s.company_id = v_company_id
+    AND s.status = 'active'
+  ORDER BY s.created_at DESC
+  LIMIT 1;
+
+  IF v_max_members IS NULL THEN
+    SELECT max_members INTO v_max_members
+    FROM public.plans
+    WHERE name = 'free';
+  END IF;
+
+  IF v_max_members IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF v_current_count >= v_max_members THEN
+    RAISE EXCEPTION '회사 멤버 수 제한에 도달했습니다. (현재: %명 / 최대: %명) 플랜을 업그레이드해주세요.', v_current_count, v_max_members;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.check_member_limit() OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -286,7 +345,7 @@ CREATE TABLE public.plans (
     price_monthly integer DEFAULT 0 NOT NULL,
     price_yearly integer DEFAULT 0 NOT NULL,
     currency text DEFAULT 'KRW'::text NOT NULL,
-    max_members integer DEFAULT 5,
+    max_members integer DEFAULT 10,
     max_departments integer DEFAULT 2,
     max_documents integer DEFAULT 100,
     max_storage_mb integer DEFAULT 1024,
@@ -2225,6 +2284,20 @@ CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON public.user_p
 
 
 --
+-- Name: users check_member_limit_before_insert; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER check_member_limit_before_insert BEFORE INSERT ON public.users FOR EACH ROW EXECUTE FUNCTION public.check_member_limit();
+
+
+--
+-- Name: users check_member_limit_before_update; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER check_member_limit_before_update BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.check_member_limit();
+
+
+--
 -- Name: account_deletion_requests account_deletion_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3750,6 +3823,15 @@ GRANT ALL ON TABLE public.usage_tracking TO service_role;
 GRANT ALL ON FUNCTION public.check_document_limit() TO anon;
 GRANT ALL ON FUNCTION public.check_document_limit() TO authenticated;
 GRANT ALL ON FUNCTION public.check_document_limit() TO service_role;
+
+
+--
+-- Name: FUNCTION check_member_limit(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.check_member_limit() TO anon;
+GRANT ALL ON FUNCTION public.check_member_limit() TO authenticated;
+GRANT ALL ON FUNCTION public.check_member_limit() TO service_role;
 
 
 --
