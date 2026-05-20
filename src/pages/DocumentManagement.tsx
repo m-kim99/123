@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Search,
   CalendarIcon,
+  Share2,
 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
@@ -55,7 +56,6 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -77,6 +77,7 @@ import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 import { hasPermission, type Role, type Action } from '@/lib/permissions';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1 } from '@/components/ui/v1-components';
 import i18n from '@/lib/i18n';
 
 function splitFilesByType(files: File[]) {
@@ -2883,30 +2884,38 @@ export function DocumentManagement() {
                 }
               }}
             >
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('documentMgmt.deleteSubcategoryTitle')}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    <p>
-                      {t('documentMgmt.deleteSubcategoryConfirm', { name: deletingSubcategory?.name ?? '' })}
-                    </p>
-                    <p className="mt-1">
-                      {t('documentMgmt.deleteSubcategoryDocCount', { count: deletingCategoryDocCount })}
-                    </p>
-                    <p className="mt-3 text-sm font-medium text-red-600">
+              <AlertDialogContent className="max-w-[460px] gap-0 p-0 rounded-[16px]">
+                <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#ef444415' }}>
+                    <Trash2 className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.deleteSubcategoryTitle')}</AlertDialogTitle>
+                    <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
                       {t('documentMgmt.deleteIrreversible')}
-                    </p>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeletingCategory}>
+                    </AlertDialogDescription>
+                  </div>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="p-3.5 bg-red-50 border border-red-200 rounded-[10px] text-[13px] leading-relaxed">
+                    <div className="text-red-800 font-semibold mb-1">
+                      {t('documentMgmt.deleteSubcategoryConfirm', { name: deletingSubcategory?.name ?? '' })}
+                    </div>
+                    <div className="text-red-700 text-[12px]">
+                      {t('documentMgmt.deleteSubcategoryDocCount', { count: deletingCategoryDocCount })}
+                    </div>
+                  </div>
+                </div>
+                <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+                  <AlertDialogCancel disabled={isDeletingCategory} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                     {t('common.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmDeleteCategory}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="h-9 rounded-[10px] text-[13px] font-semibold bg-red-100 text-red-800 hover:bg-red-200 border-none"
                     disabled={isDeletingCategory}
                   >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                     {isDeletingCategory ? t('documentMgmt.deleting') : t('common.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -3970,24 +3979,33 @@ export function DocumentManagement() {
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('documentMgmt.nfcAlreadyRegistered')}
+          <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
+                <Smartphone className="h-5 w-5 text-[#2563eb]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                  {t('documentMgmt.nfcAlreadyRegistered')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[10px] text-[13px] text-amber-800 leading-relaxed">
                 {existingNfcSubcategory && (
-                  <span className="block mt-2 font-medium">
+                  <span className="block font-semibold mb-1">
                     {t('documentMgmt.currentConnection')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">{t('documentMgmt.continueQuestion')}</span>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleNfcConfirmNo}>
+                <span>{t('documentMgmt.continueQuestion')}</span>
+              </div>
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes}>
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -3996,52 +4014,40 @@ export function DocumentManagement() {
 
         {/* 문서 공유 다이얼로그 */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.shareDocDesc')}
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
+            <V1ModalHeader icon={Share2} title={t('documentMgmt.shareDoc')} sub={t('documentMgmt.shareDocDesc')} />
 
-            {/* 탭 버튼 */}
-            <div className="flex border-b bg-white">
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'new'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('new')}
-              >
-                {t('documentMgmt.newShare')}
-              </button>
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'existing'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('existing')}
-              >
-                {t('documentMgmt.shareStatus')} ({existingShares.length})
-              </button>
+            {/* V1 탭 */}
+            <div className="flex px-6 border-b border-slate-100">
+              {[
+                { key: 'new' as const, label: t('documentMgmt.newShare') },
+                { key: 'existing' as const, label: `${t('documentMgmt.shareStatus')} (${existingShares.length})` },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
+                    activeShareTab === tab.key
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
+                      : 'text-slate-500 border-b-2 border-transparent -mb-px'
+                  }`}
+                  onClick={() => setActiveShareTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-3.5">
               {activeShareTab === 'new' ? (
                 <>
-                  {/* 전체 선택 */}
-                  {companyUsers.length > 0 && (
-                    <div className="pb-2 mb-2 border-b">
-                      <button
-                        onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
-                      >
+                  <div className="flex justify-between items-center text-[12px] text-slate-500">
+                    <span>{companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
+                    {companyUsers.length > 0 && (
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
@@ -4049,73 +4055,53 @@ export function DocumentManagement() {
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      {t('documentMgmt.noUsersToShare')}
-                    </div>
+                    <div className="text-center py-8 text-slate-500 text-[13px]">{t('documentMgmt.noUsersToShare')}</div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1 border border-slate-100 rounded-[10px] p-1 max-h-[240px] overflow-auto">
                       {companyUsers.map((companyUser) => (
-                        <div
+                        <label
                           key={companyUser.id}
-                          className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-50 border border-blue-200"
-                              : "bg-slate-50 hover:bg-slate-100 border border-transparent"
-                          )}
+                          className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer ${
+                            selectedUserIds.includes(companyUser.id) ? 'bg-[#eff6ff]' : 'hover:bg-slate-50'
+                          }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <div className={cn(
-                            "w-5 h-5 rounded border-2 flex items-center justify-center",
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-[#2563eb]"
-                              : "border-slate-300"
-                          )}>
-                            {selectedUserIds.includes(companyUser.id) && (
-                              <CheckCircle2 className="h-4 w-4 text-white" />
-                            )}
+                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                            {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{companyUser.name}</p>
-                            <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
+                            <div className="text-[13px] font-medium text-slate-900 truncate">{companyUser.name}</div>
+                            <div className="text-[11px] text-slate-500 font-mono truncate">{companyUser.email}</div>
                           </div>
-                        </div>
+                        </label>
                       ))}
                     </div>
                   )}
+
+                  <label className="flex items-center gap-2 py-1">
+                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                    <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
+                  </label>
                 </>
               ) : (
                 <>
-                  {/* 공유 현황 탭 */}
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      {t('documentMgmt.noSharedUsers')}
-                    </div>
+                    <div className="text-center py-8 text-slate-500 text-[13px]">{t('documentMgmt.noSharedUsers')}</div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
                       {existingShares.map((share: any) => (
-                        <div
-                          key={share.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
-                        >
+                        <div key={share.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
-                            <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
-                            </p>
+                            <p className="text-[13px] font-medium truncate">{share.users?.name || t('common.unknown')}</p>
+                            <p className="text-[11px] text-slate-500 font-mono truncate">{share.users?.email || ''}</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleUnshare(share.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleUnshare(share.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 text-[12px]">
                             {t('common.cancel')}
                           </Button>
                         </div>
@@ -4126,22 +4112,7 @@ export function DocumentManagement() {
               )}
             </div>
 
-            <DialogFooter className="border-t pt-4">
-              {/* 이메일 알림 체크박스 - 우측 하단 */}
-              {activeShareTab === 'new' && (
-                <div className="flex items-center space-x-2 mr-auto">
-                  <input
-                    type="checkbox"
-                    id="emailNotification"
-                    checked={sendEmailNotification}
-                    onChange={(e) => setSendEmailNotification(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  <label htmlFor="emailNotification" className="text-sm">
-                    {t('documentMgmt.emailNotification')}
-                  </label>
-                </div>
-              )}
+            <V1ModalFooter>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -4152,6 +4123,7 @@ export function DocumentManagement() {
                   setActiveShareTab('new');
                 }}
                 disabled={isSendingShare}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.close')}
               </Button>
@@ -4159,76 +4131,73 @@ export function DocumentManagement() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
+                    <><Share2 className="h-3.5 w-3.5 mr-1.5" />{t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
         {/* 파일 교체 다이얼로그 */}
         <Dialog open={fileReplaceDialogOpen} onOpenChange={(open) => !open && handleCloseFileReplaceDialog()}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('documentMgmt.fileReplace')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.fileReplaceDesc')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {/* 파일 업로드 영역 */}
+          <DialogContent variant="v1" className="max-w-[560px]">
+            <V1ModalHeader icon={Upload} title={t('documentMgmt.fileReplace')} sub={t('documentMgmt.fileReplaceDesc')} />
+            <V1ModalBody>
+              {/* V1 Dropzone */}
               <div
                 {...getReplaceRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                className={`border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                   isReplaceDragActive
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[#2563eb] bg-[#eff6ff]'
                     : replaceFile
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-slate-300 hover:border-slate-400'
+                    ? 'border-emerald-400 bg-emerald-50'
+                    : 'border-[#2563eb] bg-[#eff6ff]'
                 }`}
               >
                 <input {...getReplaceInputProps()} />
                 {isExtractingReplaceOcr ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-[#2563eb]">{t('documentMgmt.extractingOcr')}</p>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                    <p className="text-[13px] text-[#2563eb] font-medium">{t('documentMgmt.extractingOcr')}</p>
                   </div>
                 ) : replaceFile ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                    <p className="text-sm font-medium text-green-700">{replaceFile.name}</p>
-                    <p className="text-xs text-slate-500">
+                  <div className="flex flex-col items-center gap-2.5 w-full overflow-hidden">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <p className="text-[13px] font-medium text-emerald-700 truncate w-full text-center">{replaceFile.name}</p>
+                    <p className="text-[11px] text-slate-500 font-mono">
                       {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}${t('documentMgmt.chars')} ${t('documentMgmt.extracted')}` : t('documentMgmt.noOcrText')}
                     </p>
-                    <p className="text-xs text-slate-400">{t('documentMgmt.clickToSelectOther')}</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-slate-400" />
-                    <p className="text-sm text-slate-600">
-                      {isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}
-                    </p>
-                    <p className="text-xs text-slate-400">{t('documentMgmt.supportedFormatsShort')}</p>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-semibold text-slate-900">{isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>
+                      <p className="text-[12px] text-slate-500 mt-1">{t('documentMgmt.supportedFormatsShort')}</p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* OCR 추출 텍스트 */}
               {replaceFile && !isExtractingReplaceOcr && (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>{t('documentMgmt.ocrExtractedText')}</Label>
-                    <span className="text-xs text-slate-500">
+                    <Label className="text-[13px] font-medium">{t('documentMgmt.ocrExtractedText')}</Label>
+                    <span className="text-[11px] text-slate-500 font-mono">
                       {replaceOcrText.length.toLocaleString()}{t('documentMgmt.chars')}
                     </span>
                   </div>
@@ -4236,20 +4205,20 @@ export function DocumentManagement() {
                     value={replaceOcrText}
                     onChange={(e) => setReplaceOcrText(e.target.value)}
                     readOnly={!isEditingReplaceOcr}
-                    className={`min-h-[128px] max-h-48 text-sm font-mono ${
+                    className={`min-h-[128px] max-h-48 text-[13px] font-mono rounded-lg ${
                       !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
                     }`}
                     placeholder={replaceOcrText ? undefined : t('documentMgmt.noOcrText')}
                   />
                 </div>
               )}
-            </div>
-
-            <DialogFooter className="flex gap-2">
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 variant="outline"
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
@@ -4257,42 +4226,35 @@ export function DocumentManagement() {
                 variant="outline"
                 onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
                 disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {isEditingReplaceOcr ? t('documentMgmt.editDone') : t('common.edit')}
               </Button>
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
-                className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isReplacingFile ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     {t('common.saving')}
                   </>
                 ) : (
                   t('common.save')
                 )}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
         {/* 업로드 성공 팝업 */}
         <Dialog open={uploadSuccessDialogOpen} onOpenChange={setUploadSuccessDialogOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-green-600">
-                <CheckCircle2 className="h-5 w-5" />
-                {t('documentMgmt.uploadComplete')}
-              </DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.uploadSuccessDesc', { count: uploadSuccessCount })}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
+          <DialogContent variant="v1" className="max-w-sm">
+            <V1ModalHeader icon={CheckCircle2} title={t('documentMgmt.uploadComplete')} sub={t('documentMgmt.uploadSuccessDesc', { count: uploadSuccessCount })} />
+            <V1ModalFooter>
               <Button
-                className="w-full bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="w-full h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
                 onClick={() => {
                   setUploadSuccessDialogOpen(false);
                   setActiveTab('documents');
@@ -4300,7 +4262,7 @@ export function DocumentManagement() {
               >
                 {t('documentMgmt.viewAllDocuments')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
       </div>

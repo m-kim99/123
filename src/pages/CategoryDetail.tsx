@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { FileText, MapPin, Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import { FileText, MapPin, Upload, Loader2, CheckCircle2, Share2, Trash2 } from 'lucide-react';
 import binIcon from '@/assets/bin.svg';
 import downloadIcon from '@/assets/download.svg';
 import shareIcon from '@/assets/share.svg';
@@ -20,7 +20,6 @@ import { createDocumentNotification } from '@/lib/notifications';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -32,7 +31,6 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/lib/supabase';
@@ -43,6 +41,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -1194,22 +1193,28 @@ export function CategoryDetail() {
                 }
               }}
             >
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('documentMgmt.deleteDoc')}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('subcategoryDetail.confirmDelete')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeletingDocument}>
+              <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
+                <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#ef444415' }}>
+                    <Trash2 className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.deleteDoc')}</AlertDialogTitle>
+                    <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                      {t('subcategoryDetail.confirmDelete')}
+                    </AlertDialogDescription>
+                  </div>
+                </div>
+                <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+                  <AlertDialogCancel disabled={isDeletingDocument} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                     {t('common.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmDeleteDocument}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="h-9 rounded-[10px] text-[13px] font-semibold bg-red-100 text-red-800 hover:bg-red-200 border-none"
                     disabled={isDeletingDocument}
                   >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                     {isDeletingDocument ? t('documentMgmt.deleting') : t('common.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -1218,70 +1223,70 @@ export function CategoryDetail() {
           </CardContent>
         </Card>
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('subcategoryDetail.uploadDocument')}</DialogTitle>
-              <DialogDescription>
-                {t('categoryDetail.uploadDialogDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
+          <DialogContent variant="v1" className="max-w-[560px]">
+            <V1ModalHeader icon={Upload} title={t('subcategoryDetail.uploadDocument')} sub={t('categoryDetail.uploadDialogDesc')} />
+            <V1ModalBody>
+              {/* V1 Dropzone */}
               <div
                 {...getRootProps({
-                  className:
-                    'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-slate-50 transition-colors',
+                  className: `border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
+                    isDragActive
+                      ? 'border-[#2563eb] bg-[#eff6ff]'
+                      : uploadFiles.length > 0
+                      ? 'border-emerald-400 bg-emerald-50'
+                      : 'border-[#2563eb] bg-[#eff6ff]'
+                  }`,
                 })}
               >
                 <input {...getInputProps()} />
-                <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                {isDragActive ? (
-                  <p className="text-sm text-slate-600">{t('documentMgmt.dropHere')}</p>
+                {uploadFiles.length > 0 ? (
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <p className="text-[13px] font-medium text-emerald-700">
+                      {uploadFiles.length === 1 ? uploadFiles[0].name : t('documentMgmt.filesSelected', { count: uploadFiles.length })}
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-sm text-slate-600">
-                    {t('documentMgmt.clickOrDrag')}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-slate-400">{t('documentMgmt.supportedFormats')}</p>
-                {uploadFiles.length > 0 && (
-                  <p className="mt-2 text-xs text-slate-600">
-                    {t('categoryDetail.selectedFiles')}: {uploadFiles.length === 1 ? uploadFiles[0].name : t('documentMgmt.filesSelected', { count: uploadFiles.length })}
-                  </p>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-semibold text-slate-900">{isDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>
+                      <p className="text-[12px] text-slate-500 mt-1">{t('documentMgmt.supportedFormats')}</p>
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="space-y-1 text-sm">
-                <p className="text-slate-600">{t('categoryDetail.category')}: {category.name}</p>
+
+              {/* Upload progress / status */}
+              <div className="flex flex-col gap-2 text-[13px]">
+                <p className="text-slate-600">{t('categoryDetail.category')}: <strong>{category.name}</strong></p>
                 {uploadStatus && (
                   <p className="text-slate-500">{t('categoryDetail.status')}: {uploadStatus}</p>
                 )}
                 {uploadProgress > 0 && uploadProgress < 100 && (
-                  <p className="text-slate-500">{t('categoryDetail.progress')}: {uploadProgress}%</p>
+                  <div>
+                    <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                      <span>{t('categoryDetail.progress')}</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-[#2563eb] h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                    </div>
+                  </div>
                 )}
-                {uploadError && (
-                  <p className="text-red-500 text-xs mt-1">{uploadError}</p>
-                )}
-                {uploadSuccess && (
-                  <p className="text-emerald-600 text-xs mt-1">{t('categoryDetail.uploadDone')}</p>
-                )}
+                {uploadError && <p className="text-red-500 text-[12px]">{uploadError}</p>}
+                {uploadSuccess && <p className="text-emerald-600 text-[12px] font-medium">{t('categoryDetail.uploadDone')}</p>}
                 {fileStatuses.length > 0 && (
-                  <div className="mt-1 space-y-0.5 text-xs text-left">
+                  <div className="flex flex-col gap-0.5 text-[12px] border border-slate-100 rounded-lg p-2">
                     {fileStatuses.map(
-                      (
-                        file: { name: string; status: string; error?: string | null }
-                      ) => (
-                        <div
-                          key={file.name}
-                          className="flex items-center justify-between gap-2"
-                        >
-                          <span className="truncate max-w-[60%]">{file.name}</span>
-                          <span
-                            className={
-                              file.error
-                                ? 'text-red-500'
-                                : file.status === t('documentMgmt.completed')
-                                ? 'text-emerald-600'
-                                : 'text-slate-600'
-                            }
-                          >
+                      (file: { name: string; status: string; error?: string | null }) => (
+                        <div key={file.name} className="flex items-center justify-between gap-2">
+                          <span className="truncate max-w-[60%] text-slate-700">{file.name}</span>
+                          <span className={file.error ? 'text-red-500' : file.status === t('documentMgmt.completed') ? 'text-emerald-600 font-medium' : 'text-slate-500'}>
                             {file.error ? t('documentMgmt.failed') : file.status}
                           </span>
                         </div>
@@ -1290,14 +1295,15 @@ export function CategoryDetail() {
                   </div>
                 )}
                 {canEditTitle && uploadFiles.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <Label>{t('documentMgmt.docTitle')}</Label>
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    <Label className="text-[13px] font-medium">{t('documentMgmt.docTitle')}</Label>
                     <Input
                       value={documentTitle}
                       onChange={(e) => setDocumentTitle(e.target.value)}
                       placeholder={t('categoryDetail.enterDocTitle')}
+                      className="h-[38px] rounded-lg"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-[11px] text-slate-500">
                       {selectedImageFiles.length > 1
                         ? t('categoryDetail.imagesAsOneDoc', { count: selectedImageFiles.length })
                         : t('categoryDetail.defaultTitleNote')}
@@ -1305,25 +1311,27 @@ export function CategoryDetail() {
                   </div>
                 )}
               </div>
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setUploadDialogOpen(false)}
                 disabled={isUploading}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
               <Button
                 type="button"
                 onClick={handleUpload}
-                style={{ backgroundColor: primaryColor }}
                 disabled={uploadFiles.length === 0 || isUploading}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
                 {isUploading ? t('documentMgmt.uploading') : t('documentMgmt.upload')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -1498,52 +1506,40 @@ export function CategoryDetail() {
 
         {/* 문서 공유 다이얼로그 */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.shareDocDesc')}
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
+            <V1ModalHeader icon={Share2} title={t('documentMgmt.shareDoc')} sub={t('documentMgmt.shareDocDesc')} />
 
-            {/* 탭 버튼 */}
-            <div className="flex border-b bg-white">
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'new'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('new')}
-              >
-                {t('documentMgmt.newShare')}
-              </button>
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'existing'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('existing')}
-              >
-                {t('documentMgmt.shareStatus')} ({existingShares.length})
-              </button>
+            {/* V1 탭 */}
+            <div className="flex px-6 border-b border-slate-100">
+              {[
+                { key: 'new' as const, label: t('documentMgmt.newShare') },
+                { key: 'existing' as const, label: `${t('documentMgmt.shareStatus')} (${existingShares.length})` },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
+                    activeShareTab === tab.key
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
+                      : 'text-slate-500 border-b-2 border-transparent -mb-px'
+                  }`}
+                  onClick={() => setActiveShareTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-3.5">
               {activeShareTab === 'new' ? (
                 <>
-                  {/* 전체 선택 */}
-                  {companyUsers.length > 0 && (
-                    <div className="pb-2 mb-2 border-b">
-                      <button
-                        onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
-                      >
+                  <div className="flex justify-between items-center text-[12px] text-slate-500">
+                    <span>{companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
+                    {companyUsers.length > 0 && (
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
@@ -1551,71 +1547,53 @@ export function CategoryDetail() {
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      {t('documentMgmt.noUsersToShare')}
-                    </div>
+                    <div className="text-center py-8 text-slate-500 text-[13px]">{t('documentMgmt.noUsersToShare')}</div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1 border border-slate-100 rounded-[10px] p-1 max-h-[240px] overflow-auto">
                       {companyUsers.map((companyUser) => (
-                        <div
+                        <label
                           key={companyUser.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-50 border border-blue-200"
-                              : "bg-slate-50 hover:bg-slate-100 border border-transparent"
+                          className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer ${
+                            selectedUserIds.includes(companyUser.id) ? 'bg-[#eff6ff]' : 'hover:bg-slate-50'
                           }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-[#2563eb]"
-                              : "border-slate-300"
-                          }`}>
-                            {selectedUserIds.includes(companyUser.id) && (
-                              <CheckCircle2 className="h-4 w-4 text-white" />
-                            )}
+                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                            {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{companyUser.name}</p>
-                            <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
+                            <div className="text-[13px] font-medium text-slate-900 truncate">{companyUser.name}</div>
+                            <div className="text-[11px] text-slate-500 font-mono truncate">{companyUser.email}</div>
                           </div>
-                        </div>
+                        </label>
                       ))}
                     </div>
                   )}
+
+                  <label className="flex items-center gap-2 py-1">
+                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                    <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
+                  </label>
                 </>
               ) : (
                 <>
-                  {/* 공유 현황 탭 */}
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      {t('documentMgmt.noSharedUsers')}
-                    </div>
+                    <div className="text-center py-8 text-slate-500 text-[13px]">{t('documentMgmt.noSharedUsers')}</div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
                       {existingShares.map((share: any) => (
-                        <div
-                          key={share.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
-                        >
+                        <div key={share.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
-                            <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
-                            </p>
+                            <p className="text-[13px] font-medium truncate">{share.users?.name || t('common.unknown')}</p>
+                            <p className="text-[11px] text-slate-500 font-mono truncate">{share.users?.email || ''}</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleUnshare(share.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleUnshare(share.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 text-[12px]">
                             {t('common.cancel')}
                           </Button>
                         </div>
@@ -1626,22 +1604,7 @@ export function CategoryDetail() {
               )}
             </div>
 
-            <DialogFooter className="border-t pt-4">
-              {/* 이메일 알림 체크박스 - 우측 하단 */}
-              {activeShareTab === 'new' && (
-                <div className="flex items-center space-x-2 mr-auto">
-                  <input
-                    type="checkbox"
-                    id="emailNotificationCategory"
-                    checked={sendEmailNotification}
-                    onChange={(e) => setSendEmailNotification(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  <label htmlFor="emailNotificationCategory" className="text-sm">
-                    {t('documentMgmt.emailNotification')}
-                  </label>
-                </div>
-              )}
+            <V1ModalFooter>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1652,6 +1615,7 @@ export function CategoryDetail() {
                   setActiveShareTab('new');
                 }}
                 disabled={isSendingShare}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.close')}
               </Button>
@@ -1659,19 +1623,19 @@ export function CategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
+                    <><Share2 className="h-3.5 w-3.5 mr-1.5" />{t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
       </div>

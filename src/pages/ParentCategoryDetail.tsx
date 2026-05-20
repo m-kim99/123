@@ -12,14 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +20,6 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
@@ -43,7 +35,8 @@ import { BackButton } from '@/components/BackButton';
 import { useAuthStore } from '@/store/authStore';
 import { checkUserAccess, hasPermission, type Role, type Action } from '@/lib/permissions';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Archive } from 'lucide-react';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1 } from '@/components/ui/v1-components';
 import i18n from '@/lib/i18n';
 
 // 만료 상태 계산
@@ -844,16 +837,11 @@ export function ParentCategoryDetail() {
         </Card>
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('parentCategoryDetail.addSubcategoryTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('parentCategoryDetail.addSubcategoryDesc', { name: parentCategory.name })}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[85vh] flex flex-col">
+            <V1ModalHeader icon={Archive} title={t('parentCategoryDetail.addSubcategoryTitle')} sub={t('parentCategoryDetail.addSubcategoryDesc', { name: parentCategory.name })} />
+            <V1ModalBody className="flex-1 overflow-y-auto">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('parentCategoryDetail.subcategoryName')}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) =>
@@ -1113,34 +1101,37 @@ export function ParentCategoryDetail() {
                   {form.expiryDate && ` (${format(new Date(form.expiryDate), 'PPP', { locale: ko })})`}
                 </p>
               </div>
-            </div>
-            <DialogFooter className="flex-col sm:flex-row">
+            </V1ModalBody>
+            <V1ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAddDialogOpen(false)}
+                disabled={isSaving}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 type="button"
                 onClick={handleAddSubcategory}
                 variant="outline"
                 disabled={isSaving || !form.name.trim()}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
+                <Archive className="h-3.5 w-3.5 mr-1.5" />
                 {t('parentCategoryDetail.addSubcategoryOnly')}
               </Button>
               <Button
                 type="button"
                 onClick={handleAddSubcategoryWithNfc}
                 disabled={isSaving || !form.name.trim()}
-                className="flex items-center gap-2"
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
-                <Smartphone className="h-4 w-4" />
+                <Smartphone className="h-3.5 w-3.5 mr-1.5" />
                 {t('parentCategoryDetail.addWithNfc')}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddDialogOpen(false)}
-                disabled={isSaving}
-              >
-                {t('common.cancel')}
-              </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
@@ -1154,37 +1145,50 @@ export function ParentCategoryDetail() {
             }
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.deleteParentCategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                <p>{t('parentCategoryDetail.deleteConfirmMsg', { name: parentCategory.name })}</p>
-                <p className="mt-1">
-                  {t('parentCategoryDetail.deleteImpactWarning')}
-                </p>
-                <p className="mt-3 text-sm font-medium text-red-600">
+          <AlertDialogContent className="max-w-[460px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#ef444415' }}>
+                <Trash2 className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('parentCategoryDetail.deleteParentCategory')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
                   {t('documentMgmt.deleteIrreversible')}
-                </p>
-                <div className="mt-4">
-                  <p className="text-sm text-slate-600 mb-2">
-                    {t('parentCategoryDetail.typeToConfirmDelete', { text: t('parentCategoryDetail.confirmDeleteText') })}
-                  </p>
-                  <Input
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder={t('parentCategoryDetail.confirmDeleteText')}
-                    className="mt-1"
-                  />
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-[10px]">
+                <div className="text-[13px] text-red-800 font-semibold mb-2">
+                  {t('parentCategoryDetail.deleteConfirmMsg', { name: parentCategory.name })}
                 </div>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+                <div className="text-[12px] text-red-700 leading-relaxed">
+                  {t('parentCategoryDetail.deleteImpactWarning')}
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">
+                  {t('parentCategoryDetail.typeToConfirmDelete', { text: '' })}
+                  <strong className="text-red-500">{t('parentCategoryDetail.confirmDeleteText')}</strong>
+                </Label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={t('parentCategoryDetail.confirmDeleteText')}
+                  className="h-[38px] rounded-lg"
+                />
+              </div>
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogCancel disabled={isDeleting} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
+                {t('common.cancel')}
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteParentCategory}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-red-100 text-red-800 hover:bg-red-200 border-none"
                 disabled={isDeleting || deleteConfirmText !== t('parentCategoryDetail.confirmDeleteText')}
               >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                 {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1200,40 +1204,38 @@ export function ParentCategoryDetail() {
             }
           }}
         >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('parentCategoryDetail.editParentCategory')}</DialogTitle>
-              <DialogDescription>
-                {t('parentCategoryDetail.editParentCategoryDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.parentCategoryName')}</Label>
+          <DialogContent variant="v1" className="max-w-[560px]">
+            <V1ModalHeader icon={Edit} title={t('parentCategoryDetail.editParentCategory')} sub={t('parentCategoryDetail.editParentCategoryDesc')} />
+            <V1ModalBody>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('parentCategoryDetail.parentCategoryName')}</Label>
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder={t('parentCategoryDetail.parentCategoryNamePlaceholder')}
+                  className="h-[38px] rounded-lg"
                 />
                 {editNameError && (
-                  <p className="text-xs text-red-500 mt-1">{editNameError}</p>
+                  <p className="text-xs text-red-500">{editNameError}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('parentCategoryDetail.description')}</Label>
                 <Textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   placeholder={t('parentCategoryDetail.editDescPlaceholder')}
+                  className="min-h-[64px] rounded-lg resize-y"
                 />
               </div>
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSavingEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
@@ -1241,33 +1243,43 @@ export function ParentCategoryDetail() {
                 type="button"
                 onClick={handleSaveParentCategory}
                 disabled={isSavingEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('parentCategoryDetail.nfcAlreadyRegistered')}
+          <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
+                <Smartphone className="h-5 w-5 text-[#2563eb]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                  {t('parentCategoryDetail.nfcAlreadyRegistered')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[10px] text-[13px] text-amber-800 leading-relaxed">
                 {existingNfcSubcategory && (
-                  <span className="block mt-2 font-medium">
+                  <span className="block font-semibold mb-1">
                     {t('parentCategoryDetail.currentLink')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">{t('parentCategoryDetail.continueQuestion')}</span>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleNfcConfirmNo}>
+                <span>{t('parentCategoryDetail.continueQuestion')}</span>
+              </div>
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes}>
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1276,29 +1288,37 @@ export function ParentCategoryDetail() {
 
         {/* 만료된 카테고리 안내 다이얼로그 */}
         <AlertDialog open={expiredDialogOpen} onOpenChange={setExpiredDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.expiredCategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {expiredSubcategory && (
-                  <>
-                    <p className="mb-2">
-                      {t('parentCategoryDetail.expiredMsg', {
-                        name: expiredSubcategory.name,
-                        date: expiredSubcategory.expiryDate
-                          ? format(new Date(expiredSubcategory.expiryDate), 'PPP', { locale: ko })
-                          : ''
-                      })}
-                    </p>
-                    <p>
-                      {t('parentCategoryDetail.noAccessDocs', { count: expiredSubcategory.documentCount })}
-                    </p>
-                  </>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
+          <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#f59e0b15' }}>
+                <CalendarIcon className="h-5 w-5 text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('parentCategoryDetail.expiredCategory')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                  {expiredSubcategory?.name}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              {expiredSubcategory && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[10px] text-[13px] text-amber-800 leading-relaxed">
+                  <p className="mb-1.5">
+                    {t('parentCategoryDetail.expiredMsg', {
+                      name: expiredSubcategory.name,
+                      date: expiredSubcategory.expiryDate
+                        ? format(new Date(expiredSubcategory.expiryDate), 'PPP', { locale: ko })
+                        : ''
+                    })}
+                  </p>
+                  <p className="font-semibold">
+                    {t('parentCategoryDetail.noAccessDocs', { count: expiredSubcategory.documentCount })}
+                  </p>
+                </div>
+              )}
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
                 {t('common.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1312,14 +1332,9 @@ export function ParentCategoryDetail() {
             if (!open) handleCloseSubEditDialog();
           }}
         >
-          <DialogContent className="max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.editSubcategoryDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 overflow-y-auto flex-1 px-4">
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[90vh] flex flex-col">
+            <V1ModalHeader icon={Edit} title={t('subcategoryDetail.editSubcategory')} sub={t('documentMgmt.editSubcategoryDesc')} />
+            <V1ModalBody className="flex-1 overflow-y-auto">
               <div className="space-y-2">
                 <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
                 <Input
@@ -1582,13 +1597,14 @@ export function ParentCategoryDetail() {
                   {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })})`}
                 </p>
               </div>
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCloseSubEditDialog}
                 disabled={isSavingSubEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
@@ -1596,38 +1612,50 @@ export function ParentCategoryDetail() {
                 type="button"
                 onClick={handleSaveSubcategory}
                 disabled={isSavingSubEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isSavingSubEdit ? t('common.saving') : t('common.save')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
         {/* 세부 스토리지 삭제 확인 다이얼로그 */}
         <AlertDialog open={subDeleteDialogOpen} onOpenChange={setSubDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {deletingSubcategory && (
-                  <>
-                    <p className="mb-2">
-                      {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory.name })}
-                    </p>
-                    <p className="text-red-500">
-                      {t('parentCategoryDetail.deleteSubWarning', { count: deletingSubcategory.documentCount })}
-                    </p>
-                  </>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeletingSubcategory}>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogContent className="max-w-[460px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#ef444415' }}>
+                <Trash2 className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                  {t('documentMgmt.deleteIrreversible')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              {deletingSubcategory && (
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-[10px] text-[13px] leading-relaxed">
+                  <div className="text-red-800 font-semibold mb-1">
+                    {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory.name })}
+                  </div>
+                  <div className="text-red-700 text-[12px]">
+                    {t('parentCategoryDetail.deleteSubWarning', { count: deletingSubcategory.documentCount })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogCancel disabled={isDeletingSubcategory} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
+                {t('common.cancel')}
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteSubcategory}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-red-100 text-red-800 hover:bg-red-200 border-none"
                 disabled={isDeletingSubcategory}
               >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                 {isDeletingSubcategory ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>

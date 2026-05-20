@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity, Share2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
@@ -15,12 +15,12 @@ import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { v1Card, V1CardHeader, V1PageHeader, V1Chip } from '@/components/ui/v1-components';
+import { v1Card, V1CardHeader, V1PageHeader, V1Chip, V1ModalHeader, V1ModalFooter, V1ModalBody, V1 } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { formatDateTimeSimple } from '@/lib/utils';
@@ -1479,29 +1479,42 @@ export function SubcategoryDetail() {
             }
           }}
         >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
-              <DialogDescription>
-                {t('subcategoryDetail.editSubcategoryDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('documentMgmt.subcategoryName')}</Label>
-                <Input
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder={t('documentMgmt.namePlaceholder')}
-                />
-                {editNameError && (
-                  <p className="text-xs text-red-500 mt-1">{editNameError}</p>
-                )}
+          <DialogContent variant="v1" className="max-w-[560px]">
+            <V1ModalHeader icon={Edit} title={t('subcategoryDetail.editSubcategory')} sub={t('subcategoryDetail.editSubcategoryDesc')} />
+            <V1ModalBody>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-[13px] font-medium">{t('documentMgmt.subcategoryName')}</Label>
+                  <Input
+                    value={editForm.name}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    placeholder={t('documentMgmt.namePlaceholder')}
+                    className="h-[38px] rounded-lg"
+                  />
+                  {editNameError && (
+                    <p className="text-xs text-red-500">{editNameError}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-[13px] font-medium">{t('documentMgmt.managementNumber')}</Label>
+                  <Input
+                    value={editForm.managementNumber}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        managementNumber: e.target.value,
+                      }))
+                    }
+                    placeholder={t('documentMgmt.managementNumberPlaceholder')}
+                    maxLength={30}
+                    className="h-[38px] rounded-lg font-mono"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t('common.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('common.description')}</Label>
                 <Textarea
                   value={editForm.description}
                   onChange={(e) =>
@@ -1511,10 +1524,11 @@ export function SubcategoryDetail() {
                     }))
                   }
                   placeholder={t('documentMgmt.descriptionPlaceholder')}
+                  className="min-h-[64px] rounded-lg resize-y"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('documentMgmt.storageLocation')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('documentMgmt.storageLocation')}</Label>
                 <Input
                   value={editForm.storageLocation}
                   onChange={(e) =>
@@ -1525,31 +1539,17 @@ export function SubcategoryDetail() {
                   }
                   placeholder={t('documentMgmt.storageLocationPlaceholder')}
                   maxLength={30}
+                  className="h-[38px] rounded-lg"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('documentMgmt.managementNumber')}</Label>
-                <Input
-                  value={editForm.managementNumber}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      managementNumber: e.target.value,
-                    }))
-                  }
-                  placeholder={t('documentMgmt.managementNumberPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              {/* NFC 등록 여부는 DB(nfcRegistered) 기반으로 카드/상태에서만 표시하고,
-                  수정 다이얼로그에서는 직접 수정하지 않는다. */}
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCloseEditDialog}
                 disabled={isSavingEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
@@ -1557,10 +1557,11 @@ export function SubcategoryDetail() {
                 type="button"
                 onClick={handleSaveEditSubcategory}
                 disabled={isSavingEdit}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -1730,24 +1731,33 @@ export function SubcategoryDetail() {
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('documentMgmt.nfcAlreadyRegistered')}
+          <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
+                <Smartphone className="h-5 w-5 text-[#2563eb]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
+                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                  {t('documentMgmt.nfcAlreadyRegistered')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[10px] text-[13px] text-amber-800 leading-relaxed">
                 {existingNfcSubcategory && (
-                  <span className="block mt-2 font-medium">
+                  <span className="block font-semibold mb-1">
                     {t('documentMgmt.currentConnection')}: {existingNfcSubcategory.name}
                   </span>
                 )}
-                <span className="block mt-2">{t('documentMgmt.continueQuestion')}</span>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleNfcConfirmNo}>
+                <span>{t('documentMgmt.continueQuestion')}</span>
+              </div>
+            </div>
+            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes}>
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1756,52 +1766,40 @@ export function SubcategoryDetail() {
 
         {/* 문서 공유 다이얼로그 */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle>{t('documentMgmt.shareDoc')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.shareDocDesc')}
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
+            <V1ModalHeader icon={Share2} title={t('documentMgmt.shareDoc')} sub={t('documentMgmt.shareDocDesc')} />
 
-            {/* 탭 버튼 */}
-            <div className="flex border-b bg-white">
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'new'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('new')}
-              >
-                {t('documentMgmt.newShare')}
-              </button>
-              <button
-                className={`flex-1 py-2 text-sm font-medium bg-white ${
-                  activeShareTab === 'existing'
-                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setActiveShareTab('existing')}
-              >
-                {t('documentMgmt.shareStatus')} ({existingShares.length})
-              </button>
+            {/* V1 탭 */}
+            <div className="flex px-6 border-b border-slate-100">
+              {[
+                { key: 'new' as const, label: t('documentMgmt.newShare') },
+                { key: 'existing' as const, label: `${t('documentMgmt.shareStatus')} (${existingShares.length})` },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
+                    activeShareTab === tab.key
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
+                      : 'text-slate-500 border-b-2 border-transparent -mb-px'
+                  }`}
+                  onClick={() => setActiveShareTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-3.5">
               {activeShareTab === 'new' ? (
                 <>
-                  {/* 전체 선택 */}
-                  {companyUsers.length > 0 && (
-                    <div className="pb-2 mb-2 border-b">
-                      <button
-                        onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
-                      >
+                  <div className="flex justify-between items-center text-[12px] text-slate-500">
+                    <span>{t('documentMgmt.selectAll', { defaultValue: '총' })} {companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
+                    {companyUsers.length > 0 && (
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-8">
@@ -1809,70 +1807,74 @@ export function SubcategoryDetail() {
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingUsers')}</span>
                     </div>
                   ) : companyUsers.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
+                    <div className="text-center py-8 text-slate-500 text-[13px]">
                       {t('documentMgmt.noUsersToShare')}
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1 border border-slate-100 rounded-[10px] p-1 max-h-[240px] overflow-auto">
                       {companyUsers.map((companyUser) => (
-                        <div
+                        <label
                           key={companyUser.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-blue-50 border border-blue-200"
-                              : "bg-slate-50 hover:bg-slate-100 border border-transparent"
+                          className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer ${
+                            selectedUserIds.includes(companyUser.id) ? 'bg-[#eff6ff]' : 'hover:bg-slate-50'
                           }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-[#2563eb]"
-                              : "border-slate-300"
-                          }`}>
-                            {selectedUserIds.includes(companyUser.id) && (
-                              <CheckCircle2 className="h-4 w-4 text-white" />
-                            )}
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.includes(companyUser.id)}
+                            readOnly
+                            className="w-[15px] h-[15px] accent-[#2563eb] m-0"
+                          />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                            {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{companyUser.name}</p>
-                            <p className="text-sm text-slate-500 truncate">{companyUser.email}</p>
+                            <div className="text-[13px] font-medium text-slate-900 truncate">{companyUser.name}</div>
+                            <div className="text-[11px] text-slate-500 font-mono truncate">{companyUser.email}</div>
                           </div>
-                        </div>
+                        </label>
                       ))}
                     </div>
                   )}
+
+                  <label className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      checked={sendEmailNotification}
+                      onChange={(e) => setSendEmailNotification(e.target.checked)}
+                      className="w-[15px] h-[15px] accent-[#2563eb] m-0"
+                    />
+                    <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
+                  </label>
                 </>
               ) : (
                 <>
-                  {/* 공유 현황 탭 */}
                   {isLoadingShares ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                       <span className="ml-2 text-slate-500">{t('documentMgmt.loadingShares')}</span>
                     </div>
                   ) : existingShares.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
+                    <div className="text-center py-8 text-slate-500 text-[13px]">
                       {t('documentMgmt.noSharedUsers')}
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
                       {existingShares.map((share: any) => (
                         <div
                           key={share.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border"
+                          className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{share.users?.name || t('common.unknown')}</p>
-                            <p className="text-sm text-slate-500 truncate">{share.users?.email || ''}</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              {new Date(share.shared_at).toLocaleDateString()} {t('documentMgmt.shared')}
-                            </p>
+                            <p className="text-[13px] font-medium truncate">{share.users?.name || t('common.unknown')}</p>
+                            <p className="text-[11px] text-slate-500 font-mono truncate">{share.users?.email || ''}</p>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleUnshare(share.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 text-[12px]"
                           >
                             {t('common.cancel')}
                           </Button>
@@ -1884,22 +1886,7 @@ export function SubcategoryDetail() {
               )}
             </div>
 
-            <DialogFooter className="border-t pt-4">
-              {/* 이메일 알림 체크박스 - 우측 하단 */}
-              {activeShareTab === 'new' && (
-                <div className="flex items-center space-x-2 mr-auto">
-                  <input
-                    type="checkbox"
-                    id="emailNotificationSubcategory"
-                    checked={sendEmailNotification}
-                    onChange={(e) => setSendEmailNotification(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  <label htmlFor="emailNotificationSubcategory" className="text-sm">
-                    {t('documentMgmt.emailNotification')}
-                  </label>
-                </div>
-              )}
+            <V1ModalFooter>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1910,6 +1897,7 @@ export function SubcategoryDetail() {
                   setActiveShareTab('new');
                 }}
                 disabled={isSendingShare}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.close')}
               </Button>
@@ -1917,76 +1905,73 @@ export function SubcategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   {isSendingShare ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       {t('documentMgmt.sharing')}
                     </>
                   ) : (
-                    <>📤 {t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
+                    <><Share2 className="h-3.5 w-3.5 mr-1.5" />{t('documentMgmt.shareToCount', { count: selectedUserIds.length })}</>
                   )}
                 </Button>
               )}
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
         {/* 파일 교체 다이얼로그 */}
         <Dialog open={fileReplaceDialogOpen} onOpenChange={(open) => !open && handleCloseFileReplaceDialog()}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('documentMgmt.fileReplace')}</DialogTitle>
-              <DialogDescription>
-                {t('documentMgmt.fileReplaceDesc')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {/* 파일 업로드 영역 */}
+          <DialogContent variant="v1" className="max-w-[560px]">
+            <V1ModalHeader icon={Upload} title={t('documentMgmt.fileReplace')} sub={t('documentMgmt.fileReplaceDesc')} />
+            <V1ModalBody>
+              {/* V1 Dropzone */}
               <div
                 {...getReplaceRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                className={`border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                   isReplaceDragActive
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[#2563eb] bg-[#eff6ff]'
                     : replaceFile
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-slate-300 hover:border-slate-400'
+                    ? 'border-emerald-400 bg-emerald-50'
+                    : 'border-[#2563eb] bg-[#eff6ff]'
                 }`}
               >
                 <input {...getReplaceInputProps()} />
                 {isExtractingOcr ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-[#2563eb]">{t('subcategoryDetail.ocrExtracting')}</p>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                    <p className="text-[13px] text-[#2563eb] font-medium">{t('subcategoryDetail.ocrExtracting')}</p>
                   </div>
                 ) : replaceFile ? (
-                  <div className="flex flex-col items-center gap-2 w-full overflow-hidden">
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                    <p className="text-sm font-medium text-green-700 truncate w-full text-center">{replaceFile.name}</p>
-                    <p className="text-xs text-slate-500">
+                  <div className="flex flex-col items-center gap-2.5 w-full overflow-hidden">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <p className="text-[13px] font-medium text-emerald-700 truncate w-full text-center">{replaceFile.name}</p>
+                    <p className="text-[11px] text-slate-500 font-mono">
                       {replaceOcrText ? `${replaceOcrText.length.toLocaleString()}${t('documentMgmt.chars')} ${t('documentMgmt.extracted')}` : t('documentMgmt.noOcrText')}
                     </p>
-                    <p className="text-xs text-slate-400">{t('documentMgmt.clickToSelectOther')}</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-slate-400" />
-                    <p className="text-sm text-slate-600">
-                      {isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}
-                    </p>
-                    <p className="text-xs text-slate-400">{t('documentMgmt.supportedFormatsShort')}</p>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
+                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-semibold text-slate-900">{isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>
+                      <p className="text-[12px] text-slate-500 mt-1">{t('documentMgmt.supportedFormatsShort')}</p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* OCR 추출 텍스트 */}
               {replaceFile && !isExtractingOcr && (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>{t('documentMgmt.ocrExtractedText')}</Label>
-                    <span className="text-xs text-slate-500">
+                    <Label className="text-[13px] font-medium">{t('documentMgmt.ocrExtractedText')}</Label>
+                    <span className="text-[11px] text-slate-500 font-mono">
                       {replaceOcrText.length.toLocaleString()}{t('documentMgmt.chars')}
                     </span>
                   </div>
@@ -1994,20 +1979,20 @@ export function SubcategoryDetail() {
                     value={replaceOcrText}
                     onChange={(e) => setReplaceOcrText(e.target.value)}
                     readOnly={!isEditingReplaceOcr}
-                    className={`min-h-[128px] max-h-48 text-sm font-mono ${
+                    className={`min-h-[128px] max-h-48 text-[13px] font-mono rounded-lg ${
                       !isEditingReplaceOcr ? 'bg-slate-50 cursor-default' : ''
                     }`}
                     placeholder={replaceOcrText ? undefined : t('documentMgmt.noOcrText')}
                   />
                 </div>
               )}
-            </div>
-
-            <DialogFooter className="flex gap-2">
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 variant="outline"
                 onClick={handleCloseFileReplaceDialog}
                 disabled={isReplacingFile}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {t('common.cancel')}
               </Button>
@@ -2015,56 +2000,55 @@ export function SubcategoryDetail() {
                 variant="outline"
                 onClick={() => setIsEditingReplaceOcr(!isEditingReplaceOcr)}
                 disabled={!replaceFile || isReplacingFile || isExtractingOcr}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
               >
                 {isEditingReplaceOcr ? t('documentMgmt.editDone') : t('common.edit')}
               </Button>
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingOcr}
-                className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
               >
                 {isReplacingFile ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     {t('common.saving')}
                   </>
                 ) : (
                   t('common.save')
                 )}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t('subcategoryDetail.qrCodeTitle')}</DialogTitle>
-            <DialogDescription>{t('subcategoryDetail.qrCodeDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4">
-            {subcategoryId && (
-              <QRCodeCanvas
-                id="qr-code-canvas"
-                value={`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
-                size={220}
-                level="H"
-                includeMargin
-              />
-            )}
-            <p className="text-xs text-slate-400 break-all text-center">
-              {`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
-            </p>
-          </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setQrDialogOpen(false)}>
-              {t('common.close')}
-            </Button>
-            <Button onClick={handleQrDownload} className="bg-[#2563eb] hover:bg-[#1d4ed8]">
-              {t('subcategoryDetail.qrDownload')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* QR 코드 다이얼로그 */}
+        <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+          <DialogContent variant="v1" className="sm:max-w-sm">
+            <V1ModalHeader icon={QrCode} title={t('subcategoryDetail.qrCodeTitle')} sub={t('subcategoryDetail.qrCodeDesc')} />
+            <div className="flex flex-col items-center gap-4 px-6 py-5">
+              {subcategoryId && (
+                <QRCodeCanvas
+                  id="qr-code-canvas"
+                  value={`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
+                  size={220}
+                  level="H"
+                  includeMargin
+                />
+              )}
+              <p className="text-[11px] text-slate-400 break-all text-center font-mono">
+                {`${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`}
+              </p>
+            </div>
+            <V1ModalFooter>
+              <Button variant="outline" onClick={() => setQrDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
+                {t('common.close')}
+              </Button>
+              <Button onClick={handleQrDownload} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+                {t('subcategoryDetail.qrDownload')}
+              </Button>
+            </V1ModalFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </DashboardLayout>

@@ -30,32 +30,38 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
   closeClassName?: string;
+  hideClose?: boolean;
+  variant?: 'default' | 'v1';
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, closeClassName, ...props }, ref) => (
+>(({ className, children, closeClassName, hideClose, variant = 'default', ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e5e7eb] bg-background p-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[14px]',
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border border-[#e5e7eb] bg-background shadow-[0_25px_50px_-12px_rgba(15,23,42,0.35),0_10px_15px_-8px_rgba(15,23,42,0.15)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[16px]',
+        variant === 'default' ? 'gap-4 p-6' : 'gap-0 p-0',
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close
-        className={cn(
-          'absolute right-4 top-4 rounded-[8px] p-1 bg-[#2563eb] hover:bg-[#1d4ed8] ring-offset-background transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none',
-          closeClassName
-        )}
-      >
-        <Cross2Icon className="h-4 w-4 text-white" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideClose && (
+        <DialogPrimitive.Close
+          className={cn(
+            'absolute right-4 top-4 rounded-[8px] p-1 ring-offset-background transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none',
+            variant === 'v1' ? 'bg-transparent hover:bg-slate-100 text-slate-400 hover:text-slate-600' : 'bg-[#2563eb] hover:bg-[#1d4ed8]',
+            closeClassName
+          )}
+        >
+          <Cross2Icon className={cn('h-4 w-4', variant === 'v1' ? '' : 'text-white')} />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));

@@ -329,3 +329,59 @@ export function V1PageHeader({
 
 // ─── V1 Card wrapper ────────────────────────────────────────
 export const v1Card = 'bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden';
+
+// ─── V1 Modal Header ────────────────────────────────────────
+interface V1ModalHeaderProps {
+  icon?: LucideIcon;
+  iconColor?: string;
+  title: string;
+  sub?: string;
+  className?: string;
+}
+
+export function V1ModalHeader({ icon: Icon, iconColor = V1.blue, title, sub, className }: V1ModalHeaderProps) {
+  return (
+    <div className={cn('flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100', className)}>
+      {Icon && (
+        <div
+          className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
+          style={{ background: `${iconColor}15` }}
+        >
+          <Icon className="h-5 w-5" style={{ color: iconColor }} />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <h2 className="text-[17px] font-semibold text-slate-900 tracking-[-0.01em] leading-tight">{title}</h2>
+        {sub && <p className="text-[13px] text-slate-500 mt-1">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+// ─── V1 Modal Footer ────────────────────────────────────────
+interface V1ModalFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function V1ModalFooter({ children, className }: V1ModalFooterProps) {
+  return (
+    <div className={cn('flex items-center gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc]', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ─── V1 Modal Body ──────────────────────────────────────────
+interface V1ModalBodyProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function V1ModalBody({ children, className }: V1ModalBodyProps) {
+  return (
+    <div className={cn('px-6 py-5 flex flex-col gap-4 overflow-auto', className)}>
+      {children}
+    </div>
+  );
+}
