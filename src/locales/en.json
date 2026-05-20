@@ -211,6 +211,8 @@
     "appleLoginFailed": "Apple Login Failed",
     "appleLoginError": "Apple Login Error",
     "appleLoginErrorDesc": "An error occurred during Apple login.",
+    "heroHeadline": "Your struggle isn't the filing.\nIt's the structure.\nWe design systems where nothing piles up.",
+    "heroDescription": "Ever spent time scrambling to find documents before leaving work? Does audit season fill you with dread?\n\nConnect your paper filing cabinet to our solution and manage expiration dates, search for documents, and locate storage locations—all at once with AI!",
     "copyright": "COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.",
     "patentNotice": "(Notice) All technologies used in this solution are protected by registered patents (No. 10-2843883, No. 10-2731096) and pending patents."
   },

@@ -188,19 +188,29 @@ export function DepartmentManagement() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between md:mb-6">
           <div>
-            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('departmentMgmt.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('departmentMgmt.subtitle')}</p>
+            <h1 className="text-3xl font-bold">{t('departmentMgmt.title')}</h1>
+            <p className="text-slate-500 mt-1">{t('departmentMgmt.subtitle')}</p>
           </div>
-          <Button
-            className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#1d4ed8]"
+          {/* 데스크톱: 헤더 옆에 표시 */}
+          <Button 
+            className="hidden md:flex"
             onClick={() => setIsAddDialogOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
             {t('departmentMgmt.addDepartment')}
           </Button>
         </div>
+
+        {/* 모바일: 전체 너비 버튼 */}
+        <Button 
+          className="md:hidden w-full"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {t('departmentMgmt.addDepartment')}
+        </Button>
 
         <Dialog
           open={isAddDialogOpen}
@@ -287,60 +297,68 @@ export function DepartmentManagement() {
             return (
               <Card
                 key={dept.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => navigate(`/admin/departments/${dept.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5 text-[#2563eb]" />
+                    <div className="bg-[#2563eb] p-3 rounded-xl flex-shrink-0">
+                      <Building2 className="h-6 w-6 text-white" />
                     </div>
                     <div className="min-w-0 overflow-hidden">
-                      <CardTitle className="text-base truncate">{dept.name}</CardTitle>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5 truncate">{dept.code}</p>
+                      <CardTitle className="text-xl truncate">{dept.name}</CardTitle>
+                      <p className="text-sm text-slate-500 truncate">{dept.code}</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { icon: FileText, label: t('departmentMgmt.documents'), value: deptDocuments.length },
-                        { icon: FolderOpen, label: t('departmentMgmt.parentCategories'), value: deptCategories.length },
-                        { icon: Users, label: t('departmentMgmt.teamMembers'), value: memberCounts[dept.id] ?? 0 },
-                      ].map(({ icon: Icon, label, value }) => (
-                        <div key={label} className="bg-slate-50 rounded-[10px] p-3">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span className="text-[10px] text-slate-500 leading-tight line-clamp-2">{label}</span>
-                          </div>
-                          <p className="text-xl font-bold text-slate-900">{value}</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('departmentMgmt.documents')}</span>
                         </div>
-                      ))}
+                        <p className="text-2xl font-bold">{deptDocuments.length}</p>
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <FolderOpen className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 leading-tight">
+                            <span>{t('departmentMgmt.parentCategories')}</span>
+                          </span>
+                        </div>
+                        <p className="text-2xl font-bold">{deptCategories.length}</p>
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1 h-12">
+                          <Users className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 whitespace-nowrap leading-tight">{t('departmentMgmt.teamMembers')}</span>
+                        </div>
+                        <p className="text-2xl font-bold">{memberCounts[dept.id] ?? 0}</p>
+                      </div>
                     </div>
 
-                    {deptCategories.length > 0 && (
-                      <div className="space-y-2 pt-1">
-                        <p className="text-[11px] font-medium text-slate-500">
-                          {t('departmentMgmt.mainParentCategories')}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {deptCategories.slice(0, 3).map((cat) => (
-                            <span
-                              key={cat.id}
-                              className="px-2 py-0.5 bg-[#eff6ff] text-[#2563eb] text-[11px] rounded-md font-medium"
-                            >
-                              {cat.name}
-                            </span>
-                          ))}
-                          {deptCategories.length > 3 && (
-                            <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] rounded-md font-medium">
-                              +{deptCategories.length - 3}
-                            </span>
-                          )}
-                        </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-700">
+                        {t('departmentMgmt.mainParentCategories')}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {deptCategories.slice(0, 3).map((cat) => (
+                          <span
+                            key={cat.id}
+                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
+                          >
+                            {cat.name}
+                          </span>
+                        ))}
+                        {deptCategories.length > 3 && (
+                          <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">
+                            +{deptCategories.length - 3}
+                          </span>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -24,7 +24,6 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import logo from '@/assets/logo.png';
-import rootLogo from '../../assets/logo.png';
 import googleLogo from '@/assets/google.png';
 import appleLogo from '@/assets/apple.png';
 import kakaoLogo from '@/assets/kakao.png';
@@ -45,6 +44,7 @@ export function LoginPage() {
   });
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupRole, setSignupRole] = useState<'admin' | 'team'>('team');
+  const backgroundVideoSrc = '/login-bg.mp4';
   const socialLogoBaseClass = 'h-5 w-5 object-contain';
   const socialLogoClassByProvider: Record<'google' | 'apple' | 'kakao' | 'naver', string> = {
     google: `${socialLogoBaseClass} scale-[1.08]`,
@@ -719,68 +719,50 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen flex bg-white overflow-x-hidden">
-      {/* 좌측 브랜드 패널 — 태블릿/데스크탑만 표시 */}
-      <div
-        className="hidden md:flex w-[44%] shrink-0 relative flex-col justify-between p-10 lg:p-12 overflow-hidden bg-black"
+    <div className="relative min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 overflow-hidden">
+      <video
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
       >
-        <video
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          src="/login-bg.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
-        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
-        <div className="relative z-10">
-          <img src={rootLogo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-        </div>
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
-            {t('login.heroHeadline')}
-          </h1>
-          <p className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm whitespace-pre-line">
-            {t('login.heroDescription')}
-          </p>
-        </div>
-        <div className="relative z-10 text-[11px] text-white/70 leading-relaxed">
-          {t('login.copyright')}<br />{t('login.patentNotice')}
-        </div>
-      </div>
+        <source src={backgroundVideoSrc} type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
 
-      {/* 우측 폼 패널 */}
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8">
-        {/* 모바일 전용 로고 */}
-        <div className="md:hidden mb-8 flex items-center gap-2">
-          <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">BETA</span>
-        </div>
-
-        <div className="w-full max-w-[420px]">
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-1.5">
-              <h2 className="text-[26px] font-bold text-slate-900 tracking-tight">로그인</h2>
-              <span className="hidden md:inline text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">BETA</span>
-            </div>
-            <p className="text-sm text-slate-500">TrayStorage CONNECT에 오신 것을 환영합니다.</p>
-          </div>
-
-          <Tabs defaultValue="admin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-5 bg-slate-100 p-1 rounded-xl h-auto">
-              <TabsTrigger
-                value="admin"
-                className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
-              >
-                {t('login.adminTab')}
-              </TabsTrigger>
-              <TabsTrigger
-                value="team"
-                className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
-              >
-                {t('login.teamTab')}
-              </TabsTrigger>
-            </TabsList>
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center">
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="flex flex-row justify-center items-center gap-2 max-w-full overflow-hidden">
+              <img
+                src={logo}
+                alt={t('login.logoAlt')}
+                className="h-14 sm:h-16 w-auto max-w-[calc(100%-4rem)] object-contain"
+              />
+              <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shrink-0 whitespace-nowrap translate-y-[0.35rem] sm:translate-y-[0.4rem]">
+                BETA
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="admin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger
+                  value="admin"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  {t('login.adminTab')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="team"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  {t('login.teamTab')}
+                </TabsTrigger>
+              </TabsList>
               <TabsContent value="admin">
                 <form
                   onSubmit={async (e) => {
@@ -821,22 +803,24 @@ export function LoginPage() {
                       />
                       <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
                     </label>
-                    <button
+                    <Button
                       type="button"
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
                       onClick={() => setResetPasswordOpen(true)}
                     >
                       {t('login.forgotPassword')}
-                    </button>
+                    </Button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
-                  <p className="text-xs text-center text-slate-500 mt-3">
+                  <p className="text-xs text-center text-slate-500 mt-4">
                     {t('login.noAccount')}{' '}
-                    <button
+                    <Button
                       type="button"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('admin');
@@ -844,54 +828,67 @@ export function LoginPage() {
                       }}
                     >
                       {t('login.signup')}
-                    </button>
+                    </Button>
                   </p>
-                  <div className="flex items-center gap-3 my-4">
-                    <div className="flex-1 h-px bg-[#e5e7eb]" />
-                    <span className="text-xs text-slate-400">또는</span>
-                    <div className="flex-1 h-px bg-[#e5e7eb]" />
-                  </div>
-                  <div className="space-y-2.5">
-                    <button
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white"
                       onClick={handleGoogleLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                        </span>
+                        <span className="text-sm text-black w-[165px] text-left">{t('login.continueWithGoogle')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleAppleLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithApple')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleKakaoLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithKakao')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleNaverLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithNaver')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </TabsContent>
@@ -935,22 +932,24 @@ export function LoginPage() {
                       />
                       <span className="text-sm text-slate-600">{t('login.rememberEmail')}</span>
                     </label>
-                    <button
+                    <Button
                       type="button"
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 p-0 h-auto text-sm bg-transparent hover:bg-transparent"
                       onClick={() => setResetPasswordOpen(true)}
                     >
                       {t('login.forgotPassword')}
-                    </button>
+                    </Button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
-                  <p className="text-xs text-center text-slate-500 mt-3">
+                  <p className="text-xs text-center text-slate-500 mt-4">
                     {t('login.noAccount')}{' '}
-                    <button
+                    <Button
                       type="button"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      variant="link"
+                      className="text-blue-600 hover:text-blue-800 px-1 h-auto"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('team');
@@ -958,60 +957,83 @@ export function LoginPage() {
                       }}
                     >
                       {t('login.signup')}
-                    </button>
+                    </Button>
                   </p>
-                  <div className="flex items-center gap-3 my-4">
-                    <div className="flex-1 h-px bg-[#e5e7eb]" />
-                    <span className="text-xs text-slate-400">또는</span>
-                    <div className="flex-1 h-px bg-[#e5e7eb]" />
-                  </div>
-                  <div className="space-y-2.5">
-                    <button
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white"
                       onClick={handleGoogleLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} />
+                        </span>
+                        <span className="text-sm text-black w-[165px] text-left">{t('login.continueWithGoogle')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleAppleLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithApple')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleKakaoLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithKakao')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
-                    </button>
-                    <button
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex justify-center">
+                    <Button
                       type="button"
-                      className="w-full h-11 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors"
+                      variant="outline"
+                      className="w-full flex items-center justify-center bg-white text-black"
                       onClick={handleNaverLogin}
                     >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                          <img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} />
+                        </span>
+                        <span className="text-sm w-[165px] text-left">{t('login.continueWithNaver')}</span>
                       </span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </TabsContent>
             </Tabs>
-          </div>
+          </CardContent>
+        </Card>
+
+        <div className="mt-4 w-full text-center">
+          <p className="text-xs text-white">
+            {t('login.copyright')}
+          </p>
+          <p className="text-xs text-white mt-1">
+            {t('login.patentNotice')}
+          </p>
         </div>
+      </div>
 
       {signupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Smartphone, CalendarIcon, Edit, Trash2 } from 'lucide-react';
-
+import { useNavigate, useParams } from 'react-router-dom';
+import { Plus, Smartphone, CalendarIcon } from 'lucide-react';
+import penIcon from '@/assets/pen.svg';
+import binIcon from '@/assets/bin.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
-import { useAuthStore } from '@/store/authStore';
-import { supabase } from '@/lib/supabase';
-import type { Subcategory } from '@/store/documentStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import {
   Dialog,
   DialogContent,
@@ -33,15 +33,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/BackButton';
+import { useAuthStore } from '@/store/authStore';
+import { checkUserAccess, hasPermission, type Role, type Action } from '@/lib/permissions';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
-import { hasPermission, type Role, type Action } from '@/lib/permissions';
+import { Edit, Trash2 } from 'lucide-react';
 import i18n from '@/lib/i18n';
 
 // 만료 상태 계산
@@ -70,8 +72,9 @@ function getExpiryStatus(expiryDate: string | null): {
   }
 }
 
-export function SubcategoryManagement() {
+export function ParentCategoryDetail() {
   const { t } = useTranslation();
+  const { parentCategoryId } = useParams<{ parentCategoryId: string }>();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === 'admin';
@@ -80,231 +83,132 @@ export function SubcategoryManagement() {
   const departments = useDocumentStore((state) => state.departments);
   const parentCategories = useDocumentStore((state) => state.parentCategories);
   const subcategories = useDocumentStore((state) => state.subcategories);
-  const isLoading = useDocumentStore((state) => state.isLoading);
+  const documents = useDocumentStore((state) => state.documents);
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
+    fetchParentCategories,
     fetchSubcategories,
+    fetchDocuments,
     addSubcategory,
-    deleteSubcategory,
     updateSubcategory,
+    deleteSubcategory,
     registerNfcTag,
     findSubcategoryByNfcUid,
     clearNfcByUid,
   } = useDocumentStore();
 
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
-  const [selectedParentCategoryId, setSelectedParentCategoryId] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
-    departmentId: '',
-    parentCategoryId: '',
     storageLocation: '',
     managementNumber: '',
     defaultExpiryDays: null as number | null,
     expiryDate: null as string | null,
     colorLabel: null as string | null,
   });
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(
-    null,
-  );
-  const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    storageLocation: '',
-    managementNumber: '',
-    defaultExpiryDays: null as number | null,
-    expiryDate: null as string | null,
-    colorLabel: null as string | null,
-  });
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // NFC 재등록 확인 다이얼로그 상태
   const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
   const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
   const [pendingNfcSubcategoryId, setPendingNfcSubcategoryId] = useState<string | null>(null);
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
-  // 팀원용: 권한 있는 부서 ID 목록
-  const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
-  // 부서별 권한 매핑
-  const [departmentPermissions, setDepartmentPermissions] = useState<Map<string, Role>>(new Map());
 
   // 만료된 카테고리 안내 다이얼로그 상태
   const [expiredDialogOpen, setExpiredDialogOpen] = useState(false);
-  const [expiredSubcategory, setExpiredSubcategory] = useState<Subcategory | null>(null);
+  const [expiredSubcategory, setExpiredSubcategory] = useState<any>(null);
 
-  // 세부 스토리지 삭제 확인 다이얼로그 상태
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingSubcategory, setDeletingSubcategory] = useState<Subcategory | null>(null);
+  // 세부 스토리지 수정/삭제 다이얼로그 상태
+  const [subEditDialogOpen, setSubEditDialogOpen] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<any>(null);
+  const [subEditForm, setSubEditForm] = useState({
+    name: '',
+    description: '',
+    storageLocation: '',
+    managementNumber: '',
+    defaultExpiryDays: null as number | null,
+    expiryDate: null as string | null,
+    colorLabel: null as string | null,
+  });
+  const [subEditNameError, setSubEditNameError] = useState('');
+  const [isSavingSubEdit, setIsSavingSubEdit] = useState(false);
+  const [subDeleteDialogOpen, setSubDeleteDialogOpen] = useState(false);
+  const [deletingSubcategory, setDeletingSubcategory] = useState<any>(null);
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
 
-  // 페이지네이션 상태
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 12;
+  // 권한 상태
+  const [departmentRole, setDepartmentRole] = useState<Role>('none');
 
   useEffect(() => {
-    // Zustand actions는 안정적이므로 getState()로 직접 호출
-    useDocumentStore.getState().fetchParentCategories();
-    useDocumentStore.getState().fetchSubcategories();
-  }, []);
+    if (!parentCategoryId) return;
+    fetchParentCategories();
+    fetchSubcategories(parentCategoryId);
+    if (documents.length === 0) {
+      fetchDocuments();
+    }
+  }, [parentCategoryId, fetchParentCategories, fetchSubcategories, fetchDocuments, documents.length]);
 
-  // 팀원용: 권한 있는 부서 목록 조회 + 권한 레벨 매핑
+  const parentCategory = useMemo(
+    () => parentCategories.find((pc) => pc.id === parentCategoryId),
+    [parentCategories, parentCategoryId]
+  );
+
+  const department = useMemo(
+    () =>
+      parentCategory
+        ? departments.find((d) => d.id === parentCategory.departmentId)
+        : undefined,
+    [departments, parentCategory]
+  );
+
+  // 권한 조회
   useEffect(() => {
-    const fetchAccessibleDepartments = async () => {
-      if (isAdmin || !user?.id) {
-        // 관리자는 모든 부서에 manager 권한
-        setAccessibleDepartmentIds(departments.map((d) => d.id));
-        const adminPerms = new Map<string, Role>();
-        departments.forEach(d => adminPerms.set(d.id, 'manager'));
-        setDepartmentPermissions(adminPerms);
+    const fetchRole = async () => {
+      if (!user?.id || !parentCategory?.departmentId) return;
+      if (isAdmin) {
+        setDepartmentRole('manager');
         return;
       }
-
-      const permissions = new Map<string, Role>();
-      const deptIds = new Set<string>();
-
-      // 1. 소속 부서는 자동 manager 권한
-      const ownDeptId = user.departmentId;
-      if (ownDeptId) {
-        deptIds.add(ownDeptId);
-        permissions.set(ownDeptId, 'manager');
-      }
-
-      // 2. 추가 권한 부여된 부서 조회 (role이 none이 아닌 경우)
-      const { data: permissionData } = await supabase
-        .from('user_permissions')
-        .select('department_id, role')
-        .eq('user_id', user.id)
-        .neq('role', 'none');
-
-      permissionData?.forEach((p: any) => {
-        deptIds.add(p.department_id);
-        if (p.department_id !== ownDeptId) {
-          permissions.set(p.department_id, p.role as Role);
-        }
-      });
-
-      setAccessibleDepartmentIds(Array.from(deptIds));
-      setDepartmentPermissions(permissions);
+      const { role } = await checkUserAccess(user.id, parentCategory.departmentId, user.departmentId);
+      setDepartmentRole(role);
     };
+    fetchRole();
+  }, [user?.id, user?.departmentId, parentCategory?.departmentId, isAdmin]);
 
-    fetchAccessibleDepartments();
-  }, [isAdmin, user?.id, user?.departmentId, departments]);
-
-  // 세부 카테고리별 권한 체크 헬퍼
-  const canDoForSub = (sub: { departmentId: string }, action: Action): boolean => {
+  // 권한 체크 헬퍼
+  const canDo = (action: Action): boolean => {
     if (isAdmin) return true;
-    const role = departmentPermissions.get(sub.departmentId);
-    if (!role) return false;
-    return hasPermission(role, action);
+    return hasPermission(departmentRole, action);
   };
 
-  const filteredParentCategories = useMemo(
-    () => {
-      // 먼저 권한 있는 부서의 대분류만 필터링
-      const accessibleCategories = parentCategories.filter((pc) =>
-        accessibleDepartmentIds.includes(pc.departmentId)
-      );
-      // 그 다음 선택된 부서 필터 적용
-      return selectedDepartmentId
-        ? accessibleCategories.filter((pc) => pc.departmentId === selectedDepartmentId)
-        : accessibleCategories;
-    },
-    [parentCategories, selectedDepartmentId, accessibleDepartmentIds]
-  );
-
-  const filteredParentCategoriesForForm = useMemo(
+  const childSubcategories = useMemo(
     () =>
-      form.departmentId
-        ? parentCategories.filter((pc) => pc.departmentId === form.departmentId)
+      parentCategoryId
+        ? subcategories.filter((s) => s.parentCategoryId === parentCategoryId)
         : [],
-    [parentCategories, form.departmentId]
+    [subcategories, parentCategoryId]
   );
 
-  const filteredSubcategories = useMemo(
+  const parentDocumentsCount = useMemo(
     () =>
-      subcategories.filter((sub) => {
-        // 먼저 권한 있는 부서의 세부 스토리지만 필터링
-        if (!accessibleDepartmentIds.includes(sub.departmentId)) {
-          return false;
-        }
-        if (selectedDepartmentId && sub.departmentId !== selectedDepartmentId) {
-          return false;
-        }
-        if (
-          selectedParentCategoryId &&
-          sub.parentCategoryId !== selectedParentCategoryId
-        ) {
-          return false;
-        }
-        return true;
-      }),
-    [subcategories, selectedDepartmentId, selectedParentCategoryId, accessibleDepartmentIds]
+      parentCategoryId
+        ? documents.filter((d) => d.parentCategoryId === parentCategoryId).length
+        : 0,
+    [documents, parentCategoryId]
   );
 
-  // 페이지네이션 계산
-  const paginatedSubcategories = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredSubcategories.slice(startIndex, endIndex);
-  }, [filteredSubcategories, currentPage]);
-
-  const totalPages = Math.ceil(filteredSubcategories.length / ITEMS_PER_PAGE);
-  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filteredSubcategories.length);
-
-  // 필터 변경 시 페이지 리셋
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedDepartmentId, selectedParentCategoryId]);
-
-  // useCallback으로 최적화
-  const handleDelete = useCallback(async (id: string) => {
-    const target = subcategories.find((s) => s.id === id) || null;
-    setDeletingSubcategory(target);
-    setDeleteDialogOpen(true);
-  }, [subcategories]);
-
-  const handleCloseDeleteDialog = useCallback(() => {
-    setDeleteDialogOpen(false);
-    setDeletingSubcategory(null);
-    setIsDeletingSubcategory(false);
-  }, []);
-
-  const handleConfirmDeleteSubcategory = useCallback(async () => {
-    if (!deletingSubcategory?.id) {
-      return;
-    }
-
-    setIsDeletingSubcategory(true);
-
-    try {
-      await deleteSubcategory(deletingSubcategory.id);
-
-      toast({
-        title: t('documentMgmt.deleteComplete'),
-        description: t('documentMgmt.subcategoryDeletedDesc'),
-      });
-
-      handleCloseDeleteDialog();
-    } catch (error) {
-      console.error('세부 스토리지 삭제 실패:', error);
-      toast({
-        title: t('documentMgmt.deleteFailed'),
-        description: t('documentMgmt.subcategoryDeleteFailedDesc'),
-        variant: 'destructive',
-      });
-      setIsDeletingSubcategory(false);
-    }
-  }, [deletingSubcategory?.id, deleteSubcategory, handleCloseDeleteDialog]);
-
-  // useCallback으로 최적화
-  const handleSubmit = useCallback(async () => {
-    if (!form.name.trim() || !form.departmentId || !form.parentCategoryId) {
+  const handleAddSubcategory = async () => {
+    if (!parentCategory || !form.name.trim()) {
       return;
     }
 
@@ -313,43 +217,36 @@ export function SubcategoryManagement() {
       await addSubcategory({
         name: form.name.trim(),
         description: form.description,
-        departmentId: form.departmentId,
-        parentCategoryId: form.parentCategoryId,
-        storageLocation: form.storageLocation,
-        nfcRegistered: false,
+        parentCategoryId: parentCategory.id,
+        departmentId: parentCategory.departmentId,
         nfcUid: null,
+        nfcRegistered: false,
+        storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
         colorLabel: form.colorLabel,
       });
-
       setAddDialogOpen(false);
       setForm({
         name: '',
         description: '',
-        departmentId: '',
-        parentCategoryId: '',
         storageLocation: '',
         managementNumber: '',
         defaultExpiryDays: null,
         expiryDate: null,
         colorLabel: null,
       });
-
-      await fetchSubcategories();
       toast({
         title: t('documentMgmt.subcategoryAdded'),
         description: t('documentMgmt.subcategoryAddedDesc'),
       });
-    } catch (error) {
-      console.error('세부 스토리지 추가 실패:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [form, addSubcategory, fetchSubcategories]);
+  };
 
-  const handleSubmitWithNfc = async () => {
-    if (!form.name.trim() || !form.departmentId || !form.parentCategoryId) {
+  const handleAddSubcategoryWithNfc = async () => {
+    if (!parentCategory || !form.name.trim()) {
       return;
     }
 
@@ -363,11 +260,11 @@ export function SubcategoryManagement() {
       const created = await addSubcategory({
         name: form.name.trim(),
         description: form.description,
-        departmentId: form.departmentId,
-        parentCategoryId: form.parentCategoryId,
-        storageLocation: form.storageLocation,
-        nfcRegistered: false,
+        parentCategoryId: parentCategory.id,
+        departmentId: parentCategory.departmentId,
         nfcUid: null,
+        nfcRegistered: false,
+        storageLocation: form.storageLocation,
         defaultExpiryDays: form.defaultExpiryDays,
         expiryDate: form.expiryDate,
         colorLabel: form.colorLabel,
@@ -405,8 +302,6 @@ export function SubcategoryManagement() {
       setForm({
         name: '',
         description: '',
-        departmentId: '',
-        parentCategoryId: '',
         storageLocation: '',
         managementNumber: '',
         defaultExpiryDays: null,
@@ -474,8 +369,6 @@ export function SubcategoryManagement() {
     setForm({
       name: '',
       description: '',
-      departmentId: '',
-      parentCategoryId: '',
       storageLocation: '',
       managementNumber: '',
       defaultExpiryDays: null,
@@ -484,18 +377,102 @@ export function SubcategoryManagement() {
     });
   };
 
-  // useCallback으로 최적화
-  const handleNfcConfirmNo = useCallback(() => {
+  const handleNfcConfirmNo = () => {
     setPendingNfcUid(null);
     setPendingNfcSubcategoryId(null);
     setExistingNfcSubcategory(null);
     setNfcConfirmDialogOpen(false);
     setNfcMode('idle'); // 취소 시 모드 초기화
-  }, []);
+  };
 
-  const handleOpenEditDialog = (sub: Subcategory) => {
+  const handleOpenEditDialog = () => {
+    if (!parentCategory) return;
+    setEditName(parentCategory.name);
+    setEditDescription(parentCategory.description || '');
+    setEditNameError('');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveParentCategory = async () => {
+    if (!parentCategory) return;
+
+    const name = editName.trim();
+    const description = editDescription.trim();
+
+    if (!name) {
+      setEditNameError(t('parentCategoryDetail.enterParentCategoryName'));
+      return;
+    }
+    setEditNameError('');
+
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          name,
+          description: description || null,
+        })
+        .eq('id', parentCategory.id);
+
+      if (error) throw error;
+
+      await fetchParentCategories();
+
+      toast({
+        title: t('documentMgmt.editComplete'),
+        description: t('parentCategoryDetail.parentCategoryEdited'),
+      });
+
+      setIsEditDialogOpen(false);
+    } catch (err) {
+      console.error('대분류 수정 실패:', err);
+      toast({
+        title: t('documentMgmt.editFailed'),
+        description: t('parentCategoryDetail.parentCategoryEditFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleConfirmDeleteParentCategory = async () => {
+    if (!parentCategory) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', parentCategory.id);
+
+      if (error) throw error;
+
+      await fetchParentCategories();
+
+      toast({
+        title: t('documentMgmt.deleteComplete'),
+        description: t('parentCategoryDetail.parentCategoryDeleted'),
+      });
+
+      setIsDeleteDialogOpen(false);
+      navigate(-1);
+    } catch (err) {
+      console.error('대분류 삭제 실패:', err);
+      toast({
+        title: t('documentMgmt.deleteFailed'),
+        description: t('parentCategoryDetail.parentCategoryDeleteFailed'),
+        variant: 'destructive',
+      });
+      setIsDeleting(false);
+    }
+  };
+
+  // 세부 스토리지 수정/삭제 핸들러
+  const handleOpenSubEditDialog = (sub: any) => {
     setEditingSubcategory(sub);
-    setEditForm({
+    setSubEditForm({
       name: sub.name || '',
       description: sub.description || '',
       storageLocation: sub.storageLocation || '',
@@ -504,130 +481,227 @@ export function SubcategoryManagement() {
       expiryDate: sub.expiryDate || null,
       colorLabel: sub.colorLabel || null,
     });
-    setEditNameError('');
-    setEditDialogOpen(true);
+    setSubEditNameError('');
+    setSubEditDialogOpen(true);
   };
 
-  const handleCloseEditDialog = () => {
-    setEditDialogOpen(false);
+  const handleCloseSubEditDialog = () => {
+    setSubEditDialogOpen(false);
     setEditingSubcategory(null);
-    setEditNameError('');
+    setSubEditNameError('');
   };
 
-  const handleSaveEditSubcategory = async () => {
+  const handleSaveSubcategory = async () => {
     if (!editingSubcategory) return;
 
-    const trimmedName = editForm.name.trim();
+    const trimmedName = subEditForm.name.trim();
     if (!trimmedName) {
-      setEditNameError(t('documentMgmt.enterName'));
+      setSubEditNameError(t('documentMgmt.enterName'));
       return;
     }
 
-    setIsSavingEdit(true);
-    setEditNameError('');
+    setIsSavingSubEdit(true);
+    setSubEditNameError('');
+
     try {
       await updateSubcategory(editingSubcategory.id, {
         name: trimmedName,
-        description: editForm.description,
-        storageLocation: editForm.storageLocation,
-        managementNumber: editForm.managementNumber,
-        defaultExpiryDays: editForm.defaultExpiryDays,
-        expiryDate: editForm.expiryDate,
-        colorLabel: editForm.colorLabel,
+        description: subEditForm.description,
+        storageLocation: subEditForm.storageLocation,
+        managementNumber: subEditForm.managementNumber,
+        defaultExpiryDays: subEditForm.defaultExpiryDays,
+        expiryDate: subEditForm.expiryDate,
+        colorLabel: subEditForm.colorLabel,
       });
-      await fetchSubcategories();
-      setEditDialogOpen(false);
+
+      toast({
+        title: t('documentMgmt.editComplete'),
+        description: t('documentMgmt.subcategoryEditedDesc'),
+      });
+
+      handleCloseSubEditDialog();
+    } catch (error) {
+      console.error('세부 스토리지 수정 실패:', error);
+      toast({
+        title: t('documentMgmt.editFailed'),
+        description: t('documentMgmt.subcategoryEditFailedDesc'),
+        variant: 'destructive',
+      });
     } finally {
-      setIsSavingEdit(false);
+      setIsSavingSubEdit(false);
     }
   };
+
+  const handleOpenSubDeleteDialog = (sub: any) => {
+    setDeletingSubcategory(sub);
+    setSubDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDeleteSubcategory = async () => {
+    if (!deletingSubcategory) return;
+
+    setIsDeletingSubcategory(true);
+    try {
+      await deleteSubcategory(deletingSubcategory.id);
+
+      toast({
+        title: t('documentMgmt.deleteComplete'),
+        description: t('documentMgmt.subcategoryDeletedDesc'),
+      });
+
+      setSubDeleteDialogOpen(false);
+      setDeletingSubcategory(null);
+    } catch (error) {
+      console.error('세부 스토리지 삭제 실패:', error);
+      toast({
+        title: t('documentMgmt.deleteFailed'),
+        description: t('documentMgmt.subcategoryDeleteFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingSubcategory(false);
+    }
+  };
+
+  if (!parentCategoryId) {
+    return null;
+  }
+
+  if (!parentCategory) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <BackButton />
+          <p className="text-slate-500">{t('parentCategoryDetail.notFound')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
-        <BackButton className="mb-4" />
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('subcategoryMgmt.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('subcategoryMgmt.subtitle')}</p>
+        <div>
+          <DocumentBreadcrumb
+            items={(() => {
+              const isAdmin = window.location.pathname.startsWith('/admin');
+              const departmentHref =
+                department?.id &&
+                (isAdmin
+                  ? `/admin/departments/${department.id}`
+                  : `/team/department/${department.id}`);
+
+              return [
+                {
+                  label: department?.name || t('common.department'),
+                  href: departmentHref || undefined,
+                },
+                {
+                  label: parentCategory.name,
+                  isCurrentPage: true,
+                },
+              ];
+            })()}
+            className="mb-2"
+          />
+
+          <BackButton className="mb-4" />
+
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">{parentCategory.name}</h1>
+              <p className="text-slate-500 mt-1">
+                {parentCategory.description || t('subcategoryDetail.noDescription')}
+              </p>
+              {department && (
+                <p className="text-sm text-slate-500 mt-1">
+                  {t('common.department')}: {department.name} ({department.code})
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleOpenEditDialog}
+              >
+                <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-red-500 hover:text-red-600 hover:border-red-500"
+              >
+                <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
+              </Button>
+            </div>
           </div>
-          <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('parentCategoryDetail.addSubcategory')}
-          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('parentCategoryDetail.subcategoryCount')}</p>
+              <p className="text-2xl font-bold mt-2">{childSubcategories.length}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.docCount')}</p>
+              <p className="text-2xl font-bold mt-2">{parentDocumentsCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('parentCategoryDetail.nfcRegisteredSubs')}</p>
+              <p className="text-2xl font-bold mt-2">
+                {childSubcategories.filter((s) => s.nfcRegistered).length}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>{t('subcategoryMgmt.filter')}</CardTitle>
-            <CardDescription>
-              {t('subcategoryMgmt.filterDesc')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">{t('common.department')}</p>
-                <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
-                  value={selectedDepartmentId}
-                  onChange={(e) => {
-                    setSelectedDepartmentId(e.target.value);
-                    setSelectedParentCategoryId('');
-                  }}
-                >
-                  <option value="">{t('subcategoryMgmt.all')}</option>
-                  {departments
-                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
-                    .map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name} ({dept.code})
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">{t('subcategoryDetail.parentCategory')}</p>
-                <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-50 disabled:bg-slate-50"
-                  value={selectedParentCategoryId}
-                  onChange={(e) => setSelectedParentCategoryId(e.target.value)}
-                  disabled={filteredParentCategories.length === 0}
-                >
-                  <option value="">{t('subcategoryMgmt.all')}</option>
-                  {filteredParentCategories.map((pc) => (
-                    <option key={pc.id} value={pc.id}>
-                      {pc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>{t('parentCategoryDetail.subcategories')}</CardTitle>
+              <CardDescription className="mt-1">
+                {t('parentCategoryDetail.subcategoryListDesc')}
+              </CardDescription>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('subcategoryMgmt.listTitle')}</CardTitle>
-            <CardDescription>
-              {t('subcategoryMgmt.listDesc')}
-            </CardDescription>
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              className="hidden md:inline-flex"
+              disabled={!canDo('write')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('parentCategoryDetail.addSubcategory')}
+            </Button>
           </CardHeader>
+          {/* 모바일용 세부 스토리지 추가 버튼 */}
+          <div className="md:hidden px-6 pb-4">
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              className="w-full"
+              variant="outline"
+              disabled={!canDo('write')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('parentCategoryDetail.addSubcategory')}
+            </Button>
+          </div>
           <CardContent>
-            {isLoading && subcategories.length === 0 ? (
-              <p className="text-slate-500">{t('common.loading')}</p>
-            ) : filteredSubcategories.length === 0 ? (
+            {childSubcategories.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
-                {t('documentMgmt.noSubcategories')}
+                {t('parentCategoryDetail.noSubcategories')}
               </div>
             ) : (
-              <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {paginatedSubcategories.map((sub) => {
-                  const dept = departments.find((d) => d.id === sub.departmentId);
-                  const parent = parentCategories.find((pc) => pc.id === sub.parentCategoryId);
-                  const isAdminPath = window.location.pathname.startsWith('/admin');
-                  const basePath = isAdminPath ? '/admin' : '/team';
+                {childSubcategories.map((sub) => {
+                  const isAdmin = window.location.pathname.startsWith('/admin');
+                  const basePath = isAdmin ? '/admin' : '/team';
                   const expiryStatus = getExpiryStatus(sub.expiryDate || null);
                   const isExpired = expiryStatus.status === 'expired';
 
@@ -637,7 +711,7 @@ export function SubcategoryManagement() {
                       setExpiredSubcategory(sub);
                     } else {
                       navigate(
-                        `${basePath}/parent-category/${sub.parentCategoryId}/subcategory/${sub.id}`
+                        `${basePath}/parent-category/${parentCategory.id}/subcategory/${sub.id}`
                       );
                     }
                   };
@@ -646,7 +720,7 @@ export function SubcategoryManagement() {
                   <Card
                     key={sub.id}
                     className={cn(
-                      "hover:shadow-md transition-shadow cursor-pointer flex flex-col",
+                      "hover:shadow-lg transition-shadow cursor-pointer flex flex-col",
                       expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300",
                       expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
                       expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
@@ -656,8 +730,8 @@ export function SubcategoryManagement() {
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0 overflow-hidden">
-                            <CardTitle className="text-base truncate">{sub.name}</CardTitle>
-                            <CardDescription className="text-xs mt-0.5 truncate">
+                            <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
+                            <CardDescription className="mt-1 truncate">
                               {sub.description || t('parentCategoryDetail.noDescription')}
                             </CardDescription>
                           </div>
@@ -693,12 +767,12 @@ export function SubcategoryManagement() {
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">{t('common.department')}</span>
                             <span className="font-medium">
-                              {dept?.name ?? sub.departmentId}
+                              {department?.name ?? sub.departmentId}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">{t('subcategoryDetail.parentCategory')}</span>
-                            <span className="font-medium">{parent?.name ?? '-'}</span>
+                            <span className="font-medium">{parentCategory.name}</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">{t('subcategoryDetail.docCount')}</span>
@@ -744,8 +818,8 @@ export function SubcategoryManagement() {
                             variant="outline"
                             size="sm"
                             className="flex-1"
-                            onClick={() => handleOpenEditDialog(sub)}
-                            disabled={!canDoForSub(sub, 'write')}
+                            onClick={() => handleOpenSubEditDialog(sub)}
+                            disabled={!canDo('write')}
                           >
                             <Edit className="h-3 w-3 mr-1" />
                             {t('common.edit')}
@@ -753,8 +827,8 @@ export function SubcategoryManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(sub.id)}
-                            disabled={!canDoForSub(sub, 'delete')}
+                            onClick={() => handleOpenSubDeleteDialog(sub)}
+                            disabled={!canDo('delete')}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -765,120 +839,19 @@ export function SubcategoryManagement() {
                   );
                 })}
               </div>
-
-              {filteredSubcategories.length > ITEMS_PER_PAGE && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                  <div className="text-sm text-slate-500">
-                    {startItem}-{endItem} / {t('subcategoryMgmt.totalCount', { count: filteredSubcategories.length })}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      {t('common.previous')}
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className="w-10"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      {t('common.next')}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              </>
             )}
           </CardContent>
         </Card>
+
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent className="max-h-[85vh] flex flex-col">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('subcategoryMgmt.addTitle')}</DialogTitle>
+              <DialogTitle>{t('parentCategoryDetail.addSubcategoryTitle')}</DialogTitle>
               <DialogDescription>
-                {t('subcategoryMgmt.addDesc')}
+                {t('parentCategoryDetail.addSubcategoryDesc', { name: parentCategory.name })}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 overflow-y-auto flex-1 px-4">
-              <div className="space-y-2">
-                <Label>{t('common.department')}</Label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={form.departmentId}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      departmentId: e.target.value,
-                      parentCategoryId: '',
-                    }))
-                  }
-                >
-                  <option value="">{t('subcategoryMgmt.selectDepartment')}</option>
-                  {departments
-                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
-                    .map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name} ({dept.code})
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('subcategoryDetail.parentCategory')}</Label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={form.parentCategoryId}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      parentCategoryId: e.target.value,
-                    }))
-                  }
-                  disabled={filteredParentCategoriesForForm.length === 0}
-                >
-                  <option value="">{t('subcategoryMgmt.selectParentCategory')}</option>
-                  {filteredParentCategoriesForForm.map((pc) => (
-                    <option key={pc.id} value={pc.id}>
-                      {pc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
                 <Input
@@ -1144,26 +1117,16 @@ export function SubcategoryManagement() {
             <DialogFooter className="flex-col sm:flex-row">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={handleAddSubcategory}
                 variant="outline"
-                disabled={
-                  isSaving ||
-                  !form.name.trim() ||
-                  !form.departmentId ||
-                  !form.parentCategoryId
-                }
+                disabled={isSaving || !form.name.trim()}
               >
                 {t('parentCategoryDetail.addSubcategoryOnly')}
               </Button>
               <Button
                 type="button"
-                onClick={handleSubmitWithNfc}
-                disabled={
-                  isSaving ||
-                  !form.name.trim() ||
-                  !form.departmentId ||
-                  !form.parentCategoryId
-                }
+                onClick={handleAddSubcategoryWithNfc}
+                disabled={isSaving || !form.name.trim()}
                 className="flex items-center gap-2"
               >
                 <Smartphone className="h-4 w-4" />
@@ -1180,30 +1143,77 @@ export function SubcategoryManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Dialog
-          open={editDialogOpen}
+
+        <AlertDialog
+          open={isDeleteDialogOpen}
           onOpenChange={(open) => {
+            setIsDeleteDialogOpen(open);
             if (!open) {
-              handleCloseEditDialog();
+              setIsDeleting(false);
+              setDeleteConfirmText('');
             }
           }}
         >
-          <DialogContent className="max-h-[90vh] flex flex-col">
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('parentCategoryDetail.deleteParentCategory')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                <p>{t('parentCategoryDetail.deleteConfirmMsg', { name: parentCategory.name })}</p>
+                <p className="mt-1">
+                  {t('parentCategoryDetail.deleteImpactWarning')}
+                </p>
+                <p className="mt-3 text-sm font-medium text-red-600">
+                  {t('documentMgmt.deleteIrreversible')}
+                </p>
+                <div className="mt-4">
+                  <p className="text-sm text-slate-600 mb-2">
+                    {t('parentCategoryDetail.typeToConfirmDelete', { text: t('parentCategoryDetail.confirmDeleteText') })}
+                  </p>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={t('parentCategoryDetail.confirmDeleteText')}
+                    className="mt-1"
+                  />
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteParentCategory}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeleting || deleteConfirmText !== t('parentCategoryDetail.confirmDeleteText')}
+              >
+                {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <Dialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setEditNameError('');
+            }
+          }}
+        >
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
+              <DialogTitle>{t('parentCategoryDetail.editParentCategory')}</DialogTitle>
               <DialogDescription>
-                {t('documentMgmt.editSubcategoryDesc')}
+                {t('parentCategoryDetail.editParentCategoryDesc')}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 overflow-y-auto flex-1 px-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
+                <Label>{t('parentCategoryDetail.parentCategoryName')}</Label>
                 <Input
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder={t('parentCategoryDetail.parentCategoryNamePlaceholder')}
                 />
                 {editNameError && (
                   <p className="text-xs text-red-500 mt-1">{editNameError}</p>
@@ -1212,356 +1222,31 @@ export function SubcategoryManagement() {
               <div className="space-y-2">
                 <Label>{t('parentCategoryDetail.description')}</Label>
                 <Textarea
-                  value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder={t('parentCategoryDetail.editDescPlaceholder')}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
-                <ColorLabelPicker
-                  value={editForm.colorLabel}
-                  onChange={(value) =>
-                    setEditForm((prev) => ({ ...prev, colorLabel: value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
-                <Input
-                  value={editForm.storageLocation}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      storageLocation: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
-                <Input
-                  value={editForm.managementNumber}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      managementNumber: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addMonths(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.months3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 1);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.year1')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 5);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years5')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 7);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years7')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={editForm.expiryDate && Math.abs(new Date(editForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 10);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years10')}
-                  </Button>
-                  {editForm.defaultExpiryDays && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setEditForm((prev) => ({
-                          ...prev,
-                          defaultExpiryDays: null,
-                          expiryDate: null,
-                        }))
-                      }
-                      className="bg-white text-slate-600 hover:bg-slate-100"
-                    >
-                      {t('parentCategoryDetail.reset')}
-                    </Button>
-                  )}
-                </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !editForm.expiryDate && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editForm.expiryDate
-                        ? format(new Date(editForm.expiryDate), 'PPP', { locale: ko })
-                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      captionLayout="dropdown"
-                      fromYear={2020}
-                      toYear={2040}
-                      selected={editForm.expiryDate ? new Date(editForm.expiryDate) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const selected = new Date(date);
-                          selected.setHours(0, 0, 0, 0);
-                          const diffTime = selected.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          setEditForm((prev) => ({
-                            ...prev,
-                            defaultExpiryDays: diffDays,
-                            expiryDate: date.toISOString(),
-                          }));
-                        }
-                      }}
-                      initialFocus
-                      className="bg-white"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-slate-500">
-                  {t('parentCategoryDetail.expiryNote')}
-                  {editForm.expiryDate && ` (${format(new Date(editForm.expiryDate), 'PPP', { locale: ko })})`}
-                </p>
               </div>
             </div>
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleCloseEditDialog}
+                onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSavingEdit}
               >
                 {t('common.cancel')}
               </Button>
               <Button
                 type="button"
-                onClick={async () => {
-                  if (!editingSubcategory) return;
-                  let scanToast: ReturnType<typeof toast> | null = null;
-                  try {
-                    scanToast = toast({
-                      title: t('documentMgmt.nfcWaiting'),
-                      description: t('documentMgmt.nfcWaitingDesc'),
-                      duration: 1000000,
-                    });
-                    const uid = await readNFCUid();
-                    scanToast.dismiss();
-
-                    // 이 UID가 이미 등록된 태그인지 확인
-                    const existingSub = await findSubcategoryByNfcUid(uid);
-
-                    if (existingSub) {
-                      // 이미 등록된 태그 → 확인 다이얼로그 띄우기
-                      setPendingNfcUid(uid);
-                      setPendingNfcSubcategoryId(editingSubcategory.id);
-                      setExistingNfcSubcategory({ id: existingSub.id, name: existingSub.name });
-                      setNfcConfirmDialogOpen(true);
-                      return;
-                    }
-
-                    // 등록된 적 없는 태그 → 바로 등록 진행
-                    await proceedNfcRegistration(uid, editingSubcategory.id);
-                  } catch (error: any) {
-                    scanToast?.dismiss();
-                    toast({
-                      title: t('common.error'),
-                      description:
-                        error?.message || t('documentMgmt.nfcRegErrorDesc'),
-                      variant: 'destructive',
-                    });
-                    setNfcMode('idle');
-                  }
-                }}
-                disabled={!editingSubcategory || isSavingEdit}
-              >
-                📱 {t('subcategoryMgmt.nfcTagRegister')}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSaveEditSubcategory}
+                onClick={handleSaveParentCategory}
                 disabled={isSavingEdit}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <AlertDialog
-          open={deleteDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseDeleteDialog();
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                <p>
-                  {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory?.name ?? '' })}
-                </p>
-                <p className="mt-1">
-                  {t('parentCategoryDetail.deleteSubWarning', { count: deletingSubcategory?.documentCount ?? 0 })}
-                </p>
-                <p className="mt-3 text-sm font-medium text-red-600">
-                  {t('documentMgmt.deleteIrreversible')}
-                </p>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeletingSubcategory}>
-                {t('common.cancel')}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleConfirmDeleteSubcategory}
-                className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={isDeletingSubcategory}
-              >
-                {isDeletingSubcategory ? t('documentMgmt.deleting') : t('common.delete')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
@@ -1615,6 +1300,335 @@ export function SubcategoryManagement() {
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
                 {t('common.confirm')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 세부 스토리지 수정 다이얼로그 */}
+        <Dialog
+          open={subEditDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) handleCloseSubEditDialog();
+          }}
+        >
+          <DialogContent className="max-h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>{t('subcategoryDetail.editSubcategory')}</DialogTitle>
+              <DialogDescription>
+                {t('documentMgmt.editSubcategoryDesc')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 overflow-y-auto flex-1 px-4">
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
+                <Input
+                  value={subEditForm.name}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
+                />
+                {subEditNameError && (
+                  <p className="text-xs text-red-500 mt-1">{subEditNameError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.description')}</Label>
+                <Textarea
+                  value={subEditForm.description}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
+                <ColorLabelPicker
+                  value={subEditForm.colorLabel}
+                  onChange={(value) =>
+                    setSubEditForm((prev) => ({ ...prev, colorLabel: value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
+                <Input
+                  value={subEditForm.storageLocation}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      storageLocation: e.target.value,
+                    }))
+                  }
+                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
+                  maxLength={30}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
+                <Input
+                  value={subEditForm.managementNumber}
+                  onChange={(e) =>
+                    setSubEditForm((prev) => ({
+                      ...prev,
+                      managementNumber: e.target.value,
+                    }))
+                  }
+                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
+                  maxLength={30}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addMonths(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.months3')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 1);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.year1')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 3);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.years3')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 5);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.years5')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 7);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.years7')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : ''}
+                    onClick={() => {
+                      const target = addYears(new Date(), 10);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const targetDay = new Date(target);
+                      targetDay.setHours(0, 0, 0, 0);
+                      const diffTime = targetDay.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        defaultExpiryDays: diffDays,
+                        expiryDate: target.toISOString(),
+                      }));
+                    }}
+                  >
+                    {t('parentCategoryDetail.years10')}
+                  </Button>
+                  {subEditForm.defaultExpiryDays && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setSubEditForm((prev) => ({
+                          ...prev,
+                          defaultExpiryDays: null,
+                          expiryDate: null,
+                        }))
+                      }
+                      className="bg-white text-slate-600 hover:bg-slate-100"
+                    >
+                      {t('parentCategoryDetail.reset')}
+                    </Button>
+                  )}
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !subEditForm.expiryDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {subEditForm.expiryDate
+                        ? format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })
+                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      captionLayout="dropdown"
+                      fromYear={2020}
+                      toYear={2040}
+                      selected={subEditForm.expiryDate ? new Date(subEditForm.expiryDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffTime = date.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          setSubEditForm((prev) => ({
+                            ...prev,
+                            defaultExpiryDays: diffDays,
+                            expiryDate: date.toISOString(),
+                          }));
+                        }
+                      }}
+                      initialFocus
+                      className="bg-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-slate-500">
+                  {t('parentCategoryDetail.expiryNote')}
+                  {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })})`}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseSubEditDialog}
+                disabled={isSavingSubEdit}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveSubcategory}
+                disabled={isSavingSubEdit}
+              >
+                {isSavingSubEdit ? t('common.saving') : t('common.save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 세부 스토리지 삭제 확인 다이얼로그 */}
+        <AlertDialog open={subDeleteDialogOpen} onOpenChange={setSubDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deletingSubcategory && (
+                  <>
+                    <p className="mb-2">
+                      {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory.name })}
+                    </p>
+                    <p className="text-red-500">
+                      {t('parentCategoryDetail.deleteSubWarning', { count: deletingSubcategory.documentCount })}
+                    </p>
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingSubcategory}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteSubcategory}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeletingSubcategory}
+              >
+                {isDeletingSubcategory ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

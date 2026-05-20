@@ -189,16 +189,16 @@ export function OnboardingPage() {
           </CardHeader>
           <CardContent className="space-y-4 max-h-[90vh] overflow-y-auto">
             <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-100 p-1 rounded-xl h-auto">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger
                   value="admin"
-                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
                   {t('common.admin')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="team"
-                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+                  className="bg-white text-black data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                 >
                   {t('common.team')}
                 </TabsTrigger>
@@ -286,7 +286,7 @@ export function OnboardingPage() {
 
             <Button
               type="button"
-              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold mt-4"
+              className="w-full mt-4"
               onClick={handleComplete}
               disabled={isSubmitting || isLoading}
             >

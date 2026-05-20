@@ -900,11 +900,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   rel="noopener noreferrer"
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-[#1d4ed8] bg-[#eff6ff]'
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: primaryColor }
+                      : undefined
+                  }
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-500'}`} />
+                  <Icon className="h-5 w-5" />
                   {item.name}
                 </a>
               ) : (
@@ -913,11 +918,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   to={item.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-[#1d4ed8] bg-[#eff6ff]'
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: primaryColor }
+                      : undefined
+                  }
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-500'}`} />
+                  <Icon className="h-5 w-5" />
                   {item.name}
                 </Link>
               )
@@ -942,11 +952,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64 w-full min-w-full">
-        <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-white w-full h-16 px-4 flex items-center gap-3">
+        <header className="md:hidden sticky top-0 z-40 border-b bg-[#1e40af] w-full h-16 px-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-            className="p-2 text-slate-600 shrink-0"
+            className="p-2 text-white shrink-0"
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -1101,8 +1111,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 select-none outline-none" style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-                {user?.name?.[0] || 'U'}
+              <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 shrink-0">
+                <User className="h-5 w-5 text-white" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
@@ -1206,7 +1216,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </DropdownMenu>
         </header>
 
-        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white w-full">
+        <header className="hidden md:flex sticky top-0 z-40 border-b bg-[#1e40af] w-full">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">
@@ -1351,16 +1361,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2.5 hover:bg-slate-50 rounded-xl px-2 py-1.5 transition-colors outline-none">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 select-none" style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-                      {user?.name?.[0] || 'U'}
-                    </div>
-                    <div className="text-left leading-tight">
-                      <div className="text-sm font-semibold text-slate-900">{user?.name}</div>
-                      <div className="text-[11px] text-slate-500">{isAdmin ? t('common.admin') : t('common.team')}</div>
-                    </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
+                  <Button
+                    variant="outline"
+                    className="gap-2 bg-white text-slate-900 border-slate-200 hover:bg-slate-50"
+                  >
+                    <span>{user?.name}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                   <div className="px-4 py-3 border-b">

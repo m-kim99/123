@@ -1,7 +1,28 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(gunzip -c \"/Users/mini/.claude/projects/-Users-mini-Downloads-123-main/d8aba6b4-a580-4d32-915f-61b895a53942/tool-results/webfetch-1779258643743-fu8wbg.bin\")",
+      "Bash(tar -t)",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/V1Refined.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/colors_and_type.css\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/Shell.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/P1Subcategory.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/AuthPages.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/P2Documents.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/P3ParentCategory.jsx\")",
+      "Bash(tar -xO \"traystorage-connect-design-system/project/explorations/v1_pages/P4Statistics.jsx\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(f'{k}: {json.dumps\\(v, ensure_ascii=False\\)[:80]}'\\) for k,v in d.items\\(\\) if k in \\('dashboard','common','nav'\\)]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('dashboard',{}\\), ensure_ascii=False, indent=2\\)\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -L \"https://api.anthropic.com/v1/design/h/CDCWjOYvXwAK_TdicUYDBA\" -o /tmp/design2.bin)",
+      "Read(//tmp/**)",
+      "Bash(mkdir -p /tmp/design2_out)",
+      "Bash(gunzip -c /tmp/design2.bin)",
+      "Bash(tar -x -C /tmp/design2_out/)",
+      "Bash(tar -xzf /tmp/design2.bin -C /tmp/design2_out/)"
     ]
   }
 }

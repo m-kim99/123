@@ -2086,8 +2086,8 @@ export function DocumentManagement() {
         <BackButton className="mb-4" />
 
         <div>
-          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('documentMgmt.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('documentMgmt.subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('documentMgmt.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('documentMgmt.subtitle')}</p>
         </div>
 
         <Tabs
@@ -2097,22 +2097,22 @@ export function DocumentManagement() {
           }
           className="space-y-4"
         >
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-xl h-auto">
+          <TabsList className="grid w-full grid-cols-3 mb-6 gap-1">
             <TabsTrigger
               value="categories"
-              className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
               {t('documentMgmt.subcategories')}
             </TabsTrigger>
             <TabsTrigger
               value="documents"
-              className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
               {t('documentMgmt.allDocuments')}
             </TabsTrigger>
             <TabsTrigger
               value="upload"
-              className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-900"
             >
               {t('documentMgmt.uploadDocuments')}
             </TabsTrigger>
@@ -2951,7 +2951,7 @@ export function DocumentManagement() {
                       <Card
                         key={subcategory.id}
                         className={cn(
-                          'hover:shadow-md transition-shadow h-full',
+                          'hover:shadow-lg transition-shadow h-full',
                           expiryStatus.status === 'expired' && 'opacity-50 bg-gray-100 border-gray-300',
                           expiryStatus.status === 'warning_7' && 'border-orange-300 bg-orange-50',
                           expiryStatus.status === 'warning_30' && 'border-yellow-300 bg-yellow-50'
@@ -2978,8 +2978,8 @@ export function DocumentManagement() {
                           <CardHeader>
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <CardTitle className="text-base">{subcategory.name}</CardTitle>
-                                <CardDescription className="text-xs mt-0.5">
+                                <CardTitle className="text-lg">{subcategory.name}</CardTitle>
+                                <CardDescription className="mt-1">
                                   {subcategory.description}
                                 </CardDescription>
                               </div>
@@ -3289,7 +3289,7 @@ export function DocumentManagement() {
                         return (
                           <div
                             key={doc.id}
-                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-[10px] border border-[#e5e7eb] bg-white"
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg border border-slate-200 bg-white shadow-sm"
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1 w-full">
                               <div
@@ -3554,9 +3554,9 @@ export function DocumentManagement() {
                   <Label>{t('documentMgmt.fileUpload')}</Label>
                   <div
                     {...getRootProps()}
-                    className={`border-2 border-dashed rounded-[10px] p-8 text-center transition-colors cursor-pointer ${
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                       isDragActive
-                        ? 'border-[#2563eb] bg-[#eff6ff]'
+                        ? 'border-primary bg-primary/5'
                         : 'border-slate-300 hover:border-slate-400'
                     } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
                   >

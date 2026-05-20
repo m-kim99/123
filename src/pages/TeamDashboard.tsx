@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, FolderOpen, Archive, Star, Clock, Users, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { FileText, FolderOpen, Archive, Star, Clock, Users, ChevronRight } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -11,6 +9,39 @@ import { useFavoriteStore } from '@/store/favoriteStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+
+const card = 'bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
+
+function StatTile({
+  title,
+  value,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  value: number;
+  icon: React.ElementType;
+  color: string;
+}) {
+  return (
+    <div className={card}>
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: `${color}18` }}
+          >
+            <Icon className="h-[15px] w-[15px]" style={{ color }} />
+          </div>
+          <span className="text-xs font-medium text-slate-500 leading-tight">{title}</span>
+        </div>
+        <div className="text-[30px] font-bold leading-none tracking-tight text-slate-900">
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function TeamDashboard() {
   const { t, i18n } = useTranslation();
@@ -21,61 +52,33 @@ export function TeamDashboard() {
   const subcategories = useDocumentStore((state) => state.subcategories);
   const navigate = useNavigate();
 
-  // Selector 최적화: 상태값은 개별 selector로
   const favorites = useFavoriteStore((state) => state.favorites);
   const recentVisits = useFavoriteStore((state) => state.recentVisits);
-  const parentCategoryStats = useFavoriteStore((state) => state.parentCategoryStats);
-  // 함수는 한 번에 가져오기 (참조 안정적)
-  const { fetchFavorites, fetchRecentVisits, fetchParentCategoryStats } = useFavoriteStore();
+  const { fetchFavorites, fetchRecentVisits } = useFavoriteStore();
 
-  // 권한 있는 부서 ID 목록
   const [accessibleDepartmentIds, setAccessibleDepartmentIds] = useState<string[]>([]);
+  const [memberCount, setMemberCount] = useState(0);
 
   useEffect(() => {
     fetchFavorites();
     fetchRecentVisits(5);
-    fetchParentCategoryStats();
-  }, [fetchFavorites, fetchRecentVisits, fetchParentCategoryStats]);
+  }, [fetchFavorites, fetchRecentVisits]);
 
-  // 권한 있는 부서 목록 조회
   useEffect(() => {
     const fetchAccessibleDepartments = async () => {
-      if (!user?.id) {
-        setAccessibleDepartmentIds([]);
-        return;
-      }
-
+      if (!user?.id) { setAccessibleDepartmentIds([]); return; }
       const ownDeptId = user.departmentId;
-      
-      // 추가 권한 부여된 부서 조회
       const { data: permissionData } = await supabase
         .from('user_permissions')
         .select('department_id')
         .eq('user_id', user.id)
         .neq('role', 'none');
-
       const permDeptIds = permissionData?.map((p: any) => p.department_id) || [];
-      const allIds = new Set<string>([
-        ...(ownDeptId ? [ownDeptId] : []),
-        ...permDeptIds,
-      ]);
-
+      const allIds = new Set<string>([...(ownDeptId ? [ownDeptId] : []), ...permDeptIds]);
       setAccessibleDepartmentIds(Array.from(allIds));
     };
-
     fetchAccessibleDepartments();
   }, [user?.id, user?.departmentId]);
-
-  const userDepartment = departments.find((d) => d.id === user?.departmentId);
-  const userDocuments = documents.filter((d) => accessibleDepartmentIds.includes(d.departmentId));
-  const userParentCategories = parentCategories.filter(
-    (pc) => accessibleDepartmentIds.includes(pc.departmentId),
-  );
-  const userSubcategories = subcategories.filter(
-    (sc) => accessibleDepartmentIds.includes(sc.departmentId),
-  );
-
-  const [memberCount, setMemberCount] = useState(0);
 
   useEffect(() => {
     const fetchMemberCount = async () => {
@@ -89,87 +92,115 @@ export function TeamDashboard() {
     fetchMemberCount();
   }, [user?.departmentId]);
 
+  const userDepartment = departments.find((d) => d.id === user?.departmentId);
+  const userDocuments = documents.filter((d) => accessibleDepartmentIds.includes(d.departmentId));
+  const userParentCategories = parentCategories.filter(
+    (pc) => accessibleDepartmentIds.includes(pc.departmentId),
+  );
+  const userSubcategories = subcategories.filter(
+    (sc) => accessibleDepartmentIds.includes(sc.departmentId),
+  );
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString(i18n.language === 'ko' ? 'ko-KR' : 'en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
+  });
+
   const stats = [
-    {
-      title: t('dashboard.accessibleDocuments'),
-      value: userDocuments.length,
-      icon: FileText,
-      color: '#2563eb',
-    },
-    {
-      title: t('dashboard.accessibleParentCategories'),
-      value: userParentCategories.length,
-      icon: FolderOpen,
-      color: '#3B82F6',
-    },
-    {
-      title: t('dashboard.accessibleSubcategories'),
-      value: userSubcategories.length,
-      icon: Archive,
-      color: '#8B5CF6',
-    },
-    {
-      title: t('dashboard.myTeamMembers'),
-      value: memberCount,
-      icon: Users,
-      color: '#10B981',
-    },
+    { title: t('dashboard.accessibleDocuments'),       value: userDocuments.length,       icon: FileText, color: '#2563eb' },
+    { title: t('dashboard.accessibleParentCategories'), value: userParentCategories.length, icon: FolderOpen, color: '#10b981' },
+    { title: t('dashboard.accessibleSubcategories'),   value: userSubcategories.length,   icon: Archive,  color: '#8b5cf6' },
+    { title: t('dashboard.myTeamMembers'),             value: memberCount,                 icon: Users,    color: '#f59e0b' },
   ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Greeting */}
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {userDepartment?.name} {t('dashboard.title')}
+          <p className="text-sm text-slate-500 font-medium mb-1.5">{dateStr}</p>
+          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight leading-tight text-slate-900">
+            {i18n.language === 'ko'
+              ? `안녕하세요, ${user?.name || ''}님 👋`
+              : `Hello, ${user?.name || ''}!`}
           </h1>
-          <p className="text-slate-500 mt-1">
-            {t('dashboard.deptCode')} {userDepartment?.code}
+          <p className="mt-2 text-sm text-slate-500">
+            {userDepartment?.name}{userDepartment?.code ? ` · ${userDepartment.code}` : ''}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">
-                        {stat.title}
-                      </p>
-                      <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                    </div>
-                    <div
-                      className="p-3 rounded-xl"
-                      style={{ backgroundColor: `${stat.color}20` }}
-                    >
-                      <Icon className="h-6 w-6" style={{ color: stat.color }} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* KPI tiles */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {stats.map((s) => (
+            <StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} />
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500" />
-                {t('dashboard.favorites')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {favorites.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">
-                  {t('dashboard.noFavorites')}
+        {/* Main grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6">
+          {/* 접근 가능한 상위 카테고리 현황 */}
+          <div className={card}>
+            <div className="px-5 sm:px-6 py-4 flex items-center justify-between border-b border-slate-100">
+              <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                <FolderOpen className="h-4 w-4 text-[#2563eb]" />
+                {t('dashboard.parentCategoryDocStatus')}
+              </h2>
+              <button
+                onClick={() => navigate('/team/parent-categories')}
+                className="text-xs font-medium text-slate-500 border border-[#e5e7eb] rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors"
+              >
+                {t('common.viewAll')}
+              </button>
+            </div>
+            <div>
+              {userParentCategories.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-8">
+                  {t('statistics.addParentCategory')}
                 </p>
               ) : (
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {favorites.slice(0, 5).map((fav) => (
+                userParentCategories.slice(0, 6).map((category) => {
+                  const docCount = documents.filter((d) => d.parentCategoryId === category.id).length;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => navigate(`/team/parent-category/${category.id}`)}
+                      className="w-full flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-3.5 border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60 transition-colors text-left"
+                    >
+                      <div className="w-9 h-9 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-[18px] w-[18px] text-[#2563eb]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-slate-900 truncate">{category.name}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{userDepartment?.name}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xl font-bold text-slate-900">{docCount}</p>
+                        <p className="text-[10px] text-slate-400">{t('common.documents')}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* 우측 패널 */}
+          <div className="flex flex-col gap-4">
+            {/* 즐겨찾기 */}
+            <div className={card}>
+              <div className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                <h2 className="text-sm font-semibold text-slate-900">{t('dashboard.favorites')}</h2>
+              </div>
+              <div className="py-1">
+                {favorites.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-5">
+                    {t('dashboard.noFavorites')}
+                  </p>
+                ) : (
+                  favorites.slice(0, 4).map((fav) => (
                     <button
                       key={fav.id}
                       type="button"
@@ -179,169 +210,67 @@ export function TeamDashboard() {
                           `/team/parent-category/${fav.parentCategoryId}/subcategory/${fav.subcategoryId}`,
                         );
                       }}
-                      className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
+                      className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0"
                     >
-                      <p className="font-medium text-sm truncate">
+                      <p className="font-medium text-sm text-slate-900 truncate">
                         {fav.subcategoryName || t('dashboard.unnamedSubcategory')}
                       </p>
-                      <p className="text-xs text-slate-500 truncate">
-                        {[fav.departmentName, fav.parentCategoryName]
-                          .filter(Boolean)
-                          .join(' · ')}
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {[fav.departmentName, fav.parentCategoryName].filter(Boolean).join(' · ')}
                       </p>
                     </button>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-500" />
-                {t('dashboard.recentVisits')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentVisits.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">
-                  {t('dashboard.noRecentVisits')}
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {recentVisits.slice(0, 5).map((visit) => (
-                    <button
-                      key={visit.id}
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/team/parent-category/${visit.parentCategoryId}/subcategory/${visit.subcategoryId}`,
-                        )
-                      }
-                      className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
-                    >
-                      <p className="font-medium text-sm truncate">
-                        {visit.subcategoryName || t('dashboard.unnamedSubcategory')}
-                      </p>
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-slate-500 truncate">
-                          {[visit.departmentName, visit.parentCategoryName]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {formatDistanceToNow(new Date(visit.visitedAt), {
-                            locale: i18n.language === 'ko' ? ko : undefined,
-                            addSuffix: true,
-                          })}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                {t('dashboard.topParentCategories')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {parentCategoryStats.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">
-                  {t('dashboard.noUsageStats')}
-                </p>
-              ) : (
-                <div className="space-y-3 max-h-36 overflow-y-auto pr-1">
-                  {parentCategoryStats.slice(0, 5).map((stat, index) => (
-                    <button
-                      key={stat.parentCategoryId}
-                      type="button"
-                      onClick={() =>
-                        navigate(`/team/parent-category/${stat.parentCategoryId}`)
-                      }
-                      className="w-full text-left p-3 rounded-lg border bg-white hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">
-                              {stat.parentCategoryName}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {t('dashboard.visitCount', { count: stat.visitCount })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{t('dashboard.parentCategoryDocStatus')}</CardTitle>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/team/parent-categories')}
-              >
-                {t('common.viewAll')}
-              </Button>
+                  ))
+                )}
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {userParentCategories.map((category) => {
-                const categoryDocCount = documents.filter(
-                  (doc) => doc.parentCategoryId === category.id
-                ).length;
-                return (
-                  <Card
-                    key={category.id}
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/team/parent-category/${category.id}`)}
-                  >
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-[#2563eb] p-2 rounded-lg">
-                          <FileText className="h-5 w-5 text-white" />
+
+            {/* 최근 방문 — 타임라인 */}
+            <div className={card}>
+              <div className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#2563eb]" />
+                <h2 className="text-sm font-semibold text-slate-900">{t('dashboard.recentVisits')}</h2>
+              </div>
+              <div className="px-4 py-2">
+                {recentVisits.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-5">
+                    {t('dashboard.noRecentVisits')}
+                  </p>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute left-2.5 top-3 bottom-3 w-px bg-slate-100" />
+                    {recentVisits.slice(0, 5).map((visit) => (
+                      <button
+                        key={visit.id}
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/team/parent-category/${visit.parentCategoryId}/subcategory/${visit.subcategoryId}`,
+                          )
+                        }
+                        className="relative flex items-start gap-3 py-2.5 w-full text-left"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-[#eff6ff] border-2 border-white shadow-sm flex items-center justify-center shrink-0 z-10 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
                         </div>
-                        <div>
-                          <p className="font-medium">{category.name}</p>
-                          <p className="text-sm text-slate-500">
-                            {userDepartment?.name}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-xs text-slate-900 truncate">
+                            {visit.subcategoryName || t('dashboard.unnamedSubcategory')}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            {formatDistanceToNow(new Date(visit.visitedAt), {
+                              locale: i18n.language === 'ko' ? ko : undefined,
+                              addSuffix: true,
+                            })}
                           </p>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{categoryDocCount}</p>
-                        <p className="text-xs text-slate-500">{t('common.documents')}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-              {userParentCategories.length === 0 && (
-                <p className="text-sm text-slate-500 text-center py-4">
-                  {t('statistics.addParentCategory')}
-                </p>
-              )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

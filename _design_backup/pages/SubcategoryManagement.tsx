@@ -548,10 +548,12 @@ export function SubcategoryManagement() {
         <BackButton className="mb-4" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('subcategoryMgmt.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('subcategoryMgmt.subtitle')}</p>
+            <h1 className="text-3xl font-bold">{t('subcategoryMgmt.title')}</h1>
+            <p className="text-slate-500 mt-1">
+              {t('subcategoryMgmt.subtitle')}
+            </p>
           </div>
-          <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
+          <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('parentCategoryDetail.addSubcategory')}
           </Button>
@@ -567,9 +569,9 @@ export function SubcategoryManagement() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">{t('common.department')}</p>
+                <p className="text-sm font-medium text-slate-600 mb-1">{t('common.department')}</p>
                 <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
                   value={selectedDepartmentId}
                   onChange={(e) => {
                     setSelectedDepartmentId(e.target.value);
@@ -587,9 +589,9 @@ export function SubcategoryManagement() {
                 </select>
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">{t('subcategoryDetail.parentCategory')}</p>
+                <p className="text-sm font-medium text-slate-600 mb-1">{t('subcategoryDetail.parentCategory')}</p>
                 <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-50 disabled:bg-slate-50"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
                   value={selectedParentCategoryId}
                   onChange={(e) => setSelectedParentCategoryId(e.target.value)}
                   disabled={filteredParentCategories.length === 0}
@@ -646,7 +648,7 @@ export function SubcategoryManagement() {
                   <Card
                     key={sub.id}
                     className={cn(
-                      "hover:shadow-md transition-shadow cursor-pointer flex flex-col",
+                      "hover:shadow-lg transition-shadow cursor-pointer flex flex-col",
                       expiryStatus.status === 'expired' && "opacity-50 bg-gray-100 border-gray-300",
                       expiryStatus.status === 'warning_7' && "border-orange-300 bg-orange-50",
                       expiryStatus.status === 'warning_30' && "border-yellow-300 bg-yellow-50"
@@ -656,8 +658,8 @@ export function SubcategoryManagement() {
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0 overflow-hidden">
-                            <CardTitle className="text-base truncate">{sub.name}</CardTitle>
-                            <CardDescription className="text-xs mt-0.5 truncate">
+                            <CardTitle className="text-lg truncate">{sub.name}</CardTitle>
+                            <CardDescription className="mt-1 truncate">
                               {sub.description || t('parentCategoryDetail.noDescription')}
                             </CardDescription>
                           </div>

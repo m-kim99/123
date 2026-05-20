@@ -13,6 +13,7 @@ import changeIcon from '@/assets/change.svg';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -1108,26 +1109,51 @@ export function SubcategoryDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            { label: t('subcategoryDetail.docCount'), value: subcategoryDocuments.length },
-            { label: t('subcategoryDetail.nfcStatus'), value: subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive') },
-            { label: t('subcategoryDetail.storageLocation'), value: subcategory.storageLocation || t('subcategoryDetail.unassigned') },
-            { label: t('subcategoryDetail.managementNumber'), value: subcategory.managementNumber || t('subcategoryDetail.unassigned') },
-          ].map((tile) => (
-            <div key={tile.label} className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
-              <p className="text-xs font-medium text-slate-500 mb-3">{tile.label}</p>
-              <p className="text-[26px] font-bold leading-none tracking-tight text-slate-900 truncate">{tile.value}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.docCount')}</p>
+              <p className="text-2xl font-bold mt-2">
+                {subcategoryDocuments.length}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.nfcStatus')}</p>
+              <p className="text-2xl font-bold mt-2">
+                {subcategory.nfcRegistered ? t('subcategoryDetail.active') : t('subcategoryDetail.inactive')}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.storageLocation')}</p>
+              <p className="text-2xl font-bold mt-2">
+                {subcategory.storageLocation || t('subcategoryDetail.unassigned')}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-slate-500">{t('subcategoryDetail.managementNumber')}</p>
+              <p className="text-2xl font-bold mt-2">
+                {subcategory.managementNumber || t('subcategoryDetail.unassigned')}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-900">{t('subcategoryDetail.documentList')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('subcategoryDetail.documentListDesc')}</p>
-          </div>
-          <div className="p-4 sm:p-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>{t('subcategoryDetail.documentList')}</CardTitle>
+              <CardDescription className="mt-1">
+                {t('subcategoryDetail.documentListDesc')}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
             {subcategoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 {t('subcategoryDetail.noDocuments')}
@@ -1137,7 +1163,7 @@ export function SubcategoryDetail() {
                 {subcategoryDocuments.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border border-[#e5e7eb] rounded-[10px]"
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="p-2 rounded-lg bg-slate-100">
@@ -1206,15 +1232,17 @@ export function SubcategoryDetail() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white border border-[#e5e7eb] rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-900">{t('subcategoryDetail.uploadDocument')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('subcategoryDetail.uploadDocumentDesc')}</p>
-          </div>
-          <div className="p-4 sm:p-6 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('subcategoryDetail.uploadDocument')}</CardTitle>
+            <CardDescription>
+              {t('subcategoryDetail.uploadDocumentDesc')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
             {/* 파일 업로드 영역 */}
             <div className="space-y-2">
               <Label className="font-medium">{t('documentMgmt.fileUpload')}</Label>
@@ -1270,11 +1298,14 @@ export function SubcategoryDetail() {
 
             {/* OCR 추출 텍스트 미리보기/편집 */}
             {uploadOcrPreview && (
-              <div className="border border-[#e5e7eb] rounded-[10px] overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <p className="text-sm font-semibold text-slate-900">{t('documentMgmt.ocrExtractedText')}</p>
-                </div>
-                <div className="p-4 space-y-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t('documentMgmt.ocrExtractedText')}</CardTitle>
+                  <CardDescription>
+                    {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingUploadOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">
                       {(isEditingUploadOcr ? editedUploadOcrText : uploadOcrPreview).length.toLocaleString()}{t('documentMgmt.chars')} {isEditingUploadOcr ? t('documentMgmt.editing') : t('documentMgmt.extracted')}
@@ -1343,8 +1374,8 @@ export function SubcategoryDetail() {
                       {uploadOcrPreview}
                     </div>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* 업로드 가이드라인 */}
@@ -1363,7 +1394,7 @@ export function SubcategoryDetail() {
             <Button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading || isExtractingUploadOcr || !canDo('upload')}
-              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold"
+              className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {isExtractingUploadOcr ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1372,8 +1403,8 @@ export function SubcategoryDetail() {
               )}
               {isExtractingUploadOcr ? t('documentMgmt.extractingOcr') : isUploading ? t('documentMgmt.uploading') : t('documentMgmt.upload')}
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
         <Dialog
           open={editDialogOpen}
           onOpenChange={(open) => {

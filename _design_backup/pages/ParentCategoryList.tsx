@@ -138,14 +138,16 @@ export function ParentCategoryList() {
         <BackButton className="mb-4" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('parentCatList.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('parentCatList.subtitle')}</p>
+            <h1 className="text-3xl font-bold">{t('parentCatList.title')}</h1>
+            <p className="text-slate-500 mt-1">
+              {t('parentCatList.subtitle')}
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <select
               value={selectedDepartmentId}
               onChange={(e) => setSelectedDepartmentId(e.target.value)}
-              className="border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm min-w-[150px] bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+              className="border rounded-md px-3 py-2 text-sm min-w-[150px]"
             >
               <option value="">{t('parentCatList.allDepartments')}</option>
               {departments
@@ -156,7 +158,7 @@ export function ParentCategoryList() {
                   </option>
                 ))}
             </select>
-            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
+            <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t('deptDetail.addParentCategory')}
             </Button>
@@ -190,27 +192,31 @@ export function ParentCategoryList() {
                 return (
                   <Card
                     key={pc.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    className="hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => navigate(`${basePath}/parent-category/${pc.id}`)}
                   >
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base truncate">{pc.name}</CardTitle>
-                      <CardDescription className="text-xs mt-0.5 truncate">
+                    <CardHeader>
+                      <CardTitle className="text-lg truncate">{pc.name}</CardTitle>
+                      <CardDescription className="mt-1 truncate">
                         {pc.description || t('parentCategoryDetail.noDescription')}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        {[
-                          { label: t('common.department'), value: dept?.name ?? pc.departmentId },
-                          { label: t('deptDetail.subcategories'), value: pc.subcategoryCount },
-                          { label: t('deptDetail.docCount'), value: pc.documentCount },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">{label}</span>
-                            <span className="font-semibold text-slate-900">{value}</span>
-                          </div>
-                        ))}
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">{t('common.department')}</span>
+                          <span className="font-medium">
+                            {dept?.name ?? pc.departmentId}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">{t('deptDetail.subcategories')}</span>
+                          <span className="font-medium">{pc.subcategoryCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">{t('deptDetail.docCount')}</span>
+                          <span className="font-medium">{pc.documentCount}</span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
