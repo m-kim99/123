@@ -135,7 +135,7 @@ function loadMessages(defaultMsg: ChatMessage, userId: string | undefined): Chat
   return [defaultMsg];
 }
 
-export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatbotProps) {
+export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
   const { t, i18n } = useTranslation();
   const currentLocale = localStorage.getItem('app-language') || i18n.language || 'ko';
   const navigate = useNavigate();

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +15,8 @@ import {
 import { useAuthStore, UserRole } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { Building2, Check } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export function OnboardingPage() {
   const { t } = useTranslation();
@@ -177,37 +178,85 @@ export function OnboardingPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="flex flex-col items-center">
-        <Card className="w-full max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>{t('onboarding.title')}</CardTitle>
-            <CardDescription>
-              {t('onboarding.description')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 max-h-[90vh] overflow-y-auto">
-            <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-100 p-1 rounded-xl h-auto">
-                <TabsTrigger
-                  value="admin"
-                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
-                >
-                  {t('common.admin')}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="team"
-                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
-                >
-                  {t('common.team')}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+  // Determine step: 1=account created, 2=company info, 3=department
+  const currentStep = companyCodeVerified ? (role === 'team' ? 2 : 2) : 1;
+  const steps = [t('onboarding.stepAccount') || '계정 생성', t('onboarding.stepCompany') || '회사 정보', t('onboarding.stepDept') || '부서 설정'];
 
-            <div className="space-y-2">
-              <Label>{t('signup.companyCode')}</Label>
+  return (
+    <div className="min-h-screen w-screen flex items-center justify-center bg-[#f8f9fa] p-4 sm:p-8">
+      <div className="w-full max-w-[520px]">
+        {/* Progress bar */}
+        <div className="mb-9">
+          <div className="flex items-center justify-between mb-4">
+            <img src={logo} alt="TrayStorage" className="h-[26px]" />
+            <button
+              onClick={() => { useAuthStore.getState().logout(); navigate('/'); }}
+              className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+            >
+              {t('common.logout') || '로그아웃'}
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            {steps.map((_, i) => (
+              <div key={i} className="flex items-center flex-1">
+                <div className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold flex-none ${
+                  i < currentStep ? 'bg-[#2563eb] text-white' : i === currentStep ? 'bg-[#2563eb] text-white' : 'bg-[#e5e7eb] text-slate-500'
+                }`}>
+                  {i < currentStep ? <Check className="h-[13px] w-[13px]" /> : i + 1}
+                </div>
+                {i < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1.5 rounded-full ${i < currentStep ? 'bg-[#2563eb]' : 'bg-[#e5e7eb]'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            {steps.map((s, i) => (
+              <span key={s} className={`text-[11.5px] ${i <= currentStep ? 'text-slate-900 font-semibold' : 'text-slate-500'} ${
+                i === 0 ? 'text-left' : i === steps.length - 1 ? 'text-right' : 'text-center'
+              }`}>{s}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Main card */}
+        <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm p-6 sm:p-8">
+          {/* Icon header */}
+          <div className="flex justify-center mb-5">
+            <div className="w-14 h-14 rounded-[14px] bg-[#dbeafe] flex items-center justify-center">
+              <Building2 className="h-7 w-7 text-[#2563eb]" />
+            </div>
+          </div>
+          <h1 className="text-[22px] font-bold tracking-tight text-center text-slate-900">
+            {t('onboarding.title')}
+          </h1>
+          <p className="text-[13px] text-slate-500 text-center mt-2.5 mb-6">
+            {t('onboarding.description')}
+          </p>
+
+          {/* Role tabs */}
+          <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
+            <TabsList className="grid w-full grid-cols-2 mb-5 bg-slate-100 p-1 rounded-[10px] h-auto">
+              <TabsTrigger
+                value="admin"
+                className="rounded-lg py-2 text-[12.5px] font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              >
+                {t('common.admin')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="team"
+                className="rounded-lg py-2 text-[12.5px] font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              >
+                {t('common.team')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="space-y-3.5">
+            <div className="space-y-1.5">
+              <Label className="text-[13px] font-medium text-slate-900">{t('signup.companyCode')}</Label>
               <Input
+                className="h-10 rounded-lg"
                 placeholder={t('signup.companyCodePlaceholder')}
                 value={companyCode}
                 onChange={(e) => {
@@ -217,9 +266,10 @@ export function OnboardingPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>{t('signup.companyName')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[13px] font-medium text-slate-900">{t('signup.companyName')}</Label>
               <Input
+                className="h-10 rounded-lg"
                 placeholder={t('signup.companyNamePlaceholder')}
                 value={companyName}
                 onChange={(e) => {
@@ -229,23 +279,33 @@ export function OnboardingPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            {/* Verify button / status */}
+            {companyCodeVerified ? (
+              <div className="p-3.5 bg-[#ecfdf5] border border-[#a7f3d0] rounded-[10px] flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-[#10b981] text-white flex items-center justify-center flex-none">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div className="text-[13px] font-semibold text-[#065f46]">{t('onboarding.verifyComplete') || '인증 완료'}</div>
+                  <div className="text-[12px] text-[#047857] mt-0.5">{t('onboarding.companyVerified') || '회사 정보가 인증되었습니다.'}</div>
+                </div>
+              </div>
+            ) : (
               <Button
                 type="button"
-                className={`w-full ${
-                  companyCodeVerified ? 'bg-green-600 hover:bg-green-600' : ''
-                }`}
+                variant="outline"
+                className="w-full h-10 rounded-lg"
                 onClick={handleVerifyCompany}
                 disabled={!companyCode.trim() || !companyName.trim()}
-                variant={companyCodeVerified ? 'default' : 'outline'}
               >
-                {companyCodeVerified ? t('signup.verifiedReVerify') : t('signup.verifyButton')}
+                {t('signup.verifyButton')}
               </Button>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label>{t('signup.name')}</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[13px] font-medium text-slate-900">{t('signup.name')}</Label>
               <Input
+                className="h-10 rounded-lg"
                 placeholder={t('signup.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -253,14 +313,14 @@ export function OnboardingPage() {
             </div>
 
             {role === 'team' && (
-              <div className="space-y-2">
-                <Label>{t('signup.department')}</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[13px] font-medium text-slate-900">{t('signup.department')}</Label>
                 <Select
                   value={departmentId}
                   onValueChange={(value) => setDepartmentId(value)}
                   disabled={!companyCodeVerified || isLoadingDepartments}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-lg">
                     <SelectValue
                       placeholder={
                         !companyCodeVerified
@@ -286,14 +346,18 @@ export function OnboardingPage() {
 
             <Button
               type="button"
-              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold mt-4"
+              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold mt-2 shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
               onClick={handleComplete}
               disabled={isSubmitting || isLoading}
             >
-              {isSubmitting || isLoading ? t('common.saving') : t('onboarding.complete')}
+              {isSubmitting || isLoading ? t('common.saving') : (t('onboarding.complete') + ' →')}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        <p className="text-[11.5px] text-slate-400 text-center mt-4.5">
+          {t('onboarding.wrongCompanyHint') || '잘못된 회사로 들어왔다면 관리자에게 문의하세요.'}
+        </p>
       </div>
     </div>
   );

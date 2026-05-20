@@ -1252,7 +1252,7 @@ export function SubcategoryDetail() {
               <div className="flex items-center gap-2 text-sm">
                 {isExtractingUploadOcr && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
                 {!isExtractingUploadOcr && uploadOcrPreview && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                <span className={isExtractingUploadOcr ? 'text-blue-600' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
+                <span className={isExtractingUploadOcr ? 'text-[#2563eb]' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
                   {uploadOcrStatus}
                 </span>
               </div>
@@ -1339,7 +1339,7 @@ export function SubcategoryDetail() {
                       placeholder={t('documentMgmt.editOcrPlaceholder')}
                     />
                   ) : (
-                    <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                    <div className="border rounded-lg p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
                       {uploadOcrPreview}
                     </div>
                   )}
@@ -1672,7 +1672,7 @@ export function SubcategoryDetail() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'new'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('new')}
@@ -1682,7 +1682,7 @@ export function SubcategoryDetail() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'existing'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('existing')}
@@ -1699,7 +1699,7 @@ export function SubcategoryDetail() {
                     <div className="pb-2 mb-2 border-b">
                       <button
                         onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
+                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
                       >
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
@@ -1729,7 +1729,7 @@ export function SubcategoryDetail() {
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-blue-600"
+                              ? "bg-[#2563eb] border-[#2563eb]"
                               : "border-slate-300"
                           }`}>
                             {selectedUserIds.includes(companyUser.id) && (
@@ -1862,7 +1862,7 @@ export function SubcategoryDetail() {
                 {isExtractingOcr ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-blue-600">{t('subcategoryDetail.ocrExtracting')}</p>
+                    <p className="text-sm text-[#2563eb]">{t('subcategoryDetail.ocrExtracting')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2 w-full overflow-hidden">

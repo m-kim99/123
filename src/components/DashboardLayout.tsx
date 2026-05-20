@@ -961,7 +961,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Input
                 type="search"
                 placeholder={t('header.searchPlaceholder')}
-                className="w-full pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-md"
+                className="w-full pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -981,7 +981,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-full">
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-full">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
@@ -1073,7 +1073,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+              className="bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
               onClick={handleSearch}
             >
               <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
@@ -1082,7 +1082,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
+              className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
               onClick={async () => {
                 if (!isNotificationOpen) {
                   await requestLocalNotificationPermission();
@@ -1182,12 +1182,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {mobileLangExpanded && (
                 <div className="bg-slate-50 border-y">
                   <DropdownMenuItem onClick={() => changeLanguage('ko')} className="pl-8">
-                    <span className={i18n.language === 'ko' ? 'font-semibold text-blue-600' : ''}>
+                    <span className={i18n.language === 'ko' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('language.korean')}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changeLanguage('en')} className="pl-8">
-                    <span className={i18n.language === 'en' ? 'font-semibold text-blue-600' : ''}>
+                    <span className={i18n.language === 'en' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('language.english')}
                     </span>
                   </DropdownMenuItem>
@@ -1214,7 +1214,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Input
                     type="search"
                     placeholder={t('header.searchPlaceholder')}
-                    className="bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-md"
+                    className="bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-lg"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -1234,7 +1234,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
 
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-[600px]">
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-[600px]">
                       {isLoadingSuggestions ? (
                         <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                       ) : (
@@ -1326,7 +1326,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="bg-white hover:border-blue-500 border-slate-200 rounded-md"
+                  className="bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
                   onClick={handleSearch}
                 >
                   <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
@@ -1335,7 +1335,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="relative bg-white hover:border-blue-500 border-slate-200 rounded-md"
+                  className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
                   onClick={() => setIsNotificationOpen((prev) => !prev)}
                 >
                   <img src={bellIcon} alt={t('header.notifications')} className="h-7 w-7 block object-contain" />
@@ -1807,7 +1807,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-slate-50 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.basic')}</span>
-                        <span className="text-2xl font-bold text-blue-600">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-center gap-2">✓ {t('subscription.members')} 3{t('subscription.personUnit')}</li>
@@ -1825,7 +1825,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">Pro</span>
-                        <span className="text-2xl font-bold text-blue-600">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-center gap-2">✓ {t('subscription.members')} 10{t('subscription.personUnit')}</li>
@@ -1885,14 +1885,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DialogHeader>
               {isLoadingSubscription ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563eb]" />
                 </div>
               ) : subscriptionInfo ? (
                 <div className="space-y-5">
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
-                      <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
+                      <span className="px-3 py-1 bg-[#2563eb] text-white text-sm font-semibold rounded-full">
                         {subscriptionInfo.displayName}
                       </span>
                     </div>
@@ -1931,7 +1931,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             }`}
                           >
                             {plan.highlight && (
-                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
+                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#2563eb] text-white text-[10px] font-semibold rounded-full">
                                 {t('subscription.current')}
                               </span>
                             )}

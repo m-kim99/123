@@ -1511,7 +1511,7 @@ export function CategoryDetail() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'new'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('new')}
@@ -1521,7 +1521,7 @@ export function CategoryDetail() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'existing'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('existing')}
@@ -1538,7 +1538,7 @@ export function CategoryDetail() {
                     <div className="pb-2 mb-2 border-b">
                       <button
                         onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
+                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
                       >
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
@@ -1568,7 +1568,7 @@ export function CategoryDetail() {
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-blue-600"
+                              ? "bg-[#2563eb] border-[#2563eb]"
                               : "border-slate-300"
                           }`}>
                             {selectedUserIds.includes(companyUser.id) && (

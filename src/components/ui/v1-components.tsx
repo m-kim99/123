@@ -211,7 +211,7 @@ export function V1Chip({
 }: V1ChipProps) {
   return (
     <span className={cn(
-      'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border whitespace-nowrap',
+      'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium border whitespace-nowrap',
       chipStyles[variant],
       className,
     )}>

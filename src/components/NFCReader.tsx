@@ -186,7 +186,7 @@ export function NFCReader() {
             {/* 스캔 중 상태 */}
             {status === 'scanning' && (
               <Alert className="border-blue-200 bg-blue-50">
-                <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                <Loader2 className="h-4 w-4 text-[#2563eb] animate-spin" />
                 <AlertTitle className="text-blue-900">{t('nfc.scanning')}</AlertTitle>
                 <AlertDescription className="text-blue-800">
                   {statusMessage}

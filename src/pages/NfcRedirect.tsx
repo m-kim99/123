@@ -155,7 +155,7 @@ export function NfcRedirect() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+        <Loader2 className="h-12 w-12 animate-spin text-[#2563eb] mx-auto mb-4" />
         <p className="text-lg font-medium text-slate-700">{t('nfcRedirect.tagDetected')}</p>
         <p className="text-sm text-slate-500 mt-2">{t('nfcRedirect.navigating')}</p>
       </div>

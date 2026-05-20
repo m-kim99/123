@@ -210,7 +210,7 @@ export function Statistics() {
                       className="flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center font-medium">
+                        <div className="bg-blue-100 text-[#2563eb] rounded-full w-8 h-8 flex items-center justify-center font-medium">
                           {index + 1}
                         </div>
                         <span className="font-medium">{cat.name}</span>

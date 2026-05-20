@@ -164,7 +164,7 @@ export function NFCWriter({ category, categoryCode }: NFCWriterProps) {
         {/* 상태 메시지 */}
         {status === 'writing' && (
           <Alert className="border-blue-200 bg-blue-50">
-            <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+            <Loader2 className="h-4 w-4 text-[#2563eb] animate-spin" />
             <AlertTitle className="text-blue-900">{t('nfc.writingTag')}</AlertTitle>
             <AlertDescription className="text-blue-800">
               {statusMessage}

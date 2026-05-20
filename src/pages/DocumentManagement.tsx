@@ -2192,7 +2192,7 @@ export function DocumentManagement() {
                     <div className="space-y-2">
                       <Label>{t('documentMgmt.department')}</Label>
                       <select
-                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        className="w-full border rounded-lg px-3 py-2 text-sm"
                         value={newCategory.departmentId}
                         onChange={(e) =>
                           setNewCategory({
@@ -2215,7 +2215,7 @@ export function DocumentManagement() {
                     <div className="space-y-2">
                       <Label>{t('documentMgmt.parentCategory')}</Label>
                       <select
-                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        className="w-full border rounded-lg px-3 py-2 text-sm"
                         value={newCategory.parentCategoryId}
                         onChange={(e) =>
                           setNewCategory({
@@ -3731,7 +3731,7 @@ export function DocumentManagement() {
                           placeholder={t('documentMgmt.editOcrPlaceholder')}
                         />
                       ) : (
-                        <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
+                        <div className="border rounded-lg p-3 max-h-64 overflow-y-auto bg-slate-50 text-sm whitespace-pre-wrap">
                           {ocrTextPreview}
                         </div>
                       )}
@@ -4009,7 +4009,7 @@ export function DocumentManagement() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'new'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('new')}
@@ -4019,7 +4019,7 @@ export function DocumentManagement() {
               <button
                 className={`flex-1 py-2 text-sm font-medium bg-white ${
                   activeShareTab === 'existing'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-[#2563eb] text-[#2563eb]'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
                 onClick={() => setActiveShareTab('existing')}
@@ -4036,7 +4036,7 @@ export function DocumentManagement() {
                     <div className="pb-2 mb-2 border-b">
                       <button
                         onClick={handleSelectAllUsers}
-                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50"
+                        className="text-sm text-slate-600 hover:text-slate-800 bg-white px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50"
                       >
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
@@ -4068,7 +4068,7 @@ export function DocumentManagement() {
                           <div className={cn(
                             "w-5 h-5 rounded border-2 flex items-center justify-center",
                             selectedUserIds.includes(companyUser.id)
-                              ? "bg-[#2563eb] border-blue-600"
+                              ? "bg-[#2563eb] border-[#2563eb]"
                               : "border-slate-300"
                           )}>
                             {selectedUserIds.includes(companyUser.id) && (
@@ -4201,7 +4201,7 @@ export function DocumentManagement() {
                 {isExtractingReplaceOcr ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-sm text-blue-600">{t('documentMgmt.extractingOcr')}</p>
+                    <p className="text-sm text-[#2563eb]">{t('documentMgmt.extractingOcr')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2">

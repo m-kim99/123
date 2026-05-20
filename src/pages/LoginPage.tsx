@@ -749,7 +749,7 @@ export function LoginPage() {
         {/* 모바일 전용 로고 */}
         <div className="md:hidden mb-8 flex items-end gap-2">
           <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded -translate-y-[25%]">BETA</span>
+          <span className="text-xs font-bold text-[#2563eb] bg-[#dbeafe] px-2 py-1 rounded -translate-y-[25%]">BETA</span>
         </div>
 
         <div className="w-full max-w-[420px]">
@@ -817,7 +817,7 @@ export function LoginPage() {
                     </label>
                     <button
                       type="button"
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      className="text-sm text-[#2563eb] hover:text-[#1d4ed8]"
                       onClick={() => setResetPasswordOpen(true)}
                     >
                       {t('login.forgotPassword')}
@@ -830,7 +830,7 @@ export function LoginPage() {
                     {t('login.noAccount')}{' '}
                     <button
                       type="button"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('admin');
@@ -931,7 +931,7 @@ export function LoginPage() {
                     </label>
                     <button
                       type="button"
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      className="text-sm text-[#2563eb] hover:text-[#1d4ed8]"
                       onClick={() => setResetPasswordOpen(true)}
                     >
                       {t('login.forgotPassword')}
@@ -944,7 +944,7 @@ export function LoginPage() {
                     {t('login.noAccount')}{' '}
                     <button
                       type="button"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
                       onClick={() => {
                         resetSignupForm();
                         setSignupRole('team');
@@ -1312,7 +1312,7 @@ export function LoginPage() {
       <Dialog open={termsPopupType !== null} onOpenChange={(open) => { if (!open) setTermsPopupType(null); }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-blue-600 text-lg font-bold">
+            <DialogTitle className="text-[#2563eb] text-lg font-bold">
               {termsPopupType === 'tos' ? t('terms.tos') : t('terms.privacy')}
             </DialogTitle>
           </DialogHeader>
