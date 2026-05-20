@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
+import { supabase } from '@/lib/supabase';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, submitNativeSTT, stopNativeSTT, stopNativeSTTSilent } from '@/lib/appBridge';
 
@@ -968,6 +969,32 @@ export const AIChatbot = React.memo(function AIChatbot({ primaryColor }: AIChatb
 
     (async () => {
       try {
+        // 플랜 체크: basic/free 플랜은 AI 챗봇 사용 불가
+        if (user?.companyId) {
+          const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('plans(name, feature_ai_chat)')
+            .eq('company_id', user.companyId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          const plan = (sub as any)?.plans;
+          const planName = plan?.name || 'free';
+
+          if (planName === 'basic' || (plan && plan.feature_ai_chat === false)) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: t('chatbot.upgradeRequired'), timestamp: new Date() }
+                  : m
+              )
+            );
+            setIsTyping(false);
+            return;
+          }
+        }
         // history에는 기존 메시지만 포함하고, 이번에 보낸 메시지는 message 인자로만 한 번 전달
         const history: ChatHistoryItem[] = messages.map((m) => ({
           role: m.role,

@@ -1106,7 +1106,8 @@
     "goToParentCategory": "대분류로 이동",
     "sharedDocuments": "공유 문서함",
     "below": "아래",
-    "belowDoc": "아래 문서"
+    "belowDoc": "아래 문서",
+    "upgradeRequired": "AI 챗봇 기능은 Pro 플랜 이상에서 사용 가능합니다. 관리자에게 플랜 업그레이드를 요청해주세요. 🔒"
   },
   "months": {
     "1": "1월",

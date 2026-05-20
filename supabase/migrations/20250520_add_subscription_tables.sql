@@ -108,7 +108,7 @@ CREATE INDEX idx_usage_tracking_company_period
 INSERT INTO public.plans (name, display_name, price_monthly, price_yearly, max_members, max_departments, max_documents, max_storage_mb, max_ai_queries_monthly, max_nfc_tags, feature_ai_chat, feature_vector_search, feature_nfc, feature_ocr_advanced, feature_external_share, feature_statistics_advanced, feature_api_access, feature_audit_log, feature_custom_branding, sort_order)
 VALUES
   ('free', '무료', 0, 0, 10, 3, 100, 1024, 20, 0, true, false, false, false, false, false, false, false, false, 0),
-  ('basic', '베이직', 5900, 59000, 3, 2, 200, 2048, 50, 0, true, false, false, false, false, false, false, false, false, 1),
+  ('basic', '베이직', 5900, 59000, 3, 2, 200, 2048, 50, 0, false, false, false, false, false, false, false, false, false, 1),
   ('pro', 'Pro', 29900, 299000, 10, 10, 1000, 10240, 200, 20, true, true, true, true, true, true, false, false, false, 2),
   ('enterprise', 'Enterprise', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, true, true, true, true, true, true, true, true, true, 3);
 

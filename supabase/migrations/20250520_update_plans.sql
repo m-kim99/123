@@ -17,7 +17,7 @@ INSERT INTO public.plans (
 ) VALUES (
   'basic', '베이직', 5900, 59000,
   3, 2, 200, 2048, 50, 0,
-  true, false, false, false,
+  false, false, false, false,
   false, false, false, false, false,
   1
 );

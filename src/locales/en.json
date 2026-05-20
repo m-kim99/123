@@ -1106,7 +1106,8 @@
     "goToParentCategory": "Go to Parent Category",
     "sharedDocuments": "Shared Documents",
     "below": "below",
-    "belowDoc": "document below"
+    "belowDoc": "document below",
+    "upgradeRequired": "AI chatbot is available on Pro plan and above. Please ask your administrator to upgrade. 🔒"
   },
   "months": {
     "1": "Jan",
