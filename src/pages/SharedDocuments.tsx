@@ -9,9 +9,6 @@ import { v1Card, V1CardHeader, V1PageHeader, V1StatTile, V1Chip } from '@/compon
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -23,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileText, Search, Loader2, Share2, Bell, Users, Clock, MessageCircle } from 'lucide-react';
+import { FileText, Search, Loader2, Share2, Bell, Users, Clock, MessageCircle, Download, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import previewIcon from '@/assets/preview.svg';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -47,6 +44,10 @@ export function SharedDocuments() {
     title: string;
     url: string;
     type: 'image' | 'pdf' | 'other';
+    ocrText?: string | null;
+    uploader?: string;
+    uploadDate?: string;
+    fileSize?: string;
   } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [imageZoom, setImageZoom] = useState(100);
@@ -121,7 +122,7 @@ export function SharedDocuments() {
 
       const { data, error } = await supabase
         .from('documents')
-        .select('file_path, title')
+        .select('file_path, title, ocr_text, uploaded_by, uploaded_at, file_size')
         .eq('id', documentId)
         .single();
 
@@ -152,11 +153,24 @@ export function SharedDocuments() {
         type = 'image';
       }
 
+      const fileSizeRaw = (data as any).file_size;
+      let fileSizeStr: string | undefined;
+      if (fileSizeRaw) {
+        const bytes = Number(fileSizeRaw);
+        if (bytes >= 1048576) fileSizeStr = `${(bytes / 1048576).toFixed(1)}MB`;
+        else if (bytes >= 1024) fileSizeStr = `${Math.round(bytes / 1024)}KB`;
+        else fileSizeStr = `${bytes}B`;
+      }
+
       setPreviewDoc({
         id: documentId,
         title: data.title,
         url: publicUrl,
         type,
+        ocrText: (data as any).ocr_text ?? null,
+        uploader: (data as any).uploaded_by ?? undefined,
+        uploadDate: (data as any).uploaded_at ? new Date((data as any).uploaded_at).toLocaleDateString() : undefined,
+        fileSize: fileSizeStr,
       });
       setPreviewOpen(true);
     } catch (error) {
@@ -322,130 +336,72 @@ export function SharedDocuments() {
             }
           }}
         >
-          {/* PDF 미리보기 */}
-          {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
-              <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.docPreview')}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex-1 overflow-auto min-h-0">
-                {previewLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">{t('sharedDocs.loadingDoc')}</p>
-                  </div>
-                ) : (
-                  previewDoc && <PdfViewer url={previewDoc.url} />
-                )}
+          <DialogContent className="max-w-[840px] h-[90vh] flex flex-col overflow-hidden gap-0 p-0 rounded-[16px]" hideClose>
+            {/* V1 M4 Compact Header */}
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 shrink-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#eff6ff]">
+                <FileText className="h-4 w-4 text-[#1e40af]" />
               </div>
-
-              <DialogFooter className="border-t pt-3">
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">{t('sharedDocs.pdfDoc')}</span>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setPreviewOpen(false);
-                      setImageZoom(100);
-                      setImageRotation(0);
-                    }}
-                  >
-                    {t('common.close')}
-                  </Button>
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-semibold text-slate-900 truncate">{previewDoc?.title || t('sharedDocs.docPreview')}</div>
+                <div className="text-[11.5px] text-slate-500 font-mono truncate">
+                  {[previewDoc?.uploader, previewDoc?.uploadDate, previewDoc?.fileSize].filter(Boolean).join(' · ') || (previewDoc?.type === 'pdf' ? 'PDF' : 'Image')}
                 </div>
-              </DialogFooter>
-            </DialogContent>
-          )}
-
-          {/* 이미지 미리보기 */}
-          {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
-              <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('sharedDocs.imagePreview')}</DialogTitle>
-              </DialogHeader>
-
-              {/* 상단 툴바 */}
-              <div className="flex items-center justify-center gap-2 p-2 border-b bg-slate-50">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.max(25, imageZoom - 25))}
-                >
-                  ➖
-                </Button>
-
-                <span className="text-sm font-medium min-w-[60px] text-center">
-                  {imageZoom}%
-                </span>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.min(200, imageZoom + 25))}
-                >
-                  ➕
-                </Button>
-
-                <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title={t('sharedDocs.rotate90')}
-                >
-                  🔄
-                </Button>
-
-                {previewDoc && (
-                  <>
-                    <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(previewDoc.id)}
-                      title={t('sharedDocs.download')}
-                    >
-                      <img src={downloadIcon} alt={t('sharedDocs.download')} className="w-5 h-5" />
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const printWindow = window.open(previewDoc.url);
-                        if (printWindow) {
-                          setTimeout(() => {
-                            printWindow.print();
-                          }, 500);
-                        }
-                      }}
-                      title={t('sharedDocs.print')}
-                    >
-                      🖨️
-                    </Button>
-                  </>
-                )}
               </div>
-
-              {/* 메인 이미지 영역 */}
-              <div
-                className="flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-8"
-                onWheel={(e) => {
-                  if (e.ctrlKey) {
-                    e.preventDefault();
-                    const delta = e.deltaY > 0 ? -10 : 10;
-                    setImageZoom((prev) =>
-                      Math.max(25, Math.min(200, prev + delta)),
-                    );
-                  }
-                }}
+              {previewDoc && (
+                <button
+                  onClick={() => handleDownload(previewDoc.id)}
+                  className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {t('sharedDocs.download')}
+                </button>
+              )}
+              <button
+                onClick={() => { setPreviewOpen(false); setImageZoom(100); setImageRotation(0); }}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0"
               >
-                {previewLoading ? (
-                  <p className="text-slate-500">{t('sharedDocs.loadingImage')}</p>
-                ) : (
-                  previewDoc && (
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* V1 M4 Two-panel layout */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left: Viewer */}
+              <div className="flex-1 bg-[#f1f5f9] flex flex-col overflow-hidden relative">
+                {previewDoc?.type === 'image' && (
+                  <div className="flex items-center justify-center gap-1.5 px-3 py-2 border-b border-slate-200 bg-white/80 backdrop-blur-sm shrink-0">
+                    <button onClick={() => setImageZoom(Math.max(25, imageZoom - 25))} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50">
+                      <ZoomOut className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                    <span className="text-[12px] font-medium text-slate-700 min-w-[48px] text-center font-mono">{imageZoom}%</span>
+                    <button onClick={() => setImageZoom(Math.min(200, imageZoom + 25))} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50">
+                      <ZoomIn className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <button onClick={() => setImageRotation((imageRotation + 90) % 360)} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50" title={t('sharedDocs.rotate90')}>
+                      <RotateCw className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                  </div>
+                )}
+                <div
+                  className="flex-1 overflow-auto flex items-center justify-center p-8"
+                  onWheel={(e) => {
+                    if (previewDoc?.type === 'image' && e.ctrlKey) {
+                      e.preventDefault();
+                      const delta = e.deltaY > 0 ? -10 : 10;
+                      setImageZoom((prev) => Math.max(25, Math.min(200, prev + delta)));
+                    }
+                  }}
+                >
+                  {previewLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                      <p className="text-[13px] text-slate-500">{t('sharedDocs.loadingDoc')}</p>
+                    </div>
+                  ) : previewDoc?.type === 'pdf' ? (
+                    <div className="w-full h-full"><PdfViewer url={previewDoc.url} /></div>
+                  ) : previewDoc?.type === 'image' ? (
                     <img
                       src={previewDoc.url}
                       alt={previewDoc.title}
@@ -456,30 +412,50 @@ export function SharedDocuments() {
                         maxHeight: '100%',
                         objectFit: 'contain',
                       }}
-                      className="shadow-lg"
+                      className="rounded shadow-[0_20px_40px_-12px_rgba(0,0,0,0.25)]"
                     />
-                  )
-                )}
+                  ) : null}
+                </div>
               </div>
 
-              {/* 하단 푸터 */}
-              <DialogFooter className="border-t pt-3">
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">{t('sharedDocs.imageDoc')}</span>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setPreviewOpen(false);
-                      setImageZoom(100);
-                      setImageRotation(0);
-                    }}
-                  >
-                    {t('common.close')}
-                  </Button>
+              {/* Right: OCR + Meta sidebar */}
+              <div className="w-[280px] border-l border-[#e5e7eb] bg-white flex flex-col overflow-hidden shrink-0 hidden md:flex">
+                <div className="p-4 border-b border-slate-100 flex-1 overflow-auto">
+                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+                    OCR {t('documentMgmt.extractedText', { defaultValue: '추출 텍스트' })} · {previewDoc?.ocrText?.length?.toLocaleString() ?? 0}{t('documentMgmt.chars', { defaultValue: '자' })}
+                  </div>
+                  <div className="text-[11.5px] text-slate-500 leading-relaxed whitespace-pre-wrap">
+                    {previewDoc?.ocrText || t('documentMgmt.noOcrText', { defaultValue: 'OCR 텍스트 없음' })}
+                  </div>
                 </div>
-              </DialogFooter>
-            </DialogContent>
-          )}
+                <div className="p-4 border-b border-slate-100 shrink-0">
+                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2.5">
+                    {t('documentMgmt.docInfo', { defaultValue: '문서 정보' })}
+                  </div>
+                  <div className="flex flex-col gap-2 text-[12px]">
+                    {previewDoc?.uploader && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('documentMgmt.uploader', { defaultValue: '업로더' })}</span>
+                        <span className="text-slate-900 font-medium">{previewDoc.uploader}</span>
+                      </div>
+                    )}
+                    {previewDoc?.uploadDate && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('documentMgmt.uploadDate', { defaultValue: '업로드일' })}</span>
+                        <span className="text-slate-900 font-medium font-mono">{previewDoc.uploadDate}</span>
+                      </div>
+                    )}
+                    {previewDoc?.fileSize && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('documentMgmt.fileSize', { defaultValue: '파일 크기' })}</span>
+                        <span className="text-slate-900 font-medium font-mono">{previewDoc.fileSize}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
         </Dialog>
 
         {/* 삭제 확인 다이얼로그 */}

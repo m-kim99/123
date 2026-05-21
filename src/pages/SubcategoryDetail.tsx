@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity, Share2 } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity, Share2, Download, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/bin.svg';
@@ -19,7 +19,7 @@ import { v1Card, V1CardHeader, V1PageHeader, V1Chip, V1ModalHeader, V1ModalFoote
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
@@ -97,6 +97,10 @@ export function SubcategoryDetail() {
         title: string;
         url: string;
         type: 'image' | 'pdf' | 'other';
+        ocrText?: string | null;
+        uploader?: string;
+        uploadDate?: string;
+        fileSize?: string;
       }
     | null
   >(null);
@@ -535,7 +539,7 @@ export function SubcategoryDetail() {
 
       const { data, error } = await supabase
         .from('documents')
-        .select('file_path, title')
+        .select('file_path, title, ocr_text, uploaded_by, uploaded_at, file_size')
         .eq('id', documentId)
         .single();
 
@@ -566,11 +570,24 @@ export function SubcategoryDetail() {
         type = 'image';
       }
 
+      const fileSizeRaw = (data as any).file_size;
+      let fileSizeStr: string | undefined;
+      if (fileSizeRaw) {
+        const bytes = Number(fileSizeRaw);
+        if (bytes >= 1048576) fileSizeStr = `${(bytes / 1048576).toFixed(1)}MB`;
+        else if (bytes >= 1024) fileSizeStr = `${Math.round(bytes / 1024)}KB`;
+        else fileSizeStr = `${bytes}B`;
+      }
+
       setPreviewDoc({
         id: documentId,
         title: data.title,
         url: publicUrl,
         type,
+        ocrText: (data as any).ocr_text ?? null,
+        uploader: (data as any).uploaded_by ?? undefined,
+        uploadDate: (data as any).uploaded_at ? new Date((data as any).uploaded_at).toLocaleDateString() : undefined,
+        fileSize: fileSizeStr,
       });
       setPreviewOpen(true);
     } catch (error) {
@@ -1574,126 +1591,87 @@ export function SubcategoryDetail() {
             }
           }}
         >
-          {previewDoc?.type === 'pdf' && (
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
-              <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.docPreview')}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex-1 overflow-auto min-h-0">
-                {previewLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-slate-500">{t('documentMgmt.loadingDoc')}</p>
-                  </div>
-                ) : (
-                  previewDoc && <PdfViewer url={previewDoc.url} />
-                )}
+          <DialogContent className="max-w-[840px] h-[90vh] flex flex-col overflow-hidden gap-0 p-0 rounded-[16px]" hideClose>
+            {/* V1 M4 Compact Header */}
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 shrink-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: V1.blueSoft }}>
+                <FileText className="h-4 w-4" style={{ color: V1.blueInk }} />
               </div>
-
-              <DialogFooter className="border-t pt-3">
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">{t('documentMgmt.pdfDoc')}</span>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setPreviewOpen(false);
-                      setImageZoom(100);
-                      setImageRotation(0);
-                    }}
-                  >
-                    {t('common.close')}
-                  </Button>
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-semibold text-slate-900 truncate">{previewDoc?.title || t('documentMgmt.docPreview')}</div>
+                <div className="text-[11.5px] text-slate-500 font-mono truncate">
+                  {[previewDoc?.uploader, previewDoc?.uploadDate, previewDoc?.fileSize].filter(Boolean).join(' · ') || (previewDoc?.type === 'pdf' ? 'PDF' : 'Image')}
                 </div>
-              </DialogFooter>
-            </DialogContent>
-          )}
-
-          {previewDoc?.type === 'image' && (
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col overflow-hidden" closeClassName="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded p-1.5">
-              <DialogHeader>
-                <DialogTitle className="truncate pr-8">{previewDoc?.title || t('documentMgmt.imageDoc')}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex items-center justify-center gap-2 p-2 border-b bg-slate-50">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.max(25, imageZoom - 25))}
-                >
-                  ➖
-                </Button>
-
-                <span className="text-sm font-medium min-w-[60px] text-center">
-                  {imageZoom}%
-                </span>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.min(200, imageZoom + 25))}
-                >
-                  ➕
-                </Button>
-
-                <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                  title={t('documentMgmt.rotate90')}
-                >
-                  🔄
-                </Button>
-
-                {previewDoc && (
-                  <>
-                    <div className="w-px h-6 bg-slate-300 mx-2" />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadDocument(previewDoc.id)}
-                      title={t('documentMgmt.download')}
-                    >
-                      <img src={downloadIcon} alt={t('documentMgmt.download')} className="w-5 h-5" />
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const printWindow = window.open(previewDoc.url);
-                        if (printWindow) {
-                          setTimeout(() => {
-                            printWindow.print();
-                          }, 500);
-                        }
-                      }}
-                      title={t('documentMgmt.print')}
-                    >
-                      🖨️
-                    </Button>
-                  </>
-                )}
               </div>
-
-              <div
-                className="image-viewer flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-8"
-                onWheel={(e) => {
-                  if (e.ctrlKey) {
-                    e.preventDefault();
-                    const delta = e.deltaY > 0 ? -10 : 10;
-                    setImageZoom((prev) =>
-                      Math.max(25, Math.min(200, prev + delta)),
-                    );
-                  }
-                }}
+              {previewDoc && (
+                <>
+                  <button
+                    onClick={() => handleDownloadDocument(previewDoc.id)}
+                    className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    {t('documentMgmt.download')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSharingDocumentId(previewDoc.id);
+                      handleOpenShareDialog(previewDoc.id);
+                    }}
+                    className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    {t('documentMgmt.share', { defaultValue: '공유' })}
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => { setPreviewOpen(false); setImageZoom(100); setImageRotation(0); }}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0"
               >
-                {previewLoading ? (
-                  <p className="text-slate-500">{t('documentMgmt.loadingImage')}</p>
-                ) : (
-                  previewDoc && (
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* V1 M4 Two-panel layout */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left: Viewer */}
+              <div className="flex-1 bg-[#f1f5f9] flex flex-col overflow-hidden relative">
+                {/* Image toolbar (image only) */}
+                {previewDoc?.type === 'image' && (
+                  <div className="flex items-center justify-center gap-1.5 px-3 py-2 border-b border-slate-200 bg-white/80 backdrop-blur-sm shrink-0">
+                    <button onClick={() => setImageZoom(Math.max(25, imageZoom - 25))} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50">
+                      <ZoomOut className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                    <span className="text-[12px] font-medium text-slate-700 min-w-[48px] text-center font-mono">{imageZoom}%</span>
+                    <button onClick={() => setImageZoom(Math.min(200, imageZoom + 25))} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50">
+                      <ZoomIn className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <button onClick={() => setImageRotation((imageRotation + 90) % 360)} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50" title={t('documentMgmt.rotate90')}>
+                      <RotateCw className="h-3.5 w-3.5 text-slate-600" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Viewer area */}
+                <div
+                  className="flex-1 overflow-auto flex items-center justify-center p-8"
+                  onWheel={(e) => {
+                    if (previewDoc?.type === 'image' && e.ctrlKey) {
+                      e.preventDefault();
+                      const delta = e.deltaY > 0 ? -10 : 10;
+                      setImageZoom((prev) => Math.max(25, Math.min(200, prev + delta)));
+                    }
+                  }}
+                >
+                  {previewLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                      <p className="text-[13px] text-slate-500">{t('documentMgmt.loadingDoc')}</p>
+                    </div>
+                  ) : previewDoc?.type === 'pdf' ? (
+                    <div className="w-full h-full"><PdfViewer url={previewDoc.url} /></div>
+                  ) : previewDoc?.type === 'image' ? (
                     <img
                       src={previewDoc.url}
                       alt={previewDoc.title}
@@ -1704,29 +1682,56 @@ export function SubcategoryDetail() {
                         maxHeight: '100%',
                         objectFit: 'contain',
                       }}
-                      className="shadow-lg"
+                      className="rounded shadow-[0_20px_40px_-12px_rgba(0,0,0,0.25)]"
                     />
-                  )
-                )}
+                  ) : null}
+                </div>
               </div>
 
-              <DialogFooter className="border-t pt-3">
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-slate-500">{t('documentMgmt.imageDoc')}</span>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setPreviewOpen(false);
-                      setImageZoom(100);
-                      setImageRotation(0);
-                    }}
-                  >
-                    {t('common.close')}
-                  </Button>
+              {/* Right: OCR + Meta sidebar */}
+              <div className="w-[280px] border-l border-[#e5e7eb] bg-white flex flex-col overflow-hidden shrink-0 hidden md:flex">
+                {/* OCR Text */}
+                <div className="p-4 border-b border-slate-100 flex-1 overflow-auto">
+                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+                    OCR {t('documentMgmt.extractedText', { defaultValue: '추출 텍스트' })} · {previewDoc?.ocrText?.length?.toLocaleString() ?? 0}{t('documentMgmt.chars', { defaultValue: '자' })}
+                  </div>
+                  <div className="text-[11.5px] text-slate-500 leading-relaxed whitespace-pre-wrap">
+                    {previewDoc?.ocrText || t('documentMgmt.noOcrText', { defaultValue: 'OCR 텍스트 없음' })}
+                  </div>
                 </div>
-              </DialogFooter>
-            </DialogContent>
-          )}
+                {/* Document Info */}
+                <div className="p-4 border-b border-slate-100 shrink-0">
+                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2.5">
+                    {t('documentMgmt.docInfo', { defaultValue: '문서 정보' })}
+                  </div>
+                  <div className="flex flex-col gap-2 text-[12px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">{t('subcategoryDetail.storageLocation', { defaultValue: '보관 위치' })}</span>
+                      <span className="text-slate-900 font-medium">{subcategory?.name ?? '-'}</span>
+                    </div>
+                    {subcategory?.nfcUid && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">NFC</span>
+                        <span className="text-slate-900 font-medium font-mono">{subcategory.nfcUid}</span>
+                      </div>
+                    )}
+                    {subcategory?.storageLocation && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('subcategoryDetail.physicalLocation', { defaultValue: '물리 위치' })}</span>
+                        <span className="text-slate-900 font-medium">{subcategory.storageLocation}</span>
+                      </div>
+                    )}
+                    {subcategory?.managementNumber && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('subcategoryDetail.managementNumber', { defaultValue: '관리번호' })}</span>
+                        <span className="text-slate-900 font-medium font-mono">{subcategory.managementNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
         </Dialog>
 
         {/* NFC 재등록 확인 다이얼로그 */}

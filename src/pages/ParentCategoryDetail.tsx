@@ -837,12 +837,13 @@ export function ParentCategoryDetail() {
         </Card>
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent variant="v1" className="max-w-[560px] max-h-[85vh] flex flex-col">
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[90vh] flex flex-col overflow-hidden" hideClose>
             <V1ModalHeader icon={Archive} title={t('parentCategoryDetail.addSubcategoryTitle')} sub={t('parentCategoryDetail.addSubcategoryDesc', { name: parentCategory.name })} />
             <V1ModalBody className="flex-1 overflow-y-auto">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[13px] font-medium">{t('parentCategoryDetail.subcategoryName')}</Label>
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.subcategoryName')}</label>
                 <Input
+                  className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
                   value={form.name}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, name: e.target.value }))
@@ -850,9 +851,10 @@ export function ParentCategoryDetail() {
                   placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.description')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <Textarea
+                  className="min-h-[64px] rounded-lg border-[#e5e7eb] text-[14px] resize-y"
                   value={form.description}
                   onChange={(e) =>
                     setForm((prev) => ({
@@ -863,8 +865,8 @@ export function ParentCategoryDetail() {
                   placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.colorLabel')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <ColorLabelPicker
                   value={form.colorLabel}
                   onChange={(value) =>
@@ -872,265 +874,153 @@ export function ParentCategoryDetail() {
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
-                <Input
-                  value={form.storageLocation}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      storageLocation: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
-                <Input
-                  value={form.managementNumber}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      managementNumber: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addMonths(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.storageLocationOpt')}</label>
+                  <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
+                    value={form.storageLocation}
+                    onChange={(e) =>
                       setForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.months3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 1);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.year1')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 5);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years5')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 7);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years7')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 10);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years10')}
-                  </Button>
-                  {form.defaultExpiryDays && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setForm((prev) => ({
-                          ...prev,
-                          defaultExpiryDays: null,
-                          expiryDate: null,
-                        }))
-                      }
-                      className="bg-white text-slate-600 hover:bg-slate-100"
-                    >
-                      {t('parentCategoryDetail.reset')}
-                    </Button>
-                  )}
+                        storageLocation: e.target.value,
+                      }))
+                    }
+                    placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
+                    maxLength={30}
+                  />
                 </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !form.expiryDate && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.expiryDate
-                        ? format(new Date(form.expiryDate), 'PPP', { locale: ko })
-                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      captionLayout="dropdown"
-                      fromYear={2020}
-                      toYear={2040}
-                      selected={form.expiryDate ? new Date(form.expiryDate) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.managementNumberOpt')}</label>
+                  <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px] font-mono"
+                    value={form.managementNumber}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        managementNumber: e.target.value,
+                      }))
+                    }
+                    placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.defaultExpiryLabel')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: t('parentCategoryDetail.months3'), getValue: () => addMonths(new Date(), 3) },
+                    { label: t('parentCategoryDetail.year1'), getValue: () => addYears(new Date(), 1) },
+                    { label: t('parentCategoryDetail.years3'), getValue: () => addYears(new Date(), 3) },
+                    { label: t('parentCategoryDetail.years5'), getValue: () => addYears(new Date(), 5) },
+                    { label: t('parentCategoryDetail.years7'), getValue: () => addYears(new Date(), 7) },
+                    { label: t('parentCategoryDetail.years10'), getValue: () => addYears(new Date(), 10) },
+                  ].map((opt) => {
+                    const target = opt.getValue();
+                    const isActive = form.expiryDate && Math.abs(new Date(form.expiryDate).getTime() - target.getTime()) < 86400000;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                          isActive
+                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                        }`}
+                        onClick={() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          const selected = new Date(date);
-                          selected.setHours(0, 0, 0, 0);
-                          const diffTime = selected.getTime() - today.getTime();
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setForm((prev) => ({
                             ...prev,
                             defaultExpiryDays: diffDays,
-                            expiryDate: date.toISOString(),
+                            expiryDate: target.toISOString(),
                           }));
-                        }
-                      }}
-                      initialFocus
-                      className="bg-white"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-slate-500">
-                  {t('parentCategoryDetail.expiryNote')}
-                  {form.expiryDate && ` (${format(new Date(form.expiryDate), 'PPP', { locale: ko })})`}
-                </p>
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                          form.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(form.expiryDate!).getTime() - d.getTime()) < 86400000)
+                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        {t('parentCategoryDetail.selectExpiryFromCalendar', { defaultValue: '직접 선택' })}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        captionLayout="dropdown"
+                        fromYear={2020}
+                        toYear={2040}
+                        selected={form.expiryDate ? new Date(form.expiryDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const selected = new Date(date);
+                            selected.setHours(0, 0, 0, 0);
+                            const diffTime = selected.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setForm((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: date.toISOString(),
+                            }));
+                          }
+                        }}
+                        initialFocus
+                        className="bg-white"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {form.expiryDate && (
+                  <p className="text-[11.5px] text-slate-500 mt-0.5">
+                    {format(new Date(form.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                  </p>
+                )}
               </div>
             </V1ModalBody>
             <V1ModalFooter>
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => setAddDialogOpen(false)}
                 disabled={isSaving}
-                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={handleAddSubcategory}
-                variant="outline"
                 disabled={isSaving || !form.name.trim()}
-                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                <Archive className="h-3.5 w-3.5 mr-1.5" />
+                <Archive className="h-3.5 w-3.5" />
                 {t('parentCategoryDetail.addSubcategoryOnly')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={handleAddSubcategoryWithNfc}
                 disabled={isSaving || !form.name.trim()}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                <Smartphone className="h-3.5 w-3.5 mr-1.5" />
+                <Smartphone className="h-3.5 w-3.5" />
                 {t('parentCategoryDetail.addWithNfc')}
-              </Button>
+              </button>
             </V1ModalFooter>
           </DialogContent>
         </Dialog>
@@ -1332,12 +1222,13 @@ export function ParentCategoryDetail() {
             if (!open) handleCloseSubEditDialog();
           }}
         >
-          <DialogContent variant="v1" className="max-w-[560px] max-h-[90vh] flex flex-col">
-            <V1ModalHeader icon={Edit} title={t('subcategoryDetail.editSubcategory')} sub={t('documentMgmt.editSubcategoryDesc')} />
+          <DialogContent variant="v1" className="max-w-[560px] max-h-[90vh] flex flex-col overflow-hidden" hideClose>
+            <V1ModalHeader icon={Archive} title={t('subcategoryDetail.editSubcategory')} sub={t('documentMgmt.editSubcategoryDesc')} />
             <V1ModalBody className="flex-1 overflow-y-auto">
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.subcategoryName')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.subcategoryName')}</label>
                 <Input
+                  className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
                   value={subEditForm.name}
                   onChange={(e) =>
                     setSubEditForm((prev) => ({ ...prev, name: e.target.value }))
@@ -1345,12 +1236,13 @@ export function ParentCategoryDetail() {
                   placeholder={t('parentCategoryDetail.subcategoryNamePlaceholder')}
                 />
                 {subEditNameError && (
-                  <p className="text-xs text-red-500 mt-1">{subEditNameError}</p>
+                  <p className="text-[11.5px] text-red-500 mt-0.5">{subEditNameError}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.description')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <Textarea
+                  className="min-h-[64px] rounded-lg border-[#e5e7eb] text-[14px] resize-y"
                   value={subEditForm.description}
                   onChange={(e) =>
                     setSubEditForm((prev) => ({
@@ -1361,8 +1253,8 @@ export function ParentCategoryDetail() {
                   placeholder={t('parentCategoryDetail.descriptionPlaceholder')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.colorLabel')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.colorLabel')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <ColorLabelPicker
                   value={subEditForm.colorLabel}
                   onChange={(value) =>
@@ -1370,252 +1262,141 @@ export function ParentCategoryDetail() {
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.storageLocationOpt')}</Label>
-                <Input
-                  value={subEditForm.storageLocation}
-                  onChange={(e) =>
-                    setSubEditForm((prev) => ({
-                      ...prev,
-                      storageLocation: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.managementNumberOpt')}</Label>
-                <Input
-                  value={subEditForm.managementNumber}
-                  onChange={(e) =>
-                    setSubEditForm((prev) => ({
-                      ...prev,
-                      managementNumber: e.target.value,
-                    }))
-                  }
-                  placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
-                  maxLength={30}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.defaultExpiryLabel')}</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addMonths(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addMonths(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.storageLocationOpt')}</label>
+                  <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
+                    value={subEditForm.storageLocation}
+                    onChange={(e) =>
                       setSubEditForm((prev) => ({
                         ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.months3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 1).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 1);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setSubEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.year1')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 3).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 3);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setSubEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years3')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 5).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 5);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setSubEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years5')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 7).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 7);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setSubEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years7')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - addYears(new Date(), 10).getTime()) < 86400000 ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white' : ''}
-                    onClick={() => {
-                      const target = addYears(new Date(), 10);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const targetDay = new Date(target);
-                      targetDay.setHours(0, 0, 0, 0);
-                      const diffTime = targetDay.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setSubEditForm((prev) => ({
-                        ...prev,
-                        defaultExpiryDays: diffDays,
-                        expiryDate: target.toISOString(),
-                      }));
-                    }}
-                  >
-                    {t('parentCategoryDetail.years10')}
-                  </Button>
-                  {subEditForm.defaultExpiryDays && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setSubEditForm((prev) => ({
-                          ...prev,
-                          defaultExpiryDays: null,
-                          expiryDate: null,
-                        }))
-                      }
-                      className="bg-white text-slate-600 hover:bg-slate-100"
-                    >
-                      {t('parentCategoryDetail.reset')}
-                    </Button>
-                  )}
+                        storageLocation: e.target.value,
+                      }))
+                    }
+                    placeholder={t('parentCategoryDetail.storageLocationPlaceholder')}
+                    maxLength={30}
+                  />
                 </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !subEditForm.expiryDate && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {subEditForm.expiryDate
-                        ? format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })
-                        : t('parentCategoryDetail.selectExpiryFromCalendar')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      captionLayout="dropdown"
-                      fromYear={2020}
-                      toYear={2040}
-                      selected={subEditForm.expiryDate ? new Date(subEditForm.expiryDate) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.managementNumberOpt')}</label>
+                  <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px] font-mono"
+                    value={subEditForm.managementNumber}
+                    onChange={(e) =>
+                      setSubEditForm((prev) => ({
+                        ...prev,
+                        managementNumber: e.target.value,
+                      }))
+                    }
+                    placeholder={t('parentCategoryDetail.managementNumberPlaceholder')}
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.defaultExpiryLabel')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: t('parentCategoryDetail.months3'), getValue: () => addMonths(new Date(), 3) },
+                    { label: t('parentCategoryDetail.year1'), getValue: () => addYears(new Date(), 1) },
+                    { label: t('parentCategoryDetail.years3'), getValue: () => addYears(new Date(), 3) },
+                    { label: t('parentCategoryDetail.years5'), getValue: () => addYears(new Date(), 5) },
+                    { label: t('parentCategoryDetail.years7'), getValue: () => addYears(new Date(), 7) },
+                    { label: t('parentCategoryDetail.years10'), getValue: () => addYears(new Date(), 10) },
+                  ].map((opt) => {
+                    const target = opt.getValue();
+                    const isActive = subEditForm.expiryDate && Math.abs(new Date(subEditForm.expiryDate).getTime() - target.getTime()) < 86400000;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                          isActive
+                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                        }`}
+                        onClick={() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          const diffTime = date.getTime() - today.getTime();
+                          const targetDay = new Date(target);
+                          targetDay.setHours(0, 0, 0, 0);
+                          const diffTime = targetDay.getTime() - today.getTime();
                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                           setSubEditForm((prev) => ({
                             ...prev,
                             defaultExpiryDays: diffDays,
-                            expiryDate: date.toISOString(),
+                            expiryDate: target.toISOString(),
                           }));
-                        }
-                      }}
-                      initialFocus
-                      className="bg-white"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-slate-500">
-                  {t('parentCategoryDetail.expiryNote')}
-                  {subEditForm.expiryDate && ` (${format(new Date(subEditForm.expiryDate), 'PPP', { locale: ko })})`}
-                </p>
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                          subEditForm.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(subEditForm.expiryDate!).getTime() - d.getTime()) < 86400000)
+                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        {t('parentCategoryDetail.selectExpiryFromCalendar', { defaultValue: '직접 선택' })}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        captionLayout="dropdown"
+                        fromYear={2020}
+                        toYear={2040}
+                        selected={subEditForm.expiryDate ? new Date(subEditForm.expiryDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const diffTime = date.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            setSubEditForm((prev) => ({
+                              ...prev,
+                              defaultExpiryDays: diffDays,
+                              expiryDate: date.toISOString(),
+                            }));
+                          }
+                        }}
+                        initialFocus
+                        className="bg-white"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {subEditForm.expiryDate && (
+                  <p className="text-[11.5px] text-slate-500 mt-0.5">
+                    {format(new Date(subEditForm.expiryDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                  </p>
+                )}
               </div>
             </V1ModalBody>
             <V1ModalFooter>
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={handleCloseSubEditDialog}
                 disabled={isSavingSubEdit}
-                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={handleSaveSubcategory}
                 disabled={isSavingSubEdit}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSavingSubEdit ? t('common.saving') : t('common.save')}
-              </Button>
+              </button>
             </V1ModalFooter>
           </DialogContent>
         </Dialog>
