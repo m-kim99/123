@@ -9,18 +9,13 @@ import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/BackButton';
-import { V1PageHeader, V1Chip, v1Card } from '@/components/ui/v1-components';
+import { V1PageHeader, V1Chip, v1Card, V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 
 export function DepartmentManagement() {
   const { t } = useTranslation();
@@ -211,69 +206,66 @@ export function DepartmentManagement() {
             }
           }}
         >
-          <DialogContent className="rounded-[14px]" closeClassName="text-white data-[state=open]:text-white">
-            <DialogHeader>
-              <DialogTitle>{t('departmentMgmt.newDepartmentTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('departmentMgmt.newDepartmentDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('departmentMgmt.deptName')}</Label>
+          <DialogContent variant="v1" className="max-w-[560px] flex flex-col" hideClose>
+            <V1ModalHeader icon={Building2} title={t('departmentMgmt.newDepartmentTitle')} sub={t('departmentMgmt.newDepartmentDesc')} />
+            <V1ModalBody>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('departmentMgmt.deptName')}</label>
                 <Input
+                  className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
                   value={newDeptName}
                   onChange={(e) => setNewDeptName(e.target.value)}
                   placeholder={t('departmentMgmt.deptNamePlaceholder')}
                 />
-                {nameError && (
-                  <p className="text-xs text-red-500 mt-1">{nameError}</p>
-                )}
+                {nameError && <p className="text-[11.5px] text-red-500 mt-0.5">{nameError}</p>}
               </div>
-              <div className="space-y-2">
-                <Label>{t('departmentMgmt.deptCode')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('departmentMgmt.deptCode')}</label>
                 <div className="flex gap-2">
                   <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px] font-mono flex-1"
                     value={newDeptCode}
                     onChange={(e) => setNewDeptCode(e.target.value)}
                     placeholder={t('departmentMgmt.deptCodePlaceholder')}
                   />
-                  <Button type="button" variant="outline" onClick={handleGenerateCode}>
+                  <button
+                    type="button"
+                    onClick={handleGenerateCode}
+                    className="h-[38px] px-3 rounded-lg text-[13px] font-medium border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 whitespace-nowrap"
+                  >
                     {t('departmentMgmt.autoGenerate')}
-                  </Button>
+                  </button>
                 </div>
-                {codeError && (
-                  <p className="text-xs text-red-500 mt-1">{codeError}</p>
-                )}
+                {codeError && <p className="text-[11.5px] text-red-500 mt-0.5">{codeError}</p>}
               </div>
-              <div className="space-y-2">
-                <Label>{t('departmentMgmt.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('departmentMgmt.description')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <Textarea
+                  className="min-h-[64px] rounded-lg border-[#e5e7eb] text-[14px] resize-y"
                   value={newDeptDescription}
                   onChange={(e) => setNewDeptDescription(e.target.value)}
                   placeholder={t('departmentMgmt.descPlaceholder')}
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button
+            </V1ModalBody>
+            <V1ModalFooter>
+              <button
                 type="button"
-                variant="outline"
-                className="rounded-[10px] h-9"
                 onClick={() => setIsAddDialogOpen(false)}
                 disabled={isSaving}
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? t('common.saving') : t('common.save')}
-              </Button>
-            </DialogFooter>
+              </button>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 

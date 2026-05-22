@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, FolderOpen } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -11,15 +11,11 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { BackButton } from '@/components/BackButton';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 
 export function ParentCategoryList() {
   const { t } = useTranslation();
@@ -278,49 +274,48 @@ export function ParentCategoryList() {
         )}
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('deptDetail.addParentCategoryTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('parentCatList.addDialogDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('deptDetail.parentCategoryName')}</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder={t('deptDetail.parentCategoryNamePlaceholder')}
-                />
+          <DialogContent variant="v1" className="max-w-[560px] flex flex-col" hideClose>
+            <V1ModalHeader icon={FolderOpen} title={t('deptDetail.addParentCategoryTitle')} sub={t('parentCatList.addDialogDesc')} />
+            <V1ModalBody>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('deptDetail.parentCategoryName')}</label>
+                  <Input
+                    className="h-[38px] rounded-lg border-[#e5e7eb] text-[14px]"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    placeholder={t('deptDetail.parentCategoryNamePlaceholder')}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('common.department')}</label>
+                  <select
+                    className="h-[38px] rounded-lg border border-[#e5e7eb] px-3 text-[14px] bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+                    value={form.departmentId}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        departmentId: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">{t('parentCatList.selectDept')}</option>
+                    {departments
+                      .filter((dept) => accessibleDepartmentIds.includes(dept.id))
+                      .map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name} ({dept.code})
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t('common.department')}</Label>
-                <select
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  value={form.departmentId}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      departmentId: e.target.value,
-                    }))
-                  }
-                >
-                  <option value="">{t('parentCatList.selectDept')}</option>
-                  {departments
-                    .filter((dept) => accessibleDepartmentIds.includes(dept.id))
-                    .map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name} ({dept.code})
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('parentCategoryDetail.description')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('parentCategoryDetail.description')} <span className="text-slate-400 font-normal">({t('common.optional', { defaultValue: '선택' })})</span></label>
                 <Textarea
+                  className="min-h-[64px] rounded-lg border-[#e5e7eb] text-[14px] resize-y"
                   value={form.description}
                   onChange={(e) =>
                     setForm((prev) => ({
@@ -331,26 +326,25 @@ export function ParentCategoryList() {
                   placeholder={t('deptDetail.parentCategoryDescPlaceholder')}
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button
+            </V1ModalBody>
+            <V1ModalFooter>
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => setAddDialogOpen(false)}
                 disabled={isSaving}
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={
-                  isSaving || !form.name.trim() || !form.departmentId
-                }
+                disabled={isSaving || !form.name.trim() || !form.departmentId}
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? t('announcements.adding') : t('common.add')}
-              </Button>
-            </DialogFooter>
+              </button>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
       </div>
