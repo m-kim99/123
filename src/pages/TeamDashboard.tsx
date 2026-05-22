@@ -77,10 +77,10 @@ export function TeamDashboard() {
   });
 
   const stats = [
-    { title: t('dashboard.accessibleDocuments'),       value: userDocuments.length,       icon: FileText, color: '#2563eb', data: [0,0,0,0,0,0,0, userDocuments.length] },
-    { title: t('dashboard.accessibleParentCategories'), value: userParentCategories.length, icon: FolderOpen, color: '#10b981', data: [0,0,0,0,0,0,0, userParentCategories.length] },
-    { title: t('dashboard.accessibleSubcategories'),   value: userSubcategories.length,   icon: Archive,  color: '#8b5cf6', data: [0,0,0,0,0,0,0, userSubcategories.length] },
-    { title: t('dashboard.myTeamMembers'),             value: memberCount,                 icon: Users,    color: '#f59e0b', data: [0,0,0,0,0,0,0, memberCount] },
+    { title: t('dashboard.accessibleDocuments'),       value: userDocuments.length,       icon: FileText, color: '#2563eb' },
+    { title: t('dashboard.accessibleParentCategories'), value: userParentCategories.length, icon: FolderOpen, color: '#10b981' },
+    { title: t('dashboard.accessibleSubcategories'),   value: userSubcategories.length,   icon: Archive,  color: '#8b5cf6' },
+    { title: t('dashboard.myTeamMembers'),             value: memberCount,                 icon: Users,    color: '#f59e0b' },
   ];
 
   return (
@@ -102,7 +102,7 @@ export function TeamDashboard() {
         {/* KPI tiles */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((s) => (
-            <V1StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} data={s.data} />
+            <V1StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} />
           ))}
         </div>
 

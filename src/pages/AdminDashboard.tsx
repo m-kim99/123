@@ -40,10 +40,10 @@ export function AdminDashboard() {
   });
 
   const stats = [
-    { title: t('dashboard.totalDocuments'),       value: documents.length,       icon: FileText,  color: '#2563eb', data: [0, 0, 0, 0, 0, 0, 0, documents.length] },
-    { title: t('dashboard.totalSubcategories'),   value: subcategories.length,   icon: Archive,   color: '#8b5cf6', data: [0, 0, 0, 0, 0, 0, 0, subcategories.length] },
-    { title: t('dashboard.totalParentCategories'), value: parentCategories.length, icon: FolderOpen, color: '#10b981', data: [0, 0, 0, 0, 0, 0, 0, parentCategories.length] },
-    { title: t('dashboard.totalDepartments'),     value: departments.length,     icon: Building2, color: '#f59e0b', data: [0, 0, 0, 0, 0, 0, 0, departments.length] },
+    { title: t('dashboard.totalDocuments'),       value: documents.length,       icon: FileText,  color: '#2563eb' },
+    { title: t('dashboard.totalSubcategories'),   value: subcategories.length,   icon: Archive,   color: '#8b5cf6' },
+    { title: t('dashboard.totalParentCategories'), value: parentCategories.length, icon: FolderOpen, color: '#10b981' },
+    { title: t('dashboard.totalDepartments'),     value: departments.length,     icon: Building2, color: '#f59e0b' },
   ];
 
   return (
@@ -63,7 +63,7 @@ export function AdminDashboard() {
         {/* KPI tiles — 2열 모바일, 4열 데스크탑 */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((s) => (
-            <V1StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} data={s.data} />
+            <V1StatTile key={s.title} title={s.title} value={s.value} icon={s.icon} color={s.color} />
           ))}
         </div>
 
