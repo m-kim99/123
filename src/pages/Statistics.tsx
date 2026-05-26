@@ -320,7 +320,7 @@ export function Statistics() {
                 const circumference = 2 * Math.PI * r;
                 let offset = 0;
                 return (
-                  <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-5">
+                  <div className="flex flex-col items-center gap-4">
                     <svg width="152" height="152" className="shrink-0">
                       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={strokeW} />
                       {deptDistribution.map((d, i) => {
