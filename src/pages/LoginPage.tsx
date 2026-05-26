@@ -735,9 +735,11 @@ export function LoginPage() {
           <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
             {t('login.heroHeadline')}
           </h1>
-          <p className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm whitespace-pre-line">
-            {t('login.heroDescription')}
-          </p>
+          <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm flex flex-col gap-2">
+            {t('login.heroDescription').split('\n\n').map((block: string, i: number) => (
+              <p key={i} className="whitespace-pre-line m-0">{block}</p>
+            ))}
+          </div>
         </div>
         <div className="relative z-10 text-[11px] text-white/70 leading-relaxed">
           {t('login.copyright')}<br />{t('login.patentNotice')}
