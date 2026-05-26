@@ -1010,11 +1010,11 @@ export function LoginPage() {
       {signupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md my-auto flex flex-col max-h-[90vh] bg-white rounded-[14px] border border-[#e5e7eb] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-            <div className="shrink-0 px-6 pt-6 pb-4">
-              <h3 className="text-xl font-bold text-slate-900">{t('signup.title')}</h3>
-              <p className="text-sm text-slate-500 mt-1">{t('signup.description')}</p>
+            <div className="shrink-0 px-6 pt-5 pb-4">
+              <h3 className="text-[22px] font-bold text-slate-900 tracking-tight">{t('signup.title')}</h3>
+              <p className="text-[12.5px] text-slate-500 mt-1.5">{t('signup.description')}</p>
             </div>
-            <div className="space-y-4 flex-1 min-h-0 overflow-y-auto px-6">
+            <div className="flex flex-col gap-[13px] flex-1 min-h-0 overflow-y-auto px-6">
               <Tabs
                 value={signupRole}
                 onValueChange={(v) => setSignupRole(v as 'admin' | 'team')}
@@ -1038,9 +1038,10 @@ export function LoginPage() {
               {/* 관리자: 회사명 + 회사 코드 직접 입력 */}
               {signupRole === 'admin' && (
                 <>
-                  <div className="space-y-2">
-                    <Label>{t('signup.companyName')}</Label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[13px] font-medium text-slate-900">{t('signup.companyName')}</label>
                     <Input
+                      className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                       placeholder={t('signup.companyNamePlaceholder')}
                       value={signupForm.companyName}
                       onChange={(e) =>
@@ -1052,9 +1053,10 @@ export function LoginPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>{t('signup.companyCode')}</Label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[13px] font-medium text-slate-900">{t('signup.companyCode')}</label>
                     <Input
+                      className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                       placeholder={t('signup.companyCodePlaceholder')}
                       value={signupForm.companyCode}
                       onChange={(e) =>
@@ -1070,9 +1072,10 @@ export function LoginPage() {
 
               {/* 팀원: 기존 회사 코드로 가입 (선택) */}
               {signupRole === 'team' && (
-                <div className="space-y-2">
-                  <Label>{t('signup.companyCodeOptional')}</Label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-slate-900">{t('signup.companyCodeOptional')}</label>
                   <Input
+                    className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                     placeholder={t('signup.companyCodeOptionalPlaceholder')}
                     value={signupForm.companyCode}
                     onChange={(e) =>
@@ -1082,15 +1085,16 @@ export function LoginPage() {
                       }))
                     }
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11.5px] text-slate-500">
                     {t('signup.companyCodeOptionalHint')}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label>{t('signup.name')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('signup.name')}</label>
                 <Input
+                  className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                   placeholder={t('signup.namePlaceholder')}
                   value={signupForm.name}
                   onChange={(e) =>
@@ -1099,9 +1103,10 @@ export function LoginPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>{t('signup.email')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('signup.email')}</label>
                 <Input
+                  className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                   type="email"
                   placeholder={t('signup.emailPlaceholder')}
                   value={signupForm.email}
@@ -1111,10 +1116,11 @@ export function LoginPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>{t('signup.phoneVerification')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('signup.phoneVerification')}</label>
                 <div className="flex gap-2">
                   <Input
+                    className="h-10 rounded-lg border-[#e5e7eb] text-[14px] flex-1"
                     placeholder={t('signup.phonePlaceholder')}
                     value={adminPhone}
                     onChange={(e) => {
@@ -1123,31 +1129,29 @@ export function LoginPage() {
                     }}
                     disabled={isLoading}
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
                     onClick={handleSendAdminOtp}
                     disabled={isLoading || isSendingAdminOtp || !adminPhone.trim()}
-                    className="shrink-0"
+                    className="h-10 px-3 rounded-lg text-[12px] font-medium border border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50 shrink-0 disabled:opacity-50"
                   >
                     {isSendingAdminOtp
                       ? t('common.sending')
                       : adminOtpSent
                       ? t('signup.resend')
                       : t('signup.sendOtp')}
-                  </Button>
+                  </button>
                 </div>
-
                 <div className="flex gap-2">
                   <Input
+                    className="h-10 rounded-lg border-[#e5e7eb] text-[14px] flex-1"
                     placeholder={t('signup.otpPlaceholder')}
                     value={adminOtp}
                     onChange={(e) => setAdminOtp(e.target.value)}
                     disabled={isLoading || !adminOtpSent || adminOtpVerified}
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant={adminOtpVerified ? 'default' : 'outline'}
                     onClick={handleVerifyAdminOtp}
                     disabled={
                       isLoading ||
@@ -1156,26 +1160,30 @@ export function LoginPage() {
                       isVerifyingAdminOtp ||
                       !adminOtp.trim()
                     }
-                    className="shrink-0"
+                    className={`h-10 px-3 rounded-lg text-[12px] font-semibold shrink-0 flex items-center gap-1 disabled:opacity-50 ${
+                      adminOtpVerified
+                        ? 'bg-[#10b981] text-white border-none'
+                        : 'border border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                    }`}
                   >
                     {adminOtpVerified
                       ? t('signup.otpVerified')
                       : isVerifyingAdminOtp
                       ? t('signup.verifyingOtp')
                       : t('signup.verifyOtp')}
-                  </Button>
+                  </button>
                 </div>
-
                 {adminOtpVerified ? (
-                  <p className="text-xs text-green-600">{t('signup.phoneVerified')}</p>
+                  <p className="text-[11.5px] text-[#10b981] font-medium">{t('signup.phoneVerified')}</p>
                 ) : (
-                  <p className="text-xs text-slate-400">{t('signup.phoneVerifyRequired')}</p>
+                  <p className="text-[11.5px] text-slate-400">{t('signup.phoneVerifyRequired')}</p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label>{t('signup.password')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('signup.password')}</label>
                 <Input
+                  className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                   type="password"
                   placeholder={t('signup.passwordPlaceholder')}
                   value={signupForm.password}
@@ -1187,15 +1195,16 @@ export function LoginPage() {
                   }
                 />
                 {passwordValidation && !passwordValidation.isValid && signupForm.password && (
-                  <p className="text-[11px] text-red-500 mt-1">
-                    ⚠️ {passwordValidation.errors.join(' / ')}
+                  <p className="text-[11.5px] text-red-500">
+                    ⚠ {passwordValidation.errors.join(' / ')}
                   </p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label>{t('signup.confirmPassword')}</Label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-slate-900">{t('signup.confirmPassword')}</label>
                 <Input
+                  className="h-10 rounded-lg border-[#e5e7eb] text-[14px]"
                   type="password"
                   placeholder={t('signup.confirmPasswordPlaceholder')}
                   value={signupForm.confirmPassword}
@@ -1209,34 +1218,34 @@ export function LoginPage() {
               </div>
 
 
-              <div className="mt-4 border-t pt-4 space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="p-3.5 bg-[#f8fafc] rounded-lg border border-[#e5e7eb]">
+                <label className="flex items-center gap-2 cursor-pointer mb-2">
                   <input
                     type="checkbox"
                     checked={agreeAll}
                     onChange={(e) => handleAgreeAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#2563eb]"
+                    className="w-[15px] h-[15px] accent-[#2563eb] m-0"
                   />
-                  <span className="text-sm font-bold text-slate-700">모두 동의합니다</span>
+                  <span className="text-[13px] font-semibold text-slate-900">모두 동의합니다</span>
                 </label>
-                <div className="border-t pt-3 space-y-2.5">
+                <div className="pt-2 border-t border-[#e5e7eb] flex flex-col gap-1.5">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={agreeAge}
                       onChange={(e) => setAgreeAge(e.target.checked)}
-                      className="w-4 h-4 accent-[#2563eb]"
+                      className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
-                    <span className="text-sm text-slate-600">[필수] 만 14세 이상입니다</span>
+                    <span className="text-[12px] text-slate-500"><span>[필수]</span> <span className="text-slate-900">만 14세 이상입니다</span></span>
                   </label>
-                  <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="w-4 h-4 accent-[#2563eb]"
+                      className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
-                    <span className="text-sm text-slate-600">
+                    <span className="text-[12px] text-slate-500">
                       [필수]{' '}
                       <button
                         type="button"
@@ -1245,17 +1254,17 @@ export function LoginPage() {
                       >
                         서비스 이용약관
                       </button>
-                      에 동의합니다
+                      <span className="text-slate-900"> 에 동의합니다</span>
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={agreePrivacy}
                       onChange={(e) => setAgreePrivacy(e.target.checked)}
-                      className="w-4 h-4 accent-[#2563eb]"
+                      className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
-                    <span className="text-sm text-slate-600">
+                    <span className="text-[12px] text-slate-500">
                       [필수]{' '}
                       <button
                         type="button"
@@ -1264,9 +1273,9 @@ export function LoginPage() {
                       >
                         개인정보 처리방침
                       </button>
-                      에 동의합니다
+                      <span className="text-slate-900"> 에 동의합니다</span>
                     </span>
-                  </div>
+                  </label>
                 </div>
               </div>
 
@@ -1276,22 +1285,22 @@ export function LoginPage() {
                 </Alert>
               )}
             </div>
-            <div className="flex gap-2.5 px-6 py-5 border-t border-[#e5e7eb]">
-              <Button
-                variant="outline"
-                className="flex-1 h-11 rounded-[10px]"
+            <div className="flex gap-2 px-6 py-3.5 border-t border-[#f1f5f9] bg-[#fafbfc] rounded-b-[14px]">
+              <button
+                type="button"
                 onClick={() => {
                   setSignupOpen(false);
                   resetSignupForm();
                   clearError();
                 }}
                 disabled={isLoading}
+                className="flex-1 h-11 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {t('common.cancel')}
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleSignup}
-                className="flex-[2] h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold"
                 disabled={
                   isLoading ||
                   !signupForm.email ||
@@ -1302,28 +1311,47 @@ export function LoginPage() {
                   !allAgreed ||
                   (signupRole === 'admin' && (!signupForm.companyName.trim() || !signupForm.companyCode.trim()))
                 }
+                className="flex-[2] h-11 rounded-[10px] text-[14px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
               >
                 {isLoading ? t('signup.signingUp') : t('signup.signupButton')}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
       )}
       <Dialog open={termsPopupType !== null} onOpenChange={(open) => { if (!open) setTermsPopupType(null); }}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-[#2563eb] text-lg font-bold">
-              {termsPopupType === 'tos' ? t('terms.tos') : t('terms.privacy')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="border rounded-lg flex flex-col min-h-0 flex-1">
-              <div className="overflow-y-auto flex-1 p-4">
-                <div className="text-sm text-slate-700 space-y-4">
-                  {termsPopupType === 'tos' ? <TermsOfServiceContent /> : <PrivacyPolicyContent />}
-                </div>
-              </div>
+        <DialogContent variant="v1" className="max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+          <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100 shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
             </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[17px] font-semibold text-slate-900 tracking-[-0.01em]">
+                {termsPopupType === 'tos' ? t('terms.tos') : t('terms.privacy')}
+              </h2>
+              <p className="text-[13px] text-slate-500 mt-0.5">내용을 확인해 주세요.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTermsPopupType(null)}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+            <div className="text-[13px] text-slate-700 leading-relaxed space-y-4">
+              {termsPopupType === 'tos' ? <TermsOfServiceContent /> : <PrivacyPolicyContent />}
+            </div>
+          </div>
+          <div className="flex justify-end px-6 py-3.5 border-t border-[#f1f5f9] bg-[#fafbfc] rounded-b-[16px] shrink-0">
+            <button
+              type="button"
+              onClick={() => setTermsPopupType(null)}
+              className="h-9 px-5 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
+            >
+              확인
+            </button>
           </div>
         </DialogContent>
       </Dialog>
