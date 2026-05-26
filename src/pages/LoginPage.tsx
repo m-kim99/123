@@ -1006,6 +1006,9 @@ export function LoginPage() {
                 </form>
               </TabsContent>
             </Tabs>
+            <div className="mt-6 pt-5 border-t border-[#e5e7eb] text-xs text-center text-slate-500 leading-relaxed whitespace-pre-line">
+              {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: (+82)02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호(가산동, 가산한화비즈메트로2차)'}
+            </div>
           </div>
         </div>
 
