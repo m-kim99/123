@@ -1019,13 +1019,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-full">
+                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-full max-h-[70vh] overflow-y-auto">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
-                    <div className="flex">
-                      {/* 좌측: 관련 문서 (자동완성) */}
-                      <div className="flex-1 border-r dark:border-white/[0.06] p-3 max-h-80 overflow-y-auto">
+                    <div className="flex flex-col">
+                      {/* 관련 문서 (자동완성) */}
+                      <div className="p-3 border-b dark:border-white/[0.06]">
                         <p className="text-xs font-semibold text-slate-500 mb-2">
                           {t('header.relatedDocuments')}
                         </p>
@@ -1049,11 +1049,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         )}
                       </div>
 
-                      {/* 우측: 최근/인기 검색어 */}
-                      <div className="w-40 p-3 max-h-80 overflow-y-auto">
+                      {/* 최근/인기 검색어 */}
+                      <div className="p-3">
                         {/* 최근 검색어 */}
                         {searchSuggestions.recent.length > 0 && (
-                          <div className="mb-4">
+                          <div className="mb-3">
                             <p className="text-xs font-semibold text-slate-500 mb-2">
                               {t('header.recentSearches')}
                             </p>
@@ -1093,7 +1093,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           </div>
                         )}
 
-                        {/* 우측이 비어있을 때 */}
+                        {/* 비어있을 때 */}
                         {searchSuggestions.recent.length === 0 &&
                           searchSuggestions.popular.length === 0 && (
                             <p className="text-sm text-slate-400 text-center py-4">
