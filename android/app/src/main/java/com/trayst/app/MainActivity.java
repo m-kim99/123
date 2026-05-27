@@ -1,4 +1,4 @@
-package com.dms.app;
+package com.trayst.app;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -29,7 +29,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
         // NFC foreground dispatch 활성화 (Activity가 포그라운드일 때 NFC 태그 우선 수신)
         try {
@@ -46,7 +46,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         // NFC foreground dispatch 비활성화
         try {
@@ -63,7 +63,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    public void onNewIntent(Intent intent) {
+    protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         handleNfcFromIntent(intent);

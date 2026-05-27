@@ -1,4 +1,4 @@
-package com.dms.app;
+package com.trayst.app;
 
 import android.app.PendingIntent;
 import android.content.Intent;

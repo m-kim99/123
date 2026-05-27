@@ -1,4 +1,4 @@
-package com.dms.app;
+package com.trayst.app;
 
 import android.Manifest;
 import android.content.Intent;
