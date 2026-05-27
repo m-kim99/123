@@ -51,6 +51,11 @@
     "korean": "한국어",
     "english": "English"
   },
+  "theme": {
+    "settings": "Display Mode",
+    "light": "Light Mode",
+    "dark": "Dark Mode"
+  },
   "subscription": {
     "title": "Subscription Plan",
     "description": "View your current plan and usage.",

@@ -25,6 +25,8 @@ import {
   Shield,
   Trash2,
   Crown,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +55,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuthStore } from '@/store/authStore';
+import { useThemeStore } from '@/store/themeStore';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -135,6 +138,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [mobilePermExpanded, setMobilePermExpanded] = useState(false);
   const [mobileLangExpanded, setMobileLangExpanded] = useState(false);
+  const [mobileThemeExpanded, setMobileThemeExpanded] = useState(false);
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
 
   const FAQIcon = ({ className }: { className?: string }) => (
     <MessageSquare className={className} />
@@ -1193,6 +1198,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                 </div>
               )}
+              <DropdownMenuItem
+                onClick={(e) => { e.preventDefault(); setMobileThemeExpanded(!mobileThemeExpanded); }}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  {themeMode === 'dark' ? <Moon className="h-4 w-4 mr-2" /> : <Sun className="h-4 w-4 mr-2" />}
+                  <span>{t('theme.settings')}</span>
+                </div>
+                {mobileThemeExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </DropdownMenuItem>
+              {mobileThemeExpanded && (
+                <div className="bg-slate-50 border-y">
+                  <DropdownMenuItem onClick={() => setThemeMode('light')} className="pl-8">
+                    <span className={themeMode === 'light' ? 'font-semibold text-[#2563eb]' : ''}>
+                      {t('theme.light')}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setThemeMode('dark')} className="pl-8">
+                    <span className={themeMode === 'dark' ? 'font-semibold text-[#2563eb]' : ''}>
+                      {t('theme.dark')}
+                    </span>
+                  </DropdownMenuItem>
+                </div>
+              )}
               <DropdownMenuItem onClick={openSubscriptionDialog}>
                 <Crown className="h-4 w-4 mr-2" />
                 {t('subscription.title')}
@@ -1206,7 +1235,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </DropdownMenu>
         </header>
 
-        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white w-full">
+        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white dark:border-white/8 dark:bg-[#0f172a] w-full">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">
@@ -1427,6 +1456,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
                         <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      {themeMode === 'dark' ? <Moon className="h-4 w-4 mr-2" /> : <Sun className="h-4 w-4 mr-2" />}
+                      <span>{t('theme.settings')}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup value={themeMode} onValueChange={(v) => setThemeMode(v as 'light' | 'dark')}>
+                        <DropdownMenuRadioItem value="light">{t('theme.light')}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="dark">{t('theme.dark')}</DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>

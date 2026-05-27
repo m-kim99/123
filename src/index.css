@@ -27,6 +27,19 @@ html {
   text-size-adjust: 100%;
 }
 
+html.dark {
+  color-scheme: dark;
+  color: #f1f5f9;
+  background-color: #0b1220;
+}
+
+html.dark a {
+  color: #3b82f6;
+}
+html.dark a:hover {
+  color: #60a5fa;
+}
+
 a {
   font-weight: 500;
   color: #2563eb;
@@ -88,29 +101,30 @@ h1 {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
+    /* Surfaces: page=#0b1220, card=#111827, sidebar=#0f172a */
+    --background: 218 55% 8%;       /* #0b1220 */
+    --foreground: 210 40% 96%;      /* #f1f5f9 */
+    --card: 222 47% 11%;            /* #111827 */
+    --card-foreground: 210 40% 96%; /* #f1f5f9 */
+    --popover: 222 47% 11%;         /* #111827 */
+    --popover-foreground: 210 40% 96%;
+    --primary: 217 91% 60%;         /* #3b82f6 (blue-500) */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;       /* #1e293b (slate-800) */
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 17%;           /* #1e293b */
+    --muted-foreground: 215 20% 65%;/* #94a3b8 */
+    --accent: 217 33% 17%;          /* #1e293b */
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 91% 71%;       /* #f87171 (red-400) */
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 20%;          /* ~rgba(255,255,255,0.08) on dark */
+    --input: 218 55% 6%;            /* #0a101b (darker than bg) */
+    --ring: 217 91% 60%;            /* #3b82f6 */
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 39%;
     --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
+    --chart-4: 263 70% 75%;
     --chart-5: 340 75% 55%;
   }
 }
