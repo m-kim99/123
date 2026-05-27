@@ -29,6 +29,7 @@ public class NfcPlugin extends Plugin {
 
     private boolean isScanning = false;
     private boolean isWriting = false;
+    private boolean isForegroundDispatchEnabled = false;
     private String pendingWriteUrl = null;
     private String pendingWriteData = null;
     private PluginCall pendingWriteCall = null;
@@ -69,10 +70,8 @@ public class NfcPlugin extends Plugin {
     @PluginMethod
     public void stopScan(PluginCall call) {
         isScanning = false;
-        if (!isWriting) {
-            disableForegroundDispatch();
-        }
-        Log.d(TAG, "NFC scan stopped");
+        // foreground dispatch는 비활성화하지 않음 (항상 활성 상태 유지 for NFCAutoRedirect)
+        Log.d(TAG, "NFC scan stopped (foreground dispatch remains active)");
         call.resolve();
     }
 
@@ -129,11 +128,39 @@ public class NfcPlugin extends Plugin {
     }
 
     // ─────────────────────────────────────────────
-    // Called by MainActivity.onNewIntent
+    // Lifecycle (called by MainActivity)
+    // ─────────────────────────────────────────────
+
+    public void onActivityResume() {
+        // 항상 foreground dispatch 활성화 (NFCAutoRedirect가 리스너로 상시 수신)
+        enableForegroundDispatch();
+    }
+
+    public void onActivityPause() {
+        disableForegroundDispatch();
+    }
+
+    // ─────────────────────────────────────────────
+    // Called by MainActivity.onNewIntent / onCreate
     // ─────────────────────────────────────────────
 
     public void handleNfcIntent(Intent intent) {
-        if (!isScanning && !isWriting) return;
+        // cold start 또는 앱이 NFC 태그로 실행된 경우에도 처리
+        if (!isScanning && !isWriting) {
+            // 스캔/쓰기 중이 아니면 cold start NFC → JS에 이벤트만 전달
+            String action = intent.getAction();
+            if (action != null && (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
+                    || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)
+                    || NfcAdapter.ACTION_TAG_DISCOVERED.equals(action))) {
+                Tag tag = extractTag(intent);
+                if (tag != null) {
+                    String uid = bytesToHex(tag.getId()).toUpperCase();
+                    Log.d(TAG, "NFC cold start tag: UID=" + uid);
+                    performRead(tag, uid);
+                }
+            }
+            return;
+        }
 
         String action = intent.getAction();
         if (!NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
@@ -253,9 +280,7 @@ public class NfcPlugin extends Plugin {
         pendingWriteUrl = null;
         pendingWriteData = null;
         pendingWriteCall = null;
-        if (!isScanning) {
-            disableForegroundDispatch();
-        }
+        // foreground dispatch는 비활성화하지 않음 (항상 활성 상태 유지)
     }
 
     // ─────────────────────────────────────────────
@@ -263,7 +288,9 @@ public class NfcPlugin extends Plugin {
     // ─────────────────────────────────────────────
 
     private void enableForegroundDispatch() {
+        if (isForegroundDispatchEnabled) return;
         try {
+            if (nfcAdapter == null || getActivity() == null) return;
             Intent intent = new Intent(getActivity(), getActivity().getClass());
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -273,6 +300,7 @@ public class NfcPlugin extends Plugin {
                     getActivity(), 0, intent, flags
             );
             nfcAdapter.enableForegroundDispatch(getActivity(), pendingIntent, null, null);
+            isForegroundDispatchEnabled = true;
             Log.d(TAG, "NFC foreground dispatch enabled");
         } catch (Exception e) {
             Log.e(TAG, "Failed to enable foreground dispatch", e);
@@ -280,9 +308,11 @@ public class NfcPlugin extends Plugin {
     }
 
     private void disableForegroundDispatch() {
+        if (!isForegroundDispatchEnabled) return;
         try {
-            if (nfcAdapter != null) {
+            if (nfcAdapter != null && getActivity() != null) {
                 nfcAdapter.disableForegroundDispatch(getActivity());
+                isForegroundDispatchEnabled = false;
                 Log.d(TAG, "NFC foreground dispatch disabled");
             }
         } catch (Exception e) {

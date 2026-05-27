@@ -16,6 +16,7 @@ export function NFCAutoRedirect() {
   const ndefReaderRef = useRef<any>(null);
   const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const isInitializedRef = useRef(false);
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
     if (!isNFCSupported() || !user || isInitializedRef.current) {
@@ -23,12 +24,18 @@ export function NFCAutoRedirect() {
     }
 
     const processTag = async (uid: string, payload?: string, recordType?: string) => {
-      try {
-        if (getNfcMode() === 'writing') {
-          console.log('NFC 쓰기 모드 중 - 자동 리다이렉트 스킵');
-          return;
-        }
+      // 중복 처리 방지
+      if (isProcessingRef.current) return;
 
+      // 쓰기/등록 모드 체크 - 약간의 지연으로 race condition 방지
+      await new Promise((r) => setTimeout(r, 50));
+      if (getNfcMode() === 'writing') {
+        console.log('NFC 쓰기 모드 중 - 자동 리다이렉트 스킵');
+        return;
+      }
+
+      isProcessingRef.current = true;
+      try {
         console.log('NFC 태그 감지! UID:', uid);
         const basePath = user.role === 'admin' ? '/admin' : '/team';
 
@@ -77,24 +84,27 @@ export function NFCAutoRedirect() {
       } catch (error) {
         console.error('NFC 처리 오류:', error);
         toast({ title: t('common.error'), description: t('nfc.processingError'), variant: 'destructive' });
+      } finally {
+        // 1초간 중복 처리 차단 (같은 태그 연속 감지 방지)
+        setTimeout(() => { isProcessingRef.current = false; }, 1000);
       }
     };
 
     const startNFCScanning = async () => {
-      console.log('NFC 자동 스캔 시작');
+      console.log('NFC 자동 리다이렉트 리스너 등록');
       try {
         isInitializedRef.current = true;
 
         if (Capacitor.isNativePlatform()) {
-          await NfcPlugin.startScan();
-          console.log('NFC 스캔 시작 (네이티브)');
-
+          // 네이티브: startScan을 호출하지 않음 (foreground dispatch는 MainActivity lifecycle이 관리)
+          // 리스너만 등록하여 태그 감지 이벤트를 수신
           nativeListenerRef.current = await NfcPlugin.addListener(
             'nfcTagDetected',
             async (tag) => {
               await processTag(tag.uid, tag.payload, tag.recordType);
             },
           );
+          console.log('NFC 리스너 등록 완료 (네이티브)');
         } else {
           // @ts-ignore - NDEFReader is not in TypeScript types
           const ndef = new (window as any).NDEFReader();
@@ -139,10 +149,10 @@ export function NFCAutoRedirect() {
 
     return () => {
       if (Capacitor.isNativePlatform()) {
+        // 리스너만 제거 (stopScan 호출하지 않음 - write 동작 보호)
         nativeListenerRef.current?.remove();
         nativeListenerRef.current = null;
-        NfcPlugin.stopScan().catch(() => {});
-        console.log('NFC 네이티브 스캔 정리 완료');
+        console.log('NFC 네이티브 리스너 정리 완료');
       } else if (ndefReaderRef.current) {
         try {
           const ndef = ndefReaderRef.current as any;

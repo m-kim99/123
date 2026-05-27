@@ -26,6 +26,25 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="com.infocreative.traystorageconnect" />
             </intent-filter>
+
+            <!-- NFC: NDEF URL 태그 감지 (앱 URL 패턴 매칭) -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="https" android:host="traystorageconnect.com" android:pathPrefix="/nfc-redirect" />
+            </intent-filter>
+
+            <!-- NFC: TECH_DISCOVERED (NDEF 포맷 태그) -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+            </intent-filter>
+            <meta-data android:name="android.nfc.action.TECH_DISCOVERED" android:resource="@xml/nfc_tech_filter" />
+
+            <!-- NFC: TAG_DISCOVERED (모든 NFC 태그 폴백) -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <provider

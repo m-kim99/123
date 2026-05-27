@@ -24,12 +24,54 @@ public class MainActivity extends BridgeActivity {
             settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
             settings.setAppCacheEnabled(false);
         }
+
+        // Cold start: 앱이 NFC 태그로 실행된 경우 initial intent 처리
+        handleNfcFromIntent(getIntent());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // NFC foreground dispatch 활성화 (Activity가 포그라운드일 때 NFC 태그 우선 수신)
+        try {
+            PluginHandle handle = getBridge().getPlugin("NfcPlugin");
+            if (handle != null) {
+                NfcPlugin nfcPlugin = (NfcPlugin) handle.getInstance();
+                if (nfcPlugin != null) {
+                    nfcPlugin.onActivityResume();
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("MainActivity", "NFC onResume error", e);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // NFC foreground dispatch 비활성화
+        try {
+            PluginHandle handle = getBridge().getPlugin("NfcPlugin");
+            if (handle != null) {
+                NfcPlugin nfcPlugin = (NfcPlugin) handle.getInstance();
+                if (nfcPlugin != null) {
+                    nfcPlugin.onActivityPause();
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("MainActivity", "NFC onPause error", e);
+        }
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        handleNfcFromIntent(intent);
+    }
+
+    private void handleNfcFromIntent(Intent intent) {
+        if (intent == null) return;
         try {
             PluginHandle handle = getBridge().getPlugin("NfcPlugin");
             if (handle != null) {

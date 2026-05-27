@@ -9,8 +9,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { readNFCUid, setNfcMode } from '@/lib/nfc';
-import { registerNFCTag } from '@/lib/nfcApi';
+import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
+import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
 
 interface NFCRegistrationDialogProps {
@@ -29,6 +29,7 @@ export function NFCRegistrationDialog({
   const { t } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { registerNfcTag, findSubcategoryByNfcUid, clearNfcByUid } = useDocumentStore();
 
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -44,10 +45,18 @@ export function NFCRegistrationDialog({
       setError(null);
 
       const uid = await readNFCUid();
-      await registerNFCTag({
-        tagId: uid,
-        categoryId,
-      });
+
+      // 이미 다른 서브카테고리에 등록된 UID인지 확인 후 해제
+      const existing = await findSubcategoryByNfcUid(uid);
+      if (existing && existing.id !== categoryId) {
+        await clearNfcByUid(uid, categoryId);
+      }
+
+      // NFC 태그에 URL 쓰기
+      await writeNFCUrl(categoryId, categoryName);
+
+      // subcategories 테이블에 UID 등록
+      await registerNfcTag(categoryId, uid);
 
       toast({
         title: t('nfc.registrationDone'),

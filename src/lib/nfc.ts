@@ -155,15 +155,16 @@ export async function writeNFCUrl(
   subcategoryId: string,
   _subcategoryName: string
 ): Promise<boolean> {
-  setNfcMode('writing');
+  // 주의: setNfcMode('writing')은 호출자(readNFCUid)에서 이미 설정됨
+  // 여기서는 모드를 변경하지 않음 - 전체 등록 플로우가 끝날 때까지 'writing' 유지
+  if (!isNFCSupported()) {
+    throw new Error('NFC가 지원되지 않습니다.');
+  }
+
+  const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
+  console.log('NFC URL 쓰기 시작:', uploadUrl);
+
   try {
-    if (!isNFCSupported()) {
-      throw new Error('NFC가 지원되지 않습니다.');
-    }
-
-    const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
-    console.log('NFC URL 쓰기 시작:', uploadUrl);
-
     if (Capacitor.isNativePlatform()) {
       await NfcPlugin.writeUrl({ url: uploadUrl });
       console.log('NFC URL 쓰기 완료 (네이티브)');
@@ -187,9 +188,9 @@ export async function writeNFCUrl(
       throw new Error(`NFC 쓰기 실패: ${error.message}`);
     }
     throw new Error('NFC 쓰기 중 알 수 없는 오류가 발생했습니다.');
-  } finally {
-    setNfcMode('idle');
   }
+  // NOTE: setNfcMode('idle')을 여기서 호출하지 않음
+  // 호출자(proceedNfcRegistration)가 DB 등록까지 완료된 후 setNfcMode('idle') 호출 책임
 }
 
 /**
