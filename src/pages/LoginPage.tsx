@@ -795,7 +795,7 @@ export function LoginPage() {
 
         <div className="relative z-10 w-full max-w-[400px] px-5 py-10 flex flex-col items-center">
           {/* 카드 위 헤드라인 */}
-          <h1 className="text-xl font-bold text-white text-center leading-tight tracking-tight mb-6 whitespace-pre-line">
+          <h1 className="font-bold text-white text-center leading-snug tracking-tight mb-6 whitespace-pre-line" style={{ fontSize: 'clamp(14px, 4.8vw, 20px)' }}>
             {t('login.heroHeadline')}
           </h1>
 
