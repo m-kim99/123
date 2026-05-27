@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, Megaphone } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
 import { format } from 'date-fns';
@@ -8,7 +8,7 @@ import { ko } from 'date-fns/locale';
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { v1Card, V1PageHeader } from '@/components/ui/v1-components';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -221,112 +221,130 @@ export function TeamAnnouncements() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div className="min-w-0">
-          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('teamAnnouncements.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1.5">{t('teamAnnouncements.subtitle')}</p>
-        </div>
 
-        {isLoading ? (
-          <p className="text-slate-500">{t('common.loading')}</p>
-        ) : announcements.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-slate-500">{t('announcements.noAnnouncements')}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {announcements.map((announcement) => (
-              <Card key={announcement.id}>
-                <CardHeader>
-                  <CardTitle className="text-xl truncate">{announcement.title}</CardTitle>
-                  <p className="text-sm text-slate-500 truncate">
-                    {t('announcements.author')}: {announcement.authorName} ·{' '}
-                    {format(new Date(announcement.createdAt), 'PPP', { locale: ko })}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-700 whitespace-pre-wrap mb-4">{announcement.content}</p>
+        <V1PageHeader
+          title={t('teamAnnouncements.title')}
+          sub={t('teamAnnouncements.subtitle')}
+        />
 
+        {/* V1 Card */}
+        <div className={v1Card}>
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+            <Megaphone className="h-[18px] w-[18px] text-[#2563eb]" />
+            <h2 className="text-base font-semibold text-slate-900">{t('announcements.allAnnouncements', { defaultValue: '전체 공지' })}</h2>
+            <span className="text-xs font-semibold text-[#1e40af] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
+          </div>
+
+          {isLoading ? (
+            <div className="p-12 text-center"><p className="text-slate-500">{t('common.loading')}</p></div>
+          ) : announcements.length === 0 ? (
+            <div className="p-12 text-center"><p className="text-slate-500">{t('announcements.noAnnouncements')}</p></div>
+          ) : (
+            <div>
+              {announcements.map((announcement, idx) => (
+                <article
+                  key={announcement.id}
+                  className={`px-5 sm:px-6 py-5 flex flex-col gap-2 ${
+                    idx < announcements.length - 1 ? 'border-b border-slate-100' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-semibold text-slate-900 tracking-tight flex-1 min-w-0 truncate">{announcement.title}</h3>
+                  </div>
+                  <p className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">{announcement.content}</p>
+                  <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-[18px] h-[18px] rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-white flex items-center justify-center font-bold text-[9px]">{announcement.authorName?.[0]}</span>
+                      {announcement.authorName}
+                    </span>
+                    <span className="font-mono">{format(new Date(announcement.createdAt), 'yyyy-MM-dd')}</span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {comments[announcement.id]?.length || 0}
+                    </span>
+                  </div>
+
+                  {/* 댓글 섹션 */}
                   {announcement.allowComments && (
-                    <div className="mt-6 pt-6 border-t">
-                      <div className="flex items-center gap-2 mb-4">
-                        <MessageSquare className="h-5 w-5 text-slate-500" />
-                        <span className="font-medium text-slate-700">
-                          {t('announcements.commentsCount', { count: comments[announcement.id]?.length || 0 })}
-                        </span>
-                      </div>
-
-                      <div className="space-y-3 mb-4">
-                        {comments[announcement.id]?.map((comment) => (
-                          <div key={comment.id} className="bg-slate-50 rounded-lg p-3">
-                            {editingCommentId === comment.id ? (
-                              <div className="space-y-2">
-                                <Textarea
-                                  value={editingCommentContent}
-                                  onChange={(e) => setEditingCommentContent(e.target.value)}
-                                  rows={2}
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleEditComment(comment.id, announcement.id)}
-                                  >
-                                    {t('common.save')}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setEditingCommentId(null);
-                                      setEditingCommentContent('');
-                                    }}
-                                  >
-                                    {t('common.cancel')}
-                                  </Button>
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      {comments[announcement.id] && comments[announcement.id].length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          <p className="text-xs font-medium text-slate-500">{t('announcements.commentList')}</p>
+                          {comments[announcement.id].map((comment) => (
+                            <div key={comment.id} className="bg-slate-50 rounded-lg p-3">
+                              {editingCommentId === comment.id ? (
+                                <div className="space-y-2">
+                                  <Textarea
+                                    value={editingCommentContent}
+                                    onChange={(e) => setEditingCommentContent(e.target.value)}
+                                    rows={2}
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="h-8 rounded-[8px] bg-[#2563eb] hover:bg-[#1d4ed8]"
+                                      onClick={() => handleEditComment(comment.id, announcement.id)}
+                                    >
+                                      {t('common.save')}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 rounded-[8px]"
+                                      onClick={() => {
+                                        setEditingCommentId(null);
+                                        setEditingCommentContent('');
+                                      }}
+                                    >
+                                      {t('common.cancel')}
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-slate-700">{comment.userName}</p>
-                                  <p className="text-sm text-slate-600 mt-1">{comment.content}</p>
-                                  <p className="text-xs text-slate-400 mt-1">
-                                    {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
-                                  </p>
-                                </div>
-                                {(comment.userId === user?.id || isAdmin) && (
-                                  <div className="flex gap-1">
-                                    {comment.userId === user?.id && (
+                              ) : (
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-slate-700">{comment.userName}</p>
+                                    <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{comment.content}</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                      {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
+                                    </p>
+                                  </div>
+                                  {(comment.userId === user?.id || isAdmin) && (
+                                    <div className="flex gap-1 shrink-0">
+                                      {comment.userId === user?.id && (
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          className="h-6 w-6"
+                                          onClick={() => {
+                                            setEditingCommentId(comment.id);
+                                            setEditingCommentContent(comment.content);
+                                          }}
+                                        >
+                                          <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-0.5" />
+                                        </Button>
+                                      )}
                                       <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => {
-                                          setEditingCommentId(comment.id);
-                                          setEditingCommentContent(comment.content);
-                                        }}
+                                        className="h-6 w-6 text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                                        onClick={() => handleDeleteComment(comment.id, announcement.id)}
                                       >
-                                        <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1.5" />
+                                        <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-0.5" />
                                       </Button>
-                                    )}
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
-                                      onClick={() => handleDeleteComment(comment.id, announcement.id)}
-                                    >
-                                      <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
+                      {/* 댓글 입력 */}
                       <div className="flex gap-2">
                         <Textarea
+                          className="flex-1 text-[13px]"
                           value={newComment[announcement.id] || ''}
                           onChange={(e) =>
                             setNewComment((prev) => ({
@@ -339,18 +357,18 @@ export function TeamAnnouncements() {
                         />
                         <Button
                           onClick={() => handleAddComment(announcement.id)}
-                          className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                          className="h-auto rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] px-4"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
