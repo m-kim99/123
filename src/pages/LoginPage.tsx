@@ -848,18 +848,18 @@ export function LoginPage() {
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('admin'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
-                  <div className="flex items-center justify-center gap-5">
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleGoogleLogin}>
-                      <img src={googleLogo} alt="Google" className="w-6 h-6 object-contain" />
+                  <div className="flex items-center justify-center gap-4">
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleGoogleLogin}>
+                      <img src={googleLogo} alt="Google" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleAppleLogin}>
-                      <img src={appleLogo} alt="Apple" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleAppleLogin}>
+                      <img src={appleLogo} alt="Apple" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FEE500] border border-[#FEE500] hover:bg-[#fdd800] transition-colors shadow-sm" onClick={handleKakaoLogin}>
-                      <img src={kakaoLogo} alt="Kakao" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleKakaoLogin}>
+                      <img src={kakaoLogo} alt="Kakao" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#03C75A] border border-[#03C75A] hover:bg-[#02b351] transition-colors shadow-sm" onClick={handleNaverLogin}>
-                      <img src={naverLogo} alt="Naver" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleNaverLogin}>
+                      <img src={naverLogo} alt="Naver" className="w-12 h-12 object-contain" />
                     </button>
                   </div>
                 </form>
@@ -890,18 +890,18 @@ export function LoginPage() {
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('team'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
-                  <div className="flex items-center justify-center gap-5">
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleGoogleLogin}>
-                      <img src={googleLogo} alt="Google" className="w-6 h-6 object-contain" />
+                  <div className="flex items-center justify-center gap-4">
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleGoogleLogin}>
+                      <img src={googleLogo} alt="Google" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleAppleLogin}>
-                      <img src={appleLogo} alt="Apple" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleAppleLogin}>
+                      <img src={appleLogo} alt="Apple" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FEE500] border border-[#FEE500] hover:bg-[#fdd800] transition-colors shadow-sm" onClick={handleKakaoLogin}>
-                      <img src={kakaoLogo} alt="Kakao" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleKakaoLogin}>
+                      <img src={kakaoLogo} alt="Kakao" className="w-12 h-12 object-contain" />
                     </button>
-                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#03C75A] border border-[#03C75A] hover:bg-[#02b351] transition-colors shadow-sm" onClick={handleNaverLogin}>
-                      <img src={naverLogo} alt="Naver" className="w-6 h-6 object-contain" />
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleNaverLogin}>
+                      <img src={naverLogo} alt="Naver" className="w-12 h-12 object-contain" />
                     </button>
                   </div>
                 </form>
