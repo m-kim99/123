@@ -22,7 +22,6 @@ public class MainActivity extends BridgeActivity {
         if (webView != null) {
             WebSettings settings = webView.getSettings();
             settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-            settings.setAppCacheEnabled(false);
         }
 
         // Cold start: 앱이 NFC 태그로 실행된 경우 initial intent 처리
