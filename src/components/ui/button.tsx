@@ -5,14 +5,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-[10px] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
-          'bg-[#2563eb] text-white shadow-[0_1px_2px_rgba(37,99,235,0.3)] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]',
+          'bg-[#2563eb] text-white shadow-sm hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]',
         destructive:
-          'bg-[#ef4444] text-white shadow-[0_1px_2px_rgba(239,68,68,0.28)] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900',
+          'bg-[#ef4444] text-white shadow-sm hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900',
         'destructive-soft':
           'border border-red-200 bg-red-50 text-red-800 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900',
         outline:
@@ -24,8 +24,8 @@ const buttonVariants = cva(
       },
       size: {
         default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-[10px] px-3 text-xs',
-        lg: 'h-10 rounded-[10px] px-8',
+        sm: 'h-8 rounded-lg px-3 text-xs',
+        lg: 'h-10 rounded-lg px-8',
         icon: 'h-9 w-9',
       },
     },

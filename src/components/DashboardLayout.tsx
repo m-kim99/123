@@ -55,7 +55,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -1024,14 +1023,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.18),0_6px_12px_-6px_rgba(15,23,42,0.08)] overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-lg overflow-hidden">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
                     <div className="flex flex-col">
                       {/* 관련 문서 */}
                       <div className="p-2">
-                        <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                        <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                           <FileText className="h-3 w-3" />
                           {t('header.relatedDocuments')}
                         </p>
@@ -1039,7 +1038,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           searchSuggestions.related.map((item, idx) => (
                             <div
                               key={`related-mobile-${idx}`}
-                              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                               onClick={() => {
                                 setSearchQuery(item);
                                 handleSearch();
@@ -1052,7 +1051,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             </div>
                           ))
                         ) : (
-                          <p className="text-[12px] text-slate-400 px-2.5 py-2">
+                          <p className="text-sm text-slate-400 px-2.5 py-2">
                             {t('header.noRelatedDocuments')}
                           </p>
                         )}
@@ -1063,14 +1062,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {/* 최근 검색어 */}
                         {searchSuggestions.recent.length > 0 && (
                           <div className="mb-2">
-                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                               <Clock className="h-3 w-3" />
                               {t('header.recentSearches')}
                             </p>
                             {searchSuggestions.recent.map((item, idx) => (
                               <div
                                 key={`recent-mobile-${idx}`}
-                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
@@ -1086,14 +1085,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {/* 인기 검색어 */}
                         {searchSuggestions.popular.length > 0 && (
                           <div>
-                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                               <TrendingUp className="h-3 w-3" />
                               {t('header.popularSearches')}
                             </p>
                             {searchSuggestions.popular.map((item, idx) => (
                               <div
                                 key={`popular-mobile-${idx}`}
-                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
@@ -1109,7 +1108,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {/* 비어있을 때 */}
                         {searchSuggestions.recent.length === 0 &&
                           searchSuggestions.popular.length === 0 && (
-                            <p className="text-[12px] text-slate-400 text-center py-4">
+                            <p className="text-sm text-slate-400 text-center py-4">
                               {t('header.noSearchHistory')}
                             </p>
                           )}
@@ -1309,14 +1308,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
 
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.18),0_6px_12px_-6px_rgba(15,23,42,0.08)] overflow-hidden w-[600px]">
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-lg overflow-hidden w-[600px]">
                       {isLoadingSuggestions ? (
                         <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                       ) : (
                         <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-white/[0.06]">
                           {/* 좌측: 관련 문서 */}
                           <div className="p-2 max-h-80 overflow-y-auto">
-                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                               <FileText className="h-3 w-3" />
                               {t('header.relatedDocuments')}
                             </p>
@@ -1324,7 +1323,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               searchSuggestions.related.map((item, idx) => (
                                 <div
                                   key={`related-${idx}`}
-                                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                   onClick={() => {
                                     setSearchQuery(item);
                                     handleSearch();
@@ -1337,7 +1336,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 </div>
                               ))
                             ) : (
-                              <p className="text-[12px] text-slate-400 px-2.5 py-2">
+                              <p className="text-sm text-slate-400 px-2.5 py-2">
                                 {t('header.noRelatedDocuments')}
                               </p>
                             )}
@@ -1348,14 +1347,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {/* 최근 검색어 */}
                             {searchSuggestions.recent.length > 0 && (
                               <div className="mb-2">
-                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                                   <Clock className="h-3 w-3" />
                                   {t('header.recentSearches')}
                                 </p>
                                 {searchSuggestions.recent.map((item, idx) => (
                                   <div
                                     key={`recent-${idx}`}
-                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();
@@ -1371,14 +1370,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {/* 인기 검색어 */}
                             {searchSuggestions.popular.length > 0 && (
                               <div>
-                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                                   <TrendingUp className="h-3 w-3" />
                                   {t('header.popularSearches')}
                                 </p>
                                 {searchSuggestions.popular.map((item, idx) => (
                                   <div
                                     key={`popular-${idx}`}
-                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
+                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();
@@ -1394,7 +1393,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {/* 우측이 비어있을 때 */}
                             {searchSuggestions.recent.length === 0 &&
                               searchSuggestions.popular.length === 0 && (
-                                <p className="text-[12px] text-slate-400 text-center py-4">
+                                <p className="text-sm text-slate-400 text-center py-4">
                                   {t('header.noSearchHistory')}
                                 </p>
                               )}
@@ -1623,24 +1622,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {showDeletionView ? (
             <>
               {/* V1 Header */}
-              <div className="flex items-start gap-3 px-[22px] pt-[18px] pb-[14px] border-b border-slate-100">
-                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-red-50">
+              <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-red-50">
                   <Trash2 className="h-[18px] w-[18px] text-red-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <DialogTitle className="text-[15.5px] font-semibold tracking-[-0.01em]">
+                  <DialogTitle className="text-base font-semibold tracking-tight">
                     {t('profile.deleteAccountTitle')}
                   </DialogTitle>
-                  <DialogDescription className="text-[12px] text-slate-500 mt-1">
+                  <DialogDescription className="text-xs text-slate-500 mt-1">
                     {t('profile.deleteAccountDesc')}
                   </DialogDescription>
                 </div>
               </div>
 
               {/* V1 Body */}
-              <div className="px-[22px] py-4 flex flex-col gap-3.5">
+              <div className="px-6 py-4 flex flex-col gap-3.5">
                 {/* 노란 경고 박스 */}
-                <div className="p-2.5 px-3 rounded-lg bg-amber-50 border border-amber-200 text-[11.5px] text-amber-900 leading-relaxed flex gap-2">
+                <div className="p-2.5 px-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed flex gap-2">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600" />
                   <div>
                     <strong className="block mb-0.5">{t('profile.deleteDataWarning', { defaultValue: '탈퇴 후 모든 데이터가 삭제됩니다.' })}</strong>
@@ -1649,7 +1648,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
 
                 {/* 빨간 주의사항 박스 with list */}
-                <div className="p-2.5 px-3 rounded-lg bg-red-50 border border-red-200 text-[11.5px] text-red-900 leading-relaxed flex gap-2">
+                <div className="p-2.5 px-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-900 leading-relaxed flex gap-2">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-600" />
                   <div>
                     <strong className="block mb-0.5">{t('profile.deleteWarning')}</strong>
@@ -1663,32 +1662,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 {/* 확인 절차 section */}
                 <div className="border-t border-slate-100 pt-3.5">
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                  <p className="text-xs font-semibold text-slate-500 mb-2">
                     {t('profile.confirmProcedure', { defaultValue: '확인 절차' })}
                   </p>
                   {isOAuthUser ? (
                     <div className="space-y-1.5">
-                      <Label className="text-[12px] font-medium text-slate-700">
+                      <Label className="text-sm font-medium">
                         {t('profile.deleteConfirmLabel', { defaultValue: '확인을 위해 "탈퇴"를 입력하세요' })}
                       </Label>
                       <Input
                         id="deletion-confirm"
                         type="text"
-                        className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                        className="h-9 rounded-md border-[#e5e7eb] text-sm"
                         placeholder={t('profile.deleteKeyword')}
                         value={deletionConfirmText}
                         onChange={(e) => setDeletionConfirmText(e.target.value)}
                         disabled={isRequestingDeletion}
                       />
-                      <p className="text-[11px] text-slate-400">{t('profile.deleteOAuthNote')}</p>
+                      <p className="text-xs text-slate-500">{t('profile.deleteOAuthNote')}</p>
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      <Label className="text-[12px] font-medium text-slate-700">{t('profile.deletePasswordLabel')}</Label>
+                      <Label className="text-sm font-medium">{t('profile.deletePasswordLabel')}</Label>
                       <Input
                         id="deletion-password"
                         type="password"
-                        className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                        className="h-9 rounded-md border-[#e5e7eb] text-sm"
                         placeholder={t('profile.deletePasswordPlaceholder')}
                         value={deletionPassword}
                         onChange={(e) => setDeletionPassword(e.target.value)}
@@ -1699,7 +1698,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
 
                 {/* 예정일 + 유예기간 박스 */}
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11.5px] text-slate-600 flex flex-col gap-1.5">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex flex-col gap-1.5">
                   <div className="flex justify-between">
                     <span>{t('profile.scheduledDeleteDate', { defaultValue: '예정 삭제일' })}</span>
                     <strong className="text-slate-900 font-mono">
@@ -1713,16 +1712,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
 
                 {profileError && (
-                  <p className="text-[11px] text-red-500">{profileError}</p>
+                  <p className="text-xs text-red-500">{profileError}</p>
                 )}
               </div>
 
               {/* V1 Footer */}
-              <div className="flex gap-2 justify-end px-[22px] py-3 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
+              <div className="flex gap-2 justify-end px-6 py-3 border-t border-slate-100 bg-[#fafbfc] rounded-b-xl">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 text-[12.5px] font-semibold"
+                  className="h-9"
                   onClick={() => {
                     setShowDeletionView(false);
                     setDeletionPassword('');
@@ -1736,7 +1735,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Button
                   type="button"
                   variant="destructive-soft"
-                  className="h-9 text-[12.5px] font-semibold"
+                  className="h-9"
                   onClick={handleRequestDeletion}
                   disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== t('profile.deleteKeyword') : !deletionPassword.trim())}
                 >
@@ -1751,25 +1750,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <V1ModalBody className="flex-1 overflow-y-auto">
                 {/* 기본 정보 */}
                 <div className="pt-0 mt-0 border-t-0">
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                  <p className="text-xs font-semibold text-slate-500 mb-2">
                     {t('profile.basicInfo', { defaultValue: '기본 정보' })}
                   </p>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.name')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.name')}</Label>
                         <Input
                           id="profile-name"
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
                           value={profileName}
                           onChange={(e) => setProfileName(e.target.value)}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.email')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.email')}</Label>
                         <Input
                           id="profile-email"
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px] bg-slate-50"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm bg-slate-50"
                           value={profileEmail}
                           disabled
                         />
@@ -1777,8 +1776,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.role')}</Label>
-                        <div className="h-[34px] flex items-center">
+                        <Label className="text-sm font-medium">{t('profile.role')}</Label>
+                        <div className="h-9 flex items-center">
                           {user?.role === 'admin' ? (
                             <V1Chip variant="amber"><Shield className="h-3 w-3" />{t('role.admin')}</V1Chip>
                           ) : (
@@ -1787,9 +1786,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.department')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.department')}</Label>
                         <Input
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px] bg-slate-50"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm bg-slate-50"
                           value={userDepartmentName || t('common.noDepartment')}
                           disabled
                         />
@@ -1800,15 +1799,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 {/* 회사 정보 변경 */}
                 <div className="pt-3.5 mt-3.5 border-t border-slate-100">
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                  <p className="text-xs font-semibold text-slate-500 mb-2">
                     {t('profile.companyInfoChange')}
                   </p>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.companyCode')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.companyCode')}</Label>
                         <Input
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
                           placeholder={t('profile.companyCodePlaceholder')}
                           value={profileCompanyCode}
                           onChange={(e) => {
@@ -1818,9 +1817,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.companyName')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.companyName')}</Label>
                         <Input
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
                           placeholder={t('profile.companyNamePlaceholder')}
                           value={profileCompanyName}
                           onChange={(e) => {
@@ -1832,7 +1831,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                     <Button
                       type="button"
-                      className={`w-full h-[34px] text-[12.5px] ${companyVerified ? 'bg-green-600 hover:bg-green-600' : ''}`}
+                      className={`w-full ${companyVerified ? 'bg-green-600 hover:bg-green-600' : ''}`}
                       onClick={() => {
                         if (profileCompanyCode.trim() && profileCompanyName.trim()) {
                           setCompanyVerified(true);
@@ -1854,10 +1853,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {companyVerified ? t('profile.verifiedReVerify') : t('profile.verifyButton')}
                     </Button>
                     {!companyVerified && (
-                      <p className="text-[11px] text-slate-400">{t('profile.enterCompanyCodeAndName')}</p>
+                      <p className="text-xs text-slate-500">{t('profile.enterCompanyCodeAndName')}</p>
                     )}
                     {companyVerified && (
-                      <p className="text-[11px] text-green-600">{t('profile.changeCompanyInfo')}</p>
+                      <p className="text-xs text-green-600">{t('profile.changeCompanyInfo')}</p>
                     )}
                   </div>
                 </div>
@@ -1865,47 +1864,47 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {/* 비밀번호 변경 (OAuth 사용자 제외) */}
                 {!isOAuthUser && (
                   <div className="pt-3.5 mt-3.5 border-t border-slate-100">
-                    <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                    <p className="text-xs font-semibold text-slate-500 mb-2">
                       {t('profile.passwordChange')}
                     </p>
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.currentPassword')}</Label>
+                        <Label className="text-sm font-medium">{t('profile.currentPassword')}</Label>
                         <Input
                           id="current-password"
                           type="password"
-                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <Label className="text-[12px] font-medium text-slate-700">{t('profile.newPassword')}</Label>
+                          <Label className="text-sm font-medium">{t('profile.newPassword')}</Label>
                           <Input
                             id="new-password"
                             type="password"
-                            className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                            className="h-9 rounded-md border-[#e5e7eb] text-sm"
                             placeholder={t('profile.newPasswordPlaceholder')}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[12px] font-medium text-slate-700">{t('profile.confirmPassword')}</Label>
+                          <Label className="text-sm font-medium">{t('profile.confirmPassword')}</Label>
                           <Input
                             id="confirm-password"
                             type="password"
-                            className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                            className="h-9 rounded-md border-[#e5e7eb] text-sm"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                           />
                         </div>
                       </div>
                       {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
-                        <p className="text-[11px] text-red-500">⚠️ {newPasswordValidation.errors.join(' / ')}</p>
+                        <p className="text-xs text-red-500">⚠️ {newPasswordValidation.errors.join(' / ')}</p>
                       )}
-                      <p className="text-[11px] text-slate-400">{t('profile.passwordHint', { defaultValue: '영문, 숫자, 특수문자 포함 8자 이상' })}</p>
+                      <p className="text-xs text-slate-500">{t('profile.passwordHint', { defaultValue: '영문, 숫자, 특수문자 포함 8자 이상' })}</p>
                     </div>
                   </div>
                 )}
@@ -1925,7 +1924,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
 
                 {profileError && (
-                  <p className="text-[11px] text-red-500 mt-2">{profileError}</p>
+                  <p className="text-xs text-red-500 mt-2">{profileError}</p>
                 )}
               </V1ModalBody>
               <V1ModalFooter>
