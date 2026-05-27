@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/logo1.png';
+import logoDark from '@/assets/무제-2.png';
 import searchIcon from '@/assets/search.svg';
 import bellIcon from '@/assets/bell.svg';
 import {
@@ -895,7 +896,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-12 w-auto max-w-[200px] object-contain mx-auto"
+              className="h-12 w-auto max-w-[200px] object-contain mx-auto dark:hidden"
+            />
+            <img
+              src={logoDark}
+              alt="TrayStorage"
+              className="h-12 w-auto max-w-[200px] object-contain mx-auto hidden dark:block"
             />
           </button>
         </div>
@@ -904,12 +910,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={() => navigate(basePath)}
-            className="flex items-center justify-center w-full bg-white focus:outline-none"
+            className="flex items-center justify-center w-full bg-white dark:bg-transparent focus:outline-none"
           >
             <img
               src={logo}
               alt="TrayStorage"
-              className="h-[46px] w-auto object-contain mx-auto"
+              className="h-[46px] w-auto object-contain mx-auto dark:hidden"
+            />
+            <img
+              src={logoDark}
+              alt="TrayStorage"
+              className="h-[46px] w-auto object-contain mx-auto hidden dark:block"
             />
           </button>
         </div>
