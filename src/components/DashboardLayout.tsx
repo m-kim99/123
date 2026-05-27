@@ -67,6 +67,7 @@ import { NotificationSettingsDialog } from '@/components/NotificationSettingsDia
 import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 import { type Role, ROLE_LABELS } from '@/lib/permissions';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1Chip } from '@/components/ui/v1-components';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -1598,7 +1599,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent variant="v1" className="max-w-[560px] flex flex-col max-h-[85vh]" hideClose>
           {showDeletionView ? (
             <>
               <DialogHeader>
@@ -1678,184 +1679,206 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </>
           ) : (
             <>
-              <DialogHeader>
-                <DialogTitle>{t('profile.title')}</DialogTitle>
-                <DialogDescription>{t('profile.description')}</DialogDescription>
-              </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="profile-name">{t('profile.name')}</Label>
-              <Input
-                id="profile-name"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-4 pt-4 border-t">
-              <p className="text-sm font-medium text-slate-700">{t('profile.companyInfoChange')}</p>
-
-              <div className="space-y-2">
-                <Label>{t('profile.companyCode')}</Label>
-                <Input
-                  placeholder={t('profile.companyCodePlaceholder')}
-                  value={profileCompanyCode}
-                  onChange={(e) => {
-                    setProfileCompanyCode(e.target.value);
-                    setCompanyVerified(false);
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>{t('profile.companyName')}</Label>
-                <Input
-                  placeholder={t('profile.companyNamePlaceholder')}
-                  value={profileCompanyName}
-                  onChange={(e) => {
-                    setProfileCompanyName(e.target.value);
-                    setCompanyVerified(false);
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Button
-                  type="button"
-                  className={`w-full ${
-                    companyVerified ? 'bg-green-600 hover:bg-green-600' : ''
-                  }`}
-                  onClick={() => {
-                    if (profileCompanyCode.trim() && profileCompanyName.trim()) {
-                      setCompanyVerified(true);
-                      toast({
-                        title: t('profile.verifyComplete'),
-                        description: t('profile.companyInfoVerified'),
-                      });
-                    } else {
-                      toast({
-                        title: t('profile.companyInfoChange'),
-                        description: t('profile.enterCompanyInfo'),
-                        variant: 'destructive',
-                      });
-                    }
-                  }}
-                  disabled={
-                    !profileCompanyCode.trim() || !profileCompanyName.trim()
-                  }
-                  variant={companyVerified ? 'default' : 'outline'}
-                >
-                  {companyVerified ? t('profile.verifiedReVerify') : t('profile.verifyButton')}
-                </Button>
-                {!companyVerified && (
-                  <p className="text-xs text-slate-400">
-                    {t('profile.enterCompanyCodeAndName')}
+              <V1ModalHeader icon={User} title={t('profile.title')} sub={t('profile.description')} />
+              <V1ModalBody className="flex-1 overflow-y-auto">
+                {/* 기본 정보 */}
+                <div className="pt-0 mt-0 border-t-0">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                    {t('profile.basicInfo', { defaultValue: '기본 정보' })}
                   </p>
-                )}
-                {companyVerified && (
-                  <p className="text-xs text-green-600">
-                    {t('profile.changeCompanyInfo')}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="profile-email">{t('profile.email')}</Label>
-              <Input
-                id="profile-email"
-                value={profileEmail}
-                disabled
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('profile.department')}</Label>
-              <Input
-                value={userDepartmentName || t('common.noDepartment')}
-                disabled
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('profile.role')}</Label>
-              <Input
-                value={getRoleDisplay()}
-                disabled
-              />
-            </div>
-            {/* 소셜 로그인 사용자는 비밀번호 변경 불가 */}
-            {!isOAuthUser && (
-              <div className="space-y-3 pt-2">
-                <p className="text-sm font-medium text-slate-700">{t('profile.passwordChange')}</p>
-                <div className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="current-password">{t('profile.currentPassword')}</Label>
-                    <Input
-                      id="current-password"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="new-password">{t('profile.newPassword')}</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder={t('profile.newPasswordPlaceholder')}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                    {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
-                      <p className="text-[11px] text-red-500 mt-1">
-                        ⚠️ {newPasswordValidation.errors.join(' / ')}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="confirm-password">{t('profile.confirmPassword')}</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.name')}</Label>
+                        <Input
+                          id="profile-name"
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.email')}</Label>
+                        <Input
+                          id="profile-email"
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px] bg-slate-50"
+                          value={profileEmail}
+                          disabled
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.role')}</Label>
+                        <div className="h-[34px] flex items-center">
+                          {user?.role === 'admin' ? (
+                            <V1Chip variant="amber"><Shield className="h-3 w-3" />{t('role.admin')}</V1Chip>
+                          ) : (
+                            <V1Chip variant="blue">{t('role.team')}</V1Chip>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.department')}</Label>
+                        <Input
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px] bg-slate-50"
+                          value={userDepartmentName || t('common.noDepartment')}
+                          disabled
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            {profileError && (
-              <p className="text-xs text-red-500">{profileError}</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setProfileDialogOpen(false)}
-              disabled={isSavingProfile}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSaveProfile}
-              disabled={isSavingProfile}
-            >
-              {isSavingProfile ? t('common.saving') : t('common.save')}
-            </Button>
-          </DialogFooter>
-          <div className="pt-4 border-t mt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setProfileError(null);
-                setShowDeletionView(true);
-              }}
-              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              {t('profile.deleteAccount')}
-            </button>
-          </div>
+
+                {/* 회사 정보 변경 */}
+                <div className="pt-3.5 mt-3.5 border-t border-slate-100">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                    {t('profile.companyInfoChange')}
+                  </p>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.companyCode')}</Label>
+                        <Input
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          placeholder={t('profile.companyCodePlaceholder')}
+                          value={profileCompanyCode}
+                          onChange={(e) => {
+                            setProfileCompanyCode(e.target.value);
+                            setCompanyVerified(false);
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.companyName')}</Label>
+                        <Input
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          placeholder={t('profile.companyNamePlaceholder')}
+                          value={profileCompanyName}
+                          onChange={(e) => {
+                            setProfileCompanyName(e.target.value);
+                            setCompanyVerified(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className={`w-full h-[34px] text-[12.5px] ${companyVerified ? 'bg-green-600 hover:bg-green-600' : ''}`}
+                      onClick={() => {
+                        if (profileCompanyCode.trim() && profileCompanyName.trim()) {
+                          setCompanyVerified(true);
+                          toast({
+                            title: t('profile.verifyComplete'),
+                            description: t('profile.companyInfoVerified'),
+                          });
+                        } else {
+                          toast({
+                            title: t('profile.companyInfoChange'),
+                            description: t('profile.enterCompanyInfo'),
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
+                      disabled={!profileCompanyCode.trim() || !profileCompanyName.trim()}
+                      variant={companyVerified ? 'default' : 'outline'}
+                    >
+                      {companyVerified ? t('profile.verifiedReVerify') : t('profile.verifyButton')}
+                    </Button>
+                    {!companyVerified && (
+                      <p className="text-[11px] text-slate-400">{t('profile.enterCompanyCodeAndName')}</p>
+                    )}
+                    {companyVerified && (
+                      <p className="text-[11px] text-green-600">{t('profile.changeCompanyInfo')}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 비밀번호 변경 (OAuth 사용자 제외) */}
+                {!isOAuthUser && (
+                  <div className="pt-3.5 mt-3.5 border-t border-slate-100">
+                    <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                      {t('profile.passwordChange')}
+                    </p>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-medium text-slate-700">{t('profile.currentPassword')}</Label>
+                        <Input
+                          id="current-password"
+                          type="password"
+                          className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[12px] font-medium text-slate-700">{t('profile.newPassword')}</Label>
+                          <Input
+                            id="new-password"
+                            type="password"
+                            className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                            placeholder={t('profile.newPasswordPlaceholder')}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[12px] font-medium text-slate-700">{t('profile.confirmPassword')}</Label>
+                          <Input
+                            id="confirm-password"
+                            type="password"
+                            className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      {newPasswordValidation && !newPasswordValidation.isValid && newPassword && (
+                        <p className="text-[11px] text-red-500">⚠️ {newPasswordValidation.errors.join(' / ')}</p>
+                      )}
+                      <p className="text-[11px] text-slate-400">{t('profile.passwordHint', { defaultValue: '영문, 숫자, 특수문자 포함 8자 이상' })}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 계정 삭제 */}
+                <div className="pt-3.5 mt-3.5 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileError(null);
+                      setShowDeletionView(true);
+                    }}
+                    className="text-red-500 hover:text-red-600 text-xs font-medium flex items-center gap-1.5"
+                  >
+                    <Trash2 className="h-3 w-3" />{t('profile.deleteAccount')}
+                  </button>
+                </div>
+
+                {profileError && (
+                  <p className="text-[11px] text-red-500 mt-2">{profileError}</p>
+                )}
+              </V1ModalBody>
+              <V1ModalFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9"
+                  onClick={() => setProfileDialogOpen(false)}
+                  disabled={isSavingProfile}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="button"
+                  className="h-9"
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? t('common.saving') : t('common.save')}
+                </Button>
+              </V1ModalFooter>
             </>
           )}
         </DialogContent>
