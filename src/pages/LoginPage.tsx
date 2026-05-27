@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import logo from '@/assets/logo.png';
 import rootLogo from '../../assets/logo.png';
 import googleLogo from '@/assets/google.png';
 import appleLogo from '@/assets/apple.png';
@@ -779,8 +780,154 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* 우측 폼 패널 */}
-      <div className="flex flex-1 flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]">
+      {/* 모바일 전용 — 영상 배경 + 카드 오버레이 (폰 전용) */}
+      <div className="sm:hidden flex-1 relative min-h-screen flex flex-col items-center justify-center overflow-y-auto">
+        <video
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          src="/login-bg.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-[400px] px-5 py-10 flex flex-col items-center">
+          {/* 카드 위 헤드라인 */}
+          <h1 className="text-xl font-bold text-white text-center leading-tight tracking-tight mb-6 whitespace-pre-line">
+            {t('login.heroHeadline')}
+          </h1>
+
+          {/* 로그인 카드 */}
+          <div className="w-full bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.25)] p-6">
+            {/* 카드 내 로고 */}
+            <div className="flex items-center justify-center mb-5">
+              <img src={logo} alt={t('login.logoAlt')} className="h-[52px] w-auto object-contain" />
+              <span className="ml-2 self-start mt-[21px] text-[11px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
+            </div>
+
+            <Tabs defaultValue="admin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-100 p-1 rounded-xl h-auto">
+                <TabsTrigger
+                  value="admin"
+                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+                >
+                  {t('login.adminTab')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="team"
+                  className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+                >
+                  {t('login.teamTab')}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="admin">
+                <form onSubmit={async (e) => { e.preventDefault(); await handleLogin('admin'); }} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="m-admin-email" className="text-xs font-semibold text-slate-700">{t('login.email')}</Label>
+                    <Input id="m-admin-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" placeholder="admin@company.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="m-admin-pw" className="text-xs font-semibold text-slate-700">{t('login.password')}</Label>
+                    <Input id="m-admin-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={rememberEmail} onChange={(e) => setRememberEmail(e.target.checked)} className="w-4 h-4 accent-[#2563eb] rounded" />
+                      <span className="text-xs text-slate-600">{t('login.rememberEmail')}</span>
+                    </label>
+                    <button type="button" className="text-xs text-[#2563eb] hover:text-[#1d4ed8]" onClick={() => setResetPasswordOpen(true)}>{t('login.forgotPassword')}</button>
+                  </div>
+                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                    {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
+                  </Button>
+                  <p className="text-xs text-center text-slate-500 mt-2">
+                    {t('login.noAccount')}{' '}
+                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('admin'); setSignupOpen(true); }}>{t('login.signup')}</button>
+                  </p>
+                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                  <div className="space-y-2">
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleAppleLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleKakaoLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleNaverLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
+                    </button>
+                  </div>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="team">
+                <form onSubmit={async (e) => { e.preventDefault(); await handleLogin('team'); }} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="m-team-email" className="text-xs font-semibold text-slate-700">{t('login.email')}</Label>
+                    <Input id="m-team-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" placeholder="user@company.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="m-team-pw" className="text-xs font-semibold text-slate-700">{t('login.password')}</Label>
+                    <Input id="m-team-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={rememberEmail} onChange={(e) => setRememberEmail(e.target.checked)} className="w-4 h-4 accent-[#2563eb] rounded" />
+                      <span className="text-xs text-slate-600">{t('login.rememberEmail')}</span>
+                    </label>
+                    <button type="button" className="text-xs text-[#2563eb] hover:text-[#1d4ed8]" onClick={() => setResetPasswordOpen(true)}>{t('login.forgotPassword')}</button>
+                  </div>
+                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                    {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
+                  </Button>
+                  <p className="text-xs text-center text-slate-500 mt-2">
+                    {t('login.noAccount')}{' '}
+                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('team'); setSignupOpen(true); }}>{t('login.signup')}</button>
+                  </p>
+                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                  <div className="space-y-2">
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleAppleLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleKakaoLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
+                    </button>
+                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleNaverLogin}>
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} /></span>
+                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
+                    </button>
+                  </div>
+                </form>
+              </TabsContent>
+            </Tabs>
+            <div className="mt-5 pt-4 border-t border-[#e5e7eb] text-[10px] text-center text-slate-500 leading-relaxed whitespace-pre-line">
+              {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'}
+            </div>
+          </div>
+
+          {/* 카드 아래 저작권 */}
+          <div className="mt-4 text-[10px] text-center text-white/60 leading-relaxed">
+            {t('login.copyright')}<br />{t('login.patentNotice')}
+          </div>
+        </div>
+      </div>
+
+      {/* 우측 폼 패널 — sm 이상 표시 */}
+      <div className="hidden sm:flex flex-1 flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]">
         <div className="w-full max-w-[420px]">
           <div className="mb-6">
             <div className="mb-1.5">
