@@ -209,6 +209,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, error: validation.errors.join(', ') };
       }
 
+      // 0-1. 이메일 중복 검증
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser) {
+        const errMsg = '이미 가입된 이메일입니다. 로그인을 시도해주세요.';
+        set({ error: errMsg, isLoading: false });
+        return { success: false, error: errMsg };
+      }
+
       // 1. 회사 코드로 조회 (팀원은 회사 코드 없이 가입 가능)
       let company: any = null;
       let isNewCompany = false;
