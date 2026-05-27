@@ -44,7 +44,8 @@
     "yes": "Yes",
     "no": "No",
     "unknown": "Unknown",
-    "error": "Error"
+    "error": "Error",
+    "checking": "Checking..."
   },
   "language": {
     "settings": "Language",
@@ -267,6 +268,10 @@
     "departmentAfterVerify": "You can select a department after company verification",
     "noDeptContactAdmin": "No departments found. Contact admin or sign up as admin.",
     "signingUp": "Signing up...",
+    "checkDuplicate": "Check",
+    "emailAlreadyExists": "This email is already registered.",
+    "emailAvailable": "This email is available.",
+    "emailCheckFailed": "Email check failed. Please try again.",
     "signupButton": "Sign Up",
     "signupComplete": "Sign Up Complete",
     "signupCompleteDesc": "You can now log in",
