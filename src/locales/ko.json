@@ -219,7 +219,10 @@
     "heroHeadline": "문서 정리가 안되는 건, 당신 탓이 아닙니다.\n문제는 '구조'입니다.\n문서가 쌓이지 않는 '구조'를 설계합니다.",
     "heroDescription": "퇴근 전에 문서 찾느라 헤매본 적 있으신가요?\n감사 시즌만 되면 두려워지나요?\n\n종이 정리함 + 솔루션을 연결하여 유효기간 관리, 문서 검색, 보관 위치 검색까지 AI로 한 번에!",
     "copyright": "COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.",
-    "patentNotice": "(주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다."
+    "patentNotice": "(주의)본 솔루션에 사용된 모든 기술은 등록특허(제10-2843883, 제10-2731096) 및 출원특허로 보호받고 있습니다.",
+    "or": "또는",
+    "title": "로그인",
+    "welcomeMessage": "TrayStorage CONNECT에 오신 것을 환영합니다."
   },
   "signup": {
     "title": "회원가입",
@@ -355,8 +358,13 @@
   },
   "terms": {
     "title": "서비스 이용약관 및 개인정보 처리방침",
-    "tos": "서비스 이용 약관",
-    "privacy": "개인정보 처리방침"
+    "tos": "서비스 이용약관",
+    "privacy": "개인정보 처리방침",
+    "agreeAll": "모두 동의합니다",
+    "required": "[필수]",
+    "ageConfirm": "만 14세 이상입니다",
+    "agreeSuffix": " 에 동의합니다",
+    "reviewContent": "내용을 확인해 주세요."
   },
   "dashboard": {
     "title": "대시보드",

@@ -769,7 +769,7 @@ export function LoginPage() {
             {/* 카드 내 로고 */}
             <div className="flex items-center justify-center mb-5">
               <img src={logo} alt={t('login.logoAlt')} className="h-[52px] w-auto object-contain" />
-              <span className="ml-2 text-[11px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
+              <span className="ml-2 self-start mt-[21px] text-[11px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
             </div>
 
             <Tabs defaultValue="admin" className="w-full">
@@ -812,7 +812,7 @@ export function LoginPage() {
                     {t('login.noAccount')}{' '}
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('admin'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
-                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">또는</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="space-y-2">
                     <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
                       <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
@@ -858,7 +858,7 @@ export function LoginPage() {
                     {t('login.noAccount')}{' '}
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('team'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
-                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">또는</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
+                  <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="space-y-2">
                     <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
                       <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
@@ -897,9 +897,9 @@ export function LoginPage() {
         <div className="w-full max-w-[420px]">
           <div className="mb-6">
             <div className="mb-1.5">
-              <h2 className="text-[26px] font-bold text-slate-900 tracking-tight">로그인</h2>
+              <h2 className="text-[26px] font-bold text-slate-900 tracking-tight">{t('login.title')}</h2>
             </div>
-            <p className="text-sm text-slate-500">TrayStorage CONNECT에 오신 것을 환영합니다.</p>
+            <p className="text-sm text-slate-500">{t('login.welcomeMessage')}</p>
           </div>
 
           <Tabs defaultValue="admin" className="w-full">
@@ -984,7 +984,7 @@ export function LoginPage() {
                   </p>
                   <div className="flex items-center gap-3 my-4">
                     <div className="flex-1 h-px bg-[#e5e7eb]" />
-                    <span className="text-xs text-slate-400">또는</span>
+                    <span className="text-xs text-slate-400">{t('login.or')}</span>
                     <div className="flex-1 h-px bg-[#e5e7eb]" />
                   </div>
                   <div className="space-y-2.5">
@@ -1098,7 +1098,7 @@ export function LoginPage() {
                   </p>
                   <div className="flex items-center gap-3 my-4">
                     <div className="flex-1 h-px bg-[#e5e7eb]" />
-                    <span className="text-xs text-slate-400">또는</span>
+                    <span className="text-xs text-slate-400">{t('login.or')}</span>
                     <div className="flex-1 h-px bg-[#e5e7eb]" />
                   </div>
                   <div className="space-y-2.5">
@@ -1371,7 +1371,7 @@ export function LoginPage() {
                     onChange={(e) => handleAgreeAll(e.target.checked)}
                     className="w-[15px] h-[15px] accent-[#2563eb] m-0"
                   />
-                  <span className="text-[13px] font-semibold text-slate-900">모두 동의합니다</span>
+                  <span className="text-[13px] font-semibold text-slate-900">{t('terms.agreeAll')}</span>
                 </label>
                 <div className="pt-2 border-t border-[#e5e7eb] flex flex-col gap-1.5">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1381,7 +1381,7 @@ export function LoginPage() {
                       onChange={(e) => setAgreeAge(e.target.checked)}
                       className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
-                    <span className="text-[12px] text-slate-500"><span>[필수]</span> <span className="text-slate-900">만 14세 이상입니다</span></span>
+                    <span className="text-[12px] text-slate-500"><span>{t('terms.required')}</span> <span className="text-slate-900">{t('terms.ageConfirm')}</span></span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1391,15 +1391,15 @@ export function LoginPage() {
                       className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
                     <span className="text-[12px] text-slate-500">
-                      [필수]{' '}
+                      {t('terms.required')}{' '}
                       <button
                         type="button"
                         className="text-[#2563eb] underline hover:text-[#1d4ed8]"
                         onClick={() => setTermsPopupType('tos')}
                       >
-                        서비스 이용약관
+                        {t('terms.tos')}
                       </button>
-                      <span className="text-slate-900"> 에 동의합니다</span>
+                      <span className="text-slate-900">{t('terms.agreeSuffix')}</span>
                     </span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1410,15 +1410,15 @@ export function LoginPage() {
                       className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                     />
                     <span className="text-[12px] text-slate-500">
-                      [필수]{' '}
+                      {t('terms.required')}{' '}
                       <button
                         type="button"
                         className="text-[#2563eb] underline hover:text-[#1d4ed8]"
                         onClick={() => setTermsPopupType('privacy')}
                       >
-                        개인정보 처리방침
+                        {t('terms.privacy')}
                       </button>
-                      <span className="text-slate-900"> 에 동의합니다</span>
+                      <span className="text-slate-900">{t('terms.agreeSuffix')}</span>
                     </span>
                   </label>
                 </div>
@@ -1474,7 +1474,7 @@ export function LoginPage() {
               <h2 className="text-[17px] font-semibold text-slate-900 tracking-[-0.01em]">
                 {termsPopupType === 'tos' ? t('terms.tos') : t('terms.privacy')}
               </h2>
-              <p className="text-[13px] text-slate-500 mt-0.5">내용을 확인해 주세요.</p>
+              <p className="text-[13px] text-slate-500 mt-0.5">{t('terms.reviewContent')}</p>
             </div>
             <button
               type="button"
@@ -1495,7 +1495,7 @@ export function LoginPage() {
               onClick={() => setTermsPopupType(null)}
               className="h-9 px-5 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
             >
-              확인
+              {t('common.confirm')}
             </button>
           </div>
         </DialogContent>
