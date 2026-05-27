@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { savePreference } from '@/lib/preferences';
+import { useAuthStore } from '@/store/authStore';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -16,7 +18,7 @@ function applyThemeClass(mode: ThemeMode) {
   }
 }
 
-// Initialize from localStorage
+// Initialize from localStorage (instant, no flicker)
 const stored = (typeof window !== 'undefined' ? localStorage.getItem('app-theme') : null) as ThemeMode | null;
 const initialMode: ThemeMode = stored === 'dark' ? 'dark' : 'light';
 
@@ -31,5 +33,11 @@ export const useThemeStore = create<ThemeState>((set) => ({
     localStorage.setItem('app-theme', mode);
     applyThemeClass(mode);
     set({ mode });
+
+    // Save to DB (fire-and-forget)
+    const userId = useAuthStore.getState().user?.id;
+    if (userId) {
+      savePreference(userId, 'theme', mode);
+    }
   },
 }));

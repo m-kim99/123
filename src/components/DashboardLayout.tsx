@@ -56,6 +56,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
+import { savePreference } from '@/lib/preferences';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -82,6 +83,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
     localStorage.setItem('app-language', lng);
+    // Save to DB (fire-and-forget)
+    const uid = useAuthStore.getState().user?.id;
+    if (uid) {
+      savePreference(uid, 'language', lng as 'ko' | 'en');
+    }
   };
 
   // Selector 최적화: 상태값은 개별 selector로, 함수는 한 번에
@@ -171,6 +177,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     fetchPreferences();
     startRealtimeSubscription();
     return () => { stopRealtimeSubscription(); };
+  }, [user?.id]);
+
+  // Load user preferences (theme, language) from DB on login
+  useEffect(() => {
+    if (!user?.id) return;
+    import('@/lib/preferences').then(({ fetchPreferences: fetchUserPrefs }) => {
+      fetchUserPrefs(user.id).then((prefs) => {
+        if (prefs.theme && prefs.theme !== themeMode) {
+          setThemeMode(prefs.theme);
+        }
+        if (prefs.language && prefs.language !== i18n.language) {
+          i18n.changeLanguage(prefs.language);
+          localStorage.setItem('app-language', prefs.language);
+        }
+      });
+    });
   }, [user?.id]);
 
   // 사용자 부서명 가져오기
