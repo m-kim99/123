@@ -988,7 +988,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Input
                 type="search"
                 placeholder={t('header.searchPlaceholder')}
-                className="w-full pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-lg"
+                className="w-full pl-10 bg-white dark:bg-[#0a101b] text-slate-900 dark:text-[#f1f5f9] placeholder:text-slate-400 dark:placeholder:text-[#64748b] border-slate-200 dark:border-white/[0.08] rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -1008,13 +1008,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-full">
+                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-full">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
                     <div className="flex">
                       {/* 좌측: 관련 문서 (자동완성) */}
-                      <div className="flex-1 border-r p-3 max-h-80 overflow-y-auto">
+                      <div className="flex-1 border-r dark:border-white/[0.06] p-3 max-h-80 overflow-y-auto">
                         <p className="text-xs font-semibold text-slate-500 mb-2">
                           {t('header.relatedDocuments')}
                         </p>
@@ -1022,7 +1022,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           searchSuggestions.related.map((item, idx) => (
                             <div
                               key={`related-mobile-${idx}`}
-                              className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                              className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                               onClick={() => {
                                 setSearchQuery(item);
                                 handleSearch();
@@ -1049,7 +1049,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {searchSuggestions.recent.map((item, idx) => (
                               <div
                                 key={`recent-mobile-${idx}`}
-                                className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
@@ -1070,7 +1070,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {searchSuggestions.popular.map((item, idx) => (
                               <div
                                 key={`popular-mobile-${idx}`}
-                                className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
@@ -1291,7 +1291,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       ) : (
                         <div className="flex">
                           {/* 좌측: 관련 문서 (자동완성) */}
-                          <div className="flex-1 border-r p-3 max-h-80 overflow-y-auto">
+                          <div className="flex-1 border-r dark:border-white/[0.06] p-3 max-h-80 overflow-y-auto">
                             <p className="text-xs font-semibold text-slate-500 mb-2">
                               {t('header.relatedDocuments')}
                             </p>
@@ -1299,7 +1299,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               searchSuggestions.related.map((item, idx) => (
                                 <div
                                   key={`related-${idx}`}
-                                  className="px-3 py-2 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                  className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                                   onClick={() => {
                                     setSearchQuery(item);
                                     handleSearch();
@@ -1326,7 +1326,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 {searchSuggestions.recent.map((item, idx) => (
                                   <div
                                     key={`recent-${idx}`}
-                                    className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                    className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();
@@ -1347,7 +1347,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 {searchSuggestions.popular.map((item, idx) => (
                                   <div
                                     key={`popular-${idx}`}
-                                    className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer rounded text-sm"
+                                    className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();

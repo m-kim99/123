@@ -713,7 +713,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen flex bg-white overflow-x-hidden">
+    <div className="min-h-screen w-screen flex bg-white dark:bg-[#0b1220] overflow-x-hidden">
       {/* 좌측 브랜드 패널 — 태블릿/데스크탑만 표시 */}
       <div
         className="hidden md:flex w-[44%] shrink-0 relative flex-col justify-between p-10 lg:p-12 overflow-hidden bg-black"
@@ -747,7 +747,7 @@ export function LoginPage() {
       </div>
 
       {/* 우측 폼 패널 */}
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]">
         {/* 모바일 전용 로고 */}
         <div className="md:hidden mb-8 flex items-end gap-2">
           <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />

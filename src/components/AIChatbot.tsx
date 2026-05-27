@@ -1094,7 +1094,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
       {!isOpen && (
         <Button
           size="icon"
-          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-[0_4px_14px_rgba(37,99,235,0.35)] z-40 transition-all duration-300 hover:scale-110 bg-[#2563eb] hover:bg-[#1d4ed8]"
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-[0_4px_14px_rgba(37,99,235,0.35)] z-40 transition-all duration-300 hover:scale-110 bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]"
           onClick={() => setIsOpen(true)}
         >
           <MessageSquare className="h-6 w-6" />
@@ -1102,14 +1102,14 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
       )}
 
       {isOpen && (
-        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain rounded-[14px] border-[#e5e7eb]`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-slate-100 px-4 pt-4">
+        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain rounded-[14px] border-[#e5e7eb] dark:border-white/[0.08] dark:bg-[#111827]`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-slate-100 dark:border-white/[0.06] px-4 pt-4">
             <CardTitle className="flex items-center gap-2.5 text-sm font-semibold">
-              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center bg-[#eff6ff]">
-                <MessageSquare className="h-4 w-4 text-[#2563eb]" />
+              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
+                <MessageSquare className="h-4 w-4 text-[#2563eb] dark:text-[#60a5fa]" />
               </div>
               <div>
-                <span className="text-slate-900">{t('chatbot.title')}</span>
+                <span className="text-slate-900 dark:text-[#f1f5f9]">{t('chatbot.title')}</span>
                 <p className="text-[10px] font-normal text-emerald-500 mt-0.5">Online</p>
               </div>
             </CardTitle>
@@ -1117,7 +1117,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
               <button
                 type="button"
                 onClick={() => setIsTall((prev) => !prev)}
-                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
               >
                 <img
                   src={isTall ? reduceIcon : expandIcon}
@@ -1169,7 +1169,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                   }
                   setIsOpen(false);
                 }}
-                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
               >
                 <img src={closeIcon} alt={t('common.close')} className="h-5 w-5 block object-contain pointer-events-none" />
               </button>
@@ -1190,8 +1190,8 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                     <div
                       className={`max-w-xs px-4 py-2.5 ${
                         message.role === 'user'
-                          ? 'text-white rounded-[14px] rounded-br-[4px] bg-[#2563eb]'
-                          : 'text-slate-700 rounded-[14px] rounded-bl-[4px] bg-[#f1f5f9]'
+                          ? 'text-white rounded-[14px] rounded-br-[4px] bg-[#2563eb] dark:bg-[#3b82f6]'
+                          : 'text-slate-700 rounded-[14px] rounded-bl-[4px] bg-[#f1f5f9] dark:text-[#cbd5e1] dark:bg-[#1e293b]'
                       }`}
                     >
                       <div className="text-sm break-words whitespace-pre-line">
@@ -1223,7 +1223,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                           {extractedLinks.map((link, idx) => (
                             <div
                               key={`link-card-${idx}`}
-                              className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
+                              className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:bg-[rgba(59,130,246,0.12)] dark:hover:border-[rgba(59,130,246,0.4)] transition-all"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -1255,7 +1255,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                         {message.searchResults.slice(0, 5).map((doc) => (
                           <div
                             key={doc.id}
-                            className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all"
+                            className="border border-slate-200 rounded-lg bg-white px-4 py-3 text-xs shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:bg-[rgba(59,130,246,0.12)] dark:hover:border-[rgba(59,130,246,0.4)] transition-all"
                             onClick={() => {
                               if (doc.parentCategoryId && doc.subcategoryId) {
                                 const basePath = user?.role === 'admin' ? '/admin' : '/team';
@@ -1294,7 +1294,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="px-3 py-1 rounded-lg bg-transparent text-xs text-slate-600">
+                  <div className="px-3 py-1 rounded-lg bg-transparent text-xs text-slate-600 dark:text-[#94a3b8]">
                     {t('chatbot.thinking')}
                   </div>
                 </div>
@@ -1305,21 +1305,21 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
             <div className="px-4 pb-2 flex flex-wrap gap-1.5">
               <button
                 type="button"
-                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-[#111827] dark:text-[#cbd5e1] dark:hover:bg-[#1e293b] transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ1'))}
               >
                 {t('chatbot.quickQ1')}
               </button>
               <button
                 type="button"
-                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-[#111827] dark:text-[#cbd5e1] dark:hover:bg-[#1e293b] transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ2'))}
               >
                 {t('chatbot.quickQ2')}
               </button>
               <button
                 type="button"
-                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-[10px] border border-[#e5e7eb] bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-[#111827] dark:text-[#cbd5e1] dark:hover:bg-[#1e293b] transition-colors whitespace-nowrap"
                 onClick={() => handleQuickQuestion(t('chatbot.quickQ3'))}
               >
                 {t('chatbot.quickQ3')}
@@ -1328,7 +1328,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
 
             <form
               onSubmit={handleSendMessage}
-              className="p-3 border-t border-slate-100 flex items-center gap-2"
+              className="p-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center gap-2"
             >
               <div className="relative flex-1">
                 <Input
@@ -1340,7 +1340,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
                   disabled={isVoiceMode && !isRunningInApp()}
                 >
                   <img src={sendIcon} alt={t('chatbot.send')} className="h-5 w-5 block object-contain pointer-events-none" />
@@ -1351,7 +1351,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 <button
                   type="button"
                   onClick={toggleLiveVoice}
-                  className={`h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 transition-colors ${isVoiceMode ? 'bg-red-500 hover:bg-red-600' : 'bg-[#2563eb] hover:bg-[#1d4ed8]'}`}
+                  className={`h-7 w-7 flex items-center justify-center rounded-[8px] focus:outline-none p-0 border-0 transition-colors ${isVoiceMode ? 'bg-red-500 hover:bg-red-600' : 'bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]'}`}
                   title={isVoiceMode ? t('chatbot.voiceStop') : t('chatbot.voiceStart')}
                 >
                   <img

@@ -133,21 +133,21 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
   return (
     <div className="flex flex-col h-full">
       {/* 상단 툴바 */}
-      <div className="flex items-center justify-between gap-1 sm:gap-2 border-b bg-slate-50 px-2 sm:px-3 py-2 text-xs sm:text-sm">
+      <div className="flex items-center justify-between gap-1 sm:gap-2 border-b bg-slate-50 dark:bg-[#111827] dark:border-white/[0.08] px-2 sm:px-3 py-2 text-xs sm:text-sm overflow-hidden">
         {/* 왼쪽: 사이드바 토글 + 확대/축소 */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setShowSidebar(!showSidebar)}
             title={t('pdfViewer.toc')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
           </Button>
           
-          <div className="hidden sm:block w-px h-5 bg-slate-300" />
+          <div className="hidden sm:block w-px h-5 bg-slate-300 dark:bg-white/[0.14]" />
           
           <Button
             type="button"
@@ -155,7 +155,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             onClick={() => setScale((prev) => Math.max(0.5, prev - 0.1))}
             title={t('pdfViewer.zoomOut')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -168,21 +168,21 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             onClick={() => setScale((prev) => Math.min(2.5, prev + 0.1))}
             title={t('pdfViewer.zoomIn')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
 
         {/* 중앙: 페이지 네비게이션 */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             disabled={currentPage <= 1}
             onClick={() => scrollToPage(currentPage - 1)}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <ChevronUp className="h-4 w-4" />
           </Button>
@@ -203,21 +203,21 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             disabled={!numPages || currentPage >= numPages}
             onClick={() => scrollToPage(currentPage + 1)}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
         </div>
 
         {/* 오른쪽: 회전, 검색, 인쇄, 다운로드 */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleRotate}
             title={t('pdfViewer.rotate')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <RotateCw className="h-4 w-4" />
           </Button>
@@ -227,7 +227,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             onClick={() => setShowSearch(!showSearch)}
             title={t('common.search')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <Search className="h-4 w-4" />
           </Button>
@@ -237,7 +237,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             onClick={handlePrint}
             title={t('pdfViewer.print')}
-            className="hidden sm:flex p-1 sm:p-2"
+            className="hidden sm:flex h-7 w-7 sm:h-8 sm:w-8 p-0 items-center justify-center"
           >
             <Printer className="h-4 w-4" />
           </Button>
@@ -247,7 +247,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
             size="sm"
             onClick={handleDownload}
             title={t('pdfViewer.download')}
-            className="p-1 sm:p-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex items-center justify-center"
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -256,7 +256,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
 
       {/* 검색 바 */}
       {showSearch && (
-        <div className="flex items-center gap-2 border-b bg-white px-3 py-2">
+        <div className="flex items-center gap-2 border-b bg-white dark:bg-[#111827] dark:border-white/[0.08] px-3 py-2">
           <Search className="h-4 w-4 text-slate-400" />
           <Input
             type="text"
@@ -284,8 +284,8 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
       <div className="flex-1 flex overflow-hidden">
         {/* 썸네일 사이드바 */}
         {showSidebar && (
-          <div className="w-32 sm:w-40 border-r bg-slate-50 overflow-y-auto flex-shrink-0">
-            <div className="p-2 border-b bg-white sticky top-0 z-10">
+          <div className="w-32 sm:w-40 border-r bg-slate-50 dark:bg-[#0f172a] dark:border-white/[0.08] overflow-y-auto flex-shrink-0">
+            <div className="p-2 border-b bg-white dark:bg-[#111827] dark:border-white/[0.08] sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-600">{t('pdfViewer.toc')}</span>
                 <Button
@@ -331,7 +331,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
         {/* PDF 본문 */}
         <div
           ref={mainContentRef}
-          className="flex-1 overflow-auto bg-slate-100"
+          className="flex-1 overflow-auto bg-slate-100 dark:bg-[#0b1220]"
           onScroll={handleScroll}
         >
           <Document
@@ -355,7 +355,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
                 ref={(el) => {
                   if (el) pageRefs.current.set(pageNum, el);
                 }}
-                className="shadow-lg bg-white relative"
+                className="shadow-lg bg-white dark:bg-white relative"
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
                 <Page
