@@ -768,8 +768,8 @@ export function LoginPage() {
           <div className="w-full bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.25)] p-6">
             {/* 카드 내 로고 */}
             <div className="flex items-center justify-center mb-5">
-              <img src={logo} alt={t('login.logoAlt')} className="h-10 w-auto object-contain" />
-              <span className="ml-2 text-[10px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
+              <img src={logo} alt={t('login.logoAlt')} className="h-[52px] w-auto object-contain" />
+              <span className="ml-2 text-[11px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
             </div>
 
             <Tabs defaultValue="admin" className="w-full">
