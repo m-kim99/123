@@ -27,6 +27,8 @@ import {
   Crown,
   Sun,
   Moon,
+  AlertTriangle,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1602,59 +1604,107 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <DialogContent variant="v1" className="max-w-[560px] flex flex-col max-h-[85vh]" hideClose>
           {showDeletionView ? (
             <>
-              <DialogHeader>
-                <DialogTitle>{t('profile.deleteAccountTitle')}</DialogTitle>
-                <DialogDescription>
-                  {t('profile.deleteAccountDesc')}
-                  <br />
-                  {t('profile.deleteAccountDesc2')}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700 font-medium mb-2">{t('profile.deleteWarning')}</p>
-                  <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
-                    <li>{t('profile.deleteWarning1')}</li>
-                    <li>{t('profile.deleteWarning2')}</li>
-                    <li>{t('profile.deleteWarning3')}</li>
-                  </ul>
+              {/* V1 Header */}
+              <div className="flex items-start gap-3 px-[22px] pt-[18px] pb-[14px] border-b border-slate-100">
+                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-red-50">
+                  <Trash2 className="h-[18px] w-[18px] text-red-500" />
                 </div>
-                {isOAuthUser ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="deletion-confirm">{t('profile.deleteConfirmLabel')}</Label>
-                    <Input
-                      id="deletion-confirm"
-                      type="text"
-                      placeholder={t('profile.deleteKeyword')}
-                      value={deletionConfirmText}
-                      onChange={(e) => setDeletionConfirmText(e.target.value)}
-                      disabled={isRequestingDeletion}
-                    />
-                    <p className="text-xs text-slate-500">
-                      {t('profile.deleteOAuthNote')}
-                    </p>
+                <div className="flex-1 min-w-0">
+                  <DialogTitle className="text-[15.5px] font-semibold tracking-[-0.01em]">
+                    {t('profile.deleteAccountTitle')}
+                  </DialogTitle>
+                  <DialogDescription className="text-[12px] text-slate-500 mt-1">
+                    {t('profile.deleteAccountDesc')}
+                  </DialogDescription>
+                </div>
+              </div>
+
+              {/* V1 Body */}
+              <div className="px-[22px] py-4 flex flex-col gap-3.5">
+                {/* 노란 경고 박스 */}
+                <div className="p-2.5 px-3 rounded-lg bg-amber-50 border border-amber-200 text-[11.5px] text-amber-900 leading-relaxed flex gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600" />
+                  <div>
+                    <strong className="block mb-0.5">{t('profile.deleteDataWarning', { defaultValue: '탈퇴 후 모든 데이터가 삭제됩니다.' })}</strong>
+                    {t('profile.deleteDataWarningDesc', { defaultValue: '예정일에 다음 항목들이 영구 삭제되며, 복구할 수 없습니다.' })}
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="deletion-password">{t('profile.deletePasswordLabel')}</Label>
-                    <Input
-                      id="deletion-password"
-                      type="password"
-                      placeholder={t('profile.deletePasswordPlaceholder')}
-                      value={deletionPassword}
-                      onChange={(e) => setDeletionPassword(e.target.value)}
-                      disabled={isRequestingDeletion}
-                    />
+                </div>
+
+                {/* 빨간 주의사항 박스 with list */}
+                <div className="p-2.5 px-3 rounded-lg bg-red-50 border border-red-200 text-[11.5px] text-red-900 leading-relaxed flex gap-2">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-600" />
+                  <div>
+                    <strong className="block mb-0.5">{t('profile.deleteWarning')}</strong>
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                      <li>{t('profile.deleteWarning1')}</li>
+                      <li>{t('profile.deleteWarning2')}</li>
+                      <li>{t('profile.deleteWarning3')}</li>
+                    </ul>
                   </div>
-                )}
+                </div>
+
+                {/* 확인 절차 section */}
+                <div className="border-t border-slate-100 pt-3.5">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
+                    {t('profile.confirmProcedure', { defaultValue: '확인 절차' })}
+                  </p>
+                  {isOAuthUser ? (
+                    <div className="space-y-1.5">
+                      <Label className="text-[12px] font-medium text-slate-700">
+                        {t('profile.deleteConfirmLabel', { defaultValue: '확인을 위해 "탈퇴"를 입력하세요' })}
+                      </Label>
+                      <Input
+                        id="deletion-confirm"
+                        type="text"
+                        className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                        placeholder={t('profile.deleteKeyword')}
+                        value={deletionConfirmText}
+                        onChange={(e) => setDeletionConfirmText(e.target.value)}
+                        disabled={isRequestingDeletion}
+                      />
+                      <p className="text-[11px] text-slate-400">{t('profile.deleteOAuthNote')}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Label className="text-[12px] font-medium text-slate-700">{t('profile.deletePasswordLabel')}</Label>
+                      <Input
+                        id="deletion-password"
+                        type="password"
+                        className="h-[34px] rounded-lg border-[#e5e7eb] text-[12.5px]"
+                        placeholder={t('profile.deletePasswordPlaceholder')}
+                        value={deletionPassword}
+                        onChange={(e) => setDeletionPassword(e.target.value)}
+                        disabled={isRequestingDeletion}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 예정일 + 유예기간 박스 */}
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11.5px] text-slate-600 flex flex-col gap-1.5">
+                  <div className="flex justify-between">
+                    <span>{t('profile.scheduledDeleteDate', { defaultValue: '예정 삭제일' })}</span>
+                    <strong className="text-slate-900 font-mono">
+                      {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR')}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t('profile.gracePeriod', { defaultValue: '유예 기간' })}</span>
+                    <strong className="text-slate-900">14{t('common.days', { defaultValue: '일' })}</strong>
+                  </div>
+                </div>
+
                 {profileError && (
-                  <p className="text-xs text-red-500">{profileError}</p>
+                  <p className="text-[11px] text-red-500">{profileError}</p>
                 )}
               </div>
-              <DialogFooter className="flex-col sm:flex-row gap-2">
+
+              {/* V1 Footer */}
+              <div className="flex gap-2 justify-end px-[22px] py-3 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
                 <Button
                   type="button"
                   variant="outline"
+                  className="h-9 text-[12.5px] font-semibold"
                   onClick={() => {
                     setShowDeletionView(false);
                     setDeletionPassword('');
@@ -1662,20 +1712,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     setProfileError(null);
                   }}
                   disabled={isRequestingDeletion}
-                  className="w-full sm:w-auto"
                 >
                   {t('common.back')}
                 </Button>
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="destructive-soft"
+                  className="h-9 text-[12.5px] font-semibold"
                   onClick={handleRequestDeletion}
                   disabled={isRequestingDeletion || (isOAuthUser ? deletionConfirmText !== t('profile.deleteKeyword') : !deletionPassword.trim())}
-                  className="w-full sm:w-auto"
                 >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
                   {isRequestingDeletion ? t('common.processing') : t('profile.requestDeletion')}
                 </Button>
-              </DialogFooter>
+              </div>
             </>
           ) : (
             <>
