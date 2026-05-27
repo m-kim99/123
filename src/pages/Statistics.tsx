@@ -388,7 +388,6 @@ export function Statistics() {
                 action={
                   <div className="flex items-center gap-3 text-[11.5px] text-slate-500">
                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2563eb]" />{t('statistics.thisMonthUploads', { defaultValue: '이번 달' })}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#cbd5e1]" />{t('statistics.lastMonth', { defaultValue: '지난 달' })}</span>
                   </div>
                 }
               />

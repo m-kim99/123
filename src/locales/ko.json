@@ -90,7 +90,9 @@
     "auditLog": "감사 로그",
     "customBranding": "커스텀 브랜딩",
     "paymentNotReady": "결제 기능은 현재 준비 중입니다. 곧 제공될 예정입니다.",
-    "subscribe": "구독하기"
+    "subscribe": "구독하기",
+    "pro": "프로",
+    "enterprise": "엔터프라이즈"
   },
   "nav": {
     "home": "홈",
@@ -432,7 +434,7 @@
     "monthlyUploads": "월별 업로드 현황",
     "docsByParentCategory": "대분류별 문서 수",
     "addParentCategory": "대분류를 추가하세요.",
-    "docsByDepartment": "부서별 문서 분포",
+    "docsByDepartment": "부서별 업로드 현황",
     "documents": "문서",
     "count": "{{count}}건",
     "yearLabel": "{{year}}년"

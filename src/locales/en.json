@@ -90,7 +90,9 @@
     "auditLog": "Audit Log",
     "customBranding": "Custom Branding",
     "paymentNotReady": "Payment feature is currently under development. Coming soon.",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
   },
   "nav": {
     "home": "Home",
@@ -432,7 +434,7 @@
     "monthlyUploads": "Monthly Uploads",
     "docsByParentCategory": "Documents by Category",
     "addParentCategory": "Add a category first.",
-    "docsByDepartment": "Documents by Department",
+    "docsByDepartment": "Uploads by Department",
     "documents": "Documents",
     "count": "{{count}} docs",
     "yearLabel": "{{year}}"

@@ -28,7 +28,7 @@ import { TermsOfServiceContent } from '@/components/terms/TermsOfService';
 import { PrivacyPolicyContent } from '@/components/terms/PrivacyPolicy';
 
 export function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState(() => {
     const saved = localStorage.getItem('saved_login_email');
     return saved || '';
@@ -777,7 +777,7 @@ export function LoginPage() {
           </div>
         </div>
         <div className="relative z-10 text-[11px] text-white/70 leading-relaxed">
-          {t('login.copyright')}<br />{t('login.patentNotice')}
+          {t('login.copyright')}
         </div>
       </div>
 
@@ -916,13 +916,15 @@ export function LoginPage() {
               </TabsContent>
             </Tabs>
             <div className="mt-5 pt-4 border-t border-[#e5e7eb] text-[10px] text-center text-slate-500 leading-relaxed whitespace-pre-line">
-              {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'}
+              {i18n.language === 'ko'
+                ? '주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'
+                : 'InfoCreative Inc.\nCEO: Do-Cheon Jeong\nBusiness Registration No: 841-86-03004\nMail-order Sales No: 2024-Seoul Geumcheon-0112\n\nSupport: support@traystorage.net\nBusiness Inquiries: support@traystorage.net\nSupport Line: 02-333-7334\n\n708-709, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Korea'}
             </div>
           </div>
 
           {/* 카드 아래 저작권 */}
           <div className="mt-4 text-[10px] text-center text-white/60 leading-relaxed">
-            {t('login.copyright')}<br />{t('login.patentNotice')}
+            {t('login.copyright')}
           </div>
         </div>
       </div>}
@@ -1188,7 +1190,9 @@ export function LoginPage() {
               </TabsContent>
             </Tabs>
             <div className="mt-6 pt-5 border-t border-[#e5e7eb] text-xs text-center text-slate-500 leading-relaxed whitespace-pre-line">
-              {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'}
+              {i18n.language === 'ko'
+                ? '주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'
+                : 'InfoCreative Inc.\nCEO: Do-Cheon Jeong\nBusiness Registration No: 841-86-03004\nMail-order Sales No: 2024-Seoul Geumcheon-0112\n\nSupport: support@traystorage.net\nBusiness Inquiries: support@traystorage.net\nSupport Line: 02-333-7334\n\n708-709, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Korea'}
             </div>
           </div>
         </div>

@@ -1959,8 +1959,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DialogTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-yellow-500" />
                   {selectedPlan === 'basic' && t('subscription.basic')}
-                  {selectedPlan === 'pro' && 'Pro'}
-                  {selectedPlan === 'enterprise' && 'Enterprise'}
+                  {selectedPlan === 'pro' && t('subscription.pro')}
+                  {selectedPlan === 'enterprise' && t('subscription.enterprise')}
                   {' '}{t('subscription.planDetail')}
                 </DialogTitle>
                 <DialogDescription>{t('subscription.planDetailDesc')}</DialogDescription>
@@ -1988,7 +1988,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="space-y-3">
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold">Pro</span>
+                        <span className="text-lg font-bold">{t('subscription.pro')}</span>
                         <span className="text-2xl font-bold text-[#2563eb]">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
@@ -2008,7 +2008,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="space-y-3">
                     <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold">Enterprise</span>
+                        <span className="text-lg font-bold">{t('subscription.enterprise')}</span>
                         <span className="text-xl font-bold text-indigo-600">{t('subscription.contact')}</span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
@@ -2083,8 +2083,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {[
                           { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free' },
                           { name: 'basic', display: t('subscription.basic'), price: '5,900', members: '3', highlight: subscriptionInfo.planName === 'basic' },
-                          { name: 'pro', display: 'Pro', price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
-                          { name: 'enterprise', display: 'Enterprise', price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
+                          { name: 'pro', display: t('subscription.pro'), price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
+                          { name: 'enterprise', display: t('subscription.enterprise'), price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
                         ].map((plan) => (
                           <div
                             key={plan.name}
