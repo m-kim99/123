@@ -81,8 +81,26 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
     public func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {}
 
     public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        if let nfcError = error as? NFCReaderError,
-           nfcError.code == .readerSessionInvalidationErrorUserCanceled { return }
+        let isCancelled: Bool
+        if let nfcError = error as? NFCReaderError {
+            isCancelled = (nfcError.code == .readerSessionInvalidationErrorUserCanceled)
+        } else {
+            isCancelled = false
+        }
+
+        if isWriting {
+            // 쓰기 대기 중 취소/오류 → pendingWriteCall을 reject하지 않으면 JS Promise가 영구 pending 상태가 됨
+            let msg = isCancelled
+                ? "사용자가 NFC 스캔을 취소했습니다."
+                : "NFC 세션 오류: \(error.localizedDescription)"
+            pendingWriteCall?.reject(msg)
+            resetWriteState()
+        } else if isScanning {
+            // 읽기 대기 중 취소/오류 → JS의 readNFCTag/readNFCUid 타임아웃을 기다리지 않도록 이벤트 전달
+            isScanning = false
+            let reason = isCancelled ? "userCancelled" : error.localizedDescription
+            notifyListeners("nfcScanCancelled", data: ["reason": reason])
+        }
     }
 
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {

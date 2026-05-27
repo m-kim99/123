@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { Smartphone, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { isNFCSupported, readNFCTag, type NFCTagData } from '@/lib/nfc';
+import { NfcPlugin } from '@/plugins/nfc-plugin';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 
@@ -139,12 +141,16 @@ export function NFCReader() {
   };
 
   const handleCloseDialog = () => {
-    if (!isScanning) {
-      setShowDialog(false);
-      setStatus('idle');
-      setStatusMessage('');
-      setErrorMessage('');
+    // 스캔 중일 때도 닫기 허용: stopScan()을 호출하면 Swift에서 nfcScanCancelled 이벤트를 발생시키고
+    // readNFCTag() promise가 즉시 reject됩니다.
+    if (isScanning && Capacitor.isNativePlatform()) {
+      NfcPlugin.stopScan().catch(() => {});
     }
+    setShowDialog(false);
+    setIsScanning(false);
+    setStatus('idle');
+    setStatusMessage('');
+    setErrorMessage('');
   };
 
   return (
@@ -171,16 +177,14 @@ export function NFCReader() {
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">{t('nfc.scan')}</h3>
-              {!isScanning && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCloseDialog}
-                  className="h-6 w-6"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCloseDialog}
+                className="h-6 w-6"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
 
             {/* 스캔 중 상태 */}
@@ -217,14 +221,12 @@ export function NFCReader() {
               </Alert>
             )}
 
-            {/* 취소 버튼 (스캔 중일 때만 비활성화) */}
-            {!isScanning && (
-              <div className="mt-4 flex justify-end">
-                <Button onClick={handleCloseDialog} variant="outline">
-                  {t('common.close')}
-                </Button>
-              </div>
-            )}
+            {/* 닫기/취소 버튼 */}
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleCloseDialog} variant="outline">
+                {isScanning ? t('common.cancel') : t('common.close')}
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -96,15 +96,25 @@ export function NFCAutoRedirect() {
         isInitializedRef.current = true;
 
         if (Capacitor.isNativePlatform()) {
-          // 네이티브: startScan을 호출하지 않음 (foreground dispatch는 MainActivity lifecycle이 관리)
-          // 리스너만 등록하여 태그 감지 이벤트를 수신
+          if (Capacitor.getPlatform() === 'ios') {
+            // iOS: foreground dispatch 개념이 없음.
+            // NFC 태그 인식은 iOS Background Tag Reading + Universal Links 조합으로 처리됩니다.
+            // - 태그에 기록된 https://traystorageconnect.com/nfc-redirect?subcategoryId=... URL을
+            //   iOS가 백그라운드에서 자동으로 읽고 앱 Universal Link로 열어줌
+            // - App.entitlements에 applinks:traystorageconnect.com 이 선언되어 있어야 함
+            // - 앱이 열리면 NfcRedirect.tsx 페이지가 subcategoryId로 직접 이동 처리
+            console.log('NFC 자동 리다이렉트: iOS - Universal Links 방식으로 처리됩니다.');
+            return;
+          }
+
+          // Android: foreground dispatch는 MainActivity lifecycle이 관리하므로 리스너만 등록
           nativeListenerRef.current = await NfcPlugin.addListener(
             'nfcTagDetected',
             async (tag) => {
               await processTag(tag.uid, tag.payload, tag.recordType);
             },
           );
-          console.log('NFC 리스너 등록 완료 (네이티브)');
+          console.log('NFC 리스너 등록 완료 (Android 네이티브)');
         } else {
           // @ts-ignore - NDEFReader is not in TypeScript types
           const ndef = new (window as any).NDEFReader();

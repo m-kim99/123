@@ -1,3 +1,13 @@
+/**
+ * @deprecated nfcApi.ts의 nfc_mappings 테이블 기반 함수들은 현재 앱에서 사용되지 않습니다.
+ *
+ * 현재 활성화된 NFC 등록 시스템:
+ *   - 태그에 URL 쓰기: writeNFCUrl() in src/lib/nfc.ts
+ *   - UID DB 저장:     registerNfcTag() in documentStore (subcategories.nfc_tag_id 컬럼)
+ *   - 태그 읽기/리다이렉트: NFCAutoRedirect (Android) / NfcRedirect.tsx (iOS Universal Links)
+ *
+ * nfc_mappings 테이블과 이 파일의 함수들은 레거시이며 새 코드에서 참조하지 마세요.
+ */
 import { supabase } from './supabase';
 import { NFCMapping, NFCRegisterRequest, NFCResolveResponse } from '@/types/nfc';
 

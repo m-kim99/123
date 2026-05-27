@@ -7,6 +7,10 @@ export interface NfcTagDetectedEvent {
   recordType?: 'url' | 'text' | 'mime' | 'other';
 }
 
+export interface NfcScanCancelledEvent {
+  reason: string;
+}
+
 export interface NfcPluginDefinition {
   isEnabled(): Promise<{ enabled: boolean }>;
   startScan(): Promise<void>;
@@ -16,6 +20,10 @@ export interface NfcPluginDefinition {
   addListener(
     event: 'nfcTagDetected',
     listenerFunc: (tag: NfcTagDetectedEvent) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    event: 'nfcScanCancelled',
+    listenerFunc: (event: NfcScanCancelledEvent) => void,
   ): Promise<PluginListenerHandle>;
 }
 

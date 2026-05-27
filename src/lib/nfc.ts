@@ -205,25 +205,37 @@ export async function readNFCTag(): Promise<NFCTagData> {
   if (Capacitor.isNativePlatform()) {
     return new Promise(async (resolve, reject) => {
       let resolved = false;
+
+      const cleanup = (tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>, cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>) => {
+        tagHandle.remove();
+        cancelHandle.remove();
+      };
+
       const timeout = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          listenerHandle?.remove();
           NfcPlugin.stopScan().catch(() => {});
           reject(new Error('NFC 태그 읽기 시간이 초과되었습니다.'));
         }
       }, 30000);
 
-      const listenerHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+      const tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
         if (resolved) return;
         resolved = true;
         clearTimeout(timeout);
-        listenerHandle.remove();
+        cleanup(tagHandle, cancelHandle);
         NfcPlugin.stopScan().catch(() => {});
-
         const tagData = parseTagPayload(tag.payload, tag.recordType);
         console.log('NFC 태그 읽기 완료 (네이티브):', tagData);
         resolve(tagData);
+      });
+
+      const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', () => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeout);
+        cleanup(tagHandle, cancelHandle);
+        reject(new Error('NFC 스캔이 취소되었습니다.'));
       });
 
       try {
@@ -232,7 +244,7 @@ export async function readNFCTag(): Promise<NFCTagData> {
         if (!resolved) {
           resolved = true;
           clearTimeout(timeout);
-          listenerHandle.remove();
+          cleanup(tagHandle, cancelHandle);
           reject(e);
         }
       }
@@ -318,24 +330,37 @@ export async function readNFCUid(): Promise<string> {
       return await new Promise(async (resolve, reject) => {
         let resolved = false;
 
+        const cleanup = (tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>, cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>) => {
+          tagHandle.remove();
+          cancelHandle.remove();
+        };
+
         const timeout = setTimeout(() => {
           if (!resolved) {
             resolved = true;
-            listenerHandle?.remove();
             NfcPlugin.stopScan().catch(() => {});
             setNfcMode('idle');
             reject(new Error('NFC 태그 읽기 시간 초과 (30초)'));
           }
         }, 30000);
 
-        const listenerHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+        const tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
           if (resolved) return;
           resolved = true;
           clearTimeout(timeout);
-          listenerHandle.remove();
+          cleanup(tagHandle, cancelHandle);
           NfcPlugin.stopScan().catch(() => {});
           console.log('NFC UID 읽음 (네이티브):', tag.uid);
           resolve(tag.uid);
+        });
+
+        const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', () => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeout);
+          cleanup(tagHandle, cancelHandle);
+          setNfcMode('idle');
+          reject(new Error('NFC 스캔이 취소되었습니다.'));
         });
 
         try {
@@ -344,7 +369,7 @@ export async function readNFCUid(): Promise<string> {
           if (!resolved) {
             resolved = true;
             clearTimeout(timeout);
-            listenerHandle.remove();
+            cleanup(tagHandle, cancelHandle);
             setNfcMode('idle');
             reject(e);
           }

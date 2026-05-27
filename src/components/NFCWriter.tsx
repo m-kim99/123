@@ -1,3 +1,8 @@
+/**
+ * @deprecated NFCWriter는 categories 테이블에 JSON 데이터를 쓰는 레거시 컴포넌트입니다.
+ * 현재 활성화된 NFC 등록 플로우는 NFCRegistrationDialog를 사용하세요:
+ *   readNFCUid() → writeNFCUrl() → registerNfcTag() → subcategories.nfc_tag_id 저장
+ */
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
