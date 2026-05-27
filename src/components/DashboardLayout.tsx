@@ -29,6 +29,8 @@ import {
   Moon,
   AlertTriangle,
   AlertCircle,
+  Clock,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1022,54 +1024,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-full max-h-[70vh] overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.18),0_6px_12px_-6px_rgba(15,23,42,0.08)] overflow-hidden">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
                     <div className="flex flex-col">
-                      {/* 관련 문서 (자동완성) */}
-                      <div className="p-3 border-b dark:border-white/[0.06]">
-                        <p className="text-xs font-semibold text-slate-500 mb-2">
+                      {/* 관련 문서 */}
+                      <div className="p-2">
+                        <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                          <FileText className="h-3 w-3" />
                           {t('header.relatedDocuments')}
                         </p>
                         {searchSuggestions.related.length > 0 ? (
                           searchSuggestions.related.map((item, idx) => (
                             <div
                               key={`related-mobile-${idx}`}
-                              className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                               onClick={() => {
                                 setSearchQuery(item);
                                 handleSearch();
                               }}
                             >
-                              📄 {item}
+                              <div className="w-6 h-6 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center shrink-0">
+                                <FileText className="h-3 w-3 text-[#1e40af] dark:text-[#93c5fd]" />
+                              </div>
+                              {item}
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-slate-400 px-3">
+                          <p className="text-[12px] text-slate-400 px-2.5 py-2">
                             {t('header.noRelatedDocuments')}
                           </p>
                         )}
                       </div>
 
                       {/* 최근/인기 검색어 */}
-                      <div className="p-3">
+                      <div className="p-2 border-t border-slate-100 dark:border-white/[0.06]">
                         {/* 최근 검색어 */}
                         {searchSuggestions.recent.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-xs font-semibold text-slate-500 mb-2">
+                          <div className="mb-2">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                              <Clock className="h-3 w-3" />
                               {t('header.recentSearches')}
                             </p>
                             {searchSuggestions.recent.map((item, idx) => (
                               <div
                                 key={`recent-mobile-${idx}`}
-                                className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
                                 }}
                               >
-                                🕐 {item}
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                {item}
                               </div>
                             ))}
                           </div>
@@ -1078,19 +1086,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {/* 인기 검색어 */}
                         {searchSuggestions.popular.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-slate-500 mb-2">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                              <TrendingUp className="h-3 w-3" />
                               {t('header.popularSearches')}
                             </p>
                             {searchSuggestions.popular.map((item, idx) => (
                               <div
                                 key={`popular-mobile-${idx}`}
-                                className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                 onClick={() => {
                                   setSearchQuery(item);
                                   handleSearch();
                                 }}
                               >
-                                🔥 {item}
+                                <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#1e40af] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
+                                {item}
                               </div>
                             ))}
                           </div>
@@ -1099,7 +1109,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {/* 비어있을 때 */}
                         {searchSuggestions.recent.length === 0 &&
                           searchSuggestions.popular.length === 0 && (
-                            <p className="text-sm text-slate-400 text-center py-4">
+                            <p className="text-[12px] text-slate-400 text-center py-4">
                               {t('header.noSearchHistory')}
                             </p>
                           )}
@@ -1299,54 +1309,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
 
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-[600px]">
+                    <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.18),0_6px_12px_-6px_rgba(15,23,42,0.08)] overflow-hidden w-[600px]">
                       {isLoadingSuggestions ? (
                         <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                       ) : (
-                        <div className="flex">
-                          {/* 좌측: 관련 문서 (자동완성) */}
-                          <div className="flex-1 border-r dark:border-white/[0.06] p-3 max-h-80 overflow-y-auto">
-                            <p className="text-xs font-semibold text-slate-500 mb-2">
+                        <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-white/[0.06]">
+                          {/* 좌측: 관련 문서 */}
+                          <div className="p-2 max-h-80 overflow-y-auto">
+                            <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                              <FileText className="h-3 w-3" />
                               {t('header.relatedDocuments')}
                             </p>
                             {searchSuggestions.related.length > 0 ? (
                               searchSuggestions.related.map((item, idx) => (
                                 <div
                                   key={`related-${idx}`}
-                                  className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                   onClick={() => {
                                     setSearchQuery(item);
                                     handleSearch();
                                   }}
                                 >
-                                  📄 {item}
+                                  <div className="w-6 h-6 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center shrink-0">
+                                    <FileText className="h-3 w-3 text-[#1e40af] dark:text-[#93c5fd]" />
+                                  </div>
+                                  {item}
                                 </div>
                               ))
                             ) : (
-                              <p className="text-sm text-slate-400 px-3">
+                              <p className="text-[12px] text-slate-400 px-2.5 py-2">
                                 {t('header.noRelatedDocuments')}
                               </p>
                             )}
                           </div>
 
                           {/* 우측: 최근/인기 검색어 */}
-                          <div className="w-56 p-3 max-h-80 overflow-y-auto">
+                          <div className="p-2 max-h-80 overflow-y-auto">
                             {/* 최근 검색어 */}
                             {searchSuggestions.recent.length > 0 && (
-                              <div className="mb-4">
-                                <p className="text-xs font-semibold text-slate-500 mb-2">
+                              <div className="mb-2">
+                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                                  <Clock className="h-3 w-3" />
                                   {t('header.recentSearches')}
                                 </p>
                                 {searchSuggestions.recent.map((item, idx) => (
                                   <div
                                     key={`recent-${idx}`}
-                                    className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();
                                     }}
                                   >
-                                    🕐 {item}
+                                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                    {item}
                                   </div>
                                 ))}
                               </div>
@@ -1355,19 +1371,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {/* 인기 검색어 */}
                             {searchSuggestions.popular.length > 0 && (
                               <div>
-                                <p className="text-xs font-semibold text-slate-500 mb-2">
+                                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                                  <TrendingUp className="h-3 w-3" />
                                   {t('header.popularSearches')}
                                 </p>
                                 {searchSuggestions.popular.map((item, idx) => (
                                   <div
                                     key={`popular-${idx}`}
-                                    className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-[#1e293b] cursor-pointer rounded text-sm dark:text-[#cbd5e1]"
+                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1e293b]"
                                     onClick={() => {
                                       setSearchQuery(item);
                                       handleSearch();
                                     }}
                                   >
-                                    🔥 {item}
+                                    <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#1e40af] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
+                                    {item}
                                   </div>
                                 ))}
                               </div>
@@ -1376,7 +1394,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {/* 우측이 비어있을 때 */}
                             {searchSuggestions.recent.length === 0 &&
                               searchSuggestions.popular.length === 0 && (
-                                <p className="text-sm text-slate-400 text-center py-4">
+                                <p className="text-[12px] text-slate-400 text-center py-4">
                                   {t('header.noSearchHistory')}
                                 </p>
                               )}
