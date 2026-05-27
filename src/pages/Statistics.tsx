@@ -382,7 +382,7 @@ export function Statistics() {
           {isAdmin && (
             <div className={v1Card}>
               <V1CardHeader
-                title={t('statistics.docsByDepartment')}
+                title={t('statistics.uploadsByDepartment')}
                 icon={BarChart3}
                 iconColor="#2563eb"
                 action={

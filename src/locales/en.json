@@ -434,7 +434,8 @@
     "monthlyUploads": "Monthly Uploads",
     "docsByParentCategory": "Documents by Category",
     "addParentCategory": "Add a category first.",
-    "docsByDepartment": "Uploads by Department",
+    "docsByDepartment": "Documents by Department",
+    "uploadsByDepartment": "Uploads by Department",
     "documents": "Documents",
     "count": "{{count}} docs",
     "yearLabel": "{{year}}"

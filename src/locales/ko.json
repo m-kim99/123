@@ -434,7 +434,8 @@
     "monthlyUploads": "월별 업로드 현황",
     "docsByParentCategory": "대분류별 문서 수",
     "addParentCategory": "대분류를 추가하세요.",
-    "docsByDepartment": "부서별 업로드 현황",
+    "docsByDepartment": "부서별 문서 분포",
+    "uploadsByDepartment": "부서별 업로드 현황",
     "documents": "문서",
     "count": "{{count}}건",
     "yearLabel": "{{year}}년"

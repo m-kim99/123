@@ -848,22 +848,18 @@ export function LoginPage() {
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('admin'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
-                  <div className="space-y-2">
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
+                  <div className="flex items-center justify-center gap-5">
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleGoogleLogin}>
+                      <img src={googleLogo} alt="Google" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleAppleLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleAppleLogin}>
+                      <img src={appleLogo} alt="Apple" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleKakaoLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FEE500] border border-[#FEE500] hover:bg-[#fdd800] transition-colors shadow-sm" onClick={handleKakaoLogin}>
+                      <img src={kakaoLogo} alt="Kakao" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleNaverLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#03C75A] border border-[#03C75A] hover:bg-[#02b351] transition-colors shadow-sm" onClick={handleNaverLogin}>
+                      <img src={naverLogo} alt="Naver" className="w-6 h-6 object-contain" />
                     </button>
                   </div>
                 </form>
@@ -894,22 +890,18 @@ export function LoginPage() {
                     <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('team'); setSignupOpen(true); }}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
-                  <div className="space-y-2">
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleGoogleLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={googleLogo} alt="Google" className={socialLogoClassByProvider.google} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithGoogle')}</span>
+                  <div className="flex items-center justify-center gap-5">
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleGoogleLogin}>
+                      <img src={googleLogo} alt="Google" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleAppleLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={appleLogo} alt="Apple" className={socialLogoClassByProvider.apple} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithApple')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-[#e5e7eb] hover:bg-slate-50 transition-colors shadow-sm" onClick={handleAppleLogin}>
+                      <img src={appleLogo} alt="Apple" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleKakaoLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={kakaoLogo} alt="Kakao" className={socialLogoClassByProvider.kakao} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithKakao')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FEE500] border border-[#FEE500] hover:bg-[#fdd800] transition-colors shadow-sm" onClick={handleKakaoLogin}>
+                      <img src={kakaoLogo} alt="Kakao" className="w-6 h-6 object-contain" />
                     </button>
-                    <button type="button" className="w-full h-10 flex items-center gap-3 px-4 bg-white border border-[#e5e7eb] rounded-[10px] hover:bg-slate-50 transition-colors" onClick={handleNaverLogin}>
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0"><img src={naverLogo} alt="Naver" className={socialLogoClassByProvider.naver} /></span>
-                      <span className="flex-1 text-sm font-medium text-slate-700 text-center">{t('login.continueWithNaver')}</span>
+                    <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full bg-[#03C75A] border border-[#03C75A] hover:bg-[#02b351] transition-colors shadow-sm" onClick={handleNaverLogin}>
+                      <img src={naverLogo} alt="Naver" className="w-6 h-6 object-contain" />
                     </button>
                   </div>
                 </form>
