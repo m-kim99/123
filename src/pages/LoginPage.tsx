@@ -85,6 +85,7 @@ export function LoginPage() {
   const [emailChecked, setEmailChecked] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [emailCheckResult, setEmailCheckResult] = useState<string | null>(null);
+  const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   // 회원가입 팝업 열릴 때 배경 스크롤 잠금
   useEffect(() => {
@@ -780,8 +781,8 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* 모바일 전용 — 영상 배경 + 카드 오버레이 (폰 전용) */}
-      <div className="sm:hidden flex-1 relative min-h-screen flex flex-col items-center justify-center overflow-y-auto">
+      {/* 모바일 전용 — 영상 배경 + 카드 오버레이 (실제 모바일 기기만) */}
+      {isMobileDevice && <div className="md:hidden flex-1 relative min-h-screen flex flex-col items-center justify-center overflow-y-auto">
         <video
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           src="/login-bg.mp4"
@@ -924,10 +925,10 @@ export function LoginPage() {
             {t('login.copyright')}<br />{t('login.patentNotice')}
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* 우측 폼 패널 — sm 이상 표시 */}
-      <div className="hidden sm:flex flex-1 flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]">
+      {/* 우측 폼 패널 — 데스크탑 or 모바일 md 이상 */}
+      <div className={`${isMobileDevice ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]`}>
         <div className="w-full max-w-[420px]">
           <div className="mb-6">
             <div className="mb-1.5">
