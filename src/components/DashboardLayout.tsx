@@ -877,12 +877,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0b1220]">
       {/* NFC 자동 감지 (백그라운드에서 항상 작동) */}
       <NFCAutoRedirect />
       
       <aside
-        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white border-r transform transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0`}
       >
@@ -890,7 +890,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={() => navigate(basePath)}
-            className="flex items-center justify-center bg-white focus:outline-none w-full"
+            className="flex items-center justify-center bg-white dark:bg-transparent focus:outline-none w-full"
           >
             <img
               src={logo}
@@ -927,11 +927,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   rel="noopener noreferrer"
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-[#1d4ed8] bg-[#eff6ff]'
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'text-[#1d4ed8] bg-[#eff6ff] dark:text-[#93c5fd] dark:bg-[rgba(59,130,246,0.16)]'
+                      : 'text-slate-600 hover:bg-slate-50 dark:text-[#cbd5e1] dark:hover:bg-[#1e293b]'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-500'}`} />
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
                   {item.name}
                 </a>
               ) : (
@@ -940,11 +940,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   to={item.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-[#1d4ed8] bg-[#eff6ff]'
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'text-[#1d4ed8] bg-[#eff6ff] dark:text-[#93c5fd] dark:bg-[rgba(59,130,246,0.16)]'
+                      : 'text-slate-600 hover:bg-slate-50 dark:text-[#cbd5e1] dark:hover:bg-[#1e293b]'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-500'}`} />
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
                   {item.name}
                 </Link>
               )
@@ -969,7 +969,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64 w-full min-w-full">
-        <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-white w-full h-16 px-4 flex items-center gap-3">
+        <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full h-16 px-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -1257,7 +1257,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </DropdownMenu>
         </header>
 
-        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white dark:border-white/8 dark:bg-[#0f172a] w-full">
+        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">
@@ -1265,7 +1265,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Input
                     type="search"
                     placeholder={t('header.searchPlaceholder')}
-                    className="bg-white text-slate-900 placeholder:text-slate-400 border-slate-200 rounded-lg"
+                    className="bg-white dark:bg-[#0a101b] text-slate-900 dark:text-[#f1f5f9] placeholder:text-slate-400 dark:placeholder:text-[#64748b] border-slate-200 dark:border-white/[0.08] rounded-lg"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -1285,7 +1285,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
 
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-[600px]">
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#111827] border dark:border-white/[0.08] rounded-lg shadow-lg z-50 w-[600px]">
                       {isLoadingSuggestions ? (
                         <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                       ) : (
@@ -1516,8 +1516,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {isNotificationOpen && (
-        <div className="fixed top-20 right-4 z-50 w-80 bg-white border border-slate-200 rounded-[10px] shadow-lg">
-          <div className="flex items-center justify-between px-3 py-2 border-b bg-white rounded-t-[10px]">
+        <div className="fixed top-20 right-4 z-50 w-80 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/[0.08] rounded-[10px] shadow-lg">
+          <div className="flex items-center justify-between px-3 py-2 border-b bg-white dark:bg-[#111827] rounded-t-[10px]">
             <span className="text-sm font-semibold text-slate-900">{t('header.notifications')}</span>
             <button
               type="button"

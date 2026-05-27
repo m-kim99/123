@@ -137,3 +137,144 @@ h1 {
     @apply bg-background text-foreground;
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   DARK MODE — Global surface/text/border overrides
+   Automatically converts hardcoded Tailwind classes
+   ═══════════════════════════════════════════════════ */
+
+/* --- Surfaces --- */
+.dark .bg-white { background-color: #111827 !important; }
+.dark .bg-\[\#ffffff\] { background-color: #111827 !important; }
+.dark .bg-slate-50 { background-color: #0f172a !important; }
+.dark .bg-\[\#f8f9fa\] { background-color: #0b1220 !important; }
+.dark .bg-\[\#f8fafc\] { background-color: #0a101b !important; }
+.dark .bg-gray-50 { background-color: #0f172a !important; }
+.dark .bg-gray-100 { background-color: #111827 !important; }
+.dark .bg-slate-100 { background-color: #1e293b !important; }
+
+/* Hover surfaces */
+.dark .hover\:bg-slate-50:hover { background-color: #1e293b !important; }
+.dark .hover\:bg-slate-100:hover { background-color: #1e293b !important; }
+.dark .hover\:bg-gray-50:hover { background-color: #1e293b !important; }
+.dark .hover\:bg-blue-50:hover { background-color: rgba(59,130,246,0.12) !important; }
+.dark .hover\:border-blue-300:hover { border-color: rgba(59,130,246,0.4) !important; }
+
+/* --- Text --- */
+.dark .text-slate-900 { color: #f1f5f9 !important; }
+.dark .text-slate-800 { color: #f1f5f9 !important; }
+.dark .text-slate-700 { color: #cbd5e1 !important; }
+.dark .text-gray-900 { color: #f1f5f9 !important; }
+.dark .text-gray-800 { color: #f1f5f9 !important; }
+.dark .text-gray-700 { color: #cbd5e1 !important; }
+.dark .text-slate-600 { color: #94a3b8 !important; }
+.dark .text-gray-600 { color: #94a3b8 !important; }
+.dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-gray-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #64748b !important; }
+.dark .text-gray-400 { color: #64748b !important; }
+.dark .text-\[\#0f172a\] { color: #f1f5f9 !important; }
+.dark .text-\[\#111827\] { color: #f1f5f9 !important; }
+.dark .text-\[\#475569\] { color: #cbd5e1 !important; }
+.dark .text-\[\#64748b\] { color: #94a3b8 !important; }
+
+/* --- Borders --- */
+.dark .border-slate-200 { border-color: rgba(255,255,255,0.08) !important; }
+.dark .border-slate-100 { border-color: rgba(255,255,255,0.06) !important; }
+.dark .border-slate-300 { border-color: rgba(255,255,255,0.14) !important; }
+.dark .border-gray-200 { border-color: rgba(255,255,255,0.08) !important; }
+.dark .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
+.dark .border-\[\#e5e7eb\] { border-color: rgba(255,255,255,0.08) !important; }
+.dark .border-\[\#f1f5f9\] { border-color: rgba(255,255,255,0.06) !important; }
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.08) !important; }
+
+/* --- Brand colors (bump to 500/400) --- */
+.dark .text-\[\#2563eb\] { color: #3b82f6 !important; }
+.dark .text-\[\#1d4ed8\] { color: #60a5fa !important; }
+.dark .bg-\[\#2563eb\] { background-color: #3b82f6 !important; }
+.dark .bg-\[\#eff6ff\] { background-color: rgba(59,130,246,0.16) !important; }
+.dark .hover\:bg-\[\#1d4ed8\]:hover { background-color: #2563eb !important; }
+
+/* --- Shadows → Inset highlight + ambient --- */
+.dark .shadow-sm { box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.35) !important; }
+.dark .shadow-md { box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 4px 6px rgba(0,0,0,0.4) !important; }
+.dark .shadow-lg { box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 10px 15px rgba(0,0,0,0.5) !important; }
+.dark .shadow-\[0_1px_2px_rgba\(15\2c 23\2c 42\2c 0\.04\)\] { box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.35) !important; }
+
+/* --- Ring / Focus --- */
+.dark .ring-slate-200 { --tw-ring-color: rgba(255,255,255,0.14) !important; }
+
+/* --- Specific component overrides --- */
+.dark .bg-\[\#fafbfc\] { background-color: #0f172a !important; }
+.dark .bg-\[\#f1f5f9\] { background-color: #1e293b !important; }
+.dark .bg-\[\#f0f9ff\] { background-color: rgba(59,130,246,0.12) !important; }
+.dark .bg-blue-50 { background-color: rgba(59,130,246,0.12) !important; }
+.dark .bg-blue-100 { background-color: rgba(59,130,246,0.16) !important; }
+.dark .bg-green-50 { background-color: rgba(52,211,153,0.12) !important; }
+.dark .bg-green-100 { background-color: rgba(52,211,153,0.16) !important; }
+.dark .bg-red-50 { background-color: rgba(248,113,113,0.12) !important; }
+.dark .bg-red-100 { background-color: rgba(248,113,113,0.16) !important; }
+.dark .bg-yellow-50 { background-color: rgba(251,191,36,0.12) !important; }
+.dark .bg-yellow-100 { background-color: rgba(251,191,36,0.16) !important; }
+.dark .bg-violet-50 { background-color: rgba(167,139,250,0.12) !important; }
+.dark .bg-violet-100 { background-color: rgba(167,139,250,0.16) !important; }
+.dark .bg-amber-50 { background-color: rgba(251,191,36,0.12) !important; }
+
+/* Delta badges */
+.dark .bg-green-50, .dark .bg-emerald-50 { background-color: rgba(52,211,153,0.16) !important; }
+.dark .text-green-700, .dark .text-emerald-700 { color: #6ee7b7 !important; }
+.dark .bg-red-50 { background-color: rgba(248,113,113,0.16) !important; }
+.dark .text-red-700 { color: #fca5a5 !important; }
+
+/* Additional borders */
+.dark .border-slate-50 { border-color: rgba(255,255,255,0.04) !important; }
+.dark .border-white { border-color: rgba(255,255,255,0.08) !important; }
+
+/* Hover with opacity (slate-50/60 etc.) */
+.dark .hover\:bg-slate-50\/60:hover { background-color: rgba(30,41,59,0.6) !important; }
+
+/* Timeline dot borders */
+.dark .border-2.border-white { border-color: #111827 !important; }
+
+/* Specific text utilities in dark mode */
+.dark .text-blue-700 { color: #93c5fd !important; }
+.dark .text-blue-600 { color: #60a5fa !important; }
+.dark .text-yellow-700 { color: #fcd34d !important; }
+.dark .text-violet-700 { color: #c4b5fd !important; }
+.dark .text-amber-700 { color: #fcd34d !important; }
+.dark .text-emerald-700 { color: #6ee7b7 !important; }
+
+/* Chip borders in dark */
+.dark .border-blue-200 { border-color: rgba(59,130,246,0.3) !important; }
+.dark .border-emerald-200 { border-color: rgba(52,211,153,0.3) !important; }
+.dark .border-amber-200 { border-color: rgba(251,191,36,0.3) !important; }
+.dark .border-red-200 { border-color: rgba(248,113,113,0.3) !important; }
+.dark .border-violet-200 { border-color: rgba(167,139,250,0.3) !important; }
+.dark .border-yellow-200 { border-color: rgba(234,179,8,0.3) !important; }
+
+/* Status colors bump */
+.dark .text-red-500 { color: #f87171 !important; }
+.dark .text-red-600 { color: #f87171 !important; }
+.dark .text-green-500 { color: #34d399 !important; }
+.dark .text-green-600 { color: #34d399 !important; }
+.dark .text-emerald-600 { color: #34d399 !important; }
+.dark .text-amber-500 { color: #fbbf24 !important; }
+.dark .text-amber-600 { color: #fbbf24 !important; }
+.dark .text-violet-500 { color: #a78bfa !important; }
+.dark .text-violet-600 { color: #a78bfa !important; }
+
+/* Input specific */
+.dark input, .dark textarea, .dark select {
+  background-color: #0a101b;
+  border-color: rgba(255,255,255,0.08);
+  color: #f1f5f9;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #64748b;
+}
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar { width: 8px; height: 8px; }
+.dark ::-webkit-scrollbar-track { background: #0b1220; }
+.dark ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #334155; }
