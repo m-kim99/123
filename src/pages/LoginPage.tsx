@@ -23,6 +23,10 @@ import googleLogo from '@/assets/google.png';
 import appleLogo from '@/assets/apple.png';
 import kakaoLogo from '@/assets/kakao.png';
 import naverLogo from '@/assets/naver.png';
+import snsGoogle from '@/assets/sns-google.png';
+import snsApple from '@/assets/sns-apple.png';
+import snsKakao from '@/assets/sns-kakao.png';
+import snsNaver from '@/assets/sns-naver.png';
 import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 import { TermsOfServiceContent } from '@/components/terms/TermsOfService';
 import { PrivacyPolicyContent } from '@/components/terms/PrivacyPolicy';
@@ -850,16 +854,16 @@ export function LoginPage() {
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="flex items-center justify-center gap-4">
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleGoogleLogin}>
-                      <img src={googleLogo} alt="Google" className="w-12 h-12 object-contain" />
+                      <img src={snsGoogle} alt="Google" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleAppleLogin}>
-                      <img src={appleLogo} alt="Apple" className="w-12 h-12 object-contain" />
+                      <img src={snsApple} alt="Apple" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleKakaoLogin}>
-                      <img src={kakaoLogo} alt="Kakao" className="w-12 h-12 object-contain" />
+                      <img src={snsKakao} alt="Kakao" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleNaverLogin}>
-                      <img src={naverLogo} alt="Naver" className="w-12 h-12 object-contain" />
+                      <img src={snsNaver} alt="Naver" className="w-12 h-12 object-contain" />
                     </button>
                   </div>
                 </form>
@@ -892,16 +896,16 @@ export function LoginPage() {
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="flex items-center justify-center gap-4">
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleGoogleLogin}>
-                      <img src={googleLogo} alt="Google" className="w-12 h-12 object-contain" />
+                      <img src={snsGoogle} alt="Google" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleAppleLogin}>
-                      <img src={appleLogo} alt="Apple" className="w-12 h-12 object-contain" />
+                      <img src={snsApple} alt="Apple" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleKakaoLogin}>
-                      <img src={kakaoLogo} alt="Kakao" className="w-12 h-12 object-contain" />
+                      <img src={snsKakao} alt="Kakao" className="w-12 h-12 object-contain" />
                     </button>
                     <button type="button" className="w-12 h-12 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity" onClick={handleNaverLogin}>
-                      <img src={naverLogo} alt="Naver" className="w-12 h-12 object-contain" />
+                      <img src={snsNaver} alt="Naver" className="w-12 h-12 object-contain" />
                     </button>
                   </div>
                 </form>
