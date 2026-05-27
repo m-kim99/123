@@ -792,11 +792,11 @@ export function LoginPage() {
                 <form onSubmit={async (e) => { e.preventDefault(); await handleLogin('admin'); }} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="m-admin-email" className="text-xs font-semibold text-slate-700">{t('login.email')}</Label>
-                    <Input id="m-admin-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg" placeholder="admin@company.com" />
+                    <Input id="m-admin-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" placeholder="admin@company.com" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="m-admin-pw" className="text-xs font-semibold text-slate-700">{t('login.password')}</Label>
-                    <Input id="m-admin-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg" />
+                    <Input id="m-admin-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" />
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -838,11 +838,11 @@ export function LoginPage() {
                 <form onSubmit={async (e) => { e.preventDefault(); await handleLogin('team'); }} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="m-team-email" className="text-xs font-semibold text-slate-700">{t('login.email')}</Label>
-                    <Input id="m-team-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg" placeholder="user@company.com" />
+                    <Input id="m-team-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" placeholder="user@company.com" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="m-team-pw" className="text-xs font-semibold text-slate-700">{t('login.password')}</Label>
-                    <Input id="m-team-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg" />
+                    <Input id="m-team-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} required className="h-10 rounded-lg text-[16px]" />
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -880,11 +880,14 @@ export function LoginPage() {
                 </form>
               </TabsContent>
             </Tabs>
+            <div className="mt-5 pt-4 border-t border-[#e5e7eb] text-[10px] text-center text-slate-500 leading-relaxed whitespace-pre-line">
+              {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'}
+            </div>
           </div>
 
-          {/* 카드 아래 회사 정보 */}
-          <div className="mt-5 text-[10px] text-center text-white/70 leading-relaxed whitespace-pre-line">
-            {'주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'}
+          {/* 카드 아래 저작권 */}
+          <div className="mt-4 text-[10px] text-center text-white/60 leading-relaxed">
+            {t('login.copyright')}<br />{t('login.patentNotice')}
           </div>
         </div>
       </div>
