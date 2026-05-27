@@ -1133,7 +1133,7 @@ export function ParentCategoryDetail() {
                 type="button"
                 onClick={handleSaveParentCategory}
                 disabled={isSavingEdit}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold "
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
@@ -1169,7 +1169,7 @@ export function ParentCategoryDetail() {
               <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1208,7 +1208,7 @@ export function ParentCategoryDetail() {
               )}
             </div>
             <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
-              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('common.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>

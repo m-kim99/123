@@ -447,7 +447,7 @@ export function UserManagement() {
               <Button
                 onClick={handleSavePermissions}
                 disabled={isSaving}
-                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="rounded-[10px] h-9 "
               >
                 {isSaving ? t('common.saving') : t('common.save')}
               </Button>

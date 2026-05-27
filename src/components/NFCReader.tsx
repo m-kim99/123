@@ -155,7 +155,7 @@ export function NFCReader() {
           onClick={handleScan}
           disabled={isScanning}
           size="lg"
-          className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-shadow bg-[#2563eb] hover:bg-[#1d4ed8]"
+          className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-shadow "
         >
           {isScanning ? (
             <Loader2 className="h-6 w-6 animate-spin text-white" />

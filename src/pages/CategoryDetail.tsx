@@ -1340,7 +1340,7 @@ export function CategoryDetail() {
                 type="button"
                 onClick={handleUpload}
                 disabled={uploadFiles.length === 0 || isUploading}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold "
               >
                 <Upload className="h-3.5 w-3.5 mr-1.5" />
                 {isUploading ? t('documentMgmt.uploading') : t('documentMgmt.upload')}
@@ -1585,7 +1585,7 @@ export function CategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold "
                 >
                   {isSendingShare ? (
                     <>

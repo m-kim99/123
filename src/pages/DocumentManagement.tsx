@@ -3773,7 +3773,7 @@ export function DocumentManagement() {
               <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -3899,7 +3899,7 @@ export function DocumentManagement() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold "
                 >
                   {isSendingShare ? (
                     <>
@@ -4001,7 +4001,7 @@ export function DocumentManagement() {
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingReplaceOcr}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold "
               >
                 {isReplacingFile ? (
                   <>
@@ -4022,7 +4022,7 @@ export function DocumentManagement() {
             <V1ModalHeader icon={CheckCircle2} title={t('documentMgmt.uploadComplete')} sub={t('documentMgmt.uploadSuccessDesc', { count: uploadSuccessCount })} />
             <V1ModalFooter>
               <Button
-                className="w-full h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="w-full h-9 rounded-[10px] text-[13px] font-semibold "
                 onClick={() => {
                   setUploadSuccessDialogOpen(false);
                   setActiveTab('documents');

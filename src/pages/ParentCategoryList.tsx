@@ -152,7 +152,7 @@ export function ParentCategoryList() {
                   </option>
                 ))}
             </select>
-            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
+            <Button className=" w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t('deptDetail.addParentCategory')}
             </Button>

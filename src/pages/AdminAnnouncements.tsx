@@ -333,7 +333,7 @@ return (
               {t('announcements.write')}
             </Button>
             <Button
-              className="hidden md:flex h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
+              className="hidden md:flex h-9 text-[13px] font-semibold"
               onClick={() => setAddDialogOpen(true)}
             >
               <Plus className="h-4 w-4 mr-1.5" />
@@ -387,7 +387,7 @@ return (
                   type="button"
                   onClick={handleAdd}
                   disabled={isAdding}
-                  className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9"
                 >
                   {isAdding ? t('announcements.adding') : t('common.add')}
                 </Button>
@@ -552,7 +552,7 @@ return (
                 type="button"
                 onClick={handleEdit}
                 disabled={isEditing}
-                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9"
               >
                 {isEditing ? t('common.processing') : t('common.confirm')}
               </Button>

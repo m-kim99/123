@@ -204,7 +204,7 @@ export function ResetPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isResetting}>
+                <Button type="submit" className="w-full h-11 rounded-[10px]  font-semibold" disabled={isResetting}>
                   {isResetting ? t('resetPw.resetting') : t('resetPw.resetButton')}
                 </Button>
               </form>

@@ -1311,7 +1311,7 @@ export function SubcategoryDetail() {
                             size="sm"
                             onClick={lastUploadedDocId ? handleSaveUploadOcrText : handleApplyUploadOcrEdit}
                             disabled={isSavingUploadOcr}
-                            className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                            className=""
                           >
                             {isSavingUploadOcr ? (
                               <>
@@ -1370,7 +1370,7 @@ export function SubcategoryDetail() {
             <Button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading || isExtractingUploadOcr || !canDo('upload')}
-              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold"
+              className="w-full h-11 rounded-[10px]  font-semibold"
             >
               {isExtractingUploadOcr ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1574,7 +1574,7 @@ export function SubcategoryDetail() {
                 type="button"
                 onClick={handleSaveEditSubcategory}
                 disabled={isSavingEdit}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold "
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </Button>
@@ -1762,7 +1762,7 @@ export function SubcategoryDetail() {
               <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1910,7 +1910,7 @@ export function SubcategoryDetail() {
                 <Button
                   onClick={handleSendShare}
                   disabled={isSendingShare || selectedUserIds.length === 0}
-                  className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="h-9 rounded-[10px] text-[13px] font-semibold "
                 >
                   {isSendingShare ? (
                     <>
@@ -2012,7 +2012,7 @@ export function SubcategoryDetail() {
               <Button
                 onClick={handleReplaceFile}
                 disabled={!replaceFile || isReplacingFile || isExtractingOcr}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="h-9 rounded-[10px] text-[13px] font-semibold "
               >
                 {isReplacingFile ? (
                   <>
@@ -2048,7 +2048,7 @@ export function SubcategoryDetail() {
               <Button variant="outline" onClick={() => setQrDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.close')}
               </Button>
-              <Button onClick={handleQrDownload} className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8]">
+              <Button onClick={handleQrDownload} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('subcategoryDetail.qrDownload')}
               </Button>
             </V1ModalFooter>

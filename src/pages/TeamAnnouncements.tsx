@@ -282,7 +282,6 @@ export function TeamAnnouncements() {
                                   <div className="flex gap-2">
                                     <Button
                                       size="sm"
-                                      className="h-8 rounded-[8px] bg-[#2563eb] hover:bg-[#1d4ed8]"
                                       onClick={() => handleEditComment(comment.id, announcement.id)}
                                     >
                                       {t('common.save')}
@@ -357,7 +356,7 @@ export function TeamAnnouncements() {
                         />
                         <Button
                           onClick={() => handleAddComment(announcement.id)}
-                          className="h-auto rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] px-4"
+                          className="h-auto px-4"
                         >
                           <Send className="h-4 w-4" />
                         </Button>

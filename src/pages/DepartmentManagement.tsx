@@ -188,7 +188,7 @@ export function DepartmentManagement() {
           sub={t('departmentMgmt.subtitle')}
           right={
             <Button
-              className="w-full sm:w-auto h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
+              className="w-full sm:w-auto h-9 rounded-[10px]  text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]"
               onClick={() => setIsAddDialogOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />

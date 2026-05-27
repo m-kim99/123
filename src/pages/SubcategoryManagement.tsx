@@ -547,7 +547,7 @@ export function SubcategoryManagement() {
             <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('subcategoryMgmt.title')}</h1>
             <p className="text-sm text-slate-500 mt-1">{t('subcategoryMgmt.subtitle')}</p>
           </div>
-          <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
+          <Button className=" w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('parentCategoryDetail.addSubcategory')}
           </Button>

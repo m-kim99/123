@@ -346,7 +346,7 @@ export function OnboardingPage() {
 
             <Button
               type="button"
-              className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold mt-2 shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
+              className="w-full h-11 rounded-[10px]  font-semibold mt-2 shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
               onClick={handleComplete}
               disabled={isSubmitting || isLoading}
             >

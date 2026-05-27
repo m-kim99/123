@@ -293,7 +293,7 @@ export function DepartmentDetail() {
             icon={FolderOpen}
             iconColor="#2563eb"
             action={
-              <Button className="h-9 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]" onClick={handleOpenAddDialog}>
+              <Button className="h-9 rounded-[10px]  text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]" onClick={handleOpenAddDialog}>
                 <Plus className="h-4 w-4 mr-2" />
                 {t('deptDetail.addParentCategory')}
               </Button>
@@ -401,7 +401,7 @@ export function DepartmentDetail() {
               </Button>
               <Button
                 type="button"
-                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="rounded-[10px] h-9 "
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
               >
@@ -496,7 +496,7 @@ export function DepartmentDetail() {
               <Button
                 type="button"
                 onClick={handleAddCategory}
-                className="rounded-[10px] h-9 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="rounded-[10px] h-9 "
                 disabled={!newParentCategoryName.trim()}
               >
                 {t('common.add')}

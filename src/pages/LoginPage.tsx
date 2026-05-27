@@ -840,7 +840,7 @@ export function LoginPage() {
                     </label>
                     <button type="button" className="text-xs text-[#2563eb] hover:text-[#1d4ed8]" onClick={() => setResetPasswordOpen(true)}>{t('login.forgotPassword')}</button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-2">
@@ -886,7 +886,7 @@ export function LoginPage() {
                     </label>
                     <button type="button" className="text-xs text-[#2563eb] hover:text-[#1d4ed8]" onClick={() => setResetPasswordOpen(true)}>{t('login.forgotPassword')}</button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-2">
@@ -1006,7 +1006,7 @@ export function LoginPage() {
                       {t('login.forgotPassword')}
                     </button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.adminLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-3">
@@ -1120,7 +1120,7 @@ export function LoginPage() {
                       {t('login.forgotPassword')}
                     </button>
                   </div>
-                  <Button type="submit" className="w-full h-11 rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
                     {isLoading ? t('login.loggingIn') : t('login.teamLogin')}
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-3">
