@@ -190,12 +190,24 @@ export function SubcategoryDetail() {
     recordVisit(subcategoryId, parentCategoryId, subcategory.departmentId);
   }, [subcategoryId, parentCategoryId, subcategory?.departmentId, recordVisit]);
 
+  const [docSortOrder, setDocSortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
+
   const subcategoryDocuments = useMemo(
-    () =>
-      subcategoryId
+    () => {
+      const filtered = subcategoryId
         ? documents.filter((d) => d.subcategoryId === subcategoryId)
-        : [],
-    [documents, subcategoryId]
+        : [];
+      const arr = [...filtered];
+      if (docSortOrder === 'alpha') {
+        arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      } else if (docSortOrder === 'oldest') {
+        arr.sort((a, b) => new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime());
+      } else {
+        arr.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+      }
+      return arr;
+    },
+    [documents, subcategoryId, docSortOrder]
   );
 
   // 새 문서 업로드용 dropzone
@@ -1131,6 +1143,17 @@ export function SubcategoryDetail() {
             icon={FileText}
             iconColor="#2563eb"
             sub={t('subcategoryDetail.documentListDesc')}
+            action={
+              <select
+                value={docSortOrder}
+                onChange={(e) => setDocSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha')}
+                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+              >
+                <option value="latest">{t('common.sortLatest')}</option>
+                <option value="oldest">{t('common.sortOldest')}</option>
+                <option value="alpha">{t('common.sortAlpha')}</option>
+              </select>
+            }
           />
           <div className="p-4 sm:p-6">
             {subcategoryDocuments.length === 0 ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, FileText, FolderOpen, Users, ChevronRight } from 'lucide-react';
@@ -59,6 +59,7 @@ export function DepartmentDetail() {
   const [editNameError, setEditNameError] = useState('');
   const [editCodeError, setEditCodeError] = useState('');
   const [teamMembersCount, setTeamMembersCount] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
 
   if (!department) {
     return (
@@ -71,9 +72,16 @@ export function DepartmentDetail() {
     );
   }
 
-  const departmentParentCategories = parentCategories.filter(
-    (pc) => pc.departmentId === department.id,
-  );
+  const departmentParentCategories = useMemo(() => {
+    const filtered = parentCategories.filter((pc) => pc.departmentId === department.id);
+    const arr = [...filtered];
+    if (sortOrder === 'alpha') {
+      arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    } else if (sortOrder === 'latest') {
+      arr.reverse();
+    }
+    return arr;
+  }, [parentCategories, department.id, sortOrder]);
   const departmentDocuments = documents.filter((d) => d.departmentId === department.id);
   const nfcCategoryCount = departmentParentCategories.length;
 
@@ -293,10 +301,21 @@ export function DepartmentDetail() {
             icon={FolderOpen}
             iconColor="#2563eb"
             action={
-              <Button className="h-9 rounded-[10px]  text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]" onClick={handleOpenAddDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('deptDetail.addParentCategory')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha')}
+                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                >
+                  <option value="latest">{t('common.sortLatest')}</option>
+                  <option value="oldest">{t('common.sortOldest')}</option>
+                  <option value="alpha">{t('common.sortAlpha')}</option>
+                </select>
+                <Button className="h-9 rounded-[10px]  text-[13px] font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)]" onClick={handleOpenAddDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('deptDetail.addParentCategory')}
+                </Button>
+              </div>
             }
           />
           <div className="p-5 sm:p-6">

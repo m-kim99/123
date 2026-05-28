@@ -45,7 +45,10 @@
     "no": "No",
     "unknown": "Unknown",
     "error": "Error",
-    "checking": "Checking..."
+    "checking": "Checking...",
+    "sortLatest": "Newest",
+    "sortOldest": "Oldest",
+    "sortAlpha": "A-Z"
   },
   "language": {
     "settings": "Language",

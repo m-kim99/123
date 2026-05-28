@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_WITH_TEAM_ID.com.infocreative.traystorageconnect"],
+        "components": [
+          {
+            "/": "/nfc-redirect*",
+            "comment": "NFC 태그 리다이렉트 처리 - iOS Background Tag Reading + Universal Links"
+          }
+        ]
+      }
+    ]
+  }
+}
