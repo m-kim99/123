@@ -292,6 +292,7 @@ export function DocumentManagement() {
   const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
   const [dateFilter, setDateFilter] = useState<'all' | '7days' | '1month' | '3months'>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'oldest' | 'name'>('latest');
+  const [categorySortOrder, setCategorySortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
   const [categoryFilter, setCategoryFilter] = useState({
     departmentId: 'all',
     parentCategoryId: 'all',
@@ -323,8 +324,8 @@ export function DocumentManagement() {
   );
 
   const filteredSubcategoriesForCategoriesTab = useMemo(
-    () =>
-      subcategories.filter((sub) => {
+    () => {
+      const filtered = subcategories.filter((sub) => {
         if (!isAdmin && user?.departmentId && sub.departmentId !== user.departmentId) {
           return false;
         }
@@ -335,13 +336,22 @@ export function DocumentManagement() {
           return false;
         }
         return true;
-      }),
+      });
+      const arr = [...filtered];
+      if (categorySortOrder === 'alpha') {
+        arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      } else if (categorySortOrder === 'latest') {
+        arr.reverse();
+      }
+      return arr;
+    },
     [
       subcategories,
       isAdmin,
       user?.departmentId,
       categoryFilter.departmentId,
       categoryFilter.parentCategoryId,
+      categorySortOrder,
     ],
   );
 
@@ -2193,6 +2203,16 @@ export function DocumentManagement() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-2">
+                <select
+                  value={categorySortOrder}
+                  onChange={(e) => { setCategorySortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
+                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                >
+                  <option value="latest">{t('common.sortLatest')}</option>
+                  <option value="oldest">{t('common.sortOldest')}</option>
+                  <option value="alpha">{t('common.sortAlpha')}</option>
+                </select>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button style={{ backgroundColor: primaryColor }}>
@@ -2436,6 +2456,7 @@ export function DocumentManagement() {
                   </V1ModalFooter>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
 
             <Dialog

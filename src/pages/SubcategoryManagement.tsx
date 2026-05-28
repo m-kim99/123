@@ -138,6 +138,9 @@ export function SubcategoryManagement() {
   const [deletingSubcategory, setDeletingSubcategory] = useState<Subcategory | null>(null);
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
 
+  // 정렬 상태
+  const [sortOrder, setSortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
+
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
@@ -222,8 +225,8 @@ export function SubcategoryManagement() {
   );
 
   const filteredSubcategories = useMemo(
-    () =>
-      subcategories.filter((sub) => {
+    () => {
+      const filtered = subcategories.filter((sub) => {
         // 먼저 권한 있는 부서의 세부 스토리지만 필터링
         if (!accessibleDepartmentIds.includes(sub.departmentId)) {
           return false;
@@ -238,8 +241,16 @@ export function SubcategoryManagement() {
           return false;
         }
         return true;
-      }),
-    [subcategories, selectedDepartmentId, selectedParentCategoryId, accessibleDepartmentIds]
+      });
+      const arr = [...filtered];
+      if (sortOrder === 'alpha') {
+        arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      } else if (sortOrder === 'latest') {
+        arr.reverse();
+      }
+      return arr;
+    },
+    [subcategories, selectedDepartmentId, selectedParentCategoryId, accessibleDepartmentIds, sortOrder]
   );
 
   // 페이지네이션 계산
@@ -603,11 +614,22 @@ export function SubcategoryManagement() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>{t('subcategoryMgmt.listTitle')}</CardTitle>
-            <CardDescription>
-              {t('subcategoryMgmt.listDesc')}
-            </CardDescription>
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>{t('subcategoryMgmt.listTitle')}</CardTitle>
+              <CardDescription>
+                {t('subcategoryMgmt.listDesc')}
+              </CardDescription>
+            </div>
+            <select
+              value={sortOrder}
+              onChange={(e) => { setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
+              className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+            >
+              <option value="latest">{t('common.sortLatest')}</option>
+              <option value="oldest">{t('common.sortOldest')}</option>
+              <option value="alpha">{t('common.sortAlpha')}</option>
+            </select>
           </CardHeader>
           <CardContent>
             {isLoading && subcategories.length === 0 ? (
