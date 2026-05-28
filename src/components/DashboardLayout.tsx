@@ -113,7 +113,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profileCompanyCode, setProfileCompanyCode] = useState('');
   const [profileCompanyName, setProfileCompanyName] = useState('');
-  const [companyVerified, setCompanyVerified] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -511,7 +510,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setProfileEmail(user?.email || '');
     setProfileCompanyCode(user?.companyCode || '');
     setProfileCompanyName(user?.companyName || '');
-    setCompanyVerified(true);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -634,13 +632,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setIsSavingProfile(true);
 
     try {
-      // 회사 정보 인증 확인
-      if (!companyVerified) {
-        setProfileError(t('profile.verifyCompanyFirst'));
-        setIsSavingProfile(false);
-        return;
-      }
-
       const trimmedName = profileName.trim();
       if (!trimmedName) {
         setProfileError(t('profile.enterName'));
@@ -648,55 +639,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return;
       }
 
-      // 1. 회사 정보 변경 처리
-      let newCompanyId = user.companyId;
-
-      if (
-        profileCompanyCode !== user.companyCode ||
-        profileCompanyName !== user.companyName
-      ) {
-        const { data: existingCompany, error: checkError } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('code', profileCompanyCode)
-          .single();
-
-        let company;
-
-        if (existingCompany) {
-          if (existingCompany.name !== profileCompanyName) {
-            setProfileError(
-              t('profile.companyCodeMismatch')
-            );
-            setIsSavingProfile(false);
-            return;
-          }
-          company = existingCompany;
-        } else if (checkError && (checkError as any).code === 'PGRST116') {
-          const { data: newCompany, error: createError } = await supabase
-            .from('companies')
-            .insert({
-              name: profileCompanyName,
-              code: profileCompanyCode,
-            })
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          company = newCompany;
-        } else {
-          throw checkError;
-        }
-
-        newCompanyId = company.id;
-      }
-
-      // 2. 사용자 정보 업데이트
+      // 사용자 정보 업데이트 (회사 변경 불가 — 기존 company_id 유지)
       const { error: updateError } = await supabase
         .from('users')
         .update({
           name: trimmedName,
-          company_id: newCompanyId,
         })
         .eq('id', user.id);
 
@@ -1797,67 +1744,31 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                 </div>
 
-                {/* 회사 정보 변경 */}
+                {/* 회사 정보 (읽기 전용) */}
                 <div className="pt-3.5 mt-3.5 border-t border-slate-100">
                   <p className="text-xs font-semibold text-slate-500 mb-2">
-                    {t('profile.companyInfoChange')}
+                    {t('profile.companyInfo')}
                   </p>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-sm font-medium">{t('profile.companyCode')}</Label>
                         <Input
-                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
-                          placeholder={t('profile.companyCodePlaceholder')}
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
                           value={profileCompanyCode}
-                          onChange={(e) => {
-                            setProfileCompanyCode(e.target.value);
-                            setCompanyVerified(false);
-                          }}
+                          disabled
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-sm font-medium">{t('profile.companyName')}</Label>
                         <Input
-                          className="h-9 rounded-md border-[#e5e7eb] text-sm"
-                          placeholder={t('profile.companyNamePlaceholder')}
+                          className="h-9 rounded-md border-[#e5e7eb] text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
                           value={profileCompanyName}
-                          onChange={(e) => {
-                            setProfileCompanyName(e.target.value);
-                            setCompanyVerified(false);
-                          }}
+                          disabled
                         />
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      className={`w-full ${companyVerified ? 'bg-green-600 hover:bg-green-600' : ''}`}
-                      onClick={() => {
-                        if (profileCompanyCode.trim() && profileCompanyName.trim()) {
-                          setCompanyVerified(true);
-                          toast({
-                            title: t('profile.verifyComplete'),
-                            description: t('profile.companyInfoVerified'),
-                          });
-                        } else {
-                          toast({
-                            title: t('profile.companyInfoChange'),
-                            description: t('profile.enterCompanyInfo'),
-                            variant: 'destructive',
-                          });
-                        }
-                      }}
-                      disabled={!profileCompanyCode.trim() || !profileCompanyName.trim()}
-                      variant={companyVerified ? 'default' : 'outline'}
-                    >
-                      {companyVerified ? t('profile.verifiedReVerify') : t('profile.verifyButton')}
-                    </Button>
-                    {!companyVerified && (
-                      <p className="text-xs text-slate-500">{t('profile.enterCompanyCodeAndName')}</p>
-                    )}
-                    {companyVerified && (
-                      <p className="text-xs text-green-600">{t('profile.changeCompanyInfo')}</p>
-                    )}
+                    <p className="text-xs text-slate-400">{t('profile.companyChangeContact')}</p>
                   </div>
                 </div>
 
