@@ -4,16 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import logo from '@/assets/logo.png';
 import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 
 export function ResetPasswordPage() {
@@ -138,34 +131,34 @@ export function ResetPasswordPage() {
   // 세션 확인 중 로딩 표시
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <p className="text-slate-500">{t('resetPw.checking')}</p>
+      <div className="min-h-screen w-screen flex items-center justify-center bg-[#f8f9fa] dark:bg-[#0b1220]">
+        <p className="text-slate-500 dark:text-[#94a3b8]">{t('resetPw.checking')}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen w-screen flex flex-col bg-[#f8f9fa] dark:bg-[#0b1220] p-4">
       <div className="flex-1 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="flex flex-row justify-center items-center gap-2">
-              <img
-                src={logo}
-                alt={t('login.logoAlt')}
-                className="h-14 sm:h-16 w-auto object-contain"
-              />
-            </CardTitle>
-            <CardDescription className="mt-4">
-              {isRecoverySession
-                ? t('resetPw.enterNewPassword')
-                : t('resetPw.invalidAccessDesc')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="w-full max-w-[420px]">
+          <div className="bg-white dark:bg-[#111827] rounded-[16px] border border-[#e5e7eb] dark:border-white/[0.08] shadow-sm p-6 sm:p-8">
+            {/* Lock icon header */}
+            <div className="flex justify-center mb-5">
+              <div className="w-14 h-14 rounded-[14px] bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center">
+                <Lock className="h-7 w-7 text-[#2563eb] dark:text-[#60a5fa]" />
+              </div>
+            </div>
+
+            <h1 className="text-[22px] font-bold tracking-tight text-center text-slate-900 dark:text-[#f1f5f9]">
+              {isRecoverySession ? t('resetPw.newPassword') : t('resetPw.invalidAccess')}
+            </h1>
+            <p className="text-[13px] text-slate-500 dark:text-[#94a3b8] text-center mt-2.5 mb-6">
+              {isRecoverySession ? t('resetPw.enterNewPassword') : t('resetPw.invalidAccessDesc')}
+            </p>
+
             {!isRecoverySession ? (
               <Button
-                className="w-full"
+                className="w-full h-[42px] rounded-[10px]"
                 variant="outline"
                 onClick={() => navigate('/', { replace: true })}
               >
@@ -173,11 +166,14 @@ export function ResetPasswordPage() {
               </Button>
             ) : (
               <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">{t('resetPw.newPassword')}</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password" className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">
+                    {t('resetPw.newPassword')}
+                  </Label>
                   <Input
                     id="new-password"
                     type="password"
+                    className="h-[42px] rounded-[10px]"
                     placeholder={t('signup.passwordPlaceholder')}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -191,11 +187,14 @@ export function ResetPasswordPage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">{t('signup.confirmPassword')}</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-password" className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">
+                    {t('signup.confirmPassword')}
+                  </Label>
                   <Input
                     id="confirm-password"
                     type="password"
+                    className="h-[42px] rounded-[10px]"
                     placeholder={t('signup.confirmPasswordPlaceholder')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -204,17 +203,17 @@ export function ResetPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full h-11 rounded-[10px]  font-semibold" disabled={isResetting}>
+                <Button type="submit" className="w-full h-[42px] rounded-[10px] font-semibold" disabled={isResetting}>
                   {isResetting ? t('resetPw.resetting') : t('resetPw.resetButton')}
                 </Button>
               </form>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <div className="text-center py-4">
-        <p className="text-xs text-black">
+        <p className="text-xs text-slate-500 dark:text-[#64748b]">
           COPYRIGHT © TRAYSTORAGE CONNECT. ALL RIGHTS RESERVED.
         </p>
       </div>

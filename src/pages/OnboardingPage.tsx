@@ -183,7 +183,7 @@ export function OnboardingPage() {
   const steps = [t('onboarding.stepAccount') || '계정 생성', t('onboarding.stepCompany') || '회사 정보', t('onboarding.stepDept') || '부서 설정'];
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-[#f8f9fa] p-4 sm:p-8">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-[#f8f9fa] dark:bg-[#0b1220] p-4 sm:p-8">
       <div className="w-full max-w-[520px]">
         {/* Progress bar */}
         <div className="mb-9">
@@ -191,7 +191,7 @@ export function OnboardingPage() {
             <img src={logo} alt="TrayStorage" className="h-[26px]" />
             <button
               onClick={() => { useAuthStore.getState().logout(); navigate('/'); }}
-              className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+              className="text-xs text-slate-500 hover:text-slate-700 dark:text-[#94a3b8] dark:hover:text-[#cbd5e1] font-medium"
             >
               {t('common.logout') || '로그아웃'}
             </button>
@@ -220,17 +220,17 @@ export function OnboardingPage() {
         </div>
 
         {/* Main card */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm p-6 sm:p-8">
+        <div className="bg-white dark:bg-[#111827] rounded-[16px] border border-[#e5e7eb] dark:border-white/[0.08] shadow-sm p-6 sm:p-8">
           {/* Icon header */}
           <div className="flex justify-center mb-5">
-            <div className="w-14 h-14 rounded-[14px] bg-[#dbeafe] flex items-center justify-center">
-              <Building2 className="h-7 w-7 text-[#2563eb]" />
+            <div className="w-14 h-14 rounded-[14px] bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center">
+              <Building2 className="h-7 w-7 text-[#2563eb] dark:text-[#60a5fa]" />
             </div>
           </div>
-          <h1 className="text-[22px] font-bold tracking-tight text-center text-slate-900">
+          <h1 className="text-[22px] font-bold tracking-tight text-center text-slate-900 dark:text-[#f1f5f9]">
             {t('onboarding.title')}
           </h1>
-          <p className="text-[13px] text-slate-500 text-center mt-2.5 mb-6">
+          <p className="text-[13px] text-slate-500 dark:text-[#94a3b8] text-center mt-2.5 mb-6">
             {t('onboarding.description')}
           </p>
 
@@ -254,9 +254,9 @@ export function OnboardingPage() {
 
           <div className="space-y-3.5">
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium text-slate-900">{t('signup.companyCode')}</Label>
+              <Label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.companyCode')}</Label>
               <Input
-                className="h-10 rounded-lg"
+                className="h-[42px] rounded-[10px]"
                 placeholder={t('signup.companyCodePlaceholder')}
                 value={companyCode}
                 onChange={(e) => {
@@ -267,9 +267,9 @@ export function OnboardingPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium text-slate-900">{t('signup.companyName')}</Label>
+              <Label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.companyName')}</Label>
               <Input
-                className="h-10 rounded-lg"
+                className="h-[42px] rounded-[10px]"
                 placeholder={t('signup.companyNamePlaceholder')}
                 value={companyName}
                 onChange={(e) => {
@@ -294,7 +294,7 @@ export function OnboardingPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 rounded-lg"
+                className="w-full h-[42px] rounded-[10px]"
                 onClick={handleVerifyCompany}
                 disabled={!companyCode.trim() || !companyName.trim()}
               >
@@ -303,9 +303,9 @@ export function OnboardingPage() {
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium text-slate-900">{t('signup.name')}</Label>
+              <Label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.name')}</Label>
               <Input
-                className="h-10 rounded-lg"
+                className="h-[42px] rounded-[10px]"
                 placeholder={t('signup.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -314,13 +314,13 @@ export function OnboardingPage() {
 
             {role === 'team' && (
               <div className="space-y-1.5">
-                <Label className="text-[13px] font-medium text-slate-900">{t('signup.department')}</Label>
+                <Label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.department')}</Label>
                 <Select
                   value={departmentId}
                   onValueChange={(value) => setDepartmentId(value)}
                   disabled={!companyCodeVerified || isLoadingDepartments}
                 >
-                  <SelectTrigger className="h-10 rounded-lg">
+                  <SelectTrigger className="h-[42px] rounded-[10px]">
                     <SelectValue
                       placeholder={
                         !companyCodeVerified
@@ -346,7 +346,7 @@ export function OnboardingPage() {
 
             <Button
               type="button"
-              className="w-full h-11 rounded-[10px]  font-semibold mt-2 shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
+              className="w-full h-11 rounded-[10px] font-semibold mt-2 shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
               onClick={handleComplete}
               disabled={isSubmitting || isLoading}
             >
