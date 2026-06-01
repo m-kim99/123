@@ -50,6 +50,10 @@
     "sortOldest": "Oldest",
     "sortAlpha": "A-Z"
   },
+  "role": {
+    "admin": "Admin",
+    "team": "Team Member"
+  },
   "language": {
     "settings": "Language",
     "korean": "한국어",
