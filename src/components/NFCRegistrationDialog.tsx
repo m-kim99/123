@@ -3,12 +3,10 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { V1ModalHeader, V1ModalFooter } from '@/components/ui/v1-components';
+import { Smartphone } from 'lucide-react';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
@@ -80,20 +78,36 @@ export function NFCRegistrationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('nfc.tagRegistration')}</DialogTitle>
-          <DialogDescription>
-            {t('nfcRegDialog.confirmRegister', { name: categoryName })}\n
-            {t('nfcRegDialog.bringTagClose')}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent variant="v1" className="max-w-[420px]" hideClose>
+        <V1ModalHeader icon={Smartphone} title={t('nfc.tagRegistration')} sub={t('nfcRegDialog.confirmRegister', { name: categoryName })} />
+
+        {/* NFC Pulse Animation */}
+        <div className="px-[22px] py-4 flex flex-col items-center gap-[18px]">
+          <div className="relative w-[120px] h-[120px] flex items-center justify-center">
+            <div className="absolute inset-3 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite' }} />
+            <div className="absolute inset-7 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite 0.6s' }} />
+            <div className="w-16 h-16 rounded-full bg-[#2563eb] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(37,99,235,0.45)]">
+              <Smartphone className="h-[30px] w-[30px] text-white" />
+            </div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">{t('nfc.bringTagClose', { defaultValue: '태그를 가까이 대주세요' })}</h3>
+            <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{t('nfcRegDialog.bringTagClose')}</p>
+          </div>
+          {/* Info box */}
+          <div className="w-full bg-slate-50 dark:bg-[#1e293b] border border-slate-200 dark:border-white/[0.08] rounded-[10px] p-3 flex flex-col gap-1.5 text-[12px]">
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-slate-400">{t('common.categoryName', { defaultValue: '카테고리 이름' })}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{categoryName}</span>
+            </div>
+          </div>
+        </div>
 
         {error && (
-          <p className="text-sm text-red-500 mt-2">{error}</p>
+          <p className="px-[22px] -mt-2 text-[12px] text-red-500">{error}</p>
         )}
 
-        <DialogFooter className="mt-4">
+        <V1ModalFooter>
           <Button
             type="button"
             variant="outline"
@@ -107,9 +121,10 @@ export function NFCRegistrationDialog({
             onClick={handleRegister}
             disabled={isRegistering}
           >
+            <Smartphone className="h-3.5 w-3.5 mr-1" />
             {isRegistering ? t('nfcRegDialog.scanningTag') : t('nfcRegDialog.startRegistration')}
           </Button>
-        </DialogFooter>
+        </V1ModalFooter>
       </DialogContent>
     </Dialog>
   );

@@ -278,3 +278,9 @@ h1 {
 .dark ::-webkit-scrollbar-track { background: #0b1220; }
 .dark ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+/* NFC Pulse Animation */
+@keyframes nfc-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
