@@ -195,7 +195,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
               onChange={handlePageInputChange}
               className="w-10 sm:w-12 h-7 text-center text-xs sm:text-sm p-1"
             />
-            <span className="text-slate-500">/ {numPages || '...'}</span>
+            <span className="text-slate-500 dark:text-slate-400">/ {numPages || '...'}</span>
           </div>
           <Button
             type="button"
@@ -287,7 +287,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
           <div className="w-32 sm:w-40 border-r bg-slate-50 dark:bg-[#0f172a] dark:border-white/[0.08] overflow-y-auto flex-shrink-0">
             <div className="p-2 border-b bg-white dark:bg-[#111827] dark:border-white/[0.08] sticky top-0 z-10">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600">{t('pdfViewer.toc')}</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('pdfViewer.toc')}</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -308,8 +308,8 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
                     onClick={() => scrollToPage(pageNum)}
                     className={`w-full p-1 rounded border-2 transition-all ${
                       currentPage === pageNum
-                        ? 'border-slate-400 bg-white'
-                        : 'border-transparent hover:border-slate-300 bg-white'
+                        ? 'border-slate-400 dark:border-slate-500 bg-white dark:bg-white'
+                        : 'border-transparent hover:border-slate-300 dark:hover:border-slate-500 bg-white dark:bg-white'
                     }`}
                   >
                     <div className="bg-white shadow-sm overflow-hidden">
@@ -320,7 +320,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
                         renderAnnotationLayer={false}
                       />
                     </div>
-                    <p className="text-xs text-center mt-1 text-slate-600">{pageNum}</p>
+                    <p className="text-xs text-center mt-1 text-slate-600 dark:text-slate-400">{pageNum}</p>
                   </button>
                 ))}
               </Document>

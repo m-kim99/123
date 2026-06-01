@@ -42,6 +42,7 @@ export function resolveThemeColor(lightHex: string): string {
     '#10b981': V1_DARK.emerald,
     '#f59e0b': V1_DARK.amber,
     '#ef4444': V1_DARK.red,
+    '#eab308': '#facc15', // yellow
     '#0f172a': V1_DARK.ink,
     '#64748b': V1_DARK.muted,
     '#94a3b8': V1_DARK.faint,
@@ -77,6 +78,8 @@ export function Sparkline({
   className,
 }: SparklineProps) {
   const resolvedColor = useThemeColor(color);
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const gradientOpacity = isDark ? 0.42 : 0.18;
   if (!data || data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -101,7 +104,7 @@ export function Sparkline({
     >
       <defs>
         <linearGradient id={`spark-${resolvedColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={resolvedColor} stopOpacity="0.18" />
+          <stop offset="0%" stopColor={resolvedColor} stopOpacity={gradientOpacity} />
           <stop offset="100%" stopColor={resolvedColor} stopOpacity="0" />
         </linearGradient>
       </defs>

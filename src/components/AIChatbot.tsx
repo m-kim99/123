@@ -1234,10 +1234,10 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                                 }, 100);
                               }}
                             >
-                              <div className="font-semibold text-slate-800 text-sm">
+                              <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
                                 📄 {link.label}
                               </div>
-                              <div className="text-slate-400 text-[10px] mt-1 truncate">
+                              <div className="text-slate-400 dark:text-slate-500 text-[10px] mt-1 truncate">
                                 {link.path}
                               </div>
                             </div>
@@ -1264,10 +1264,10 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                               }
                             }}
                           >
-                            <div className="font-semibold text-slate-800 text-sm">
+                            <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
                               {doc.name}
                             </div>
-                            <div className="text-slate-500 mt-1">
+                            <div className="text-slate-500 dark:text-slate-400 mt-1">
                               {doc.departmentName && <span>{doc.departmentName}</span>}
                               {doc.categoryName && (
                                 <span>
@@ -1277,12 +1277,12 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                               )}
                             </div>
                             {doc.storageLocation && (
-                              <div className="text-slate-500">
+                              <div className="text-slate-500 dark:text-slate-400">
                                 {doc.storageLocation}
                               </div>
                             )}
                             {doc.uploadDate && (
-                              <div className="text-slate-400 text-[10px] mt-1">
+                              <div className="text-slate-400 dark:text-slate-500 text-[10px] mt-1">
                                 {formatDateTimeSimple(doc.uploadDate)}
                               </div>
                             )}
