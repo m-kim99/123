@@ -14,9 +14,13 @@ import { toast } from '@/hooks/use-toast';
 interface NFCRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categoryId: string;
   categoryName: string;
+  // Mode A (full flow): 주어진 categoryId에 대해 다이어로그가 전체 등록 처리
+  categoryId?: string;
   onSuccess?: () => void | Promise<void>;
+  // Mode B (scan-only): UID만 읽어서 콜백으로 전달. 호출자가 후속 처리.
+  // (새 세부 스토리지 생성 + NFC 등록 같은 복합 흐름용)
+  onUidScanned?: (uid: string) => void | Promise<void>;
 }
 
 export function NFCRegistrationDialog({
@@ -25,6 +29,7 @@ export function NFCRegistrationDialog({
   categoryId,
   categoryName,
   onSuccess,
+  onUidScanned,
 }: NFCRegistrationDialogProps) {
   const { t } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -45,6 +50,19 @@ export function NFCRegistrationDialog({
       setError(null);
 
       const uid = await readNFCUid();
+
+      // Mode B: scan-only — UID만 전달하고 종료
+      if (onUidScanned) {
+        setNfcMode('idle');
+        onOpenChange(false);
+        await onUidScanned(uid);
+        return;
+      }
+
+      // Mode A: full flow — categoryId 필요
+      if (!categoryId) {
+        throw new Error('categoryId is required when onUidScanned is not provided');
+      }
 
       // 이미 다른 서브카테고리에 등록된 UID인지 확인 후 해제
       const existing = await findSubcategoryByNfcUid(uid);

@@ -68,7 +68,7 @@ import { supabase } from '@/lib/supabase';
 import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
 import { toast } from '@/hooks/use-toast';
-import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
+import { NFCRegistrationDialog } from '@/components/NFCRegistrationDialog';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { PdfViewer } from '@/components/PdfViewer';
@@ -79,7 +79,7 @@ import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
 import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker';
 import { hasPermission, type Role, type Action } from '@/lib/permissions';
-import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1 } from '@/components/ui/v1-components';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 import i18n from '@/lib/i18n';
 
 function splitFilesByType(files: File[]) {
@@ -177,9 +177,6 @@ export function DocumentManagement() {
     fetchDocuments,
     updateSubcategory,
     deleteSubcategory,
-    registerNfcTag,
-    findSubcategoryByNfcUid,
-    clearNfcByUid,
     updateDocumentOcrText,
     shareDocument,
     unshareDocument,
@@ -287,10 +284,9 @@ export function DocumentManagement() {
   const [uploadSuccessCount, setUploadSuccessCount] = useState(0);
 
   // NFC 재등록 확인 다이얼로그 상태
-  const [nfcConfirmDialogOpen, setNfcConfirmDialogOpen] = useState(false);
-  const [pendingNfcUid, setPendingNfcUid] = useState<string | null>(null);
-  const [pendingNfcSubcategoryId, setPendingNfcSubcategoryId] = useState<string | null>(null);
-  const [existingNfcSubcategory, setExistingNfcSubcategory] = useState<{ id: string; name: string } | null>(null);
+  const [nfcDialogOpen, setNfcDialogOpen] = useState(false);
+  const [nfcTargetSubcategory, setNfcTargetSubcategory] = useState<{ id: string; name: string } | null>(null);
+  const [nfcDialogSource, setNfcDialogSource] = useState<'add' | 'edit'>('add');
   const [dateFilter, setDateFilter] = useState<'all' | '7days' | '1month' | '3months'>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'oldest' | 'name'>('latest');
   const [categorySortOrder, setCategorySortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
@@ -746,7 +742,6 @@ export function DocumentManagement() {
       return;
     }
 
-    let scanToast: ReturnType<typeof toast> | null = null;
     try {
       const created = await addSubcategory({
         name: newCategory.name.trim(),
@@ -770,29 +765,23 @@ export function DocumentManagement() {
         return;
       }
 
-      scanToast = toast({
-        title: t('documentMgmt.nfcWaiting'),
-        description: t('documentMgmt.nfcWaitingDesc'),
-        duration: 1000000,
+      // 세부 스토리지 생성 완료 → NFC 등록 다이어로그 열기 (펄스 애니메이션)
+      setNfcDialogSource('add');
+      setNfcTargetSubcategory({ id: created.id, name: created.name });
+      setNfcDialogOpen(true);
+    } catch (error: any) {
+      console.error('세부 스토리지 생성 실패:', error);
+      toast({
+        title: t('documentMgmt.subcategoryCreateFailed'),
+        description: error?.message || t('documentMgmt.subcategoryCreateFailedNfc'),
+        variant: 'destructive',
       });
-      const uid = await readNFCUid();
-      scanToast.dismiss();
+    }
+  };
 
-      // 이 UID가 이미 등록된 태그인지 확인
-      const existingSub = await findSubcategoryByNfcUid(uid);
-
-      if (existingSub) {
-        // 이미 등록된 태그 → 확인 다이얼로그 띄우기
-        setPendingNfcUid(uid);
-        setPendingNfcSubcategoryId(created.id);
-        setExistingNfcSubcategory({ id: existingSub.id, name: existingSub.name });
-        setNfcConfirmDialogOpen(true);
-        return;
-      }
-
-      // 등록된 적 없는 태그 → 바로 등록 진행
-      await proceedNfcRegistration(uid, created.id);
-
+  const handleNfcRegistrationSuccess = async () => {
+    await fetchSubcategories();
+    if (nfcDialogSource === 'add') {
       setNewCategory({
         name: '',
         description: '',
@@ -804,91 +793,8 @@ export function DocumentManagement() {
         expiryDate: null,
         colorLabel: null,
       });
-    } catch (error: any) {
-      scanToast?.dismiss();
-      console.error('세부 스토리지 생성 및 NFC 등록 실패:', error);
-      toast({
-        title: t('documentMgmt.nfcRegFailed'),
-        description:
-          error?.message || t('documentMgmt.nfcRegFailedDesc'),
-        variant: 'destructive',
-      });
-      setNfcMode('idle'); // 에러 시 모드 초기화
     }
-  };
-
-  const proceedNfcRegistration = async (uid: string, subcategoryId: string) => {
-    try {
-      const targetSub = subcategories.find((s) => s.id === subcategoryId);
-      if (!targetSub) {
-        // 새로 생성된 경우 DB에서 조회
-        const { data } = await supabase
-          .from('subcategories')
-          .select('id, name')
-          .eq('id', subcategoryId)
-          .single();
-        if (!data) {
-          throw new Error('세부 스토리지를 찾을 수 없습니다.');
-        }
-      }
-
-      // 기존에 이 UID를 쓰던 모든 세부 스토리지에서 NFC 정보 해제
-      await clearNfcByUid(uid, subcategoryId);
-
-      // NFC 태그에 세부 스토리지용 URL을 쓴다
-      const subName = targetSub?.name || subcategoryId;
-      await writeNFCUrl(subcategoryId, subName);
-
-      // 세부 스토리지 테이블에 UID 및 등록 여부 반영
-      await registerNfcTag(subcategoryId, uid);
-
-      toast({
-        title: t('documentMgmt.nfcRegComplete'),
-        description: t('documentMgmt.nfcRegCompleteDesc'),
-      });
-
-      await fetchSubcategories();
-
-      // 상태 초기화
-      setPendingNfcUid(null);
-      setPendingNfcSubcategoryId(null);
-      setExistingNfcSubcategory(null);
-      setNfcConfirmDialogOpen(false);
-      setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
-    } catch (error: any) {
-      console.error('NFC 등록 실패:', error);
-      toast({
-        title: t('documentMgmt.nfcRegFailed'),
-        description:
-          error?.message || t('documentMgmt.nfcRegErrorDesc'),
-        variant: 'destructive',
-      });
-      setNfcMode('idle'); // 에러 시 모드 초기화
-    }
-  };
-
-  const handleNfcConfirmYes = async () => {
-    if (!pendingNfcUid || !pendingNfcSubcategoryId) return;
-    await proceedNfcRegistration(pendingNfcUid, pendingNfcSubcategoryId);
-    setNewCategory({
-      name: '',
-      description: '',
-      departmentId: '',
-      parentCategoryId: '',
-      storageLocation: '',
-      managementNumber: '',
-      defaultExpiryDays: null,
-      expiryDate: null,
-      colorLabel: null,
-    });
-  };
-
-  const handleNfcConfirmNo = () => {
-    setPendingNfcUid(null);
-    setPendingNfcSubcategoryId(null);
-    setExistingNfcSubcategory(null);
-    setNfcConfirmDialogOpen(false);
-    setNfcMode('idle'); // 취소 시 모드 초기화
+    setNfcTargetSubcategory(null);
   };
 
   const handleOpenEditDialog = (subcategory: Subcategory) => {
@@ -2632,39 +2538,13 @@ export function DocumentManagement() {
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       if (!editingCategoryId) return;
-                      let scanToast: ReturnType<typeof toast> | null = null;
-                      try {
-                        scanToast = toast({
-                          title: t('documentMgmt.nfcWaiting'),
-                          description: t('documentMgmt.nfcWaitingDesc'),
-                          duration: 1000000,
-                        });
-                        const uid = await readNFCUid();
-                        scanToast.dismiss();
-
-                        const existingSub = await findSubcategoryByNfcUid(uid);
-
-                        if (existingSub) {
-                          setPendingNfcUid(uid);
-                          setPendingNfcSubcategoryId(editingCategoryId);
-                          setExistingNfcSubcategory({ id: existingSub.id, name: existingSub.name });
-                          setNfcConfirmDialogOpen(true);
-                          return;
-                        }
-
-                        await proceedNfcRegistration(uid, editingCategoryId);
-                      } catch (error: any) {
-                        scanToast?.dismiss();
-                        toast({
-                          title: t('documentMgmt.nfcRegFailed'),
-                          description:
-                            error?.message || t('documentMgmt.nfcRegErrorDesc'),
-                          variant: 'destructive',
-                        });
-                        setNfcMode('idle');
-                      }
+                      const editingSub = subcategories.find((s) => s.id === editingCategoryId);
+                      const subName = editingSub?.name || editCategoryForm.name || editingCategoryId;
+                      setNfcDialogSource('edit');
+                      setNfcTargetSubcategory({ id: editingCategoryId, name: subName });
+                      setNfcDialogOpen(true);
                     }}
                     disabled={!editingCategoryId || isSavingCategory}
                     className="h-9 px-4 rounded-[10px] text-[13px] font-semibold border border-[#e5e7eb] bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
@@ -3759,40 +3639,19 @@ export function DocumentManagement() {
           </DialogContent>
         </Dialog>
 
-        {/* NFC 재등록 확인 다이얼로그 */}
-        <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
-          <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
-            <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
-                <Smartphone className="h-5 w-5 text-[#2563eb]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
-                <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
-                  {t('documentMgmt.nfcAlreadyRegistered')}
-                </AlertDialogDescription>
-              </div>
-            </div>
-            <div className="px-6 py-5">
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[10px] text-[13px] text-amber-800 leading-relaxed">
-                {existingNfcSubcategory && (
-                  <span className="block font-semibold mb-1">
-                    {t('documentMgmt.currentConnection')}: {existingNfcSubcategory.name}
-                  </span>
-                )}
-                <span>{t('documentMgmt.continueQuestion')}</span>
-              </div>
-            </div>
-            <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
-              <AlertDialogCancel onClick={handleNfcConfirmNo} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
-                {t('common.no')}
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes} className="h-9 rounded-[10px] text-[13px] font-semibold ">
-                {t('common.yes')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* NFC 등록 다이어로그 — 펄스 애니메이션 (이미 등록된 태그는 내부에서 자동 해제) */}
+        {nfcTargetSubcategory && (
+          <NFCRegistrationDialog
+            open={nfcDialogOpen}
+            onOpenChange={(open) => {
+              setNfcDialogOpen(open);
+              if (!open) setNfcTargetSubcategory(null);
+            }}
+            categoryId={nfcTargetSubcategory.id}
+            categoryName={nfcTargetSubcategory.name}
+            onSuccess={handleNfcRegistrationSuccess}
+          />
+        )}
 
         {/* 문서 공유 다이얼로그 */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
