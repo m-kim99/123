@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, FileText, FolderOpen, Users, ChevronRight } from 'lucide-react';
+import { Plus, FileText, FolderOpen, Users, ChevronRight, Pencil } from 'lucide-react';
 import penIcon from '@/assets/pen.svg';
 import binIcon from '@/assets/bin.svg';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
+import { V1StatTile, V1CardHeader, v1Card, V1PageHeader, V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -249,16 +249,12 @@ export function DepartmentDetail() {
 
           <BackButton className="mb-4" />
 
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-            <div className="min-w-0">
-              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{department.name}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">{t('deptDetail.deptCode')}: <span className="font-mono">{department.code}</span></p>
-              <p className="text-sm text-slate-500 mt-1">
-                {department.description || t('deptDetail.noDescription')}
-              </p>
-            </div>
-
-            <div className="flex gap-2 shrink-0">
+          <V1PageHeader
+            eyebrow={`${t('deptDetail.deptCode')}: ${department.code}`}
+            title={department.name}
+            sub={department.description || t('deptDetail.noDescription')}
+            right={
+              <div className="flex gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="icon"
@@ -283,8 +279,9 @@ export function DepartmentDetail() {
               >
                 <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-1.5" />
               </Button>
-            </div>
-          </div>
+              </div>
+            }
+          />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -369,14 +366,9 @@ export function DepartmentDetail() {
             }
           }}
         >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('deptDetail.editDeptTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('deptDetail.editDeptDesc')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
+          <DialogContent variant="v1" className="max-w-[560px] flex flex-col" hideClose>
+            <V1ModalHeader icon={Pencil} title={t('deptDetail.editDeptTitle')} sub={t('deptDetail.editDeptDesc')} />
+            <V1ModalBody>
               <div className="space-y-2">
                 <Label>{t('deptDetail.deptName')}</Label>
                 <Input
@@ -407,8 +399,8 @@ export function DepartmentDetail() {
                   placeholder={t('deptDetail.deptDescPlaceholder')}
                 />
               </div>
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -420,13 +412,13 @@ export function DepartmentDetail() {
               </Button>
               <Button
                 type="button"
-                className="rounded-[10px] h-9 "
+                className="rounded-[10px] h-9"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
               >
                 {isSaving ? t('common.saving') : t('common.save')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
 
@@ -440,10 +432,10 @@ export function DepartmentDetail() {
             }
           }}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('deptDetail.deleteDept')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('deptDetail.deleteDept')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 <p>{t('deptDetail.deleteDeptConfirm', { name: department.name })}</p>
                 <p className="mt-1">
                   {t('deptDetail.deleteDeptWarning', { categories: departmentParentCategories.length, docs: departmentDocuments.length })}
@@ -465,10 +457,10 @@ export function DepartmentDetail() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting} className="dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]">{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteDepartment}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
                 disabled={isDeleting || deleteConfirmText !== t('deptDetail.confirmWord')}
               >
                 {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
@@ -478,14 +470,9 @@ export function DepartmentDetail() {
         </AlertDialog>
 
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('deptDetail.addParentCategoryTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('deptDetail.addParentCategoryDesc', { name: department.name })}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
+          <DialogContent variant="v1" className="max-w-[560px] flex flex-col" hideClose>
+            <V1ModalHeader icon={FolderOpen} title={t('deptDetail.addParentCategoryTitle')} sub={t('deptDetail.addParentCategoryDesc', { name: department.name })} />
+            <V1ModalBody>
               <div className="space-y-2">
                 <Label>{t('deptDetail.parentCategoryName')}</Label>
                 <Input
@@ -502,8 +489,8 @@ export function DepartmentDetail() {
                   placeholder={t('deptDetail.parentCategoryDescPlaceholder')}
                 />
               </div>
-            </div>
-            <DialogFooter>
+            </V1ModalBody>
+            <V1ModalFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -515,12 +502,12 @@ export function DepartmentDetail() {
               <Button
                 type="button"
                 onClick={handleAddCategory}
-                className="rounded-[10px] h-9 "
+                className="rounded-[10px] h-9"
                 disabled={!newParentCategoryName.trim()}
               >
                 {t('common.add')}
               </Button>
-            </DialogFooter>
+            </V1ModalFooter>
           </DialogContent>
         </Dialog>
       </div>

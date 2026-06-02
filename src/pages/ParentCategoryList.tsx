@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { BackButton } from '@/components/BackButton';
-import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
+import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1PageHeader, v1Card } from '@/components/ui/v1-components';
 
 export function ParentCategoryList() {
   const { t } = useTranslation();
@@ -141,12 +140,11 @@ export function ParentCategoryList() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('parentCatList.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('parentCatList.subtitle')}</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <V1PageHeader
+          title={t('parentCatList.title')}
+          sub={t('parentCatList.subtitle')}
+          right={
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <select
               value={selectedDepartmentId}
               onChange={(e) => setSelectedDepartmentId(e.target.value)}
@@ -170,12 +168,13 @@ export function ParentCategoryList() {
               <option value="oldest">{t('common.sortOldest')}</option>
               <option value="alpha">{t('common.sortAlpha')}</option>
             </select>
-            <Button className=" w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
+            <Button className="w-full sm:w-auto" onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t('deptDetail.addParentCategory')}
             </Button>
-          </div>
-        </div>
+            </div>
+          }
+        />
 
         {selectedDepartmentId && filteredParentCategories.length > 0 && (
           <p className="text-sm text-slate-500">
@@ -189,11 +188,11 @@ export function ParentCategoryList() {
         {isLoading && parentCategories.length === 0 ? (
           <p className="text-slate-500">{t('common.loading')}</p>
         ) : filteredParentCategories.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-slate-500">
+          <div className={v1Card}>
+            <div className="py-12 text-center text-slate-500">
               {t('deptDetail.noParentCategories')}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -202,32 +201,30 @@ export function ParentCategoryList() {
                 const isAdminPath = window.location.pathname.startsWith('/admin');
                 const basePath = isAdminPath ? '/admin' : '/team';
                 return (
-                  <Card
+                  <div
                     key={pc.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    className={`${v1Card} hover:shadow-lg transition-shadow cursor-pointer`}
                     onClick={() => navigate(`${basePath}/parent-category/${pc.id}`)}
                   >
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base truncate">{pc.name}</CardTitle>
-                      <CardDescription className="text-xs mt-0.5 truncate">
+                    <div className="p-5">
+                      <p className="text-base font-semibold text-slate-900 dark:text-[#f1f5f9] truncate">{pc.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 truncate">
                         {pc.description || t('parentCategoryDetail.noDescription')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
+                      </p>
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-2 text-sm">
                         {[
                           { label: t('common.department'), value: dept?.name ?? pc.departmentId },
                           { label: t('deptDetail.subcategories'), value: pc.subcategoryCount },
                           { label: t('deptDetail.docCount'), value: pc.documentCount },
                         ].map(({ label, value }) => (
-                          <div key={label} className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">{label}</span>
-                            <span className="font-semibold text-slate-900">{value}</span>
+                          <div key={label} className="flex items-center justify-between">
+                            <span className="text-slate-500 dark:text-[#94a3b8]">{label}</span>
+                            <span className="font-semibold text-slate-900 dark:text-[#f1f5f9]">{value}</span>
                           </div>
                         ))}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })}
             </div>

@@ -373,7 +373,7 @@ return (
                     id="allow-comments"
                     checked={newAllowComments}
                     onCheckedChange={(checked) => setNewAllowComments(checked === true)}
-                    className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
+                    className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                   />
                   <Label htmlFor="allow-comments">{t('announcements.allowComments')}</Label>
                 </div>
@@ -538,7 +538,7 @@ return (
                   id="edit-allow-comments"
                   checked={editAllowComments}
                   onCheckedChange={(checked) => setEditAllowComments(checked === true)}
-                  className="h-5 w-5 rounded-none border-black bg-white data-[state=checked]:bg-white data-[state=checked]:text-black"
+                  className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                 />
                 <Label htmlFor="edit-allow-comments">{t('announcements.allowComments')}</Label>
               </div>
@@ -561,21 +561,21 @@ return (
         </Dialog>
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('announcements.deleteDialogTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('announcements.deleteDialogTitle')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 {t('announcements.deleteConfirmMsg')}
                 <br />
                 {t('announcements.deleteWarning')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting} className="dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]">{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
               >
                 {isDeleting ? t('documentMgmt.deleting') : t('common.delete')}
               </AlertDialogAction>

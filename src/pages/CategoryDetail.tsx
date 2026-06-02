@@ -1207,25 +1207,25 @@ export function CategoryDetail() {
                 }
               }}
             >
-              <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
-                <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+              <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px] dark:bg-[#111827] dark:border-white/[0.08]">
+                <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100 dark:border-white/[0.06]">
                   <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#ef444415' }}>
                     <Trash2 className="h-5 w-5 text-red-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.deleteDoc')}</AlertDialogTitle>
-                    <AlertDialogDescription className="text-[13px] text-slate-500 mt-1">
+                    <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em] dark:text-[#f1f5f9]">{t('documentMgmt.deleteDoc')}</AlertDialogTitle>
+                    <AlertDialogDescription className="text-[13px] text-slate-500 dark:text-[#94a3b8] mt-1">
                       {t('subcategoryDetail.confirmDelete')}
                     </AlertDialogDescription>
                   </div>
                 </div>
-                <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 bg-[#fafbfc] rounded-b-[16px]">
-                  <AlertDialogCancel disabled={isDeletingDocument} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
+                <AlertDialogFooter className="flex gap-2 justify-end px-6 py-3.5 border-t border-slate-100 dark:border-white/[0.06] bg-[#fafbfc] dark:bg-[#0f172a] rounded-b-[16px]">
+                  <AlertDialogCancel disabled={isDeletingDocument} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb] dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]">
                     {t('common.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmDeleteDocument}
-                    className="h-9 rounded-[10px] text-[13px] font-semibold bg-red-100 text-red-800 hover:bg-red-200 border-none"
+                    className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#ef4444] text-white hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900 border-none"
                     disabled={isDeletingDocument}
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-1.5" />

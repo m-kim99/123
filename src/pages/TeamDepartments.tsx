@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { V1Chip, v1Card } from '@/components/ui/v1-components';
+import { V1Chip, v1Card, V1PageHeader } from '@/components/ui/v1-components';
 import { Building2, FileText, Users, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -113,10 +113,10 @@ export function TeamDepartments() {
     <DashboardLayout>
       <div className="space-y-6">
         <BackButton className="mb-4" />
-        <div className="min-w-0">
-          <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{t('teamDepts.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1.5">{t('teamDepts.subtitle')}</p>
-        </div>
+        <V1PageHeader
+          title={t('teamDepts.title')}
+          sub={t('teamDepts.subtitle')}
+        />
 
         {isLoading ? (
           <div className="text-center py-12">

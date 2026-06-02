@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
+import { V1StatTile, V1CardHeader, v1Card, V1PageHeader } from '@/components/ui/v1-components';
 import { FileText, FolderOpen, Users, ChevronRight } from 'lucide-react';
 import { useDocumentStore } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -88,15 +88,11 @@ export function TeamDepartmentDetail() {
 
           <BackButton className="mb-4" />
 
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-[28px] sm:text-[30px] font-bold tracking-tight text-slate-900">{department.name}</h1>
-              <p className="text-sm text-slate-500">{t('deptDetail.deptCode')}: {department.code}</p>
-              <p className="text-slate-500 mt-1">
-                {department.description || t('deptDetail.noDescription')}
-              </p>
-            </div>
-          </div>
+          <V1PageHeader
+            eyebrow={`${t('deptDetail.deptCode')}: ${department.code}`}
+            title={department.name}
+            sub={department.description || t('deptDetail.noDescription')}
+          />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

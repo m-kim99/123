@@ -1317,10 +1317,10 @@ export function SubcategoryManagement() {
             }
           }}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('parentCategoryDetail.deleteSubcategory')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 <p>
                   {t('parentCategoryDetail.deleteSubConfirm', { name: deletingSubcategory?.name ?? '' })}
                 </p>
@@ -1333,12 +1333,12 @@ export function SubcategoryManagement() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeletingSubcategory}>
+              <AlertDialogCancel disabled={isDeletingSubcategory} className="dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]">
                 {t('common.cancel')}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteSubcategory}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
                 disabled={isDeletingSubcategory}
               >
                 {isDeletingSubcategory ? t('documentMgmt.deleting') : t('common.delete')}
@@ -1349,10 +1349,10 @@ export function SubcategoryManagement() {
 
         {/* NFC 재등록 확인 다이얼로그 */}
         <AlertDialog open={nfcConfirmDialogOpen} onOpenChange={setNfcConfirmDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 {t('parentCategoryDetail.nfcAlreadyRegistered')}
                 {existingNfcSubcategory && (
                   <span className="block mt-2 font-medium">
@@ -1363,10 +1363,10 @@ export function SubcategoryManagement() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleNfcConfirmNo}>
+              <AlertDialogCancel onClick={handleNfcConfirmNo} className="dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]">
                 {t('common.no')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={handleNfcConfirmYes}>
+              <AlertDialogAction onClick={handleNfcConfirmYes} className="dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]">
                 {t('common.yes')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1375,10 +1375,10 @@ export function SubcategoryManagement() {
 
         {/* 만료된 카테고리 안내 다이얼로그 */}
         <AlertDialog open={expiredDialogOpen} onOpenChange={setExpiredDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('parentCategoryDetail.expiredCategory')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('parentCategoryDetail.expiredCategory')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 {expiredSubcategory && (
                   <>
                     <p className="mb-2">
@@ -1397,7 +1397,7 @@ export function SubcategoryManagement() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)}>
+              <AlertDialogAction onClick={() => setExpiredDialogOpen(false)} className="dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]">
                 {t('common.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
