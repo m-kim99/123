@@ -14,7 +14,8 @@ import { TermsOfServiceContent } from '@/components/terms/TermsOfService';
 import { PrivacyPolicyContent } from '@/components/terms/PrivacyPolicy';
 
 export function SignupPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isKorean = i18n.language === 'ko';
   const navigate = useNavigate();
   const { signup, isLoading, error, clearError } = useAuthStore();
 
@@ -36,6 +37,12 @@ export function SignupPage() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation | null>(null);
 
+  const [adminPhone, setAdminPhone] = useState('');
+  const [adminOtp, setAdminOtp] = useState('');
+  const [adminOtpSent, setAdminOtpSent] = useState(false);
+  const [adminOtpVerified, setAdminOtpVerified] = useState(false);
+  const [isSendingAdminOtp, setIsSendingAdminOtp] = useState(false);
+  const [isVerifyingAdminOtp, setIsVerifyingAdminOtp] = useState(false);
   const [emailChecked, setEmailChecked] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [emailCheckResult, setEmailCheckResult] = useState<string | null>(null);
@@ -94,6 +101,8 @@ export function SignupPage() {
     }
   };
 
+  const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
+
   const validateCompanyCode = (code: string): boolean => {
     const regex = /^[A-Za-z0-9]{12}$/;
     return regex.test(code);
@@ -134,6 +143,117 @@ export function SignupPage() {
     }
   };
 
+  const handleSendAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneInputDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('send-phone-otp', {
+        body: { phone, purpose: 'admin_signup' },
+      });
+
+      if (fnError) {
+        let errMsg = fnError.message || t('signup.smsSendFailed');
+        try {
+          const errBody = await fnError.context?.json();
+          if (errBody?.error) errMsg = errBody.error;
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || data?.message || t('signup.smsSendFailed'));
+      }
+
+      setAdminOtpSent(true);
+      setAdminOtpVerified(false);
+      setAdminOtp('');
+
+      toast({
+        title: t('signup.otpSent'),
+        description: t('signup.otpSentDesc'),
+      });
+    } catch (err: any) {
+      toast({
+        title: t('signup.otpSendFailed'),
+        description: err?.message || t('signup.otpSendFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingAdminOtp(false);
+    }
+  };
+
+  const handleVerifyAdminOtp = async () => {
+    const phone = normalizePhone(adminPhone);
+    const code = (adminOtp || '').trim();
+
+    if (!phone || phone.length < 10 || phone.length > 11) {
+      toast({
+        title: t('signup.phoneInput'),
+        description: t('signup.phoneCheckDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!adminOtpSent) {
+      toast({
+        title: t('signup.sendOtpFirst'),
+        description: t('signup.sendOtpFirstDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!code) {
+      toast({
+        title: t('signup.enterOtp'),
+        description: t('signup.enterOtpDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifyingAdminOtp(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('verify-phone-otp', {
+        body: { phone, code, purpose: 'admin_signup' },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || t('signup.verifyFailed'));
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || t('signup.verifyFailed'));
+      }
+
+      setAdminOtpVerified(true);
+
+      toast({
+        title: t('signup.phoneVerifyComplete'),
+        description: t('signup.phoneVerifyCompleteDesc'),
+      });
+    } catch (err: any) {
+      toast({
+        title: t('signup.verifyFailed'),
+        description: err?.message || t('signup.verifyFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingAdminOtp(false);
+    }
+  };
 
   const handleSignup = async () => {
     clearError();
@@ -192,6 +312,28 @@ export function SignupPage() {
       return;
     }
 
+    // 한국어 사용자만 휴대폰 인증 필수
+    if (isKorean) {
+      const phone = normalizePhone(adminPhone);
+      if (!phone) {
+        toast({
+          title: t('signup.enterPhone'),
+          description: signupRole === 'admin' ? t('signup.enterPhoneForAdmin') : t('signup.enterPhoneForTeam'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!adminOtpVerified) {
+        toast({
+          title: t('signup.phoneVerifyNeeded'),
+          description: t('signup.phoneVerifyNeededDesc'),
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     const companyCodeToUse = signupForm.companyCode.trim();
     const companyNameToUse = signupRole === 'admin' ? signupForm.companyName.trim() : '';
 
@@ -226,6 +368,8 @@ export function SignupPage() {
     signupForm.name &&
     emailChecked &&
     allAgreed &&
+    // 한국어 사용자만 휴대폰 인증 필수
+    (!isKorean || (adminPhone.trim() && adminOtpVerified)) &&
     (signupRole !== 'admin' || (signupForm.companyName.trim() && signupForm.companyCode.trim() && companyCodeChecked));
 
   return (
@@ -356,6 +500,59 @@ export function SignupPage() {
               </p>
             )}
           </div>
+
+          {/* 한국어 사용자만 휴대폰 인증 표시 */}
+          {isKorean && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.phoneVerification')}</label>
+              <div className="flex gap-2">
+                <Input
+                  className="h-[42px] rounded-[10px] flex-1"
+                  placeholder={t('signup.phonePlaceholder')}
+                  value={adminPhone}
+                  onChange={(e) => {
+                    setAdminPhone(e.target.value);
+                    setAdminOtpVerified(false);
+                  }}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={handleSendAdminOtp}
+                  disabled={isLoading || isSendingAdminOtp || !adminPhone.trim()}
+                  className="h-[42px] px-3 rounded-[10px] text-[12px] font-medium border border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50 shrink-0 disabled:opacity-50"
+                >
+                  {isSendingAdminOtp ? t('common.sending') : adminOtpSent ? t('signup.resend') : t('signup.sendOtp')}
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  className="h-[42px] rounded-[10px] flex-1"
+                  placeholder={t('signup.otpPlaceholder')}
+                  value={adminOtp}
+                  onChange={(e) => setAdminOtp(e.target.value)}
+                  disabled={isLoading || !adminOtpSent || adminOtpVerified}
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyAdminOtp}
+                  disabled={isLoading || !adminOtpSent || adminOtpVerified || isVerifyingAdminOtp || !adminOtp.trim()}
+                  className={`h-[42px] px-3 rounded-[10px] text-[12px] font-semibold shrink-0 flex items-center gap-1 disabled:opacity-50 ${
+                    adminOtpVerified
+                      ? 'bg-[#10b981] text-white border-none'
+                      : 'border border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  {adminOtpVerified ? t('signup.otpVerified') : isVerifyingAdminOtp ? t('signup.verifyingOtp') : t('signup.verifyOtp')}
+                </button>
+              </div>
+              {adminOtpVerified ? (
+                <p className="text-[11.5px] text-[#10b981] font-medium">{t('signup.phoneVerified')}</p>
+              ) : (
+                <p className="text-[11.5px] text-slate-400 dark:text-[#64748b]">{t('signup.phoneVerifyRequired')}</p>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-slate-900 dark:text-[#f1f5f9]">{t('signup.password')}</label>
