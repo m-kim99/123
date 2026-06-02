@@ -35,10 +35,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import logo from '@/assets/logo1.png';
-import logoDark from '@/assets/무제-2.png';
-import searchIcon from '@/assets/search.svg';
-import bellIcon from '@/assets/bell.svg';
+import logo from '@/assets/logos/logo-header.png';
+import logoDark from '@/assets/logos/logo-header-dark.png';
+import searchIcon from '@/assets/icons/search.svg';
+import bellIcon from '@/assets/icons/bell.svg';
 import {
   DropdownMenu,
   DropdownMenuContent,

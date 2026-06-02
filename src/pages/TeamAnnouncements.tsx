@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageSquare, Send, Megaphone } from 'lucide-react';
-import penIcon from '@/assets/pen.svg';
-import binIcon from '@/assets/bin.svg';
+import penIcon from '@/assets/icons/pen.svg';
+import binIcon from '@/assets/icons/bin.svg';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 

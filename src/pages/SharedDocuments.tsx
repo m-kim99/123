@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useDocumentStore } from '@/store/documentStore';
-import downloadIcon from '@/assets/download.svg';
-import binIcon from '@/assets/bin.svg';
+import downloadIcon from '@/assets/icons/download.svg';
+import binIcon from '@/assets/icons/bin.svg';
 import { Button } from '@/components/ui/button';
 import { v1Card, V1CardHeader, V1PageHeader, V1StatTile, V1Chip } from '@/components/ui/v1-components';
 import {
@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { FileText, Search, Loader2, Share2, Bell, Users, Clock, MessageCircle, Download, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-import previewIcon from '@/assets/preview.svg';
+import previewIcon from '@/assets/icons/preview.svg';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { trackEvent } from '@/lib/analytics';

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import rootLogo from '../../assets/logo.png';
-import logo from '@/assets/logo.png';
+import rootLogo from '@/assets/logos/logo-brand.png';
+import logo from '@/assets/logos/logo.png';
 
 interface AuthShellProps {
   heroHeadline: string;

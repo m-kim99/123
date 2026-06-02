@@ -21,11 +21,11 @@ import {
   RotateCw,
   Archive,
 } from 'lucide-react';
-import binIcon from '@/assets/bin.svg';
-import downloadIcon from '@/assets/download.svg';
-import shareIcon from '@/assets/share.svg';
-import previewIcon from '@/assets/preview.svg';
-import changeIcon from '@/assets/change.svg';
+import binIcon from '@/assets/icons/bin.svg';
+import downloadIcon from '@/assets/icons/download.svg';
+import shareIcon from '@/assets/icons/share.svg';
+import previewIcon from '@/assets/icons/preview.svg';
+import changeIcon from '@/assets/icons/change.svg';
 import { format, addDays, addMonths, addYears } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useDocumentStore } from '@/store/documentStore';
 import { BackButton } from '@/components/BackButton';
-import binIcon from '@/assets/bin.svg';
+import binIcon from '@/assets/icons/bin.svg';
 
 export function Trash() {
   const { t } = useTranslation();
