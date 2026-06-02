@@ -22,7 +22,8 @@
       "Bash(mkdir -p /tmp/design2_out)",
       "Bash(gunzip -c /tmp/design2.bin)",
       "Bash(tar -x -C /tmp/design2_out/)",
-      "Bash(tar -xzf /tmp/design2.bin -C /tmp/design2_out/)"
+      "Bash(tar -xzf /tmp/design2.bin -C /tmp/design2_out/)",
+      "WebSearch"
     ]
   }
 }

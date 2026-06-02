@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { AccountDeletionPage } from './pages/AccountDeletionPage';
 
 const AdminDashboard = lazy(() =>
   import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
@@ -313,6 +314,7 @@ function App() {
             <Route path="/nfc-redirect" element={<NfcRedirect />} />
             <Route path="/auth/naver/callback" element={<NaverCallback />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/account/delete" element={<AccountDeletionPage />} />
 
             <Route
               path="/admin"
