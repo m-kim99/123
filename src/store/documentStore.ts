@@ -8,6 +8,7 @@ import {
   type ParentCategory as SupabaseParentCategory,
   type Subcategory as SupabaseSubcategory,
 } from '@/lib/supabase';
+import { r2Storage } from '@/lib/r2';
 import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { createDocumentNotification, createShareNotification, deleteShareNotification } from '@/lib/notifications';
@@ -592,8 +593,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
             fileUrl:
-              supabase.storage.from('123').getPublicUrl(doc.file_path).data
-                .publicUrl || '#',
+              r2Storage.getPublicUrl(doc.file_path).data.publicUrl || '#',
             ocrText: doc.ocr_text || null,
             deletedAt: null,
           };
@@ -685,8 +685,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
             fileUrl:
-              supabase.storage.from('123').getPublicUrl(doc.file_path).data
-                .publicUrl || '#',
+              r2Storage.getPublicUrl(doc.file_path).data.publicUrl || '#',
             ocrText: doc.ocr_text || null,
             deletedAt: (doc as any).deleted_at || null,
           };
@@ -1335,9 +1334,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const originalLower = (originalNameForStorage || '').toLowerCase();
       const fileExt = originalLower.includes('.') ? originalLower.split('.').pop() : undefined;
 
-      const { error: storageError } = await supabase.storage
-        .from('123')
-        .upload(filePath, document.file);
+      const { error: storageError } = await r2Storage.upload(filePath, document.file);
 
       if (storageError) {
         throw storageError;
@@ -1388,9 +1385,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         let fileUrl = '#';
 
         try {
-          const { data: publicUrlData } = supabase.storage
-            .from('123')
-            .getPublicUrl(data.file_path);
+          const { data: publicUrlData } = r2Storage.getPublicUrl(data.file_path);
 
           if (publicUrlData?.publicUrl) {
             fileUrl = publicUrlData.publicUrl;
@@ -1583,9 +1578,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       // 스토리지에서 파일 삭제
       if (filePath) {
-        const { error: storageError } = await supabase.storage
-          .from('123')
-          .remove([filePath]);
+        const { error: storageError } = await r2Storage.remove([filePath]);
 
         if (storageError) {
           console.error('Failed to delete file from storage:', storageError);
@@ -1652,7 +1645,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           .filter((path: string | null) => path);
         
         if (filePaths.length > 0) {
-          await supabase.storage.from('123').remove(filePaths);
+          await r2Storage.remove(filePaths);
         }
 
         // DB에서 영구 삭제
@@ -1743,14 +1736,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       // 2. 기존 파일 삭제
       if (existingDoc.file_path) {
-        await supabase.storage.from('123').remove([existingDoc.file_path]);
+        await r2Storage.remove([existingDoc.file_path]);
       }
 
       // 3. 새 파일 업로드
       const newFilePath = sanitizeFileName(file.name);
-      const { error: storageError } = await supabase.storage
-        .from('123')
-        .upload(newFilePath, file);
+      const { error: storageError } = await r2Storage.upload(newFilePath, file);
 
       if (storageError) {
         throw storageError;
@@ -1776,9 +1767,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // 6. 로컬 상태 업데이트
       let fileUrl = '#';
       try {
-        const { data: publicUrlData } = supabase.storage
-          .from('123')
-          .getPublicUrl(newFilePath);
+        const { data: publicUrlData } = r2Storage.getPublicUrl(newFilePath);
 
         if (publicUrlData?.publicUrl) {
           fileUrl = publicUrlData.publicUrl;

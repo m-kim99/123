@@ -173,7 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/team';
-  const primaryColor = '#1e40af';
+  const primaryColor = '#2563eb';
 
   // Realtime 구독 시작 (권한 요청은 알림 버튼 클릭 시)
   useEffect(() => {
@@ -893,7 +893,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       : 'text-slate-600 hover:bg-slate-50 dark:text-[#cbd5e1] dark:hover:bg-[#1e293b]'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#1e40af] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
                   {item.name}
                 </a>
               ) : (
@@ -906,7 +906,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       : 'text-slate-600 hover:bg-slate-50 dark:text-[#cbd5e1] dark:hover:bg-[#1e293b]'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#1e40af] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-[#2563eb] dark:text-[#3b82f6]' : 'text-slate-500 dark:text-[#94a3b8]'}`} />
                   {item.name}
                 </Link>
               )
@@ -992,7 +992,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               }}
                             >
                               <div className="w-6 h-6 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center shrink-0">
-                                <FileText className="h-3 w-3 text-[#1e40af] dark:text-[#93c5fd]" />
+                                <FileText className="h-3 w-3 text-[#2563eb] dark:text-[#93c5fd]" />
                               </div>
                               {item}
                             </div>
@@ -1045,7 +1045,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                   handleSearch();
                                 }}
                               >
-                                <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#1e40af] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
+                                <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#2563eb] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
                                 {item}
                               </div>
                             ))}
@@ -1070,7 +1070,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="bg-white hover:border-[#1e40af] border-slate-200 rounded-lg"
+              className="bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
               onClick={handleSearch}
             >
               <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
@@ -1079,7 +1079,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="relative bg-white hover:border-[#1e40af] border-slate-200 rounded-lg"
+              className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
               onClick={async () => {
                 if (!isNotificationOpen) {
                   await requestLocalNotificationPermission();
@@ -1179,12 +1179,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {mobileLangExpanded && (
                 <div className="bg-slate-50 border-y">
                   <DropdownMenuItem onClick={() => changeLanguage('ko')} className="pl-8">
-                    <span className={i18n.language === 'ko' ? 'font-semibold text-[#1e40af]' : ''}>
+                    <span className={i18n.language === 'ko' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('language.korean')}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changeLanguage('en')} className="pl-8">
-                    <span className={i18n.language === 'en' ? 'font-semibold text-[#1e40af]' : ''}>
+                    <span className={i18n.language === 'en' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('language.english')}
                     </span>
                   </DropdownMenuItem>
@@ -1203,12 +1203,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {mobileThemeExpanded && (
                 <div className="bg-slate-50 border-y">
                   <DropdownMenuItem onClick={() => setThemeMode('light')} className="pl-8">
-                    <span className={themeMode === 'light' ? 'font-semibold text-[#1e40af]' : ''}>
+                    <span className={themeMode === 'light' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('theme.light')}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setThemeMode('dark')} className="pl-8">
-                    <span className={themeMode === 'dark' ? 'font-semibold text-[#1e40af]' : ''}>
+                    <span className={themeMode === 'dark' ? 'font-semibold text-[#2563eb]' : ''}>
                       {t('theme.dark')}
                     </span>
                   </DropdownMenuItem>
@@ -1277,7 +1277,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                   }}
                                 >
                                   <div className="w-6 h-6 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center shrink-0">
-                                    <FileText className="h-3 w-3 text-[#1e40af] dark:text-[#93c5fd]" />
+                                    <FileText className="h-3 w-3 text-[#2563eb] dark:text-[#93c5fd]" />
                                   </div>
                                   {item}
                                 </div>
@@ -1330,7 +1330,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                       handleSearch();
                                     }}
                                   >
-                                    <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#1e40af] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
+                                    <span className="w-5 h-5 rounded-md bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] text-[#2563eb] dark:text-[#93c5fd] flex items-center justify-center text-[10px] font-bold font-mono shrink-0">{idx + 1}</span>
                                     {item}
                                   </div>
                                 ))}
@@ -1355,7 +1355,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="bg-white hover:border-[#1e40af] border-slate-200 rounded-lg"
+                  className="bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
                   onClick={handleSearch}
                 >
                   <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
@@ -1364,7 +1364,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="relative bg-white hover:border-[#1e40af] border-slate-200 rounded-lg"
+                  className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
                   onClick={() => setIsNotificationOpen((prev) => !prev)}
                 >
                   <img src={bellIcon} alt={t('header.notifications')} className="h-7 w-7 block object-contain" />
@@ -1882,7 +1882,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-slate-50 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.basic')}</span>
-                        <span className="text-2xl font-bold text-[#1e40af]">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-center gap-2">✓ {t('subscription.members')} 3{t('subscription.personUnit')}</li>
@@ -1900,7 +1900,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.pro')}</span>
-                        <span className="text-2xl font-bold text-[#1e40af]">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-center gap-2">✓ {t('subscription.members')} 10{t('subscription.personUnit')}</li>
@@ -1960,14 +1960,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DialogHeader>
               {isLoadingSubscription ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e40af]" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563eb]" />
                 </div>
               ) : subscriptionInfo ? (
                 <div className="space-y-5">
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
-                      <span className="px-3 py-1 bg-[#1e40af] text-white text-sm font-semibold rounded-full">
+                      <span className="px-3 py-1 bg-[#2563eb] text-white text-sm font-semibold rounded-full">
                         {subscriptionInfo.displayName}
                       </span>
                     </div>
@@ -2006,7 +2006,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             }`}
                           >
                             {plan.highlight && (
-                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#1e40af] text-white text-[10px] font-semibold rounded-full">
+                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#2563eb] text-white text-[10px] font-semibold rounded-full">
                                 {t('subscription.current')}
                               </span>
                             )}

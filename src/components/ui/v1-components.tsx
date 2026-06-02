@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 
 // ─── V1 Design Tokens ───────────────────────────────────────
 export const V1 = {
-  blue: '#1e40af',
-  blueInk: '#1e40af',
+  blue: '#2563eb',
+  blueInk: '#2563eb',
   blueSoft: '#eff6ff',
   violet: '#8b5cf6',
   emerald: '#10b981',
@@ -36,8 +36,8 @@ export function resolveThemeColor(lightHex: string): string {
   const isDark = document.documentElement.classList.contains('dark');
   if (!isDark) return lightHex;
   const map: Record<string, string> = {
-    '#1e40af': V1_DARK.blue,
-    '#1e3a8a': V1_DARK.blueInk,
+    '#2563eb': V1_DARK.blue,
+    '#1d4ed8': V1_DARK.blueInk,
     '#8b5cf6': V1_DARK.violet,
     '#10b981': V1_DARK.emerald,
     '#f59e0b': V1_DARK.amber,
@@ -319,7 +319,7 @@ export function V1PrimaryButton({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-[10px] bg-[#1e40af] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] text-white font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)] transition-colors whitespace-nowrap',
+        'inline-flex items-center justify-center rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] text-white font-semibold shadow-[0_1px_2px_rgba(37,99,235,0.3)] transition-colors whitespace-nowrap',
         sizeClass,
         className,
       )}

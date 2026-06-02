@@ -77,7 +77,7 @@ export function TeamDashboard() {
   });
 
   const stats = [
-    { title: t('dashboard.accessibleDocuments'),       value: userDocuments.length,       icon: FileText, color: '#1e40af' },
+    { title: t('dashboard.accessibleDocuments'),       value: userDocuments.length,       icon: FileText, color: '#2563eb' },
     { title: t('dashboard.accessibleParentCategories'), value: userParentCategories.length, icon: FolderOpen, color: '#10b981' },
     { title: t('dashboard.accessibleSubcategories'),   value: userSubcategories.length,   icon: Archive,  color: '#8b5cf6' },
     { title: t('dashboard.myTeamMembers'),             value: memberCount,                 icon: Users,    color: '#f59e0b' },
@@ -113,7 +113,7 @@ export function TeamDashboard() {
             <V1CardHeader
               title={t('dashboard.parentCategoryDocStatus')}
               icon={FolderOpen}
-              iconColor="#1e40af"
+              iconColor="#2563eb"
               action={
                 <button
                   onClick={() => navigate('/team/parent-categories')}
@@ -139,7 +139,7 @@ export function TeamDashboard() {
                       className="w-full flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-3.5 border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60 transition-colors text-left"
                     >
                       <div className="w-9 h-9 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
-                        <FolderOpen className="h-[18px] w-[18px] text-[#1e40af]" />
+                        <FolderOpen className="h-[18px] w-[18px] text-[#2563eb]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-slate-900 truncate">{category.name}</p>
@@ -198,7 +198,7 @@ export function TeamDashboard() {
             {/* 최근 방문 — 타임라인 */}
             <div className={card}>
               <div className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#1e40af]" />
+                <Clock className="h-4 w-4 text-[#2563eb]" />
                 <h2 className="text-sm font-semibold text-slate-900">{t('dashboard.recentVisits')}</h2>
               </div>
               <div className="px-4 py-2">
@@ -221,7 +221,7 @@ export function TeamDashboard() {
                         className="relative flex items-start gap-3 py-2.5 w-full text-left"
                       >
                         <div className="w-5 h-5 rounded-full bg-[#eff6ff] border-2 border-white shadow-sm flex items-center justify-center shrink-0 z-10 mt-0.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#1e40af]" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-xs text-slate-900 truncate">

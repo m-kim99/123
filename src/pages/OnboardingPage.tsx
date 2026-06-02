@@ -202,12 +202,12 @@ export function OnboardingPage() {
           {steps.map((_, i) => (
             <div key={i} className="flex items-center flex-1">
               <div className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold flex-none ${
-                i < currentStep ? 'bg-[#1e40af] text-white' : i === currentStep ? 'bg-[#1e40af] text-white' : 'bg-[#e5e7eb] text-slate-500'
+                i < currentStep ? 'bg-[#2563eb] text-white' : i === currentStep ? 'bg-[#2563eb] text-white' : 'bg-[#e5e7eb] text-slate-500'
               }`}>
                 {i < currentStep ? <Check className="h-[13px] w-[13px]" /> : i + 1}
               </div>
               {i < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-1.5 rounded-full ${i < currentStep ? 'bg-[#1e40af]' : 'bg-[#e5e7eb]'}`} />
+                <div className={`flex-1 h-0.5 mx-1.5 rounded-full ${i < currentStep ? 'bg-[#2563eb]' : 'bg-[#e5e7eb]'}`} />
               )}
             </div>
           ))}

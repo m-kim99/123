@@ -150,7 +150,7 @@ export function TeamDepartments() {
                 >
                   <div className="px-5 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5 text-[#1e40af]" />
+                      <Building2 className="h-5 w-5 text-[#2563eb]" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-semibold text-slate-900 truncate">{dept.name}</p>

@@ -204,7 +204,7 @@ export function DepartmentManagement() {
               <select
                 value={sortOrder}
                 onChange={(e) => { setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
-                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
               >
                 <option value="latest">{t('common.sortLatest')}</option>
                 <option value="oldest">{t('common.sortOldest')}</option>
@@ -285,7 +285,7 @@ export function DepartmentManagement() {
                 type="button"
                 onClick={handleSaveDepartment}
                 disabled={isSaving}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? t('common.saving') : t('common.save')}
               </button>
@@ -310,7 +310,7 @@ export function DepartmentManagement() {
               >
                 <div className="px-5 py-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center flex-shrink-0">
-                    <Building2 className="h-5 w-5 text-[#1e40af]" />
+                    <Building2 className="h-5 w-5 text-[#2563eb]" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-semibold text-slate-900 truncate">{dept.name}</p>

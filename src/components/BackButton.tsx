@@ -14,7 +14,7 @@ export function BackButton({ className = '' }: BackButtonProps) {
   return (
     <Button
       variant="ghost"
-      className={`bg-[#1e40af] text-white hover:bg-[#1d4ed8] hover:text-white ${className}`}
+      className={`bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white ${className}`}
       onClick={() => navigate(-1)}
     >
       <ArrowLeft className="h-4 w-4 mr-2" />

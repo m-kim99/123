@@ -63,7 +63,7 @@ export function NotificationSettingsDialog({
               {/* 섹션 1: 문서 활동 */}
               <div>
                 <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
-                  <FileText className="h-3 w-3 text-[#1e40af]" />
+                  <FileText className="h-3 w-3 text-[#2563eb]" />
                   {t('notificationSettings.documentActivity')}
                 </p>
                 <div>
@@ -75,7 +75,7 @@ export function NotificationSettingsDialog({
                       id="document_created"
                       checked={preferences.document_created}
                       onCheckedChange={(checked) => handleToggle('document_created', checked)}
-                      className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                      className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                     />
                   </div>
                   <div className="flex items-start justify-between gap-3 py-2.5 border-t border-slate-50 dark:border-white/[0.06]">
@@ -86,7 +86,7 @@ export function NotificationSettingsDialog({
                       id="document_deleted"
                       checked={preferences.document_deleted}
                       onCheckedChange={(checked) => handleToggle('document_deleted', checked)}
-                      className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                      className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                     />
                   </div>
                   <div className="flex items-start justify-between gap-3 py-2.5 border-t border-slate-50 dark:border-white/[0.06]">
@@ -97,7 +97,7 @@ export function NotificationSettingsDialog({
                       id="document_shared"
                       checked={preferences.document_shared}
                       onCheckedChange={(checked) => handleToggle('document_shared', checked)}
-                      className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                      className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                     />
                   </div>
                 </div>
@@ -108,7 +108,7 @@ export function NotificationSettingsDialog({
               {/* 섹션 2: 카테고리 변경 */}
               <div>
                 <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
-                  <FolderOpen className="h-3 w-3 text-[#1e40af]" />
+                  <FolderOpen className="h-3 w-3 text-[#2563eb]" />
                   {t('notificationSettings.categoryChanges')}
                 </p>
                 <div className="flex items-start justify-between gap-3 py-2.5">
@@ -124,7 +124,7 @@ export function NotificationSettingsDialog({
                     id="category_changes"
                     checked={preferences.category_changes}
                     onCheckedChange={(checked) => handleToggle('category_changes', checked)}
-                    className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                    className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                   />
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function NotificationSettingsDialog({
               {/* 섹션 3: 만료 관리 */}
               <div>
                 <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
-                  <Clock className="h-3 w-3 text-[#1e40af]" />
+                  <Clock className="h-3 w-3 text-[#2563eb]" />
                   {t('notificationSettings.expiryManagement')}
                 </p>
                 <div className="flex items-start justify-between gap-3 py-2.5">
@@ -150,7 +150,7 @@ export function NotificationSettingsDialog({
                     id="expiry_alerts"
                     checked={preferences.expiry_alerts}
                     onCheckedChange={(checked) => handleToggle('expiry_alerts', checked)}
-                    className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                    className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                   />
                 </div>
               </div>
@@ -161,7 +161,7 @@ export function NotificationSettingsDialog({
                   <div className="h-px bg-slate-100 dark:bg-white/[0.06] my-0.5" />
                   <div>
                     <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2.5">
-                      <Users className="h-3 w-3 text-[#1e40af]" />
+                      <Users className="h-3 w-3 text-[#2563eb]" />
                       {t('notificationSettings.notificationScope')}
                       <V1Chip variant="amber" className="ml-1 text-[9px] px-1.5 py-0">{t('common.admin', { defaultValue: '관리자' })}</V1Chip>
                     </p>
@@ -183,7 +183,7 @@ export function NotificationSettingsDialog({
                         onCheckedChange={(checked) =>
                           handleToggle('notify_my_department_only', checked)
                         }
-                        className="mt-0.5 data-[state=checked]:bg-[#1e40af]"
+                        className="mt-0.5 data-[state=checked]:bg-[#2563eb]"
                       />
                     </div>
                   </div>

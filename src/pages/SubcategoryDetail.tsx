@@ -27,6 +27,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
+import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
 import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
@@ -559,9 +560,7 @@ export function SubcategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = supabase.storage
-        .from('123')
-        .getPublicUrl(data.file_path);
+      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
 
       const publicUrl = publicData?.publicUrl;
 
@@ -633,9 +632,7 @@ export function SubcategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = supabase.storage
-        .from('123')
-        .getPublicUrl(data.file_path);
+      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
 
       if (!publicData?.publicUrl) {
         throw new Error('Could not generate file URL');
@@ -681,9 +678,7 @@ export function SubcategoryDetail() {
       if (!filePath) {
         console.error('파일 경로가 없습니다');
       } else {
-        const { error: storageError } = await supabase.storage
-          .from('123')
-          .remove([filePath]);
+        const { error: storageError } = await r2Storage.remove([filePath]);
 
         if (storageError) {
           console.error('Storage 삭제 실패:', storageError);
@@ -891,9 +886,7 @@ export function SubcategoryDetail() {
           .single();
 
         if (!docError && docData) {
-          const { data: publicData } = supabase.storage
-            .from('123')
-            .getPublicUrl(docData.file_path);
+          const { data: publicData } = r2Storage.getPublicUrl(docData.file_path);
 
           const documentUrl = publicData?.publicUrl || '';
           const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
@@ -1099,7 +1092,7 @@ export function SubcategoryDetail() {
                 disabled={isRegisteringNfc || !canDo('share')}
                 className={`h-8 rounded-[10px] text-xs font-semibold gap-1.5 ${
                   subcategory.nfcRegistered
-                    ? 'bg-[#1e40af] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#1e40af]'
+                    ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white active:text-white border-[#2563eb]'
                     : 'border-[#e5e7eb]'
                 }`}
               >
@@ -1141,13 +1134,13 @@ export function SubcategoryDetail() {
           <V1CardHeader
             title={t('subcategoryDetail.documentList')}
             icon={FileText}
-            iconColor="#1e40af"
+            iconColor="#2563eb"
             sub={t('subcategoryDetail.documentListDesc')}
             action={
               <select
                 value={docSortOrder}
                 onChange={(e) => setDocSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha')}
-                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
               >
                 <option value="latest">{t('common.sortLatest')}</option>
                 <option value="oldest">{t('common.sortOldest')}</option>
@@ -1241,7 +1234,7 @@ export function SubcategoryDetail() {
           <V1CardHeader
             title={t('subcategoryDetail.uploadDocument')}
             icon={Upload}
-            iconColor="#1e40af"
+            iconColor="#2563eb"
             sub={t('subcategoryDetail.uploadDocumentDesc')}
           />
           <div className="p-4 sm:p-6 space-y-6">
@@ -1282,7 +1275,7 @@ export function SubcategoryDetail() {
               <div className="flex items-center gap-2 text-sm">
                 {isExtractingUploadOcr && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
                 {!isExtractingUploadOcr && uploadOcrPreview && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                <span className={isExtractingUploadOcr ? 'text-[#1e40af]' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
+                <span className={isExtractingUploadOcr ? 'text-[#2563eb]' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
                   {uploadOcrStatus}
                 </span>
               </div>
@@ -1411,7 +1404,7 @@ export function SubcategoryDetail() {
           <div className="flex flex-col gap-4">
             {/* NFC / QR Card */}
             <div className={v1Card}>
-              <V1CardHeader title="NFC / QR" icon={Smartphone} iconColor="#1e40af" />
+              <V1CardHeader title="NFC / QR" icon={Smartphone} iconColor="#2563eb" />
               <div className="px-5 py-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between py-2">
                   <span className="text-[12.5px] text-slate-500">NFC</span>
@@ -1433,7 +1426,7 @@ export function SubcategoryDetail() {
                     disabled={isRegisteringNfc || !canDo('share')}
                     className={`flex-1 h-8 rounded-[10px] text-xs font-semibold ${
                       subcategory.nfcRegistered
-                        ? 'bg-[#1e40af] text-white hover:bg-[#1d4ed8] hover:text-white border-[#1e40af]'
+                        ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] hover:text-white border-[#2563eb]'
                         : 'border-[#e5e7eb]'
                     }`}
                   >
@@ -1455,7 +1448,7 @@ export function SubcategoryDetail() {
 
             {/* Activity Timeline */}
             <div className={v1Card}>
-              <V1CardHeader title={t('subcategoryDetail.recentActivity', { defaultValue: '최근 활동' })} icon={Activity} iconColor="#1e40af" />
+              <V1CardHeader title={t('subcategoryDetail.recentActivity', { defaultValue: '최근 활동' })} icon={Activity} iconColor="#2563eb" />
               <div className="px-5 py-3">
                 {subcategoryDocuments.length === 0 ? (
                   <p className="text-xs text-slate-400 text-center py-4">{t('subcategoryDetail.noDocuments')}</p>
@@ -1464,7 +1457,7 @@ export function SubcategoryDetail() {
                     {subcategoryDocuments.slice(0, 5).map((doc, i) => (
                       <div key={doc.id} className={`flex gap-3 py-2.5 ${i > 0 ? 'border-t border-slate-50' : ''}`}>
                         <div className="flex flex-col items-center shrink-0 mt-0.5">
-                          <div className="w-2 h-2 rounded-full bg-[#1e40af]" />
+                          <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
                           {i < Math.min(subcategoryDocuments.length, 5) - 1 && (
                             <div className="w-px flex-1 bg-slate-200 mt-1" />
                           )}
@@ -1488,7 +1481,7 @@ export function SubcategoryDetail() {
 
             {/* Storage Info */}
             <div className={v1Card}>
-              <V1CardHeader title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })} icon={MapPin} iconColor="#1e40af" />
+              <V1CardHeader title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })} icon={MapPin} iconColor="#2563eb" />
               <div className="px-5 py-3 flex flex-col gap-2.5">
                 <div className="flex justify-between items-center py-1.5">
                   <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.storageLocation')}</span>
@@ -1689,7 +1682,7 @@ export function SubcategoryDetail() {
                 >
                   {previewLoading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
                       <p className="text-[13px] text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (
@@ -1762,7 +1755,7 @@ export function SubcategoryDetail() {
           <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
             <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
-                <Smartphone className="h-5 w-5 text-[#1e40af]" />
+                <Smartphone className="h-5 w-5 text-[#2563eb]" />
               </div>
               <div className="flex-1 min-w-0">
                 <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
@@ -1807,7 +1800,7 @@ export function SubcategoryDetail() {
                   key={tab.key}
                   className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
                     activeShareTab === tab.key
-                      ? 'text-slate-900 font-semibold border-b-2 border-[#1e40af] -mb-px'
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
                       : 'text-slate-500 border-b-2 border-transparent -mb-px'
                   }`}
                   onClick={() => setActiveShareTab(tab.key)}
@@ -1823,7 +1816,7 @@ export function SubcategoryDetail() {
                   <div className="flex justify-between items-center text-[12px] text-slate-500">
                     <span>{t('documentMgmt.selectAll', { defaultValue: '총' })} {companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
                     {companyUsers.length > 0 && (
-                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#1e40af] text-[12px] font-medium cursor-pointer p-0">
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     )}
@@ -1852,9 +1845,9 @@ export function SubcategoryDetail() {
                             type="checkbox"
                             checked={selectedUserIds.includes(companyUser.id)}
                             readOnly
-                            className="w-[15px] h-[15px] accent-[#1e40af] m-0"
+                            className="w-[15px] h-[15px] accent-[#2563eb] m-0"
                           />
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
                             {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1871,7 +1864,7 @@ export function SubcategoryDetail() {
                       type="checkbox"
                       checked={sendEmailNotification}
                       onChange={(e) => setSendEmailNotification(e.target.checked)}
-                      className="w-[15px] h-[15px] accent-[#1e40af] m-0"
+                      className="w-[15px] h-[15px] accent-[#2563eb] m-0"
                     />
                     <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
                   </label>
@@ -1959,17 +1952,17 @@ export function SubcategoryDetail() {
                 {...getReplaceRootProps()}
                 className={`border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                   isReplaceDragActive
-                    ? 'border-[#1e40af] bg-[#eff6ff]'
+                    ? 'border-[#2563eb] bg-[#eff6ff]'
                     : replaceFile
                     ? 'border-emerald-400 bg-emerald-50'
-                    : 'border-[#1e40af] bg-[#eff6ff]'
+                    : 'border-[#2563eb] bg-[#eff6ff]'
                 }`}
               >
                 <input {...getReplaceInputProps()} />
                 {isExtractingOcr ? (
                   <div className="flex flex-col items-center gap-2.5">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
-                    <p className="text-[13px] text-[#1e40af] font-medium">{t('subcategoryDetail.ocrExtracting')}</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                    <p className="text-[13px] text-[#2563eb] font-medium">{t('subcategoryDetail.ocrExtracting')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2.5 w-full overflow-hidden">
@@ -1984,7 +1977,7 @@ export function SubcategoryDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2.5">
                     <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
-                      <Upload className="h-[22px] w-[22px] text-[#1e40af]" />
+                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
                     </div>
                     <div>
                       <p className="text-[14px] font-semibold text-slate-900">{isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>

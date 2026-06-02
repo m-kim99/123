@@ -373,7 +373,7 @@ return (
                     id="allow-comments"
                     checked={newAllowComments}
                     onCheckedChange={(checked) => setNewAllowComments(checked === true)}
-                    className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#1e40af] data-[state=checked]:border-[#1e40af]"
+                    className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                   />
                   <Label htmlFor="allow-comments">{t('announcements.allowComments')}</Label>
                 </div>
@@ -401,9 +401,9 @@ return (
           <div className={v1Card}>
             <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Megaphone className="h-[18px] w-[18px] text-[#1e40af]" />
+                <Megaphone className="h-[18px] w-[18px] text-[#2563eb]" />
                 <h2 className="text-base font-semibold text-slate-900">{t('announcements.allAnnouncements', { defaultValue: '전체 공지' })}</h2>
-                <span className="text-xs font-semibold text-[#1e40af] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
+                <span className="text-xs font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
               </div>
             </div>
 
@@ -474,10 +474,10 @@ return (
           <div className="flex flex-col gap-4">
             {/* Monthly Stats */}
             <div className={v1Card}>
-              <V1CardHeader title={t('announcements.monthlyStats', { defaultValue: '이번 달 통계' })} icon={Megaphone} iconColor="#1e40af" />
+              <V1CardHeader title={t('announcements.monthlyStats', { defaultValue: '이번 달 통계' })} icon={Megaphone} iconColor="#2563eb" />
               <div className="px-5 py-3 flex flex-col gap-3">
                 {[
-                  [t('announcements.writtenAnnouncements', { defaultValue: '작성된 공지' }), announcements.length, '#1e40af'],
+                  [t('announcements.writtenAnnouncements', { defaultValue: '작성된 공지' }), announcements.length, '#2563eb'],
                   [t('announcements.totalComments', { defaultValue: '댓글' }), totalComments, '#8b5cf6'],
                 ].map(([label, value, color], i) => (
                   <div key={i} className={`flex justify-between items-center py-2 ${i > 0 ? 'border-t border-slate-100' : ''}`}>
@@ -490,7 +490,7 @@ return (
 
             {/* Recent Comments */}
             <div className={v1Card}>
-              <V1CardHeader title={t('announcements.recentComments', { defaultValue: '최근 댓글' })} icon={MessageSquare} iconColor="#1e40af" />
+              <V1CardHeader title={t('announcements.recentComments', { defaultValue: '최근 댓글' })} icon={MessageSquare} iconColor="#2563eb" />
               <div>
                 {recentComments.length === 0 ? (
                   <div className="px-5 py-6 text-center text-xs text-slate-400">{t('announcements.noComments', { defaultValue: '댓글이 없습니다.' })}</div>
@@ -538,7 +538,7 @@ return (
                   id="edit-allow-comments"
                   checked={editAllowComments}
                   onCheckedChange={(checked) => setEditAllowComments(checked === true)}
-                  className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#1e40af] data-[state=checked]:border-[#1e40af]"
+                  className="h-5 w-5 rounded-[5px] data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                 />
                 <Label htmlFor="edit-allow-comments">{t('announcements.allowComments')}</Label>
               </div>

@@ -504,7 +504,7 @@ export function SignupPage() {
                 type="checkbox"
                 checked={agreeAll}
                 onChange={(e) => handleAgreeAll(e.target.checked)}
-                className="w-[15px] h-[15px] accent-[#1e40af] m-0"
+                className="w-[15px] h-[15px] accent-[#2563eb] m-0"
               />
               <span className="text-[13px] font-semibold text-slate-900 dark:text-[#f1f5f9]">{t('terms.agreeAll')}</span>
             </label>
@@ -514,7 +514,7 @@ export function SignupPage() {
                   type="checkbox"
                   checked={agreeAge}
                   onChange={(e) => setAgreeAge(e.target.checked)}
-                  className="w-[14px] h-[14px] accent-[#1e40af] m-0"
+                  className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                 />
                 <span className="text-[12px] text-slate-500 dark:text-[#94a3b8]">
                   <span>{t('terms.required')}</span> <span className="text-slate-900 dark:text-[#f1f5f9]">{t('terms.ageConfirm')}</span>
@@ -525,11 +525,11 @@ export function SignupPage() {
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="w-[14px] h-[14px] accent-[#1e40af] m-0"
+                  className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                 />
                 <span className="text-[12px] text-slate-500 dark:text-[#94a3b8]">
                   {t('terms.required')}{' '}
-                  <button type="button" className="text-[#1e40af] underline hover:text-[#1d4ed8]" onClick={() => setTermsPopupType('tos')}>
+                  <button type="button" className="text-[#2563eb] underline hover:text-[#1d4ed8]" onClick={() => setTermsPopupType('tos')}>
                     {t('terms.tos')}
                   </button>
                   <span className="text-slate-900 dark:text-[#f1f5f9]">{t('terms.agreeSuffix')}</span>
@@ -540,11 +540,11 @@ export function SignupPage() {
                   type="checkbox"
                   checked={agreePrivacy}
                   onChange={(e) => setAgreePrivacy(e.target.checked)}
-                  className="w-[14px] h-[14px] accent-[#1e40af] m-0"
+                  className="w-[14px] h-[14px] accent-[#2563eb] m-0"
                 />
                 <span className="text-[12px] text-slate-500 dark:text-[#94a3b8]">
                   {t('terms.required')}{' '}
-                  <button type="button" className="text-[#1e40af] underline hover:text-[#1d4ed8]" onClick={() => setTermsPopupType('privacy')}>
+                  <button type="button" className="text-[#2563eb] underline hover:text-[#1d4ed8]" onClick={() => setTermsPopupType('privacy')}>
                     {t('terms.privacy')}
                   </button>
                   <span className="text-slate-900 dark:text-[#f1f5f9]">{t('terms.agreeSuffix')}</span>
@@ -572,7 +572,7 @@ export function SignupPage() {
               type="button"
               onClick={handleSignup}
               disabled={isLoading || !isFormValid}
-              className="flex-[2] h-11 rounded-[11px] text-[14px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
+              className="flex-[2] h-11 rounded-[11px] text-[14px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_rgba(37,99,235,0.3)]"
             >
               {isLoading ? t('signup.signingUp') : t('signup.signupButton')}
             </button>
@@ -580,7 +580,7 @@ export function SignupPage() {
 
           <p className="text-xs text-center text-slate-500 dark:text-[#94a3b8] mt-2">
             {t('signup.alreadyHaveAccount')}{' '}
-            <button type="button" className="text-[#1e40af] hover:text-[#1d4ed8] font-medium" onClick={() => navigate('/')}>
+            <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => navigate('/')}>
               {t('signup.goToLogin')}
             </button>
           </p>
@@ -592,7 +592,7 @@ export function SignupPage() {
         <DialogContent variant="v1" className="max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" hideClose>
           <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100 shrink-0">
             <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-[17px] font-semibold text-slate-900 tracking-[-0.01em]">
@@ -617,7 +617,7 @@ export function SignupPage() {
             <button
               type="button"
               onClick={() => setTermsPopupType(null)}
-              className="h-9 px-5 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8]"
+              className="h-9 px-5 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
             >
               {t('common.confirm')}
             </button>

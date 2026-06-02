@@ -230,9 +230,9 @@ export function TeamAnnouncements() {
         {/* V1 Card */}
         <div className={v1Card}>
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Megaphone className="h-[18px] w-[18px] text-[#1e40af]" />
+            <Megaphone className="h-[18px] w-[18px] text-[#2563eb]" />
             <h2 className="text-base font-semibold text-slate-900">{t('announcements.allAnnouncements', { defaultValue: '전체 공지' })}</h2>
-            <span className="text-xs font-semibold text-[#1e40af] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
+            <span className="text-xs font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-full">{announcements.length}</span>
           </div>
 
           {isLoading ? (

@@ -42,7 +42,7 @@ html.dark a:hover {
 
 a {
   font-weight: 500;
-  color: #1e40af;
+  color: #2563eb;
   text-decoration: inherit;
 }
 a:hover {
@@ -80,7 +80,7 @@ h1 {
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 222 84% 56%; /* ~#1e40af */
+    --primary: 222 84% 56%; /* ~#2563eb */
     --primary-foreground: 0 0% 100%;
     --secondary: 217 91% 60%; /* ~#3b82f6 */
     --secondary-foreground: 0 0% 100%;
@@ -189,11 +189,11 @@ h1 {
 .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.08) !important; }
 
 /* --- Brand colors (bump to 500/400) --- */
-.dark .text-\[\#1e40af\] { color: #3b82f6 !important; }
+.dark .text-\[\#2563eb\] { color: #3b82f6 !important; }
 .dark .text-\[\#1d4ed8\] { color: #60a5fa !important; }
-.dark .bg-\[\#1e40af\] { background-color: #3b82f6 !important; }
+.dark .bg-\[\#2563eb\] { background-color: #3b82f6 !important; }
 .dark .bg-\[\#eff6ff\] { background-color: rgba(59,130,246,0.16) !important; }
-.dark .hover\:bg-\[\#1d4ed8\]:hover { background-color: #1e40af !important; }
+.dark .hover\:bg-\[\#1d4ed8\]:hover { background-color: #2563eb !important; }
 
 /* --- Shadows → Inset highlight + ambient --- */
 .dark .shadow-sm { box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.35) !important; }

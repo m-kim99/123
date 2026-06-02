@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/lib/supabase';
+import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
@@ -98,7 +99,7 @@ export function CategoryDetail() {
   // 함수는 한 번에 가져오기 (참조 안정적)
   const { fetchDocuments, uploadDocument, shareDocument, unshareDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
-  const primaryColor = '#1e40af';
+  const primaryColor = '#2563eb';
 
   const category = categories.find((c) => c.id === categoryId);
   const categoryDocuments = documents.filter(
@@ -193,9 +194,7 @@ export function CategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = supabase.storage
-        .from('123')
-        .getPublicUrl(data.file_path);
+      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
 
       const publicUrl = publicData?.publicUrl;
 
@@ -744,9 +743,7 @@ export function CategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = supabase.storage
-        .from('123')
-        .getPublicUrl(data.file_path);
+      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
 
       if (!publicData?.publicUrl) {
         throw new Error('Could not generate file URL');
@@ -808,9 +805,7 @@ export function CategoryDetail() {
       if (!filePath) {
         console.error('파일 경로가 없습니다');
       } else {
-        const { error: storageError } = await supabase.storage
-          .from('123')
-          .remove([filePath]);
+        const { error: storageError } = await r2Storage.remove([filePath]);
 
         if (storageError) {
           console.error('Storage 삭제 실패:', storageError);
@@ -1023,9 +1018,7 @@ export function CategoryDetail() {
           .single();
 
         if (!docError && docData) {
-          const { data: publicData } = supabase.storage
-            .from('123')
-            .getPublicUrl(docData.file_path);
+          const { data: publicData } = r2Storage.getPublicUrl(docData.file_path);
 
           const documentUrl = publicData?.publicUrl || '';
           const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
@@ -1245,10 +1238,10 @@ export function CategoryDetail() {
                 {...getRootProps({
                   className: `border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                     isDragActive
-                      ? 'border-[#1e40af] bg-[#eff6ff]'
+                      ? 'border-[#2563eb] bg-[#eff6ff]'
                       : uploadFiles.length > 0
                       ? 'border-emerald-400 bg-emerald-50'
-                      : 'border-[#1e40af] bg-[#eff6ff]'
+                      : 'border-[#2563eb] bg-[#eff6ff]'
                   }`,
                 })}
               >
@@ -1265,7 +1258,7 @@ export function CategoryDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2.5">
                     <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
-                      <Upload className="h-[22px] w-[22px] text-[#1e40af]" />
+                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
                     </div>
                     <div>
                       <p className="text-[14px] font-semibold text-slate-900">{isDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>
@@ -1288,7 +1281,7 @@ export function CategoryDetail() {
                       <span>{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div className="bg-[#1e40af] h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                      <div className="bg-[#2563eb] h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   </div>
                 )}
@@ -1362,7 +1355,7 @@ export function CategoryDetail() {
             {/* V1 M4 Compact Header */}
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 shrink-0">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#eff6ff]">
-                <FileText className="h-4 w-4 text-[#1e40af]" />
+                <FileText className="h-4 w-4 text-[#2563eb]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[14px] font-semibold text-slate-900 truncate">{previewDoc?.title || t('documentMgmt.docPreview')}</div>
@@ -1418,7 +1411,7 @@ export function CategoryDetail() {
                 >
                   {previewLoading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
                       <p className="text-[13px] text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (
@@ -1481,7 +1474,7 @@ export function CategoryDetail() {
                   key={tab.key}
                   className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
                     activeShareTab === tab.key
-                      ? 'text-slate-900 font-semibold border-b-2 border-[#1e40af] -mb-px'
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
                       : 'text-slate-500 border-b-2 border-transparent -mb-px'
                   }`}
                   onClick={() => setActiveShareTab(tab.key)}
@@ -1497,7 +1490,7 @@ export function CategoryDetail() {
                   <div className="flex justify-between items-center text-[12px] text-slate-500">
                     <span>{companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
                     {companyUsers.length > 0 && (
-                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#1e40af] text-[12px] font-medium cursor-pointer p-0">
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     )}
@@ -1520,8 +1513,8 @@ export function CategoryDetail() {
                           }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
                             {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1534,7 +1527,7 @@ export function CategoryDetail() {
                   )}
 
                   <label className="flex items-center gap-2 py-1">
-                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
+                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
                     <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
                   </label>
                 </>

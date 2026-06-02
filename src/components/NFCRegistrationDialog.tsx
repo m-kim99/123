@@ -84,9 +84,9 @@ export function NFCRegistrationDialog({
         {/* NFC Pulse Animation */}
         <div className="px-[22px] py-4 flex flex-col items-center gap-[18px]">
           <div className="relative w-[120px] h-[120px] flex items-center justify-center">
-            <div className="absolute inset-3 rounded-full bg-[#1e40af]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite' }} />
-            <div className="absolute inset-7 rounded-full bg-[#1e40af]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite 0.6s' }} />
-            <div className="w-16 h-16 rounded-full bg-[#1e40af] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(37,99,235,0.45)]">
+            <div className="absolute inset-3 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite' }} />
+            <div className="absolute inset-7 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite 0.6s' }} />
+            <div className="w-16 h-16 rounded-full bg-[#2563eb] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(37,99,235,0.45)]">
               <Smartphone className="h-[30px] w-[30px] text-white" />
             </div>
           </div>
