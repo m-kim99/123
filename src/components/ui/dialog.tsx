@@ -54,7 +54,7 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Close
           className={cn(
             'absolute right-4 top-4 rounded-[8px] p-1 ring-offset-background transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none',
-            variant === 'v1' ? 'bg-transparent hover:bg-slate-100 text-slate-400 hover:text-slate-600' : 'bg-[#2563eb] hover:bg-[#1d4ed8]',
+            variant === 'v1' ? 'bg-transparent hover:bg-slate-100 text-slate-400 hover:text-slate-600' : 'bg-[#1e40af] hover:bg-[#1d4ed8]',
             closeClassName
           )}
         >

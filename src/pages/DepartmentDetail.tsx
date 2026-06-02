@@ -285,7 +285,7 @@ export function DepartmentDetail() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <V1StatTile title={t('deptDetail.docCount')} value={departmentDocuments.length} icon={FileText} color="#2563eb" />
+          <V1StatTile title={t('deptDetail.docCount')} value={departmentDocuments.length} icon={FileText} color="#1e40af" />
           <V1StatTile title={t('deptDetail.parentCategoryCount')} value={departmentParentCategories.length} icon={FolderOpen} color="#10b981" />
           <V1StatTile title={t('deptDetail.teamMemberCount')} value={teamMembersCount} icon={Users} color="#8b5cf6" />
           <V1StatTile title={t('deptDetail.parentCategoryCount')} value={nfcCategoryCount} icon={FolderOpen} color="#f59e0b" />
@@ -296,13 +296,13 @@ export function DepartmentDetail() {
             title={t('deptDetail.parentCategoryList')}
             sub={t('deptDetail.parentCategoryListDesc', { name: department.name })}
             icon={FolderOpen}
-            iconColor="#2563eb"
+            iconColor="#1e40af"
             action={
               <div className="flex items-center gap-2">
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha')}
-                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
                 >
                   <option value="latest">{t('common.sortLatest')}</option>
                   <option value="oldest">{t('common.sortOldest')}</option>

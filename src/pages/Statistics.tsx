@@ -102,7 +102,7 @@ export function Statistics() {
       title: t('statistics.totalDocuments'),
       value: documents.length,
       icon: FileText,
-      color: '#2563eb',
+      color: '#1e40af',
       delta: thisMonthCount > 0 ? `+${thisMonthCount}` : undefined,
       data: sparklineData,
     },
@@ -161,7 +161,7 @@ export function Statistics() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  const deptColors = ['#2563eb', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
+  const deptColors = ['#1e40af', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
 
   const deptDistribution = useMemo(() =>
     departments.map((dept, i) => ({
@@ -241,11 +241,11 @@ export function Statistics() {
             <V1CardHeader
               title={t('statistics.monthlyUploads')}
               icon={TrendingUp}
-              iconColor="#2563eb"
+              iconColor="#1e40af"
               action={
                 <div className="flex items-center gap-3 text-[11.5px] text-slate-500">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-[#2563eb]" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-[#1e40af]" />
                     {t('statistics.thisMonthUploads', { defaultValue: '업로드' })}
                   </span>
                 </div>
@@ -283,8 +283,8 @@ export function Statistics() {
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block" preserveAspectRatio="xMidYMid meet">
                     <defs>
                       <linearGradient id="stat-area-grad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563eb" stopOpacity="0.22" />
-                        <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#1e40af" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#1e40af" stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     {[0, 0.25, 0.5, 0.75, 1].map(p => (
@@ -294,14 +294,14 @@ export function Statistics() {
                       <text key={p} x={PL - 6} y={PT + pH * (1 - p) + 4} fontSize="9" fill="#94a3b8" textAnchor="end" fontFamily="ui-monospace,monospace">{Math.round(maxVal * p)}</text>
                     ))}
                     <polygon fill="url(#stat-area-grad)" points={`${PL},${PT + pH} ${pts.map(p => p.join(',')).join(' ')} ${W - PR},${PT + pH}`} />
-                    <polyline fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" points={pts.map(p => p.join(',')).join(' ')} />
+                    <polyline fill="none" stroke="#1e40af" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" points={pts.map(p => p.join(',')).join(' ')} />
                     {pts.map((p, i) => (
-                      <circle key={i} cx={p[0]} cy={p[1]} r={i === pts.length - 1 ? 3.5 : 2.5} fill="#fff" stroke="#2563eb" strokeWidth="1.5" />
+                      <circle key={i} cx={p[0]} cy={p[1]} r={i === pts.length - 1 ? 3.5 : 2.5} fill="#fff" stroke="#1e40af" strokeWidth="1.5" />
                     ))}
                     {monthlyData.map((d, i) => (
                       <text key={i} x={PL + (i / Math.max(monthlyData.length - 1, 1)) * pW} y={H - 6} fontSize="9.5" fill="#94a3b8" textAnchor="middle" fontFamily="ui-monospace,monospace">{d.month}</text>
                     ))}
-                    <line x1={pts[pts.length - 1][0]} y1={PT} x2={pts[pts.length - 1][0]} y2={PT + pH} stroke="#2563eb" strokeWidth="1" strokeDasharray="2 3" opacity="0.4" />
+                    <line x1={pts[pts.length - 1][0]} y1={PT} x2={pts[pts.length - 1][0]} y2={PT + pH} stroke="#1e40af" strokeWidth="1" strokeDasharray="2 3" opacity="0.4" />
                   </svg>
                 );
               })()}
@@ -310,7 +310,7 @@ export function Statistics() {
 
           {/* Department Donut Chart */}
           <div className={v1Card}>
-            <V1CardHeader title={t('statistics.docsByDepartment')} icon={Building2} iconColor="#2563eb" />
+            <V1CardHeader title={t('statistics.docsByDepartment')} icon={Building2} iconColor="#1e40af" />
             <div className="p-5 sm:p-6">
               {deptDistribution.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-8">{t('statistics.noDocuments')}</p>
@@ -357,7 +357,7 @@ export function Statistics() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Top Parent Categories Leaderboard */}
           <div className={v1Card}>
-            <V1CardHeader title={t('statistics.docsByParentCategory')} icon={FolderOpen} iconColor="#2563eb" />
+            <V1CardHeader title={t('statistics.docsByParentCategory')} icon={FolderOpen} iconColor="#1e40af" />
             <div className="px-5 sm:px-6 py-4 flex flex-col gap-3">
               {parentCategories.length === 0 ? (
                 <p className="text-sm text-slate-500">{t('statistics.addParentCategory')}</p>
@@ -384,10 +384,10 @@ export function Statistics() {
               <V1CardHeader
                 title={t('statistics.uploadsByDepartment')}
                 icon={BarChart3}
-                iconColor="#2563eb"
+                iconColor="#1e40af"
                 action={
                   <div className="flex items-center gap-3 text-[11.5px] text-slate-500">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2563eb]" />{t('statistics.thisMonthUploads', { defaultValue: '이번 달' })}</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#1e40af]" />{t('statistics.thisMonthUploads', { defaultValue: '이번 달' })}</span>
                   </div>
                 }
               />
@@ -397,7 +397,7 @@ export function Statistics() {
                     <span className="text-[12.5px] font-medium text-slate-900 truncate">{d.dept}</span>
                     <div className="flex flex-col gap-1">
                       <div className="h-2.5 relative rounded-sm overflow-hidden bg-slate-50">
-                        <div className="absolute inset-y-0 left-0 rounded-sm bg-[#2563eb]" style={{ width: `${(d.thisM / deptBarMax) * 100}%` }} />
+                        <div className="absolute inset-y-0 left-0 rounded-sm bg-[#1e40af]" style={{ width: `${(d.thisM / deptBarMax) * 100}%` }} />
                       </div>
                       <div className="h-2.5 relative rounded-sm overflow-hidden bg-slate-50">
                         <div className="absolute inset-y-0 left-0 rounded-sm bg-[#cbd5e1]" style={{ width: `${(d.lastM / deptBarMax) * 100}%` }} />

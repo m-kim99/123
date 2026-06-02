@@ -145,7 +145,7 @@ export function ResetPasswordPage() {
             {/* Lock icon header */}
             <div className="flex justify-center mb-5">
               <div className="w-14 h-14 rounded-[14px] bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)] flex items-center justify-center">
-                <Lock className="h-7 w-7 text-[#2563eb] dark:text-[#60a5fa]" />
+                <Lock className="h-7 w-7 text-[#1e40af] dark:text-[#60a5fa]" />
               </div>
             </div>
 

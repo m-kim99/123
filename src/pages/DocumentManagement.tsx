@@ -186,7 +186,7 @@ export function DocumentManagement() {
   } = useDocumentStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
-  const primaryColor = '#2563eb';
+  const primaryColor = '#1e40af';
 
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -2207,7 +2207,7 @@ export function DocumentManagement() {
                 <select
                   value={categorySortOrder}
                   onChange={(e) => { setCategorySortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
-                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                  className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
                 >
                   <option value="latest">{t('common.sortLatest')}</option>
                   <option value="oldest">{t('common.sortOldest')}</option>
@@ -2352,7 +2352,7 @@ export function DocumentManagement() {
                               type="button"
                               className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                                 isActive
-                                  ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                                  ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                                   : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                               }`}
                               onClick={() => {
@@ -2379,7 +2379,7 @@ export function DocumentManagement() {
                               type="button"
                               className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                                 newCategory.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(newCategory.expiryDate!).getTime() - d.getTime()) < 86400000)
-                                  ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                                  ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                                   : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                               }`}
                             >
@@ -2448,7 +2448,7 @@ export function DocumentManagement() {
                         !newCategory.departmentId ||
                         !newCategory.parentCategoryId
                       }
-                      className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                     >
                       <Smartphone className="h-3.5 w-3.5" />
                       {t('documentMgmt.addWithNfc')}
@@ -2561,7 +2561,7 @@ export function DocumentManagement() {
                             type="button"
                             className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                               isActive
-                                ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                                ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                                 : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                             }`}
                             onClick={() => {
@@ -2588,7 +2588,7 @@ export function DocumentManagement() {
                             type="button"
                             className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                               editCategoryForm.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(editCategoryForm.expiryDate!).getTime() - d.getTime()) < 86400000)
-                                ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                                ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                                 : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                             }`}
                           >
@@ -2683,7 +2683,7 @@ export function DocumentManagement() {
                     type="button"
                     onClick={handleSaveCategory}
                     disabled={isSavingCategory}
-                    className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSavingCategory ? t('common.saving') : t('common.save')}
                   </button>
@@ -3380,7 +3380,7 @@ export function DocumentManagement() {
                     {...getRootProps()}
                     className={`border-2 border-dashed rounded-[10px] p-8 text-center transition-colors cursor-pointer ${
                       isDragActive
-                        ? 'border-[#2563eb] bg-[#eff6ff]'
+                        ? 'border-[#1e40af] bg-[#eff6ff]'
                         : 'border-slate-300 hover:border-slate-400'
                     } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
                   >
@@ -3704,7 +3704,7 @@ export function DocumentManagement() {
                 >
                   {previewLoading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
                       <p className="text-[13px] text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (
@@ -3771,7 +3771,7 @@ export function DocumentManagement() {
           <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
             <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
-                <Smartphone className="h-5 w-5 text-[#2563eb]" />
+                <Smartphone className="h-5 w-5 text-[#1e40af]" />
               </div>
               <div className="flex-1 min-w-0">
                 <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
@@ -3816,7 +3816,7 @@ export function DocumentManagement() {
                   key={tab.key}
                   className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
                     activeShareTab === tab.key
-                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#1e40af] -mb-px'
                       : 'text-slate-500 border-b-2 border-transparent -mb-px'
                   }`}
                   onClick={() => setActiveShareTab(tab.key)}
@@ -3832,7 +3832,7 @@ export function DocumentManagement() {
                   <div className="flex justify-between items-center text-[12px] text-slate-500">
                     <span>{companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
                     {companyUsers.length > 0 && (
-                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#1e40af] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     )}
@@ -3855,8 +3855,8 @@ export function DocumentManagement() {
                           }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
                             {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -3869,7 +3869,7 @@ export function DocumentManagement() {
                   )}
 
                   <label className="flex items-center gap-2 py-1">
-                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
                     <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
                   </label>
                 </>
@@ -3946,17 +3946,17 @@ export function DocumentManagement() {
                 {...getReplaceRootProps()}
                 className={`border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                   isReplaceDragActive
-                    ? 'border-[#2563eb] bg-[#eff6ff]'
+                    ? 'border-[#1e40af] bg-[#eff6ff]'
                     : replaceFile
                     ? 'border-emerald-400 bg-emerald-50'
-                    : 'border-[#2563eb] bg-[#eff6ff]'
+                    : 'border-[#1e40af] bg-[#eff6ff]'
                 }`}
               >
                 <input {...getReplaceInputProps()} />
                 {isExtractingReplaceOcr ? (
                   <div className="flex flex-col items-center gap-2.5">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
-                    <p className="text-[13px] text-[#2563eb] font-medium">{t('documentMgmt.extractingOcr')}</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
+                    <p className="text-[13px] text-[#1e40af] font-medium">{t('documentMgmt.extractingOcr')}</p>
                   </div>
                 ) : replaceFile ? (
                   <div className="flex flex-col items-center gap-2.5 w-full overflow-hidden">
@@ -3971,7 +3971,7 @@ export function DocumentManagement() {
                 ) : (
                   <div className="flex flex-col items-center gap-2.5">
                     <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
-                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
+                      <Upload className="h-[22px] w-[22px] text-[#1e40af]" />
                     </div>
                     <div>
                       <p className="text-[14px] font-semibold text-slate-900">{isReplaceDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>

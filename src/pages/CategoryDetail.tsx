@@ -98,7 +98,7 @@ export function CategoryDetail() {
   // 함수는 한 번에 가져오기 (참조 안정적)
   const { fetchDocuments, uploadDocument, shareDocument, unshareDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
-  const primaryColor = '#2563eb';
+  const primaryColor = '#1e40af';
 
   const category = categories.find((c) => c.id === categoryId);
   const categoryDocuments = documents.filter(
@@ -1245,10 +1245,10 @@ export function CategoryDetail() {
                 {...getRootProps({
                   className: `border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
                     isDragActive
-                      ? 'border-[#2563eb] bg-[#eff6ff]'
+                      ? 'border-[#1e40af] bg-[#eff6ff]'
                       : uploadFiles.length > 0
                       ? 'border-emerald-400 bg-emerald-50'
-                      : 'border-[#2563eb] bg-[#eff6ff]'
+                      : 'border-[#1e40af] bg-[#eff6ff]'
                   }`,
                 })}
               >
@@ -1265,7 +1265,7 @@ export function CategoryDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2.5">
                     <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center">
-                      <Upload className="h-[22px] w-[22px] text-[#2563eb]" />
+                      <Upload className="h-[22px] w-[22px] text-[#1e40af]" />
                     </div>
                     <div>
                       <p className="text-[14px] font-semibold text-slate-900">{isDragActive ? t('documentMgmt.dropHere') : t('documentMgmt.clickOrDrag')}</p>
@@ -1288,7 +1288,7 @@ export function CategoryDetail() {
                       <span>{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div className="bg-[#2563eb] h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                      <div className="bg-[#1e40af] h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   </div>
                 )}
@@ -1418,7 +1418,7 @@ export function CategoryDetail() {
                 >
                   {previewLoading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
                       <p className="text-[13px] text-slate-500">{t('documentMgmt.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (
@@ -1481,7 +1481,7 @@ export function CategoryDetail() {
                   key={tab.key}
                   className={`py-2.5 px-3.5 text-[13px] font-medium bg-transparent border-none cursor-pointer ${
                     activeShareTab === tab.key
-                      ? 'text-slate-900 font-semibold border-b-2 border-[#2563eb] -mb-px'
+                      ? 'text-slate-900 font-semibold border-b-2 border-[#1e40af] -mb-px'
                       : 'text-slate-500 border-b-2 border-transparent -mb-px'
                   }`}
                   onClick={() => setActiveShareTab(tab.key)}
@@ -1497,7 +1497,7 @@ export function CategoryDetail() {
                   <div className="flex justify-between items-center text-[12px] text-slate-500">
                     <span>{companyUsers.length}{t('documentMgmt.people', { defaultValue: '명' })} — <strong className="text-slate-900">{selectedUserIds.length}</strong> {t('documentMgmt.selected', { defaultValue: '선택됨' })}</span>
                     {companyUsers.length > 0 && (
-                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#2563eb] text-[12px] font-medium cursor-pointer p-0">
+                      <button onClick={handleSelectAllUsers} className="bg-transparent border-none text-[#1e40af] text-[12px] font-medium cursor-pointer p-0">
                         {selectedUserIds.length === companyUsers.length ? t('documentMgmt.deselectAll') : t('documentMgmt.selectAll')}
                       </button>
                     )}
@@ -1520,8 +1520,8 @@ export function CategoryDetail() {
                           }`}
                           onClick={() => handleToggleUser(companyUser.id)}
                         >
-                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#2563eb] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
+                          <input type="checkbox" checked={selectedUserIds.includes(companyUser.id)} readOnly className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
                             {companyUser.name?.[0] || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1534,7 +1534,7 @@ export function CategoryDetail() {
                   )}
 
                   <label className="flex items-center gap-2 py-1">
-                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#2563eb] m-0" />
+                    <input type="checkbox" checked={sendEmailNotification} onChange={(e) => setSendEmailNotification(e.target.checked)} className="w-[15px] h-[15px] accent-[#1e40af] m-0" />
                     <span className="text-[13px] text-slate-900">{t('documentMgmt.emailNotification')}</span>
                   </label>
                 </>

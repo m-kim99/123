@@ -96,7 +96,7 @@ export function TeamDepartmentDetail() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <V1StatTile title={t('deptDetail.docCount')} value={deptDocuments.length} icon={FileText} color="#2563eb" />
+          <V1StatTile title={t('deptDetail.docCount')} value={deptDocuments.length} icon={FileText} color="#1e40af" />
           <V1StatTile title={t('deptDetail.parentCategoryCount')} value={deptParentCategories.length} icon={FolderOpen} color="#10b981" />
           <V1StatTile title={t('deptDetail.teamMemberCount')} value={teamMembersCount} icon={Users} color="#8b5cf6" />
           <V1StatTile title={t('deptDetail.parentCategoryCount')} value={nfcCategoryCount} icon={FolderOpen} color="#f59e0b" />
@@ -107,7 +107,7 @@ export function TeamDepartmentDetail() {
             title={t('deptDetail.parentCategoryList')}
             sub={t('deptDetail.parentCategoryListDesc', { name: department.name })}
             icon={FolderOpen}
-            iconColor="#2563eb"
+            iconColor="#1e40af"
           />
           <div className="p-5 sm:p-6">
             {deptParentCategories.length === 0 ? (

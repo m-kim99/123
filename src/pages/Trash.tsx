@@ -145,7 +145,7 @@ export function Trash() {
         <div className={v1Card}>
           <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Trash2 className="h-[18px] w-[18px] text-[#2563eb]" />
+              <Trash2 className="h-[18px] w-[18px] text-[#1e40af]" />
               <h2 className="text-base font-semibold text-slate-900">{t('trash.deletedDocuments')}</h2>
               <span className="text-xs font-semibold text-[#1e40af] bg-[#eff6ff] px-2 py-0.5 rounded-full">
                 {t('trash.totalCount', { count: filteredDocuments.length })}
@@ -206,7 +206,7 @@ export function Trash() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 px-2.5 text-xs rounded-md text-[#2563eb] border-[#e5e7eb]"
+                        className="h-7 px-2.5 text-xs rounded-md text-[#1e40af] border-[#e5e7eb]"
                         onClick={() => handleRestore(doc.id)}
                         disabled={isRestoring === doc.id}
                       >

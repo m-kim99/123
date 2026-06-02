@@ -1106,7 +1106,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-slate-100 dark:border-white/[0.06] px-4 pt-4">
             <CardTitle className="flex items-center gap-2.5 text-sm font-semibold">
               <div className="w-8 h-8 rounded-[9px] flex items-center justify-center bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
-                <MessageSquare className="h-4 w-4 text-[#2563eb] dark:text-[#60a5fa]" />
+                <MessageSquare className="h-4 w-4 text-[#1e40af] dark:text-[#60a5fa]" />
               </div>
               <div>
                 <span className="text-slate-900 dark:text-[#f1f5f9]">{t('chatbot.title')}</span>
@@ -1190,7 +1190,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                     <div
                       className={`max-w-xs px-4 py-2.5 ${
                         message.role === 'user'
-                          ? 'text-white rounded-[14px] rounded-br-[4px] bg-[#2563eb] dark:bg-[#3b82f6]'
+                          ? 'text-white rounded-[14px] rounded-br-[4px] bg-[#1e40af] dark:bg-[#3b82f6]'
                           : 'text-slate-700 rounded-[14px] rounded-bl-[4px] bg-[#f1f5f9] dark:text-[#cbd5e1] dark:bg-[#1e293b]'
                       }`}
                     >

@@ -230,7 +230,7 @@ export function UserManagement() {
               <div className="flex items-center gap-2">
                 <span className={`text-lg font-bold ${
                   memberLimit.current >= memberLimit.limit ? 'text-red-600' :
-                  memberLimit.current >= memberLimit.limit * 0.8 ? 'text-amber-600' : 'text-[#2563eb]'
+                  memberLimit.current >= memberLimit.limit * 0.8 ? 'text-amber-600' : 'text-[#1e40af]'
                 }`}>
                   {memberLimit.current}
                 </span>
@@ -404,7 +404,7 @@ export function UserManagement() {
                             </SelectItem>
                             <SelectItem value="viewer">
                               <div className="flex items-center gap-2">
-                                <span className="text-[#2563eb]">●</span>
+                                <span className="text-[#1e40af]">●</span>
                                 <span>{t('userMgmt.roleViewer')}</span>
                               </div>
                             </SelectItem>

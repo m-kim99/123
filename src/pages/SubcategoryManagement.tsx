@@ -576,7 +576,7 @@ export function SubcategoryManagement() {
               <div>
                 <p className="text-xs font-medium text-slate-500 mb-1.5">{t('common.department')}</p>
                 <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30"
                   value={selectedDepartmentId}
                   onChange={(e) => {
                     setSelectedDepartmentId(e.target.value);
@@ -596,7 +596,7 @@ export function SubcategoryManagement() {
               <div>
                 <p className="text-xs font-medium text-slate-500 mb-1.5">{t('subcategoryDetail.parentCategory')}</p>
                 <select
-                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-50 disabled:bg-slate-50"
+                  className="w-full border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30 disabled:opacity-50 disabled:bg-slate-50"
                   value={selectedParentCategoryId}
                   onChange={(e) => setSelectedParentCategoryId(e.target.value)}
                   disabled={filteredParentCategories.length === 0}
@@ -624,7 +624,7 @@ export function SubcategoryManagement() {
             <select
               value={sortOrder}
               onChange={(e) => { setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
-              className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+              className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
             >
               <option value="latest">{t('common.sortLatest')}</option>
               <option value="oldest">{t('common.sortOldest')}</option>
@@ -979,7 +979,7 @@ export function SubcategoryManagement() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           isActive
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                         onClick={() => {
@@ -1006,7 +1006,7 @@ export function SubcategoryManagement() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           form.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(form.expiryDate!).getTime() - d.getTime()) < 86400000)
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                       >
@@ -1070,7 +1070,7 @@ export function SubcategoryManagement() {
                 type="button"
                 onClick={handleSubmitWithNfc}
                 disabled={isSaving || !form.name.trim() || !form.departmentId || !form.parentCategoryId}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Smartphone className="h-3.5 w-3.5" />
                 {t('parentCategoryDetail.addWithNfc')}
@@ -1177,7 +1177,7 @@ export function SubcategoryManagement() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           isActive
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                         onClick={() => {
@@ -1204,7 +1204,7 @@ export function SubcategoryManagement() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           editForm.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(editForm.expiryDate!).getTime() - d.getTime()) < 86400000)
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                       >
@@ -1301,7 +1301,7 @@ export function SubcategoryManagement() {
                 type="button"
                 onClick={handleSaveEditSubcategory}
                 disabled={isSavingEdit}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSavingEdit ? t('common.saving') : t('common.save')}
               </button>

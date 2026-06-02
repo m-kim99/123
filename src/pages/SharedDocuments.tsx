@@ -238,7 +238,7 @@ export function SharedDocuments() {
 
         {/* ─── 4 KPI Stat Tiles ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <V1StatTile title={t('sharedDocs.receivedDocs', { defaultValue: '받은 문서' })} value={sharedDocuments.length} icon={Share2} color="#2563eb" delta={thisWeekCount > 0 ? `+${thisWeekCount}` : undefined} />
+          <V1StatTile title={t('sharedDocs.receivedDocs', { defaultValue: '받은 문서' })} value={sharedDocuments.length} icon={Share2} color="#1e40af" delta={thisWeekCount > 0 ? `+${thisWeekCount}` : undefined} />
           <V1StatTile title={t('sharedDocs.unread', { defaultValue: '읽지 않음' })} value={unreadCount} icon={Bell} color="#8b5cf6" delta={unreadCount > 0 ? `+${unreadCount}` : undefined} />
           <V1StatTile title={t('sharedDocs.sharers', { defaultValue: '공유자' })} value={uniqueSharers} icon={Users} color="#10b981" />
           <V1StatTile title={t('sharedDocs.thisWeek', { defaultValue: '이번 주' })} value={thisWeekCount} icon={Clock} color="#f59e0b" delta={thisWeekCount > 0 ? `+${thisWeekCount}` : undefined} />
@@ -249,7 +249,7 @@ export function SharedDocuments() {
           <V1CardHeader
             title={t('sharedDocs.listTitle')}
             icon={Share2}
-            iconColor="#2563eb"
+            iconColor="#1e40af"
             sub={t('sharedDocs.totalShared', { count: filteredShares.length })}
           />
 
@@ -269,7 +269,7 @@ export function SharedDocuments() {
                       idx < filteredShares.length - 1 ? 'border-b border-slate-100' : ''
                     } ${unread ? 'bg-[#eff6ff]' : ''}`}
                   >
-                    {unread && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#2563eb] rounded-r" />}
+                    {unread && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1e40af] rounded-r" />}
 
                     {/* Icon */}
                     <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
@@ -396,7 +396,7 @@ export function SharedDocuments() {
                 >
                   {previewLoading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#1e40af]" />
                       <p className="text-[13px] text-slate-500">{t('sharedDocs.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (

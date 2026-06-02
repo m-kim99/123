@@ -148,7 +148,7 @@ export function ParentCategoryList() {
             <select
               value={selectedDepartmentId}
               onChange={(e) => setSelectedDepartmentId(e.target.value)}
-              className="border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm min-w-[150px] bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+              className="border border-[#e5e7eb] rounded-[10px] px-3 py-2 text-sm min-w-[150px] bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30"
             >
               <option value="">{t('parentCatList.allDepartments')}</option>
               {departments
@@ -162,7 +162,7 @@ export function ParentCategoryList() {
             <select
               value={sortOrder}
               onChange={(e) => { setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha'); setCurrentPage(1); }}
-              className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+              className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
             >
               <option value="latest">{t('common.sortLatest')}</option>
               <option value="oldest">{t('common.sortOldest')}</option>
@@ -307,7 +307,7 @@ export function ParentCategoryList() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-medium text-slate-900">{t('common.department')}</label>
                   <select
-                    className="h-[38px] rounded-lg border border-[#e5e7eb] px-3 text-[14px] bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30"
+                    className="h-[38px] rounded-lg border border-[#e5e7eb] px-3 text-[14px] bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30"
                     value={form.departmentId}
                     onChange={(e) =>
                       setForm((prev) => ({
@@ -355,7 +355,7 @@ export function ParentCategoryList() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSaving || !form.name.trim() || !form.departmentId}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? t('announcements.adding') : t('common.add')}
               </button>

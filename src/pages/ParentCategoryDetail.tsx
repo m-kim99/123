@@ -677,7 +677,7 @@ export function ParentCategoryDetail() {
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest' | 'alpha')}
-                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
+                className="h-9 rounded-[10px] border border-[#e5e7eb] bg-white text-[13px] text-slate-700 px-3 pr-8 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_8px_center] bg-no-repeat cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 dark:bg-[#111827] dark:border-white/10 dark:text-slate-200"
               >
                 <option value="latest">{t('common.sortLatest')}</option>
                 <option value="oldest">{t('common.sortOldest')}</option>
@@ -945,7 +945,7 @@ export function ParentCategoryDetail() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           isActive
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                         onClick={() => {
@@ -972,7 +972,7 @@ export function ParentCategoryDetail() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           form.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(form.expiryDate!).getTime() - d.getTime()) < 86400000)
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                       >
@@ -1036,7 +1036,7 @@ export function ParentCategoryDetail() {
                 type="button"
                 onClick={handleAddSubcategoryWithNfc}
                 disabled={isSaving || !form.name.trim()}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Smartphone className="h-3.5 w-3.5" />
                 {t('parentCategoryDetail.addWithNfc')}
@@ -1166,7 +1166,7 @@ export function ParentCategoryDetail() {
           <AlertDialogContent className="max-w-[440px] gap-0 p-0 rounded-[16px]">
             <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${V1.blue}15` }}>
-                <Smartphone className="h-5 w-5 text-[#2563eb]" />
+                <Smartphone className="h-5 w-5 text-[#1e40af]" />
               </div>
               <div className="flex-1 min-w-0">
                 <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.01em]">{t('documentMgmt.nfcReregister')}</AlertDialogTitle>
@@ -1333,7 +1333,7 @@ export function ParentCategoryDetail() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           isActive
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                         onClick={() => {
@@ -1360,7 +1360,7 @@ export function ParentCategoryDetail() {
                         type="button"
                         className={`px-3 py-[7px] rounded-lg text-[12.5px] font-medium border cursor-pointer transition-colors ${
                           subEditForm.expiryDate && ![addMonths(new Date(), 3), addYears(new Date(), 1), addYears(new Date(), 3), addYears(new Date(), 5), addYears(new Date(), 7), addYears(new Date(), 10)].some(d => Math.abs(new Date(subEditForm.expiryDate!).getTime() - d.getTime()) < 86400000)
-                            ? 'border-[#2563eb] bg-[#eff6ff] text-[#1e40af]'
+                            ? 'border-[#1e40af] bg-[#eff6ff] text-[#1e40af]'
                             : 'border-[#e5e7eb] bg-white text-slate-900 hover:bg-slate-50'
                         }`}
                       >
@@ -1413,7 +1413,7 @@ export function ParentCategoryDetail() {
                 type="button"
                 onClick={handleSaveSubcategory}
                 disabled={isSavingSubEdit}
-                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-[#1e40af] text-white hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSavingSubEdit ? t('common.saving') : t('common.save')}
               </button>
