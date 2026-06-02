@@ -37,7 +37,7 @@ export function resolveThemeColor(lightHex: string): string {
   if (!isDark) return lightHex;
   const map: Record<string, string> = {
     '#1e40af': V1_DARK.blue,
-    '#1e40af': V1_DARK.blueInk,
+    '#1e3a8a': V1_DARK.blueInk,
     '#8b5cf6': V1_DARK.violet,
     '#10b981': V1_DARK.emerald,
     '#f59e0b': V1_DARK.amber,
