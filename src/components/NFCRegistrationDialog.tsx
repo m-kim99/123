@@ -16,6 +16,7 @@ interface NFCRegistrationDialogProps {
   onOpenChange: (open: boolean) => void;
   categoryId: string;
   categoryName: string;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export function NFCRegistrationDialog({
@@ -23,6 +24,7 @@ export function NFCRegistrationDialog({
   onOpenChange,
   categoryId,
   categoryName,
+  onSuccess,
 }: NFCRegistrationDialogProps) {
   const { t } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -63,6 +65,7 @@ export function NFCRegistrationDialog({
 
       setNfcMode('idle'); // NFC 등록 완료 후 모드 초기화
       onOpenChange(false);
+      if (onSuccess) await onSuccess();
     } catch (err) {
       console.error('NFC 태그 등록 실패:', err);
       if (err instanceof Error) {

@@ -27,7 +27,14 @@
       "Bash(npm install *)",
       "Bash(npx tsx *)",
       "Bash(curl -o /tmp/1778054971590.pdf \"https://kqurgsqmrmtpglrbzpoc.supabase.co/storage/v1/object/public/123/1778054971590.pdf\")",
-      "Bash(AWS_ACCESS_KEY_ID=f70c70782e8dad739dd67966d8eee617 AWS_SECRET_ACCESS_KEY=b235af651385d5d83e42a18818202fc11336f95305cdb50f0afffc87c6307611 aws s3 cp *)"
+      "Bash(AWS_ACCESS_KEY_ID=f70c70782e8dad739dd67966d8eee617 AWS_SECRET_ACCESS_KEY=b235af651385d5d83e42a18818202fc11336f95305cdb50f0afffc87c6307611 aws s3 cp *)",
+      "Bash(keytool -list -v -keystore /Users/mini/Downloads/123-main/sign/dms-release.jks)",
+      "Read(//Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/**)",
+      "Read(//usr/bin/**)",
+      "Bash(\"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool\" -list -v -keystore /Users/mini/Downloads/123-main/sign/dms-release.jks -storepass dms123456 -alias dms-key)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
