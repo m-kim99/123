@@ -339,7 +339,10 @@
     "sendOtpFirst": "Send OTP First",
     "sendOtpFirstDesc": "Please send OTP first.",
     "enterOtp": "Enter OTP",
-    "enterOtpDesc": "Please enter the OTP."
+    "enterOtpDesc": "Please enter the OTP.",
+    "heroDescription": "Build a 'structure' where documents never pile up.\nBoost your productivity with organized document management.",
+    "alreadyHaveAccount": "Already have an account?",
+    "goToLogin": "Log in"
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -955,7 +958,12 @@
     "onboardingComplete": "Onboarding Complete",
     "companySaved": "Company information has been saved.",
     "onboardingFailed": "Onboarding Failed",
-    "complete": "Complete"
+    "complete": "Complete",
+    "heroHeadline": "Almost there.\nJust register your company info.",
+    "stepAccount": "Create Account",
+    "stepCompany": "Company Info",
+    "stepDept": "Department",
+    "wrongCompanyHint": "Wrong company? Contact your administrator."
   },
   "teamAnnouncements": {
     "title": "Announcements",

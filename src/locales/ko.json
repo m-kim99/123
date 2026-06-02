@@ -339,7 +339,10 @@
     "sendOtpFirst": "인증번호 전송",
     "sendOtpFirstDesc": "먼저 인증번호를 전송해주세요.",
     "enterOtp": "인증번호 입력",
-    "enterOtpDesc": "인증번호를 입력해주세요."
+    "enterOtpDesc": "인증번호를 입력해주세요.",
+    "heroDescription": "문서가 쌓이지 않는 '구조'를 설계합니다.\n체계적인 문서 관리로 업무 효율을 높여보세요.",
+    "alreadyHaveAccount": "이미 계정이 있으신가요?",
+    "goToLogin": "로그인"
   },
   "resetPassword": {
     "title": "비밀번호 재설정",
@@ -955,7 +958,12 @@
     "onboardingComplete": "온보딩 완료",
     "companySaved": "회사 정보가 저장되었습니다.",
     "onboardingFailed": "온보딩 실패",
-    "complete": "완료"
+    "complete": "완료",
+    "heroHeadline": "거의 다 왔어요.\n회사 정보만 등록하면 됩니다.",
+    "stepAccount": "계정 생성",
+    "stepCompany": "회사 정보",
+    "stepDept": "부서 설정",
+    "wrongCompanyHint": "잘못된 회사로 들어왔다면 관리자에게 문의하세요."
   },
   "teamAnnouncements": {
     "title": "공지사항",

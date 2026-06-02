@@ -849,7 +849,7 @@ export function LoginPage() {
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-2">
                     {t('login.noAccount')}{' '}
-                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('admin'); setSignupOpen(true); }}>{t('login.signup')}</button>
+                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => navigate('/signup')}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="flex items-center justify-center gap-4">
@@ -891,7 +891,7 @@ export function LoginPage() {
                   </Button>
                   <p className="text-xs text-center text-slate-500 mt-2">
                     {t('login.noAccount')}{' '}
-                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => { resetSignupForm(); setSignupRole('team'); setSignupOpen(true); }}>{t('login.signup')}</button>
+                    <button type="button" className="text-[#2563eb] hover:text-[#1d4ed8] font-medium" onClick={() => navigate('/signup')}>{t('login.signup')}</button>
                   </p>
                   <div className="flex items-center gap-3 my-3"><div className="flex-1 h-px bg-[#e5e7eb]" /><span className="text-xs text-slate-400">{t('login.or')}</span><div className="flex-1 h-px bg-[#e5e7eb]" /></div>
                   <div className="flex items-center justify-center gap-4">
@@ -1012,11 +1012,7 @@ export function LoginPage() {
                     <button
                       type="button"
                       className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
-                      onClick={() => {
-                        resetSignupForm();
-                        setSignupRole('admin');
-                        setSignupOpen(true);
-                      }}
+                      onClick={() => navigate('/signup')}
                     >
                       {t('login.signup')}
                     </button>
@@ -1126,11 +1122,7 @@ export function LoginPage() {
                     <button
                       type="button"
                       className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
-                      onClick={() => {
-                        resetSignupForm();
-                        setSignupRole('team');
-                        setSignupOpen(true);
-                      }}
+                      onClick={() => navigate('/signup')}
                     >
                       {t('login.signup')}
                     </button>
