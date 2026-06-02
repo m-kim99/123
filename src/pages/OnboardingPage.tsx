@@ -178,9 +178,15 @@ export function OnboardingPage() {
     }
   };
 
-  // Determine step: 1=account created, 2=company info, 3=department
-  const currentStep = companyCodeVerified ? (role === 'team' ? 2 : 2) : 1;
-  const steps = [t('onboarding.stepAccount'), t('onboarding.stepCompany'), t('onboarding.stepDept')];
+  // 0=계정(항상 완료), 1=회사정보, 2=부서(팀원만)
+  // 온보딩 도착 = 계정은 이미 있음. stepper 의미를 그것에 맞춤.
+  const accountDone = true;
+  const companyDone = companyCodeVerified;
+  const deptDone = role === 'team' ? !!departmentId : companyCodeVerified;
+  const stepStates = [accountDone, companyDone, deptDone];
+  const steps = role === 'team'
+    ? [t('onboarding.stepAccount'), t('onboarding.stepCompany'), t('onboarding.stepDept')]
+    : [t('onboarding.stepAccount'), t('onboarding.stepCompany')];
 
   return (
     <AuthShell
@@ -199,25 +205,35 @@ export function OnboardingPage() {
           </button>
         </div>
         <div className="flex items-center gap-1">
-          {steps.map((_, i) => (
-            <div key={i} className="flex items-center flex-1">
-              <div className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold flex-none ${
-                i < currentStep ? 'bg-[#2563eb] text-white' : i === currentStep ? 'bg-[#2563eb] text-white' : 'bg-[#e5e7eb] text-slate-500'
-              }`}>
-                {i < currentStep ? <Check className="h-[13px] w-[13px]" /> : i + 1}
+          {steps.map((_, i) => {
+            const done = stepStates[i];
+            // 현재 진행 중인 첫 미완료 단계
+            const isCurrent = !done && stepStates.slice(0, i).every(Boolean);
+            return (
+              <div key={i} className="flex items-center flex-1">
+                <div className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-bold flex-none ${
+                  done || isCurrent ? 'bg-[#2563eb] text-white' : 'bg-[#e5e7eb] text-slate-500'
+                }`}>
+                  {done ? <Check className="h-[13px] w-[13px]" /> : i + 1}
+                </div>
+                {i < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1.5 rounded-full ${done ? 'bg-[#2563eb]' : 'bg-[#e5e7eb]'}`} />
+                )}
               </div>
-              {i < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-1.5 rounded-full ${i < currentStep ? 'bg-[#2563eb]' : 'bg-[#e5e7eb]'}`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="flex justify-between mt-2">
-          {steps.map((s, i) => (
-            <span key={s} className={`text-[11.5px] ${i <= currentStep ? 'text-slate-900 dark:text-[#f1f5f9] font-semibold' : 'text-slate-500 dark:text-[#94a3b8]'} ${
-              i === 0 ? 'text-left' : i === steps.length - 1 ? 'text-right' : 'text-center'
-            }`}>{s}</span>
-          ))}
+          {steps.map((s, i) => {
+            const done = stepStates[i];
+            const isCurrent = !done && stepStates.slice(0, i).every(Boolean);
+            const active = done || isCurrent;
+            return (
+              <span key={s} className={`text-[11.5px] ${active ? 'text-slate-900 dark:text-[#f1f5f9] font-semibold' : 'text-slate-500 dark:text-[#94a3b8]'} ${
+                i === 0 ? 'text-left' : i === steps.length - 1 ? 'text-right' : 'text-center'
+              }`}>{s}</span>
+            );
+          })}
         </div>
       </div>
 

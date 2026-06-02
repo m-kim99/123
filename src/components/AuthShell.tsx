@@ -14,10 +14,10 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
   const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
-    <div className="min-h-screen w-screen flex bg-white dark:bg-[#0b1220] overflow-x-hidden">
+    <div className="h-screen w-screen flex bg-white dark:bg-[#0b1220] overflow-hidden">
       {/* 좌측 브랜드 패널 — 태블릿/데스크탑만 표시 */}
       <div
-        className="hidden md:flex w-[44%] shrink-0 relative flex-col justify-between p-10 lg:p-12 overflow-hidden bg-black"
+        className="hidden md:flex w-[44%] shrink-0 relative flex-col justify-between p-10 lg:p-12 overflow-hidden bg-black h-screen sticky top-0"
       >
         <video
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
@@ -92,14 +92,14 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
       )}
 
       {/* 우측 폼 패널 — 데스크탑 or 모바일 md 이상 */}
-      <div className={`${isMobileDevice ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-center min-h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]`}>
+      <div className={`${isMobileDevice ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-start h-screen overflow-y-auto p-6 sm:p-8 dark:bg-[#0b1220]`}>
         {/* 모바일 전용 로고 */}
         <div className="md:hidden mb-8 flex items-end gap-2">
           <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
           <span className="text-xs font-bold text-[#2563eb] bg-[#dbeafe] px-2 py-1 rounded -translate-y-[25%]">BETA</span>
         </div>
 
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-[420px] my-auto py-8">
           {children}
           <div className="mt-6 pt-5 border-t border-[#e5e7eb] text-xs text-center text-slate-500 leading-relaxed whitespace-pre-line">
             {i18n.language === 'ko'
