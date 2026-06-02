@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { downloadFile as appDownloadFile } from '@/lib/appBridge';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -39,6 +39,23 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
   const [currentPage, setCurrentPage] = useState(1);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const container = mainContentRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
+      }
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const handleDocumentLoadSuccess = ({ numPages: nextNumPages }: { numPages: number }) => {
     setNumPages(nextNumPages);
@@ -360,7 +377,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
               >
                 <Page
                   pageNumber={pageNum}
-                  scale={scale}
+                  width={containerWidth > 0 ? (containerWidth - 32) * scale : undefined}
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
                 />
