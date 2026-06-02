@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface UserPreferences {
   theme?: 'light' | 'dark';
-  language?: 'ko' | 'en';
+  language?: 'ko' | 'en' | 'ja';
 }
 
 /**

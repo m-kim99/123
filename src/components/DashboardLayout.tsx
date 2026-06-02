@@ -91,7 +91,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     // Save to DB (fire-and-forget)
     const uid = useAuthStore.getState().user?.id;
     if (uid) {
-      savePreference(uid, 'language', lng as 'ko' | 'en');
+      savePreference(uid, 'language', lng as 'ko' | 'en' | 'ja');
     }
   };
 
@@ -1188,6 +1188,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {t('language.english')}
                     </span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeLanguage('ja')} className="pl-8">
+                    <span className={i18n.language === 'ja' ? 'font-semibold text-[#2563eb]' : ''}>
+                      {t('language.japanese')}
+                    </span>
+                  </DropdownMenuItem>
                 </div>
               )}
               <DropdownMenuItem
@@ -1456,6 +1461,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <DropdownMenuRadioGroup value={i18n.language} onValueChange={changeLanguage}>
                         <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="ja">{t('language.japanese')}</DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
