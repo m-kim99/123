@@ -336,22 +336,22 @@ export function SharedDocuments() {
             }
           }}
         >
-          <DialogContent className="max-w-[840px] h-[90vh] flex flex-col overflow-hidden gap-0 p-0 rounded-[16px]" hideClose>
+          <DialogContent className="max-w-[840px] h-[90vh] flex flex-col overflow-hidden gap-0 p-0 rounded-[16px] dark:bg-[#111827]" hideClose>
             {/* V1 M4 Compact Header */}
-            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 shrink-0">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#eff6ff]">
-                <FileText className="h-4 w-4 text-[#1e40af]" />
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
+                <FileText className="h-4 w-4 text-[#1e40af] dark:text-[#60a5fa]" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[14px] font-semibold text-slate-900 truncate">{previewDoc?.title || t('sharedDocs.docPreview')}</div>
-                <div className="text-[11.5px] text-slate-500 font-mono truncate">
+                <div className="text-[14px] font-semibold text-slate-900 dark:text-[#f1f5f9] truncate">{previewDoc?.title || t('sharedDocs.docPreview')}</div>
+                <div className="text-[11.5px] text-slate-500 dark:text-[#94a3b8] font-mono truncate">
                   {[previewDoc?.uploader, previewDoc?.uploadDate, previewDoc?.fileSize].filter(Boolean).join(' · ') || (previewDoc?.type === 'pdf' ? 'PDF' : 'Image')}
                 </div>
               </div>
               {previewDoc && (
                 <button
                   onClick={() => handleDownload(previewDoc.id)}
-                  className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
+                  className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] dark:border-white/[0.08] bg-white dark:bg-[#1e293b] text-[12px] font-medium text-slate-700 dark:text-[#cbd5e1] hover:bg-slate-50 dark:hover:bg-[#334155] flex items-center gap-1.5 shrink-0"
                 >
                   <Download className="h-3.5 w-3.5" />
                   {t('sharedDocs.download')}
@@ -359,7 +359,7 @@ export function SharedDocuments() {
               )}
               <button
                 onClick={() => { setPreviewOpen(false); setImageZoom(100); setImageRotation(0); }}
-                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0"
+                className="p-1.5 rounded-md text-slate-400 dark:text-[#94a3b8] hover:text-slate-600 dark:hover:text-[#f1f5f9] hover:bg-slate-100 dark:hover:bg-[#1e293b] shrink-0"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -370,7 +370,7 @@ export function SharedDocuments() {
               {/* Left: Viewer */}
               <div className="flex-1 bg-[#f1f5f9] flex flex-col overflow-hidden relative">
                 {previewDoc?.type === 'image' && (
-                  <div className="flex items-center justify-center gap-1.5 px-3 py-2 border-b border-slate-200 bg-white/80 backdrop-blur-sm shrink-0">
+                  <div className="flex items-center justify-center gap-1.5 px-3 py-2 border-b border-slate-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-sm shrink-0">
                     <button onClick={() => setImageZoom(Math.max(25, imageZoom - 25))} className="w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white flex items-center justify-center hover:bg-slate-50">
                       <ZoomOut className="h-3.5 w-3.5 text-slate-600" />
                     </button>
@@ -419,36 +419,36 @@ export function SharedDocuments() {
               </div>
 
               {/* Right: OCR + Meta sidebar */}
-              <div className="w-[280px] border-l border-[#e5e7eb] bg-white flex flex-col overflow-hidden shrink-0 hidden md:flex">
-                <div className="p-4 border-b border-slate-100 flex-1 overflow-auto">
-                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+              <div className="w-[280px] border-l border-[#e5e7eb] dark:border-white/[0.08] bg-white dark:bg-[#111827] flex flex-col overflow-hidden shrink-0 hidden md:flex">
+                <div className="p-4 border-b border-slate-100 dark:border-white/[0.06] flex-1 overflow-auto">
+                  <div className="text-[11px] text-slate-500 dark:text-[#94a3b8] font-semibold uppercase tracking-wider mb-2">
                     OCR {t('documentMgmt.extractedText', { defaultValue: '추출 텍스트' })} · {previewDoc?.ocrText?.length?.toLocaleString() ?? 0}{t('documentMgmt.chars', { defaultValue: '자' })}
                   </div>
-                  <div className="text-[11.5px] text-slate-500 leading-relaxed whitespace-pre-wrap">
+                  <div className="text-[11.5px] text-slate-500 dark:text-[#94a3b8] leading-relaxed whitespace-pre-wrap">
                     {previewDoc?.ocrText || t('documentMgmt.noOcrText', { defaultValue: 'OCR 텍스트 없음' })}
                   </div>
                 </div>
-                <div className="p-4 border-b border-slate-100 shrink-0">
-                  <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2.5">
+                <div className="p-4 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
+                  <div className="text-[11px] text-slate-500 dark:text-[#94a3b8] font-semibold uppercase tracking-wider mb-2.5">
                     {t('documentMgmt.docInfo', { defaultValue: '문서 정보' })}
                   </div>
                   <div className="flex flex-col gap-2 text-[12px]">
                     {previewDoc?.uploader && (
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">{t('documentMgmt.uploader', { defaultValue: '업로더' })}</span>
-                        <span className="text-slate-900 font-medium">{previewDoc.uploader}</span>
+                        <span className="text-slate-500 dark:text-[#94a3b8]">{t('documentMgmt.uploader', { defaultValue: '업로더' })}</span>
+                        <span className="text-slate-900 dark:text-[#f1f5f9] font-medium">{previewDoc.uploader}</span>
                       </div>
                     )}
                     {previewDoc?.uploadDate && (
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">{t('documentMgmt.uploadDate', { defaultValue: '업로드일' })}</span>
-                        <span className="text-slate-900 font-medium font-mono">{previewDoc.uploadDate}</span>
+                        <span className="text-slate-500 dark:text-[#94a3b8]">{t('documentMgmt.uploadDate', { defaultValue: '업로드일' })}</span>
+                        <span className="text-slate-900 dark:text-[#f1f5f9] font-medium font-mono">{previewDoc.uploadDate}</span>
                       </div>
                     )}
                     {previewDoc?.fileSize && (
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">{t('documentMgmt.fileSize', { defaultValue: '파일 크기' })}</span>
-                        <span className="text-slate-900 font-medium font-mono">{previewDoc.fileSize}</span>
+                        <span className="text-slate-500 dark:text-[#94a3b8]">{t('documentMgmt.fileSize', { defaultValue: '파일 크기' })}</span>
+                        <span className="text-slate-900 dark:text-[#f1f5f9] font-medium font-mono">{previewDoc.fileSize}</span>
                       </div>
                     )}
                   </div>
@@ -460,10 +460,10 @@ export function SharedDocuments() {
 
         {/* 삭제 확인 다이얼로그 */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="dark:bg-[#111827] dark:border-white/[0.08]">
             <AlertDialogHeader>
-              <AlertDialogTitle>{t('sharedDocs.deleteTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="dark:text-[#f1f5f9]">{t('sharedDocs.deleteTitle')}</AlertDialogTitle>
+              <AlertDialogDescription className="dark:text-[#94a3b8]">
                 {t('sharedDocs.deleteConfirm')}
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -473,6 +473,7 @@ export function SharedDocuments() {
                   setDeleteDialogOpen(false);
                   setDeletingShareId(null);
                 }}
+                className="dark:bg-[#1e293b] dark:text-[#cbd5e1] dark:border-white/[0.08]"
               >
                 {t('common.cancel')}
               </AlertDialogCancel>
@@ -499,7 +500,7 @@ export function SharedDocuments() {
                     setDeletingShareId(null);
                   }
                 }}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
               >
                 {isDeleting ? (
                   <>
