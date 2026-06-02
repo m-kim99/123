@@ -14,7 +14,7 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
   const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
-    <div className="h-screen w-screen flex bg-white dark:bg-[#0b1220] overflow-hidden">
+    <div className="min-h-screen w-screen flex bg-white dark:bg-[#0b1220] overflow-x-hidden md:h-screen md:overflow-hidden">
       {/* 좌측 브랜드 패널 — 태블릿/데스크탑만 표시 */}
       <div
         className="hidden md:flex w-[44%] shrink-0 relative flex-col justify-between p-10 lg:p-12 overflow-hidden bg-black h-screen sticky top-0"
@@ -51,7 +51,7 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
 
       {/* 모바일 전용 — 영상 배경 + 카드 오버레이 (실제 모바일 기기만) */}
       {isMobileDevice && (
-        <div className="md:hidden flex-1 relative min-h-screen flex flex-col items-center justify-center overflow-y-auto">
+        <div className="md:hidden flex-1 relative min-h-screen flex flex-col items-center justify-center">
           <video
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             src="/login-bg.mp4"
