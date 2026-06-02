@@ -235,6 +235,7 @@ export function DocumentManagement() {
   const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
   const [extractedOcrText, setExtractedOcrText] = useState('');
+  const [ocrPageProgress, setOcrPageProgress] = useState<{ page: number; totalPages: number; percent: number } | null>(null);
   const [fileStatuses, setFileStatuses] = useState<
     { name: string; status: string; error?: string | null }[]
   >([]);
@@ -1483,6 +1484,7 @@ export function DocumentManagement() {
 
     // OCR 추출 시작
     setIsExtractingOcr(true);
+    setOcrPageProgress(null);
     setUploadStatus('OCR 텍스트 추출 중...');
 
     try {
@@ -1502,7 +1504,13 @@ export function DocumentManagement() {
         });
 
         try {
-          const ocrText = await extractText(file);
+          const ocrText = await extractText(file, (progress) => {
+            setOcrPageProgress({
+              page: progress.page ?? 0,
+              totalPages: progress.totalPages ?? 0,
+              percent: progress.percent,
+            });
+          });
           if (pdfFiles.length === 1 && imageFiles.length === 0) {
             allOcrText = ocrText;
           } else if (ocrText && ocrText.trim()) {
@@ -1545,7 +1553,13 @@ export function DocumentManagement() {
           });
 
           try {
-            const ocrText = await extractText(file);
+            const ocrText = await extractText(file, (progress) => {
+              setOcrPageProgress({
+                page: i + 1,
+                totalPages: imageFiles.length,
+                percent: Math.round(((i + progress.percent / 100) / imageFiles.length) * 100),
+              });
+            });
             if (ocrText && ocrText.trim()) {
               ocrParts.push({
                 index: i,
@@ -1596,6 +1610,7 @@ export function DocumentManagement() {
       setUploadStatus('');
     } finally {
       setIsExtractingOcr(false);
+      setOcrPageProgress(null);
     }
   }, []);
 
@@ -3293,6 +3308,23 @@ export function DocumentManagement() {
                           ? t('documentMgmt.imagesBundled', { count: selectedImageFiles.length })
                           : t('documentMgmt.defaultTitleNote')}
                       </p>
+                    </div>
+                  )}
+
+                  {/* OCR 추출 진행률 표시 */}
+                  {isExtractingOcr && ocrPageProgress && ocrPageProgress.totalPages > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#2563eb] font-medium flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          텍스트 추출 중...
+                        </span>
+                        <span className="text-slate-700 font-semibold">
+                          {ocrPageProgress.page}/{ocrPageProgress.totalPages} 페이지
+                        </span>
+                      </div>
+                      <Progress value={ocrPageProgress.percent} className="w-full" />
+                      <p className="text-xs text-slate-500 text-right">{ocrPageProgress.percent}% 완료</p>
                     </div>
                   )}
 

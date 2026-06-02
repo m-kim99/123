@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { v1Card, V1CardHeader, V1PageHeader, V1Chip, V1ModalHeader, V1ModalFooter, V1ModalBody, V1 } from '@/components/ui/v1-components';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -70,6 +71,7 @@ export function SubcategoryDetail() {
   const [isEditingUploadOcr, setIsEditingUploadOcr] = useState(false);
   const [editedUploadOcrText, setEditedUploadOcrText] = useState('');
   const [uploadOcrStatus, setUploadOcrStatus] = useState('');
+  const [ocrPageProgress, setOcrPageProgress] = useState<{ page: number; totalPages: number; percent: number } | null>(null);
   const [lastUploadedDocId, setLastUploadedDocId] = useState<string | null>(null);
   const [isSavingUploadOcr, setIsSavingUploadOcr] = useState(false);
   const [isRegisteringNfc] = useState(false);
@@ -235,10 +237,17 @@ export function SubcategoryDetail() {
 
     // OCR 추출 시작
     setIsExtractingUploadOcr(true);
+    setOcrPageProgress(null);
     setUploadOcrStatus(t('subcategoryDetail.ocrExtracting'));
 
     try {
-      const ocrText = await extractText(file);
+      const ocrText = await extractText(file, (progress) => {
+        setOcrPageProgress({
+          page: progress.page ?? 0,
+          totalPages: progress.totalPages ?? 0,
+          percent: progress.percent,
+        });
+      });
       setUploadOcrText(ocrText);
       setUploadOcrPreview(ocrText);
       setUploadOcrStatus(t('subcategoryDetail.ocrDoneUploadReady'));
@@ -247,6 +256,7 @@ export function SubcategoryDetail() {
       setUploadOcrStatus(t('subcategoryDetail.ocrFailedNoText'));
     } finally {
       setIsExtractingUploadOcr(false);
+      setOcrPageProgress(null);
     }
   }, []);
 
@@ -1156,12 +1166,22 @@ export function SubcategoryDetail() {
 
             {/* OCR 추출 상태 */}
             {uploadOcrStatus && selectedFile && (
-              <div className="flex items-center gap-2 text-sm">
-                {isExtractingUploadOcr && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
-                {!isExtractingUploadOcr && uploadOcrPreview && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                <span className={isExtractingUploadOcr ? 'text-[#2563eb]' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
-                  {uploadOcrStatus}
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  {isExtractingUploadOcr && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                  {!isExtractingUploadOcr && uploadOcrPreview && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                  <span className={isExtractingUploadOcr ? 'text-[#2563eb]' : uploadOcrPreview ? 'text-green-600' : 'text-slate-500'}>
+                    {uploadOcrStatus}
+                  </span>
+                  {isExtractingUploadOcr && ocrPageProgress && ocrPageProgress.totalPages > 0 && (
+                    <span className="ml-auto text-slate-700 font-semibold text-sm">
+                      {ocrPageProgress.page}/{ocrPageProgress.totalPages} 페이지
+                    </span>
+                  )}
+                </div>
+                {isExtractingUploadOcr && ocrPageProgress && ocrPageProgress.totalPages > 0 && (
+                  <Progress value={ocrPageProgress.percent} className="w-full" />
+                )}
               </div>
             )}
 

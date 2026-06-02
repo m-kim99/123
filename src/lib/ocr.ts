@@ -14,27 +14,22 @@ async function loadPDFLib() {
 
 /**
  * PDF 파일을 이미지로 변환
- * @param file PDF 파일
+ * @param pdfDoc 이미 로드된 PDF 문서 객체
  * @param pageNum 페이지 번호 (1부터 시작)
  * @param scale 스케일 (기본값: 2.0)
  * @returns Canvas 요소
  */
 async function convertPDFPageToImage(
-  file: File,
+  pdfDoc: any,
   pageNum: number,
   scale: number = 2.0
 ): Promise<HTMLCanvasElement> {
   try {
-    const pdfLib = await loadPDFLib();
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
-
-    if (pageNum < 1 || pageNum > pdf.numPages) {
-      throw new Error(`페이지 번호가 범위를 벗어났습니다: ${pageNum}/${pdf.numPages}`);
+    if (pageNum < 1 || pageNum > pdfDoc.numPages) {
+      throw new Error(`페이지 번호가 범위를 벗어났습니다: ${pageNum}/${pdfDoc.numPages}`);
     }
 
-    const page = await pdf.getPage(pageNum);
+    const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale });
 
     // Canvas 생성
@@ -148,17 +143,23 @@ export async function extractTextFromPDF(
         });
 
         // PDF 페이지를 이미지로 변환
-        const canvas = await convertPDFPageToImage(file, pageNum, 2.0);
+        const canvas = await convertPDFPageToImage(pdf, pageNum, 2.0);
         
         // 이미지 크기 확인 (네이버 OCR 제한: 5MB)
         const dataUrl = canvas.toDataURL('image/png');
+        // Canvas 메모리 해제
+        canvas.width = 0;
+        canvas.height = 0;
         const imageSizeMB = (dataUrl.length * 3) / 4 / 1024 / 1024;
         
         if (imageSizeMB > 4.5) {
           console.warn(`⚠️ 페이지 ${pageNum}: 이미지 크기 초과 (${imageSizeMB.toFixed(2)}MB), 해상도 낮춤`);
           // 해상도를 낮춰서 다시 변환
-          const smallerCanvas = await convertPDFPageToImage(file, pageNum, 1.5);
+          const smallerCanvas = await convertPDFPageToImage(pdf, pageNum, 1.5);
           const smallerDataUrl = smallerCanvas.toDataURL('image/jpeg', 0.85);
+          // Canvas 메모리 해제
+          smallerCanvas.width = 0;
+          smallerCanvas.height = 0;
           const smallerSizeMB = (smallerDataUrl.length * 3) / 4 / 1024 / 1024;
           console.log(`🔄 해상도 조정 후: ${smallerSizeMB.toFixed(2)}MB`);
           
@@ -355,7 +356,7 @@ export async function extractTextFromImage(
 
 export async function extractText(
   file: File,
-  onProgress?: (progress: { percent: number; status: string; type: 'pdf' | 'image' }) => void
+  onProgress?: (progress: { percent: number; status: string; type: 'pdf' | 'image'; page?: number; totalPages?: number }) => void
 ): Promise<string> {
   const mimeType = file.type;
   const fileName = file.name.toLowerCase();
@@ -368,23 +369,25 @@ export async function extractText(
     fileName.endsWith('.png');
 
   if (isPdf) {
-    onProgress?.({ percent: 0, status: 'PDF 처리 중...', type: 'pdf' });
+    onProgress?.({ percent: 0, status: 'PDF 처리 중...', type: 'pdf', page: 0, totalPages: 0 });
     const text = await extractTextFromPDF(file, (progress) => {
       onProgress?.({
         percent: progress.percent,
         status: progress.status,
         type: 'pdf',
+        page: progress.page,
+        totalPages: progress.totalPages,
       });
     });
     return text;
   }
 
   if (isImage) {
-    onProgress?.({ percent: 0, status: '이미지 처리 중...', type: 'image' });
+    onProgress?.({ percent: 0, status: '이미지 처리 중...', type: 'image', page: 1, totalPages: 1 });
     const text = await extractTextFromImage(file, ({ percent, status }) => {
-      onProgress?.({ percent, status, type: 'image' });
+      onProgress?.({ percent, status, type: 'image', page: 1, totalPages: 1 });
     });
-    onProgress?.({ percent: 100, status: '이미지 처리 완료', type: 'image' });
+    onProgress?.({ percent: 100, status: '이미지 처리 완료', type: 'image', page: 1, totalPages: 1 });
     return text;
   }
 
