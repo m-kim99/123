@@ -216,6 +216,14 @@ export function DocumentManagement() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [isDeletingCategory, setIsDeletingCategory] = useState(false);
 
+  const [deleteDocDialogOpen, setDeleteDocDialogOpen] = useState(false);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [isDeletingDocument, setIsDeletingDocument] = useState(false);
+
+  const [unshareDialogOpen, setUnshareDialogOpen] = useState(false);
+  const [unshareId, setUnshareId] = useState<string | null>(null);
+  const [isUnsharing, setIsUnsharing] = useState(false);
+
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadSelection, setUploadSelection] = useState({
     departmentId: '',
@@ -1024,19 +1032,24 @@ export function DocumentManagement() {
       return;
     }
 
-    const confirmed = window.confirm(t('documentMgmt.confirmDelete'));
-    if (!confirmed) return;
+    setDeletingDocumentId(documentId);
+    setDeleteDocDialogOpen(true);
+  };
 
+  const handleConfirmDeleteDocument = async () => {
+    if (!deletingDocumentId) return;
+
+    setIsDeletingDocument(true);
     try {
       trackEvent('document_delete', {
-        document_id: documentId,
+        document_id: deletingDocumentId,
         delete_context: 'document_management',
       });
 
       const { data, error } = await supabase
         .from('documents')
         .select('file_path')
-        .eq('id', documentId)
+        .eq('id', deletingDocumentId)
         .single();
 
       if (error) {
@@ -1058,18 +1071,20 @@ export function DocumentManagement() {
       const { error: dbError } = await supabase
         .from('documents')
         .delete()
-        .eq('id', documentId);
+        .eq('id', deletingDocumentId);
 
       if (dbError) {
         throw dbError;
       }
 
-      await fetchDocuments();
+      const targetDoc = documents.find((d) => d.id === deletingDocumentId);
 
       toast({
         title: t('documentMgmt.deleteComplete'),
         description: t('documentMgmt.docDeletedDesc'),
       });
+
+      await fetchDocuments();
 
       if (user?.companyId && targetDoc) {
         const department = departments.find(
@@ -1084,7 +1099,7 @@ export function DocumentManagement() {
 
         await createDocumentNotification({
           type: 'document_deleted',
-          documentId,
+          documentId: deletingDocumentId,
           title: targetDoc.name,
           companyId: user.companyId,
           departmentId: targetDoc.departmentId,
@@ -1095,15 +1110,19 @@ export function DocumentManagement() {
           subcategoryName: subcategoryForDoc?.name ?? null,
         });
       }
+
+      setDeleteDocDialogOpen(false);
+      setDeletingDocumentId(null);
     } catch (error) {
       console.error('문서 삭제 실패:', error);
-
 
       toast({
         title: t('documentMgmt.deleteFailed'),
         description: t('documentMgmt.docDeleteFailedDesc'),
         variant: 'destructive',
       });
+    } finally {
+      setIsDeletingDocument(false);
     }
   };
 
@@ -1196,18 +1215,27 @@ export function DocumentManagement() {
 
   // 공유 취소
   const handleUnshare = async (shareId: string) => {
-    if (!confirm(t('documentMgmt.confirmUnshare'))) return;
+    setUnshareId(shareId);
+    setUnshareDialogOpen(true);
+  };
 
+  const handleConfirmUnshare = async () => {
+    if (!unshareId) return;
+
+    setIsUnsharing(true);
     try {
-      await unshareDocument(shareId);
+      await unshareDocument(unshareId);
       
       // 목록에서 제거
-      setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
+      setExistingShares((prev) => prev.filter((s) => s.id !== unshareId));
       
       toast({
         title: t('documentMgmt.unshareComplete'),
         description: t('documentMgmt.unshareCompleteDesc'),
       });
+
+      setUnshareDialogOpen(false);
+      setUnshareId(null);
     } catch (error) {
       console.error('공유 취소 실패:', error);
       toast({
@@ -1215,6 +1243,8 @@ export function DocumentManagement() {
         description: t('documentMgmt.unshareFailedDesc'),
         variant: 'destructive',
       });
+    } finally {
+      setIsUnsharing(false);
     }
   };
 
@@ -3938,6 +3968,88 @@ export function DocumentManagement() {
             </V1ModalFooter>
           </DialogContent>
         </Dialog>
+
+        {/* 문서 삭제 확인 AlertDialog */}
+        <AlertDialog open={deleteDocDialogOpen} onOpenChange={setDeleteDocDialogOpen}>
+          <AlertDialogContent className="max-w-md">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-red-50">
+                <Trash2 className="h-[18px] w-[18px] text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold tracking-tight">
+                  {t('documentMgmt.deleteDoc')}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+                  {t('documentMgmt.confirmDelete')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <AlertDialogFooter className="px-6 pb-5">
+              <AlertDialogCancel disabled={isDeletingDocument} className="h-9">
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteDocument}
+                className="h-9 bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
+                disabled={isDeletingDocument}
+              >
+                {isDeletingDocument ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('documentMgmt.deleting')}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    {t('common.delete')}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 공유 취소 확인 AlertDialog */}
+        <AlertDialog open={unshareDialogOpen} onOpenChange={setUnshareDialogOpen}>
+          <AlertDialogContent className="max-w-md">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-amber-50">
+                <Share2 className="h-[18px] w-[18px] text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold tracking-tight">
+                  {t('documentMgmt.unshareTitle', { defaultValue: '공유 취소' })}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+                  {t('documentMgmt.confirmUnshare')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <AlertDialogFooter className="px-6 pb-5">
+              <AlertDialogCancel disabled={isUnsharing} className="h-9">
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmUnshare}
+                className="h-9 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
+                disabled={isUnsharing}
+              >
+                {isUnsharing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('common.processing')}
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                    {t('documentMgmt.unshare', { defaultValue: '취소' })}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

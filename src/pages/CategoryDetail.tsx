@@ -110,6 +110,10 @@ export function CategoryDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
   const [isDeletingDocument, setIsDeletingDocument] = useState(false);
+
+  const [unshareDialogOpen, setUnshareDialogOpen] = useState(false);
+  const [unshareId, setUnshareId] = useState<string | null>(null);
+  const [isUnsharing, setIsUnsharing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<
     | {
@@ -938,18 +942,27 @@ export function CategoryDetail() {
 
   // 공유 취소
   const handleUnshare = async (shareId: string) => {
-    if (!confirm(t('documentMgmt.confirmUnshare'))) return;
+    setUnshareId(shareId);
+    setUnshareDialogOpen(true);
+  };
 
-    try {
-      await unshareDocument(shareId);
+  const handleConfirmUnshare = async () => {
+    if (!unshareId) return;
+
+    setIsUnsharing(true);
+    try{
+      await unshareDocument(unshareId);
       
       // 목록에서 제거
-      setExistingShares((prev) => prev.filter((s) => s.id !== shareId));
+      setExistingShares((prev) => prev.filter((s) => s.id !== unshareId));
       
       toast({
         title: t('documentMgmt.unshareComplete'),
         description: t('documentMgmt.unshareCompleteDesc'),
       });
+
+      setUnshareDialogOpen(false);
+      setUnshareId(null);
     } catch (error) {
       console.error('공유 취소 실패:', error);
       toast({
@@ -957,6 +970,8 @@ export function CategoryDetail() {
         description: t('documentMgmt.unshareFailedDesc'),
         variant: 'destructive',
       });
+    } finally {
+      setIsUnsharing(false);
     }
   };
 
@@ -1593,6 +1608,47 @@ export function CategoryDetail() {
             </V1ModalFooter>
           </DialogContent>
         </Dialog>
+
+        {/* 공유 취소 확인 AlertDialog */}
+        <AlertDialog open={unshareDialogOpen} onOpenChange={setUnshareDialogOpen}>
+          <AlertDialogContent className="max-w-md">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-amber-50">
+                <Share2 className="h-[18px] w-[18px] text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold tracking-tight">
+                  {t('documentMgmt.unshareTitle', { defaultValue: '공유 취소' })}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+                  {t('documentMgmt.confirmUnshare')}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <AlertDialogFooter className="px-6 pb-5">
+              <AlertDialogCancel disabled={isUnsharing} className="h-9">
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmUnshare}
+                className="h-9 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
+                disabled={isUnsharing}
+              >
+                {isUnsharing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('common.processing')}
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                    {t('documentMgmt.unshare', { defaultValue: '취소' })}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
