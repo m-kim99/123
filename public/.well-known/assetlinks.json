@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.trayst.app",
+      "sha256_cert_fingerprints": [
+        "76:32:72:10:ED:31:C6:D6:57:57:F5:AF:73:9E:AC:3D:72:5F:AC:2B:4B:B7:DF:B2:81:82:D5:11:05:46:08:B4"
+      ]
+    }
+  }
+]
