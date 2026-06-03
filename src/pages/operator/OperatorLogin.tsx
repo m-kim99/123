@@ -10,11 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 export function OperatorLogin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { operatorLogin, isLoading } = useOperatorStore();
+  const operatorLogin = useOperatorStore((s) => s.operatorLogin);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,20 +29,27 @@ export function OperatorLogin() {
       return;
     }
 
-    const result = await operatorLogin(email, password);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    if (result.success) {
-      toast({
-        title: '로그인 성공',
-        description: '운영자 페이지에 접속했습니다.',
-      });
-      navigate('/operator');
-    } else {
-      toast({
-        title: '로그인 실패',
-        description: result.error || '이메일 또는 비밀번호를 확인해주세요.',
-        variant: 'destructive',
-      });
+    try {
+      const result = await operatorLogin(email, password);
+
+      if (result.success) {
+        toast({
+          title: '로그인 성공',
+          description: '운영자 페이지에 접속했습니다.',
+        });
+        navigate('/operator');
+      } else {
+        toast({
+          title: '로그인 실패',
+          description: result.error || '이메일 또는 비밀번호를 확인해주세요.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -101,10 +109,10 @@ export function OperatorLogin() {
 
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold"
             >
-              {isLoading ? '로그인 중...' : '로그인'}
+              {isSubmitting ? '로그인 중...' : '로그인'}
             </Button>
           </form>
         </div>

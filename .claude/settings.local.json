@@ -34,7 +34,8 @@
       "Bash(\"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool\" -list -v -keystore /Users/mini/Downloads/123-main/sign/dms-release.jks -storepass dms123456 -alias dms-key)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git commit *)"
     ]
   }
 }
