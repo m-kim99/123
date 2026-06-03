@@ -124,12 +124,6 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         return;
       }
 
-      // 마지막 로그인 시간 업데이트
-      await supabase
-        .from('operators')
-        .update({ last_login_at: new Date().toISOString() })
-        .eq('id', session.user.id);
-
       set({
         operator: {
           id: operatorData.id,

@@ -14,7 +14,9 @@ import { useOperatorStore } from '@/store/operatorStore';
 import { cn } from '@/lib/utils';
 
 export function OperatorDashboard() {
-  const { stats, fetchDashboardStats, isLoading } = useOperatorStore();
+  const stats = useOperatorStore((s) => s.stats);
+  const fetchDashboardStats = useOperatorStore((s) => s.fetchDashboardStats);
+  const isLoading = useOperatorStore((s) => s.isLoading);
 
   useEffect(() => {
     fetchDashboardStats();

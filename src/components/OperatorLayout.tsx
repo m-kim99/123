@@ -43,7 +43,8 @@ const navItems = [
 export function OperatorLayout({ children }: OperatorLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { operator, operatorLogout } = useOperatorStore();
+  const operator = useOperatorStore((s) => s.operator);
+  const operatorLogout = useOperatorStore((s) => s.operatorLogout);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {

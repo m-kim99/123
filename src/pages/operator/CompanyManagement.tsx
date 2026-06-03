@@ -54,30 +54,39 @@ export function CompanyManagement() {
 
       if (error) throw error;
 
-      // 각 회사별 통계 수집
-      const companiesWithStats: Company[] = await Promise.all(
-        (data || []).map(async (c: any) => {
-          const [
-            { count: memberCount },
-            { count: documentCount },
-            { count: departmentCount },
-          ] = await Promise.all([
-            supabase.from('users').select('*', { count: 'exact', head: true }).eq('company_id', c.id),
-            supabase.from('documents').select('*', { count: 'exact', head: true }).eq('company_id', c.id),
-            supabase.from('departments').select('*', { count: 'exact', head: true }).eq('company_id', c.id),
-          ]);
+      const companyIds = data?.map((c: any) => c.id) || [];
 
-          return {
-            id: c.id,
-            name: c.name,
-            code: c.code,
-            createdAt: c.created_at,
-            memberCount: memberCount || 0,
-            documentCount: documentCount || 0,
-            departmentCount: departmentCount || 0,
-          };
-        })
-      );
+      if (companyIds.length === 0) {
+        setCompanies([]);
+        setTotal(0);
+        return;
+      }
+
+      const [userCounts, docCounts, deptCounts] = await Promise.all([
+        supabase.from('users').select('company_id').in('company_id', companyIds),
+        supabase.from('documents').select('company_id').in('company_id', companyIds),
+        supabase.from('departments').select('company_id').in('company_id', companyIds),
+      ]);
+
+      const countByCompany = (items: any[]) =>
+        items.reduce((acc, item) => {
+          acc[item.company_id] = (acc[item.company_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+      const userMap = countByCompany(userCounts.data || []);
+      const docMap = countByCompany(docCounts.data || []);
+      const deptMap = countByCompany(deptCounts.data || []);
+
+      const companiesWithStats: Company[] = (data || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        code: c.code,
+        createdAt: c.created_at,
+        memberCount: userMap[c.id] || 0,
+        documentCount: docMap[c.id] || 0,
+        departmentCount: deptMap[c.id] || 0,
+      }));
 
       setCompanies(companiesWithStats);
       setTotal(count || 0);

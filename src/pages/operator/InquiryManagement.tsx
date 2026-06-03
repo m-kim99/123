@@ -75,15 +75,13 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
 
 export function InquiryManagement() {
   const { toast } = useToast();
-  const {
-    inquiries,
-    inquiriesTotal,
-    fetchInquiries,
-    currentInquiryReplies,
-    fetchInquiryReplies,
-    updateInquiry,
-    createInquiryReply,
-  } = useOperatorStore();
+  const inquiries = useOperatorStore((s) => s.inquiries);
+  const inquiriesTotal = useOperatorStore((s) => s.inquiriesTotal);
+  const fetchInquiries = useOperatorStore((s) => s.fetchInquiries);
+  const currentInquiryReplies = useOperatorStore((s) => s.currentInquiryReplies);
+  const fetchInquiryReplies = useOperatorStore((s) => s.fetchInquiryReplies);
+  const updateInquiry = useOperatorStore((s) => s.updateInquiry);
+  const createInquiryReply = useOperatorStore((s) => s.createInquiryReply);
 
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');

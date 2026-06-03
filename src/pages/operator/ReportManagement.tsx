@@ -77,7 +77,10 @@ const targetTypeLabels: Record<string, { label: string; icon: any }> = {
 
 export function ReportManagement() {
   const { toast } = useToast();
-  const { reports, reportsTotal, fetchReports, updateReport } = useOperatorStore();
+  const reports = useOperatorStore((s) => s.reports);
+  const reportsTotal = useOperatorStore((s) => s.reportsTotal);
+  const fetchReports = useOperatorStore((s) => s.fetchReports);
+  const updateReport = useOperatorStore((s) => s.updateReport);
 
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [priorityFilter, setPriorityFilter] = useState<string>('');

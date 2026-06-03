@@ -78,7 +78,11 @@ const locationLabels: Record<NoticeDisplayLocation, string> = {
 
 export function SystemNotices() {
   const { toast } = useToast();
-  const { notices, fetchNotices, createNotice, updateNotice, deleteNotice } = useOperatorStore();
+  const notices = useOperatorStore((s) => s.notices);
+  const fetchNotices = useOperatorStore((s) => s.fetchNotices);
+  const createNotice = useOperatorStore((s) => s.createNotice);
+  const updateNotice = useOperatorStore((s) => s.updateNotice);
+  const deleteNotice = useOperatorStore((s) => s.deleteNotice);
 
   const [isLoading, setIsLoading] = useState(false);
 

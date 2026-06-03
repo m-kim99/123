@@ -45,15 +45,13 @@ import type { ManagedUser } from '@/types/operator';
 
 export function MemberManagement() {
   const { toast } = useToast();
-  const {
-    users,
-    usersTotal,
-    fetchUsers,
-    suspendUser,
-    fetchSuspensions,
-    suspensions,
-    liftSuspension,
-  } = useOperatorStore();
+  const users = useOperatorStore((s) => s.users);
+  const usersTotal = useOperatorStore((s) => s.usersTotal);
+  const fetchUsers = useOperatorStore((s) => s.fetchUsers);
+  const suspendUser = useOperatorStore((s) => s.suspendUser);
+  const fetchSuspensions = useOperatorStore((s) => s.fetchSuspensions);
+  const suspensions = useOperatorStore((s) => s.suspensions);
+  const liftSuspension = useOperatorStore((s) => s.liftSuspension);
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
