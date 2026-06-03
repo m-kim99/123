@@ -83,7 +83,7 @@ export function MemberManagement() {
     setIsLoading(true);
     await fetchUsers({
       search: search || undefined,
-      role: roleFilter || undefined,
+      role: roleFilter && roleFilter !== 'all' ? roleFilter : undefined,
       page,
       limit,
     });
@@ -229,7 +229,7 @@ export function MemberManagement() {
                 <SelectValue placeholder="역할 필터" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="admin">관리자</SelectItem>
                 <SelectItem value="team">팀원</SelectItem>
               </SelectContent>

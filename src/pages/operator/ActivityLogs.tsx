@@ -57,7 +57,7 @@ export function ActivityLogs() {
           operator:operator_id(name)
         `, { count: 'exact' });
 
-      if (actionFilter) {
+      if (actionFilter && actionFilter !== 'all') {
         query = query.eq('action', actionFilter);
       }
 
@@ -116,7 +116,7 @@ export function ActivityLogs() {
               <SelectValue placeholder="활동 유형" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">전체</SelectItem>
+              <SelectItem value="all">전체</SelectItem>
               <SelectItem value="suspend_user">회원 정지</SelectItem>
               <SelectItem value="lift_suspension">정지 해제</SelectItem>
               <SelectItem value="update_report">신고 처리</SelectItem>

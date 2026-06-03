@@ -105,8 +105,8 @@ export function InquiryManagement() {
   const loadInquiries = async () => {
     setIsLoading(true);
     await fetchInquiries({
-      status: statusFilter || undefined,
-      category: categoryFilter || undefined,
+      status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
+      category: categoryFilter && categoryFilter !== 'all' ? categoryFilter : undefined,
       page,
       limit,
     });
@@ -182,7 +182,7 @@ export function InquiryManagement() {
                 <SelectValue placeholder="상태 필터" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="open">접수</SelectItem>
                 <SelectItem value="in_progress">처리중</SelectItem>
                 <SelectItem value="waiting">대기</SelectItem>
@@ -196,7 +196,7 @@ export function InquiryManagement() {
                 <SelectValue placeholder="분류 필터" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="general">일반 문의</SelectItem>
                 <SelectItem value="bug">버그 신고</SelectItem>
                 <SelectItem value="feature">기능 요청</SelectItem>

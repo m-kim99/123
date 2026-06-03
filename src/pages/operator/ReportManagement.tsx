@@ -101,8 +101,8 @@ export function ReportManagement() {
   const loadReports = async () => {
     setIsLoading(true);
     await fetchReports({
-      status: statusFilter || undefined,
-      priority: priorityFilter || undefined,
+      status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
+      priority: priorityFilter && priorityFilter !== 'all' ? priorityFilter : undefined,
       page,
       limit,
     });
@@ -177,7 +177,7 @@ export function ReportManagement() {
                 <SelectValue placeholder="상태 필터" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="pending">대기</SelectItem>
                 <SelectItem value="reviewing">검토중</SelectItem>
                 <SelectItem value="resolved">처리완료</SelectItem>
@@ -190,7 +190,7 @@ export function ReportManagement() {
                 <SelectValue placeholder="우선순위" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="all">전체</SelectItem>
                 <SelectItem value="urgent">긴급</SelectItem>
                 <SelectItem value="high">높음</SelectItem>
                 <SelectItem value="normal">보통</SelectItem>
