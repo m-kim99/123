@@ -58,7 +58,8 @@
     "settings": "언어 설정",
     "korean": "한국어",
     "english": "English",
-    "japanese": "日本語"
+    "japanese": "日本語",
+    "german": "Deutsch"
   },
   "theme": {
     "settings": "화면 모드",
