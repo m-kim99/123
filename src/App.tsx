@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
+import { useOperatorStore } from './store/operatorStore';
 import { supabase } from '@/lib/supabase';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
@@ -79,6 +80,17 @@ const Trash = lazy(() =>
   import('./pages/Trash').then((m) => ({ default: m.Trash })),
 );
 
+// Operator pages
+const OperatorLogin = lazy(() =>
+  import('./pages/operator/OperatorLogin').then((m) => ({ default: m.OperatorLogin })),
+);
+const OperatorDashboard = lazy(() =>
+  import('./pages/operator/OperatorDashboard').then((m) => ({ default: m.OperatorDashboard })),
+);
+const MemberManagement = lazy(() =>
+  import('./pages/operator/MemberManagement').then((m) => ({ default: m.MemberManagement })),
+);
+
 function ProtectedRoute({
   children,
   requiredRole,
@@ -144,6 +156,23 @@ function PageLoader() {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563eb]"></div>
     </div>
   );
+}
+
+function OperatorProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isOperator, isLoading } = useOperatorStore();
+  const location = useLocation();
+
+  // 세션 확인 중
+  if (isLoading) {
+    return <PageLoader />;
+  }
+
+  // 운영자가 아니면 운영자 로그인 페이지로
+  if (!isOperator) {
+    return <Navigate to="/operator/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function RouteAnalytics() {
@@ -262,14 +291,26 @@ function App() {
 
   useEffect(() => {
     const { checkSession } = useAuthStore.getState();
+    const { checkOperatorSession } = useOperatorStore.getState();
+
     checkSession();
+
+    // 운영자 페이지 접근 시 운영자 세션도 체크
+    if (window.location.pathname.startsWith('/operator')) {
+      checkOperatorSession();
+    }
 
     // 세션 상태 변경 감지 (토큰 갱신, 로그아웃 등)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'SIGNED_OUT') {
         useAuthStore.getState().logout();
+        useOperatorStore.getState().operatorLogout();
       } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
         useAuthStore.getState().checkSession();
+        // 운영자 페이지에 있으면 운영자 세션도 체크
+        if (window.location.pathname.startsWith('/operator')) {
+          useOperatorStore.getState().checkOperatorSession();
+        }
       }
     });
 
@@ -525,6 +566,25 @@ function App() {
                 <ProtectedRoute requiredRole="team">
                   <CategoryDetail />
                 </ProtectedRoute>
+              }
+            />
+
+            {/* Operator routes */}
+            <Route path="/operator/login" element={<OperatorLogin />} />
+            <Route
+              path="/operator"
+              element={
+                <OperatorProtectedRoute>
+                  <OperatorDashboard />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/members"
+              element={
+                <OperatorProtectedRoute>
+                  <MemberManagement />
+                </OperatorProtectedRoute>
               }
             />
 
