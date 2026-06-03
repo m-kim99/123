@@ -90,6 +90,21 @@ const OperatorDashboard = lazy(() =>
 const MemberManagement = lazy(() =>
   import('./pages/operator/MemberManagement').then((m) => ({ default: m.MemberManagement })),
 );
+const ReportManagement = lazy(() =>
+  import('./pages/operator/ReportManagement').then((m) => ({ default: m.ReportManagement })),
+);
+const SystemNotices = lazy(() =>
+  import('./pages/operator/SystemNotices').then((m) => ({ default: m.SystemNotices })),
+);
+const InquiryManagement = lazy(() =>
+  import('./pages/operator/InquiryManagement').then((m) => ({ default: m.InquiryManagement })),
+);
+const CompanyManagement = lazy(() =>
+  import('./pages/operator/CompanyManagement').then((m) => ({ default: m.CompanyManagement })),
+);
+const ActivityLogs = lazy(() =>
+  import('./pages/operator/ActivityLogs').then((m) => ({ default: m.ActivityLogs })),
+);
 
 function ProtectedRoute({
   children,
@@ -584,6 +599,46 @@ function App() {
               element={
                 <OperatorProtectedRoute>
                   <MemberManagement />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/reports"
+              element={
+                <OperatorProtectedRoute>
+                  <ReportManagement />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/notices"
+              element={
+                <OperatorProtectedRoute>
+                  <SystemNotices />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/inquiries"
+              element={
+                <OperatorProtectedRoute>
+                  <InquiryManagement />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/companies"
+              element={
+                <OperatorProtectedRoute>
+                  <CompanyManagement />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/logs"
+              element={
+                <OperatorProtectedRoute>
+                  <ActivityLogs />
                 </OperatorProtectedRoute>
               }
             />
