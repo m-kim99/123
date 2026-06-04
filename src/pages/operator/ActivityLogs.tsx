@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Activity,
-  Filter,
   ChevronLeft,
   ChevronRight,
   ShieldOff,
@@ -21,24 +20,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import type { OperatorActivityLog } from '@/types/operator';
+import {
+  V1PageHeader,
+  V1Chip,
+  v1Card,
+  V1,
+} from '@/components/ui/v1-components';
 
-const actionConfig: Record<string, { label: string; icon: any; color: string }> = {
-  suspend_user: { label: '회원 정지', icon: ShieldOff, color: 'text-red-500' },
-  lift_suspension: { label: '정지 해제', icon: ShieldCheck, color: 'text-green-500' },
-  update_report: { label: '신고 처리', icon: Flag, color: 'text-amber-500' },
-  reply_inquiry: { label: '문의 답변', icon: MessageSquare, color: 'text-blue-500' },
-  create_notice: { label: '공지 작성', icon: Megaphone, color: 'text-violet-500' },
-  update_notice: { label: '공지 수정', icon: Megaphone, color: 'text-violet-500' },
-  delete_notice: { label: '공지 삭제', icon: Megaphone, color: 'text-slate-500' },
-  default: { label: '기타', icon: Settings, color: 'text-slate-500' },
+type ChipVariant = 'blue' | 'emerald' | 'amber' | 'red' | 'violet' | 'neutral';
+
+const actionConfig: Record<string, { label: string; icon: any; variant: ChipVariant; color: string }> = {
+  suspend_user: { label: '회원 정지', icon: ShieldOff, variant: 'red', color: V1.red },
+  lift_suspension: { label: '정지 해제', icon: ShieldCheck, variant: 'emerald', color: V1.emerald },
+  update_report: { label: '신고 처리', icon: Flag, variant: 'amber', color: V1.amber },
+  reply_inquiry: { label: '문의 답변', icon: MessageSquare, variant: 'blue', color: V1.blue },
+  create_notice: { label: '공지 작성', icon: Megaphone, variant: 'violet', color: V1.violet },
+  update_notice: { label: '공지 수정', icon: Megaphone, variant: 'violet', color: V1.violet },
+  delete_notice: { label: '공지 삭제', icon: Megaphone, variant: 'neutral', color: V1.muted },
+  default: { label: '기타', icon: Settings, variant: 'neutral', color: V1.muted },
 };
 
 export function ActivityLogs() {
   const [logs, setLogs] = useState<OperatorActivityLog[]>([]);
   const [total, setTotal] = useState(0);
-  const [actionFilter, setActionFilter] = useState<string>('');
+  const [actionFilter, setActionFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const limit = 30;
@@ -101,70 +107,75 @@ export function ActivityLogs() {
     <OperatorLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">활동 로그</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            운영자 활동 기록을 확인합니다. (총 {total.toLocaleString()}건)
-          </p>
-        </div>
+        <V1PageHeader
+          eyebrow={`총 ${total.toLocaleString()}건 기록`}
+          title="활동 로그"
+          sub="운영자 활동 기록을 확인합니다."
+        />
 
-        {/* Filter */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-          <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-48">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="활동 유형" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체</SelectItem>
-              <SelectItem value="suspend_user">회원 정지</SelectItem>
-              <SelectItem value="lift_suspension">정지 해제</SelectItem>
-              <SelectItem value="update_report">신고 처리</SelectItem>
-              <SelectItem value="reply_inquiry">문의 답변</SelectItem>
-              <SelectItem value="create_notice">공지 작성</SelectItem>
-              <SelectItem value="update_notice">공지 수정</SelectItem>
-              <SelectItem value="delete_notice">공지 삭제</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Card */}
+        <div className={v1Card}>
+          {/* Filter */}
+          <div className="px-5 py-4 border-b border-border/50">
+            <div className="flex items-center justify-between">
+              <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-48 rounded-[10px]">
+                  <SelectValue placeholder="활동 유형" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 활동</SelectItem>
+                  <SelectItem value="suspend_user">회원 정지</SelectItem>
+                  <SelectItem value="lift_suspension">정지 해제</SelectItem>
+                  <SelectItem value="update_report">신고 처리</SelectItem>
+                  <SelectItem value="reply_inquiry">문의 답변</SelectItem>
+                  <SelectItem value="create_notice">공지 작성</SelectItem>
+                  <SelectItem value="update_notice">공지 수정</SelectItem>
+                  <SelectItem value="delete_notice">공지 삭제</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">
+                총 {total.toLocaleString()}건
+              </span>
+            </div>
+          </div>
 
-        {/* Log List */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+          {/* Log List */}
           {isLoading ? (
-            <div className="p-8 text-center text-slate-500">로딩 중...</div>
+            <div className="p-8 text-center text-muted-foreground">로딩 중...</div>
           ) : logs.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              <Activity className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <div className="p-8 text-center text-muted-foreground">
+              <Activity className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
               <p>활동 기록이 없습니다.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-200 dark:divide-slate-700">
+            <div className="divide-y divide-border/50">
               {logs.map((log) => {
                 const config = getActionConfig(log.action);
                 const Icon = config.icon;
 
                 return (
-                  <div key={log.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                  <div key={log.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className={cn('mt-0.5', config.color)}>
-                        <Icon className="w-5 h-5" />
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                        style={{ background: `${config.color}15` }}
+                      >
+                        <Icon className="w-4 h-4" style={{ color: config.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-slate-900 dark:text-white">
+                          <span className="font-medium text-foreground">
                             {log.operatorName || '운영자'}
                           </span>
-                          <span className="text-slate-600 dark:text-slate-300">
-                            {config.label}
-                          </span>
+                          <V1Chip variant={config.variant}>{config.label}</V1Chip>
                           {log.targetType && (
-                            <span className="text-sm text-slate-500">
+                            <span className="text-xs text-muted-foreground">
                               ({log.targetType})
                             </span>
                           )}
                         </div>
                         {log.details && (
-                          <p className="text-sm text-slate-500 mt-1 truncate">
+                          <p className="text-sm text-muted-foreground mt-1 truncate">
                             {typeof log.details === 'object'
                               ? Object.entries(log.details)
                                   .filter(([_, v]) => v)
@@ -173,7 +184,7 @@ export function ActivityLogs() {
                               : String(log.details)}
                           </p>
                         )}
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {new Date(log.createdAt).toLocaleString('ko-KR')}
                         </p>
                       </div>
@@ -186,8 +197,8 @@ export function ActivityLogs() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
+            <div className="px-5 py-3 border-t border-border/50 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
                 {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total}
               </p>
               <div className="flex items-center gap-2">
@@ -196,15 +207,17 @@ export function ActivityLogs() {
                   size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
+                  className="rounded-lg"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm text-slate-600">{page} / {totalPages}</span>
+                <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
+                  className="rounded-lg"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>

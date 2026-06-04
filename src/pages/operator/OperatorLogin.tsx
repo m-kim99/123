@@ -78,7 +78,7 @@ export function OperatorLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="operator@traystorage.com"
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 rounded-[10px]"
                 autoComplete="email"
               />
             </div>
@@ -94,7 +94,7 @@ export function OperatorLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 pr-10"
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 pr-10 rounded-[10px]"
                   autoComplete="current-password"
                 />
                 <button
@@ -110,7 +110,7 @@ export function OperatorLogin() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold rounded-[11px]"
             >
               {isSubmitting ? '로그인 중...' : '로그인'}
             </Button>

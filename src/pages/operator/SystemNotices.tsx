@@ -31,14 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,12 +48,23 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { SystemNotice, SystemNoticeType, NoticeTargetAudience, NoticeDisplayLocation } from '@/types/operator';
+import {
+  V1PageHeader,
+  V1Chip,
+  v1Card,
+  V1ModalHeader,
+  V1ModalBody,
+  V1ModalFooter,
+  V1,
+} from '@/components/ui/v1-components';
 
-const typeConfig: Record<SystemNoticeType, { label: string; icon: any; color: string }> = {
-  info: { label: '안내', icon: Info, color: 'bg-blue-100 text-blue-700' },
-  warning: { label: '주의', icon: AlertTriangle, color: 'bg-amber-100 text-amber-700' },
-  maintenance: { label: '점검', icon: Wrench, color: 'bg-orange-100 text-orange-700' },
-  update: { label: '업데이트', icon: Sparkles, color: 'bg-violet-100 text-violet-700' },
+type ChipVariant = 'blue' | 'emerald' | 'amber' | 'red' | 'violet' | 'neutral';
+
+const typeConfig: Record<SystemNoticeType, { label: string; icon: any; variant: ChipVariant; color: string }> = {
+  info: { label: '안내', icon: Info, variant: 'blue', color: V1.blue },
+  warning: { label: '주의', icon: AlertTriangle, variant: 'amber', color: V1.amber },
+  maintenance: { label: '점검', icon: Wrench, variant: 'amber', color: V1.amber },
+  update: { label: '업데이트', icon: Sparkles, variant: 'violet', color: V1.violet },
 };
 
 const audienceLabels: Record<NoticeTargetAudience, string> = {
@@ -86,7 +90,6 @@ export function SystemNotices() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // 작성/수정 다이얼로그
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<SystemNotice | null>(null);
   const [formData, setFormData] = useState({
@@ -100,7 +103,6 @@ export function SystemNotices() {
     expiresAt: '',
   });
 
-  // 삭제 확인 다이얼로그
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingNotice, setDeletingNotice] = useState<SystemNotice | null>(null);
 
@@ -219,148 +221,155 @@ export function SystemNotices() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  const activeCount = notices.filter((n) => n.isActive).length;
+
   return (
     <OperatorLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">시스템 공지</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              전체 사용자에게 표시되는 시스템 공지를 관리합니다.
-            </p>
-          </div>
-          <Button onClick={openCreateDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            새 공지
-          </Button>
-        </div>
+        <V1PageHeader
+          eyebrow={`총 ${notices.length}개 · 게시중 ${activeCount}개`}
+          title="시스템 공지"
+          sub="전체 사용자에게 표시되는 시스템 공지를 관리합니다."
+          right={
+            <button
+              onClick={openCreateDialog}
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              새 공지
+            </button>
+          }
+        />
 
         {/* Notice List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center text-slate-500">
-              로딩 중...
-            </div>
-          ) : sortedNotices.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center text-slate-500">
-              <Megaphone className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-              <p>등록된 공지가 없습니다.</p>
-            </div>
-          ) : (
-            sortedNotices.map((notice) => {
-              const type = typeConfig[notice.type];
-              const TypeIcon = type.icon;
+        <div className={v1Card}>
+          <div className="divide-y divide-border/50">
+            {isLoading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                로딩 중...
+              </div>
+            ) : sortedNotices.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Megaphone className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                <p>등록된 공지가 없습니다.</p>
+              </div>
+            ) : (
+              sortedNotices.map((notice) => {
+                const type = typeConfig[notice.type];
+                const TypeIcon = type.icon;
 
-              return (
-                <div
-                  key={notice.id}
-                  className={cn(
-                    'bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border',
-                    notice.isActive
-                      ? 'border-slate-200 dark:border-slate-700'
-                      : 'border-slate-200 dark:border-slate-700 opacity-60'
-                  )}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={cn('p-2 rounded-lg', type.color)}>
-                      <TypeIcon className="w-5 h-5" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {notice.isPinned && (
-                          <Pin className="w-4 h-4 text-amber-500" />
-                        )}
-                        <h3 className="font-semibold text-slate-900 dark:text-white">
-                          {notice.title}
-                        </h3>
-                        {!notice.isActive && (
-                          <span className="px-2 py-0.5 text-xs bg-slate-200 text-slate-600 rounded-full">
-                            비활성
-                          </span>
-                        )}
+                return (
+                  <div
+                    key={notice.id}
+                    className={cn(
+                      'p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors',
+                      !notice.isActive && 'opacity-60'
+                    )}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
+                        style={{ background: `${type.color}15` }}
+                      >
+                        <TypeIcon className="w-5 h-5" style={{ color: type.color }} />
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
-                        {notice.content}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                        <span>{audienceLabels[notice.targetAudience]}</span>
-                        <span>·</span>
-                        <span>{locationLabels[notice.displayLocation]}</span>
-                        <span>·</span>
-                        <span>{new Date(notice.createdAt).toLocaleDateString('ko-KR')}</span>
-                        {notice.expiresAt && (
-                          <>
-                            <span>·</span>
-                            <span>만료: {new Date(notice.expiresAt).toLocaleDateString('ko-KR')}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditDialog(notice)}>
-                          <Pencil className="w-4 h-4 mr-2" />
-                          수정
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleTogglePinned(notice)}>
-                          <Pin className="w-4 h-4 mr-2" />
-                          {notice.isPinned ? '고정 해제' : '상단 고정'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleActive(notice)}>
-                          {notice.isActive ? (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {notice.isPinned && (
+                            <Pin className="w-4 h-4 text-amber-500" />
+                          )}
+                          <h3 className="font-semibold text-foreground">
+                            {notice.title}
+                          </h3>
+                          <V1Chip variant={type.variant}>{type.label}</V1Chip>
+                          {!notice.isActive && (
+                            <V1Chip variant="neutral">비활성</V1Chip>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {notice.content}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
+                          <span>{audienceLabels[notice.targetAudience]}</span>
+                          <span>·</span>
+                          <span>{locationLabels[notice.displayLocation]}</span>
+                          <span>·</span>
+                          <span>{new Date(notice.createdAt).toLocaleDateString('ko-KR')}</span>
+                          {notice.expiresAt && (
                             <>
-                              <EyeOff className="w-4 h-4 mr-2" />
-                              비활성화
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="w-4 h-4 mr-2" />
-                              활성화
+                              <span>·</span>
+                              <span>만료: {new Date(notice.expiresAt).toLocaleDateString('ko-KR')}</span>
                             </>
                           )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => { setDeletingNotice(notice); setDeleteDialogOpen(true); }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          삭제
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        </div>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="rounded-lg">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(notice)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            수정
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleTogglePinned(notice)}>
+                            <Pin className="w-4 h-4 mr-2" />
+                            {notice.isPinned ? '고정 해제' : '상단 고정'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleActive(notice)}>
+                            {notice.isActive ? (
+                              <>
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                비활성화
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="w-4 h-4 mr-2" />
+                                활성화
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => { setDeletingNotice(notice); setDeleteDialogOpen(true); }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingNotice ? '공지 수정' : '새 공지 작성'}</DialogTitle>
-            <DialogDescription>
-              {editingNotice ? '공지 내용을 수정합니다.' : '새로운 시스템 공지를 작성합니다.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="max-w-lg p-0 gap-0">
+          <V1ModalHeader
+            icon={Megaphone}
+            iconColor={V1.violet}
+            title={editingNotice ? '공지 수정' : '새 공지 작성'}
+            sub={editingNotice ? '공지 내용을 수정합니다.' : '새로운 시스템 공지를 작성합니다.'}
+          />
+          <V1ModalBody>
             <div className="space-y-2">
               <Label>제목</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="공지 제목"
+                className="rounded-[10px]"
               />
             </div>
             <div className="space-y-2">
@@ -370,6 +379,7 @@ export function SystemNotices() {
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder="공지 내용을 입력하세요..."
                 rows={4}
+                className="rounded-[10px]"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -379,7 +389,7 @@ export function SystemNotices() {
                   value={formData.type}
                   onValueChange={(v) => setFormData({ ...formData, type: v as SystemNoticeType })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-[10px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -396,7 +406,7 @@ export function SystemNotices() {
                   value={formData.targetAudience}
                   onValueChange={(v) => setFormData({ ...formData, targetAudience: v as NoticeTargetAudience })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-[10px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -414,7 +424,7 @@ export function SystemNotices() {
                   value={formData.displayLocation}
                   onValueChange={(v) => setFormData({ ...formData, displayLocation: v as NoticeDisplayLocation })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-[10px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -431,6 +441,7 @@ export function SystemNotices() {
                   type="date"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                  className="rounded-[10px]"
                 />
               </div>
             </div>
@@ -440,21 +451,21 @@ export function SystemNotices() {
                   checked={formData.isPinned}
                   onCheckedChange={(v) => setFormData({ ...formData, isPinned: v })}
                 />
-                <Label>상단 고정</Label>
+                <Label className="text-sm">상단 고정</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.isActive}
                   onCheckedChange={(v) => setFormData({ ...formData, isActive: v })}
                 />
-                <Label>활성화</Label>
+                <Label className="text-sm">활성화</Label>
               </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>취소</Button>
-            <Button onClick={handleSubmit}>{editingNotice ? '수정' : '등록'}</Button>
-          </DialogFooter>
+          </V1ModalBody>
+          <V1ModalFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-[10px]">취소</Button>
+            <Button onClick={handleSubmit} className="rounded-[10px]">{editingNotice ? '수정' : '등록'}</Button>
+          </V1ModalFooter>
         </DialogContent>
       </Dialog>
 
@@ -468,8 +479,8 @@ export function SystemNotices() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="rounded-[10px]">취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-[10px]">
               삭제
             </AlertDialogAction>
           </AlertDialogFooter>

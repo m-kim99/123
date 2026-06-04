@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Flag,
-  Filter,
   MoreVertical,
-  AlertTriangle,
   CheckCircle,
   XCircle,
   Clock,
@@ -31,32 +29,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import type { Report, ReportStatus, Priority } from '@/types/operator';
+import {
+  V1PageHeader,
+  V1Chip,
+  v1Card,
+  V1ModalHeader,
+  V1ModalBody,
+  V1ModalFooter,
+  V1,
+} from '@/components/ui/v1-components';
 
-const statusConfig: Record<ReportStatus, { label: string; icon: any; color: string }> = {
-  pending: { label: '대기', icon: Clock, color: 'bg-amber-100 text-amber-700' },
-  reviewing: { label: '검토중', icon: Eye, color: 'bg-blue-100 text-blue-700' },
-  resolved: { label: '처리완료', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
-  dismissed: { label: '기각', icon: XCircle, color: 'bg-slate-100 text-slate-700' },
+type ChipVariant = 'blue' | 'emerald' | 'amber' | 'red' | 'violet' | 'neutral';
+
+const statusConfig: Record<ReportStatus, { label: string; icon: any; variant: ChipVariant }> = {
+  pending: { label: '대기', icon: Clock, variant: 'amber' },
+  reviewing: { label: '검토중', icon: Eye, variant: 'blue' },
+  resolved: { label: '처리완료', icon: CheckCircle, variant: 'emerald' },
+  dismissed: { label: '기각', icon: XCircle, variant: 'neutral' },
 };
 
-const priorityConfig: Record<Priority, { label: string; color: string }> = {
-  low: { label: '낮음', color: 'bg-slate-100 text-slate-600' },
-  normal: { label: '보통', color: 'bg-blue-100 text-blue-600' },
-  high: { label: '높음', color: 'bg-orange-100 text-orange-600' },
-  urgent: { label: '긴급', color: 'bg-red-100 text-red-600' },
+const priorityConfig: Record<Priority, { label: string; variant: ChipVariant }> = {
+  low: { label: '낮음', variant: 'neutral' },
+  normal: { label: '보통', variant: 'blue' },
+  high: { label: '높음', variant: 'amber' },
+  urgent: { label: '긴급', variant: 'red' },
 };
 
 const categoryLabels: Record<string, string> = {
@@ -83,16 +84,14 @@ export function ReportManagement() {
   const updateReport = useOperatorStore((s) => s.updateReport);
 
   const [statusFilter, setStatusFilter] = useState<string>('pending');
-  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const limit = 20;
 
-  // 상세 보기 다이얼로그
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-  // 처리 다이얼로그
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<'resolve' | 'dismiss'>('resolve');
   const [actionNote, setActionNote] = useState('');
@@ -164,68 +163,74 @@ export function ReportManagement() {
     <OperatorLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">신고 관리</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            사용자 신고를 검토하고 처리합니다. (총 {reportsTotal.toLocaleString()}건)
-          </p>
-        </div>
+        <V1PageHeader
+          eyebrow={`총 ${reportsTotal.toLocaleString()}건 신고`}
+          title="신고 관리"
+          sub="사용자 신고를 검토하고 처리합니다."
+        />
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="상태 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="pending">대기</SelectItem>
-                <SelectItem value="reviewing">검토중</SelectItem>
-                <SelectItem value="resolved">처리완료</SelectItem>
-                <SelectItem value="dismissed">기각</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="우선순위" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="urgent">긴급</SelectItem>
-                <SelectItem value="high">높음</SelectItem>
-                <SelectItem value="normal">보통</SelectItem>
-                <SelectItem value="low">낮음</SelectItem>
-              </SelectContent>
-            </Select>
+        {/* Table Card */}
+        <div className={v1Card}>
+          {/* Filters */}
+          <div className="px-5 py-4 border-b border-border/50">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <div className="flex gap-3">
+                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+                  <SelectTrigger className="w-36 rounded-[10px]">
+                    <SelectValue placeholder="상태" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 상태</SelectItem>
+                    <SelectItem value="pending">대기</SelectItem>
+                    <SelectItem value="reviewing">검토중</SelectItem>
+                    <SelectItem value="resolved">처리완료</SelectItem>
+                    <SelectItem value="dismissed">기각</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); setPage(1); }}>
+                  <SelectTrigger className="w-36 rounded-[10px]">
+                    <SelectValue placeholder="우선순위" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 우선순위</SelectItem>
+                    <SelectItem value="urgent">긴급</SelectItem>
+                    <SelectItem value="high">높음</SelectItem>
+                    <SelectItem value="normal">보통</SelectItem>
+                    <SelectItem value="low">낮음</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                총 {reportsTotal.toLocaleString()}건
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Report List */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">유형</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">분류</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">사유</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">우선순위</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">상태</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">신고일</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">관리</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">유형</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">분류</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">사유</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">우선순위</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">상태</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase">신고일</th>
+                  <th className="px-5 py-3 text-right text-xs font-medium text-muted-foreground uppercase">관리</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody className="divide-y divide-border/50">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">로딩 중...</td>
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">로딩 중...</td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">신고가 없습니다.</td>
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
+                      <Flag className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                      신고가 없습니다.
+                    </td>
                   </tr>
                 ) : (
                   reports.map((report) => {
@@ -236,43 +241,38 @@ export function ReportManagement() {
                     const priority = priorityConfig[report.priority];
 
                     return (
-                      <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        <td className="px-4 py-3">
+                      <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
-                            <TargetIcon className="w-4 h-4 text-slate-400" />
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <TargetIcon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">
                               {targetType?.label || report.targetType}
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <td className="px-5 py-3">
+                          <span className="text-sm text-foreground">
                             {categoryLabels[report.category] || report.category}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm text-slate-700 dark:text-slate-300 truncate max-w-xs">
+                        <td className="px-5 py-3">
+                          <p className="text-sm text-foreground truncate max-w-xs">
                             {report.reason}
                           </p>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className={cn('px-2 py-1 text-xs font-medium rounded-full', priority.color)}>
-                            {priority.label}
-                          </span>
+                        <td className="px-5 py-3">
+                          <V1Chip variant={priority.variant}>{priority.label}</V1Chip>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className={cn('inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full', status.color)}>
-                            <StatusIcon className="w-3 h-3" />
-                            {status.label}
-                          </span>
+                        <td className="px-5 py-3">
+                          <V1Chip variant={status.variant} icon={StatusIcon}>{status.label}</V1Chip>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-500">
+                        <td className="px-5 py-3 text-sm text-muted-foreground">
                           {new Date(report.createdAt).toLocaleDateString('ko-KR')}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-5 py-3 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="rounded-lg">
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -315,16 +315,16 @@ export function ReportManagement() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
+            <div className="px-5 py-3 border-t border-border/50 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
                 {(page - 1) * limit + 1} - {Math.min(page * limit, reportsTotal)} / {reportsTotal}
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-lg">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm text-slate-600">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-lg">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -335,74 +335,75 @@ export function ReportManagement() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>신고 상세</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 gap-0">
+          <V1ModalHeader
+            icon={Flag}
+            iconColor={V1.red}
+            title="신고 상세"
+            sub={selectedReport ? `${targetTypeLabels[selectedReport.targetType]?.label} 신고` : ''}
+          />
           {selectedReport && (
-            <div className="space-y-4 py-4">
+            <V1ModalBody>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-slate-500">신고 유형</p>
-                  <p className="font-medium">{targetTypeLabels[selectedReport.targetType]?.label}</p>
+                  <p className="text-muted-foreground mb-1">신고 유형</p>
+                  <p className="font-medium text-foreground">{targetTypeLabels[selectedReport.targetType]?.label}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">분류</p>
-                  <p className="font-medium">{categoryLabels[selectedReport.category]}</p>
+                  <p className="text-muted-foreground mb-1">분류</p>
+                  <p className="font-medium text-foreground">{categoryLabels[selectedReport.category]}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">우선순위</p>
-                  <span className={cn('px-2 py-1 text-xs font-medium rounded-full', priorityConfig[selectedReport.priority].color)}>
+                  <p className="text-muted-foreground mb-1">우선순위</p>
+                  <V1Chip variant={priorityConfig[selectedReport.priority].variant}>
                     {priorityConfig[selectedReport.priority].label}
-                  </span>
+                  </V1Chip>
                 </div>
                 <div>
-                  <p className="text-slate-500">상태</p>
-                  <span className={cn('px-2 py-1 text-xs font-medium rounded-full', statusConfig[selectedReport.status].color)}>
+                  <p className="text-muted-foreground mb-1">상태</p>
+                  <V1Chip variant={statusConfig[selectedReport.status].variant}>
                     {statusConfig[selectedReport.status].label}
-                  </span>
+                  </V1Chip>
                 </div>
               </div>
               <div>
-                <p className="text-slate-500 text-sm mb-1">신고 사유</p>
-                <p className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg text-sm">
+                <p className="text-muted-foreground text-sm mb-1">신고 사유</p>
+                <p className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm text-foreground">
                   {selectedReport.reason}
                 </p>
               </div>
               {selectedReport.actionTaken && (
                 <div>
-                  <p className="text-slate-500 text-sm mb-1">처리 내용</p>
-                  <p className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-sm text-green-700 dark:text-green-300">
+                  <p className="text-muted-foreground text-sm mb-1">처리 내용</p>
+                  <p className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl text-sm text-emerald-700 dark:text-emerald-300">
                     {selectedReport.actionTaken}
                   </p>
                 </div>
               )}
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-muted-foreground">
                 신고일: {new Date(selectedReport.createdAt).toLocaleString('ko-KR')}
                 {selectedReport.reviewedAt && (
                   <> · 처리일: {new Date(selectedReport.reviewedAt).toLocaleString('ko-KR')}</>
                 )}
               </div>
-            </div>
+            </V1ModalBody>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>닫기</Button>
-          </DialogFooter>
+          <V1ModalFooter>
+            <Button variant="outline" onClick={() => setDetailDialogOpen(false)} className="rounded-[10px]">닫기</Button>
+          </V1ModalFooter>
         </DialogContent>
       </Dialog>
 
       {/* Action Dialog */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{actionType === 'resolve' ? '신고 처리' : '신고 기각'}</DialogTitle>
-            <DialogDescription>
-              {actionType === 'resolve'
-                ? '이 신고를 처리 완료로 표시합니다.'
-                : '이 신고를 기각합니다.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="p-0 gap-0">
+          <V1ModalHeader
+            icon={actionType === 'resolve' ? CheckCircle : XCircle}
+            iconColor={actionType === 'resolve' ? V1.emerald : V1.muted}
+            title={actionType === 'resolve' ? '신고 처리' : '신고 기각'}
+            sub={actionType === 'resolve' ? '이 신고를 처리 완료로 표시합니다.' : '이 신고를 기각합니다.'}
+          />
+          <V1ModalBody>
             <div className="space-y-2">
               <Label>{actionType === 'resolve' ? '처리 내용' : '기각 사유'}</Label>
               <Textarea
@@ -410,18 +411,20 @@ export function ReportManagement() {
                 onChange={(e) => setActionNote(e.target.value)}
                 placeholder={actionType === 'resolve' ? '처리 내용을 입력하세요...' : '기각 사유를 입력하세요...'}
                 rows={3}
+                className="rounded-[10px]"
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialogOpen(false)}>취소</Button>
+          </V1ModalBody>
+          <V1ModalFooter>
+            <Button variant="outline" onClick={() => setActionDialogOpen(false)} className="rounded-[10px]">취소</Button>
             <Button
               onClick={handleAction}
               variant={actionType === 'resolve' ? 'default' : 'secondary'}
+              className="rounded-[10px]"
             >
               {actionType === 'resolve' ? '처리 완료' : '기각'}
             </Button>
-          </DialogFooter>
+          </V1ModalFooter>
         </DialogContent>
       </Dialog>
     </OperatorLayout>
