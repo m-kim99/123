@@ -10,10 +10,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
+import { useSlowRender } from '@/lib/devSlowdown';
 
 const card = v1Card;
 
 export function TeamDashboard() {
+  useSlowRender();
   const { t, i18n } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const departments = useDocumentStore((state) => state.departments);

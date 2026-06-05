@@ -1,4 +1,5 @@
-import { useEffect, lazy, Suspense, useState } from 'react';
+import { useEffect, Suspense, useState } from 'react';
+import { slowLazy as lazy } from './lib/devSlowdown';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';

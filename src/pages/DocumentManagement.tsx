@@ -81,6 +81,7 @@ import { ColorLabelPicker, ColorLabelBadge } from '@/components/ColorLabelPicker
 import { hasPermission, type Role, type Action } from '@/lib/permissions';
 import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 import i18n from '@/lib/i18n';
+import { useSlowRender } from '@/lib/devSlowdown';
 
 function splitFilesByType(files: File[]) {
   const pdfFiles: File[] = [];
@@ -154,6 +155,7 @@ function getExpiryStatus(expiryDate: string | null): {
 }
 
 export function DocumentManagement() {
+  useSlowRender();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   
