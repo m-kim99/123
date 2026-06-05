@@ -5,18 +5,20 @@
  * Remove this file entirely once optimization work is complete.
  */
 
+import { lazy } from 'react';
+
 // ──────────────────── MASTER SWITCH ────────────────────
 export const DEV_SLOWDOWN = {
   ENABLED: true,
 
   // Lazy-import artificial delay (ms)
-  LAZY_DELAY_MS: 800,
+  LAZY_DELAY_MS: 200,
 
   // Extra blocking work on every React re-render (iterations)
-  RENDER_BURN_ITERATIONS: 600_000,
+  RENDER_BURN_ITERATIONS: 80_000,
 
   // Artificial delay added to fetch/XHR responses (ms)
-  FETCH_DELAY_MS: 500,
+  FETCH_DELAY_MS: 150,
 };
 
 // ──────────────────── Slow lazy() wrapper ────────────────────
@@ -27,7 +29,6 @@ export const DEV_SLOWDOWN = {
 export function slowLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
 ): React.LazyExoticComponent<T> {
-  const { lazy } = require('react');
   if (!DEV_SLOWDOWN.ENABLED) return lazy(factory);
 
   return lazy(() =>
