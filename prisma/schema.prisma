@@ -980,13 +980,16 @@ model system_notices {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title           String
   content         String
-  type            String?   @default("info")
-  is_active       Boolean?  @default(true)
-  target_audience String?   @default("all")
-  created_by      String    @db.Uuid
-  created_at      DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
-  expires_at      DateTime? @db.Timestamptz(6)
+  type             String?   @default("info")
+  is_active        Boolean?  @default(true)
+  is_pinned        Boolean?  @default(false)
+  target_audience  String?   @default("all")
+  display_location String?   @default("dashboard")
+  created_by       String    @db.Uuid
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime? @default(now()) @db.Timestamptz(6)
+  published_at     DateTime? @default(now()) @db.Timestamptz(6)
+  expires_at       DateTime? @db.Timestamptz(6)
   operators       operators @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
@@ -1160,6 +1163,7 @@ model public_users {
   company_id                                                  String?                    @db.Uuid
   push_id                                                     String?                    @db.VarChar(64)
   preferences                                                 Json?                      @default("{}")
+  last_login_at                                               DateTime?                  @db.Timestamptz(6)
   account_deletion_requests                                   account_deletion_requests?
   announcement_comments                                       announcement_comments[]
   announcements                                               announcements[]
