@@ -88,7 +88,8 @@ export function AccountDeletionPage() {
         .from('account_deletion_requests')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .eq('status', 'pending')
+        .maybeSingle();
 
       if (existingRequest) {
         toast({

@@ -504,7 +504,7 @@ export function LoginPage() {
       .select('id, scheduled_deletion_at')
       .eq('user_id', authData.user.id)
       .eq('status', 'pending')
-      .single();
+      .maybeSingle();
 
     if (deletionRequest) {
       // 탈퇴 신청이 있으면 경고 다이얼로그 표시

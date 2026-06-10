@@ -63,10 +63,23 @@ interface AuthState {
 }
 
 // 정지 상태 확인 (check_user_suspension RPC는 SECURITY DEFINER라 RLS 무관하게 조회 가능)
+// RPC가 DB에 없으면(404) 세션 동안 재호출하지 않음
+let suspensionRpcUnavailable = false;
+
 async function getActiveSuspension(userId: string): Promise<{ reason: string; expiresAt: string | null } | null> {
+  if (suspensionRpcUnavailable) return null;
+
   const { data, error } = await supabase.rpc('check_user_suspension', { check_user_id: userId });
   if (error) {
-    console.error('정지 상태 확인 실패:', error);
+    const code = (error as any)?.code;
+    const message = (error as any)?.message ?? '';
+    // PGRST202: 함수 없음 → DB에 마이그레이션(20260603) 미적용 상태
+    if (code === 'PGRST202' || message.includes('Could not find the function')) {
+      suspensionRpcUnavailable = true;
+      console.warn('check_user_suspension RPC가 DB에 없어 정지 상태 확인을 건너뜁니다. (마이그레이션 20260603 적용 필요)');
+    } else {
+      console.error('정지 상태 확인 실패:', error);
+    }
     return null; // 확인 실패 시 차단하지 않음 (fail-open)
   }
   const row = Array.isArray(data) ? data[0] : data;
@@ -539,7 +552,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .select('id, scheduled_deletion_at')
           .eq('user_id', userData.id)
           .eq('status', 'pending')
-          .single();
+          .maybeSingle();
 
         let pendingDeletionInfo: PendingDeletion | null = null;
         if (deletionRequest) {

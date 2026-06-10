@@ -586,7 +586,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .select('id')
         .eq('user_id', user.id)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
 
       if (existingRequest) {
         setProfileError(t('profile.alreadyRequested'));

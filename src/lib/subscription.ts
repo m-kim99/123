@@ -42,10 +42,19 @@ const FREE_PLAN_DEFAULTS: PlanLimits = {
   feature_statistics_advanced: false,
 };
 
+// 플랜 제한 캐시 (60초 TTL) — 연속 체크 시 중복 요청 방지
+const planLimitsCache = new Map<string, { limits: PlanLimits; fetchedAt: number }>();
+const PLAN_CACHE_TTL_MS = 60_000;
+
 /**
  * 회사의 현재 플랜 제한 정보를 조회
  */
 export async function getCompanyPlanLimits(companyId: string): Promise<PlanLimits> {
+  const cached = planLimitsCache.get(companyId);
+  if (cached && Date.now() - cached.fetchedAt < PLAN_CACHE_TTL_MS) {
+    return cached.limits;
+  }
+
   try {
     const { data: subscription } = await supabase
       .from('subscriptions')
@@ -67,13 +76,11 @@ export async function getCompanyPlanLimits(companyId: string): Promise<PlanLimit
       `)
       .eq('company_id', companyId)
       .in('status', ['active', 'trialing'])
-      .single();
+      .maybeSingle();
 
-    if (subscription?.plan) {
-      return subscription.plan as unknown as PlanLimits;
-    }
-
-    return FREE_PLAN_DEFAULTS;
+    const limits = (subscription?.plan as unknown as PlanLimits) ?? FREE_PLAN_DEFAULTS;
+    planLimitsCache.set(companyId, { limits, fetchedAt: Date.now() });
+    return limits;
   } catch {
     return FREE_PLAN_DEFAULTS;
   }
@@ -146,7 +153,7 @@ export async function checkAiQueryLimit(companyId: string): Promise<UsageCheckRe
       .select('ai_queries_used')
       .eq('company_id', companyId)
       .eq('period_start', periodStr)
-      .single();
+      .maybeSingle();
 
     const currentUsage = usage?.ai_queries_used ?? 0;
 
