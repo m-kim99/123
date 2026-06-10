@@ -38,7 +38,14 @@
       "Bash(git commit *)",
       "Bash(claude --model claude-fable-5 --print \"test\")",
       "Bash(claude *)",
-      "Bash(npm show *)"
+      "Bash(npm show *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(sed -n '652,670p' /Users/mini/Downloads/123-main/docs/schema.sql)",
+      "Bash(sed -n '1740,1750p' /Users/mini/Downloads/123-main/docs/schema.sql)",
+      "Bash(git mv *)",
+      "Bash(sed -n '979,996p' /Users/mini/Downloads/123-main/prisma/schema.prisma)",
+      "Bash(sed -n '1153,1210p' /Users/mini/Downloads/123-main/prisma/schema.prisma)",
+      "Bash(npx prisma *)"
     ]
   }
 }
