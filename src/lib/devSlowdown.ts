@@ -9,7 +9,7 @@ import { lazy } from 'react';
 
 // ──────────────────── MASTER SWITCH ────────────────────
 export const DEV_SLOWDOWN = {
-  ENABLED: true,
+  ENABLED: false,
 
   // Lazy-import artificial delay (ms)
   LAZY_DELAY_MS: 200,
