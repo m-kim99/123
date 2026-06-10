@@ -309,23 +309,28 @@ function App() {
     const { checkSession } = useAuthStore.getState();
     const { checkOperatorSession } = useOperatorStore.getState();
 
-    checkSession();
+    // 세션 분리: 운영자 콘솔(/operator)에서는 운영자 세션만, 그 외에는 사용자 세션만 체크
+    const isOperatorPath = () => window.location.pathname.startsWith('/operator');
 
-    // 운영자 페이지 접근 시 운영자 세션도 체크
-    if (window.location.pathname.startsWith('/operator')) {
+    if (isOperatorPath()) {
       checkOperatorSession();
+    } else {
+      checkSession();
     }
 
     // 세션 상태 변경 감지 (토큰 갱신, 로그아웃 등)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'SIGNED_OUT') {
-        useAuthStore.getState().logout();
-        useOperatorStore.getState().operatorLogout();
+        if (isOperatorPath()) {
+          useOperatorStore.getState().operatorLogout();
+        } else {
+          useAuthStore.getState().logout();
+        }
       } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-        useAuthStore.getState().checkSession();
-        // 운영자 페이지에 있으면 운영자 세션도 체크
-        if (window.location.pathname.startsWith('/operator')) {
+        if (isOperatorPath()) {
           useOperatorStore.getState().checkOperatorSession();
+        } else {
+          useAuthStore.getState().checkSession();
         }
       }
     });

@@ -416,6 +416,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         // users 테이블에 없으면 자동 생성 (신규 OAuth 사용자에 한함)
         if (error && (error as any).code === 'PGRST116') {
+          // 세션 분리: 운영자 전용 계정(operators 테이블에만 존재)은
+          // users 자동 생성/강제 로그아웃 대상에서 제외하고 사용자 상태만 해제
+          const { data: operatorRecord } = await supabase
+            .from('operators')
+            .select('id')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (operatorRecord) {
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              needsOnboarding: false,
+            });
+            return;
+          }
+
           // 보안: Auth 계정 생성 후 24시간 이내인 경우에만 자동 생성 허용
           // 기존 사용자의 DB 레코드가 삭제된 경우 재가입 악용 방지
           const authCreatedAt = new Date(session.user.created_at);
