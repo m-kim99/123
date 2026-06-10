@@ -11,7 +11,6 @@ import {
   X,
   Shield,
   ChevronDown,
-  Settings,
   Activity,
   Building2,
 } from 'lucide-react';
@@ -25,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useOperatorStore } from '@/store/operatorStore';
 import { cn } from '@/lib/utils';
+import type { OperatorPermissions } from '@/types/operator';
 
 interface OperatorLayoutProps {
   children: ReactNode;
@@ -36,6 +36,7 @@ interface NavItem {
   label: string;
   end?: boolean;
   countKey?: 'pendingReports' | 'openInquiries';
+  permission?: keyof OperatorPermissions;
 }
 
 interface NavSection {
@@ -53,21 +54,21 @@ const navSections: NavSection[] = [
   {
     label: 'MANAGE',
     items: [
-      { path: '/operator/members', icon: Users, label: '회원 관리' },
-      { path: '/operator/companies', icon: Building2, label: '회사 관리' },
+      { path: '/operator/members', icon: Users, label: '회원 관리', permission: 'members' },
+      { path: '/operator/companies', icon: Building2, label: '회사 관리', permission: 'companies' },
     ],
   },
   {
     label: 'QUEUE',
     items: [
-      { path: '/operator/reports', icon: Flag, label: '신고 관리', countKey: 'pendingReports' },
-      { path: '/operator/inquiries', icon: MessageSquare, label: '문의 관리', countKey: 'openInquiries' },
+      { path: '/operator/reports', icon: Flag, label: '신고 관리', countKey: 'pendingReports', permission: 'reports' },
+      { path: '/operator/inquiries', icon: MessageSquare, label: '문의 관리', countKey: 'openInquiries', permission: 'inquiries' },
     ],
   },
   {
     label: 'SYSTEM',
     items: [
-      { path: '/operator/notices', icon: Megaphone, label: '시스템 공지' },
+      { path: '/operator/notices', icon: Megaphone, label: '시스템 공지', permission: 'notices' },
       { path: '/operator/logs', icon: Activity, label: '활동 로그' },
     ],
   },
@@ -128,9 +129,19 @@ export function OperatorLayout({ children }: OperatorLayoutProps) {
     );
   };
 
+  // 권한 검사 — 슈퍼 운영자는 모든 메뉴, 그 외엔 permissions 플래그 기준
+  const hasPermission = (permission?: keyof OperatorPermissions) =>
+    !permission || !!operator?.isSuper || !!operator?.permissions?.[permission];
+
   const renderNavSections = (mobile?: boolean) => (
     <div className="space-y-5">
-      {navSections.map((section) => (
+      {navSections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter((item) => hasPermission(item.permission)),
+        }))
+        .filter((section) => section.items.length > 0)
+        .map((section) => (
         <div key={section.label}>
           <div className="px-3 mb-2 text-[9.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             {section.label}
@@ -194,11 +205,6 @@ export function OperatorLayout({ children }: OperatorLayoutProps) {
                     </span>
                   )}
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/operator/settings')}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  설정
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                   <LogOut className="w-4 h-4 mr-2" />

@@ -151,6 +151,8 @@ export interface OperatorDashboardStats {
   activeSuspensions: number;
   newUsers7d: number;
   newUsers30d: number;
+  newCompanies7d: number;
+  avgResponseHours: number | null; // 최근 30일 해결된 문의의 평균 응답 시간 (없으면 null)
 }
 
 // 회원 관리에서 사용할 확장된 사용자 타입

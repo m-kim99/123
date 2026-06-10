@@ -62,6 +62,28 @@ interface AuthState {
   clearError: () => void;
 }
 
+// 정지 상태 확인 (check_user_suspension RPC는 SECURITY DEFINER라 RLS 무관하게 조회 가능)
+async function getActiveSuspension(userId: string): Promise<{ reason: string; expiresAt: string | null } | null> {
+  const { data, error } = await supabase.rpc('check_user_suspension', { check_user_id: userId });
+  if (error) {
+    console.error('정지 상태 확인 실패:', error);
+    return null; // 확인 실패 시 차단하지 않음 (fail-open)
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (row?.is_suspended) {
+    return { reason: row.reason ?? '', expiresAt: row.expires_at ?? null };
+  }
+  return null;
+}
+
+function suspensionMessage(suspension: { reason: string; expiresAt: string | null }): string {
+  const until = suspension.expiresAt
+    ? `${new Date(suspension.expiresAt).toLocaleDateString('ko-KR')}까지 `
+    : '영구 ';
+  const reason = suspension.reason ? ` (사유: ${suspension.reason})` : '';
+  return `이 계정은 ${until}이용이 정지되었습니다.${reason}`;
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
@@ -130,6 +152,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('선택한 역할과 계정 정보가 일치하지 않습니다');
       }
 
+      // 계정 정지 확인 — 정지 상태면 로그인 차단
+      const suspension = await getActiveSuspension(userData.id);
+      if (suspension) {
+        await supabase.auth.signOut();
+        throw new Error(suspensionMessage(suspension));
+      }
+
       const company = (userData as any).companies;
 
       set({
@@ -153,6 +182,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         method: 'password',
         selected_role: role,
       });
+
+      // 마지막 로그인 시간 기록 (실패해도 로그인 흐름엔 영향 없음)
+      supabase
+        .from('users')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', userData.id)
+        .then(({ error: llError }: { error: any }) => {
+          if (llError) console.error('마지막 로그인 기록 실패:', llError);
+        });
 
       // 앱 환경에서 푸시키 저장
       requestPushId((pushId) => {
@@ -477,6 +515,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
 
         if (!userData) throw new Error('사용자 정보를 찾을 수 없습니다');
+
+        // 계정 정지 확인 — 정지 상태면 세션 종료
+        const suspension = await getActiveSuspension(userData.id);
+        if (suspension) {
+          await supabase.auth.signOut();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            needsOnboarding: false,
+            error: suspensionMessage(suspension),
+          });
+          return;
+        }
 
         const company = (userData as any).companies;
         const needsOnboarding = !userData.company_id;

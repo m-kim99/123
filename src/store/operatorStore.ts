@@ -148,6 +148,9 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   operatorLogin: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
 
+    // 기존(일반 사용자) 세션 토큰 보존 — 운영자 검증 실패 시 복원용
+    const { data: { session: priorSession } } = await supabase.auth.getSession();
+
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -166,7 +169,15 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         .single();
 
       if (opError || !operatorData) {
-        await supabase.auth.signOut();
+        // 운영자가 아니면 로그인 시도 이전 세션으로 복원 (일반 사용자 세션 보호)
+        if (priorSession?.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: priorSession.access_token,
+            refresh_token: priorSession.refresh_token,
+          });
+        } else {
+          await supabase.auth.signOut();
+        }
         throw new Error('운영자 권한이 없습니다.');
       }
 
@@ -228,6 +239,8 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         { count: activeSuspensions },
         { count: newUsers7d },
         { count: newUsers30d },
+        { count: newCompanies7d },
+        { data: resolvedInquiries },
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('companies').select('*', { count: 'exact', head: true }),
@@ -240,7 +253,23 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
           .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
         supabase.from('users').select('*', { count: 'exact', head: true })
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('companies').select('*', { count: 'exact', head: true })
+          .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('inquiries').select('created_at, resolved_at')
+          .not('resolved_at', 'is', null)
+          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+          .limit(500),
       ]);
+
+      // 최근 30일 해결된 문의의 평균 응답 시간(시간 단위) 계산
+      let avgResponseHours: number | null = null;
+      if (resolvedInquiries && resolvedInquiries.length > 0) {
+        const totalHours = resolvedInquiries.reduce((sum: number, i: any) => {
+          const diff = new Date(i.resolved_at).getTime() - new Date(i.created_at).getTime();
+          return sum + diff / (1000 * 60 * 60);
+        }, 0);
+        avgResponseHours = totalHours / resolvedInquiries.length;
+      }
 
       set({
         stats: {
@@ -251,6 +280,8 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
           activeSuspensions: activeSuspensions || 0,
           newUsers7d: newUsers7d || 0,
           newUsers30d: newUsers30d || 0,
+          newCompanies7d: newCompanies7d || 0,
+          avgResponseHours,
         },
       });
     } catch (error) {
@@ -265,7 +296,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
       let query = supabase
         .from('users')
         .select(`
-          id, name, email, role, company_id, department_id, created_at,
+          id, name, email, role, company_id, department_id, created_at, last_login_at,
           companies:companies!left(name, code),
           departments:departments!left(name)
         `, { count: 'exact' });
@@ -316,7 +347,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         departmentId: u.department_id,
         departmentName: u.departments?.name || null,
         createdAt: u.created_at,
-        lastLoginAt: null,
+        lastLoginAt: u.last_login_at ?? null,
         isSuspended: !!suspensionMap[u.id],
         suspensionExpiresAt: suspensionMap[u.id]?.expiresAt || null,
       }));
@@ -330,6 +361,9 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   suspendUser: async (userId, reason, expiresAt, internalNote) => {
     const { operator } = get();
     if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
+    if (!operator.isSuper && !operator.permissions?.suspensions) {
+      return { success: false, error: '정지 권한이 없습니다.' };
+    }
 
     try {
       const { error } = await supabase.from('user_suspensions').insert({
@@ -361,6 +395,9 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   liftSuspension: async (suspensionId, reason) => {
     const { operator } = get();
     if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
+    if (!operator.isSuper && !operator.permissions?.suspensions) {
+      return { success: false, error: '정지 해제 권한이 없습니다.' };
+    }
 
     try {
       const { error } = await supabase

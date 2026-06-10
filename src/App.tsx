@@ -7,6 +7,7 @@ import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useOperatorStore } from './store/operatorStore';
+import type { OperatorPermissions } from './types/operator';
 import { supabase } from '@/lib/supabase';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
@@ -174,8 +175,14 @@ function PageLoader() {
   );
 }
 
-function OperatorProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isOperator, isLoading } = useOperatorStore();
+function OperatorProtectedRoute({
+  children,
+  permission,
+}: {
+  children: React.ReactNode;
+  permission?: keyof OperatorPermissions;
+}) {
+  const { isOperator, isLoading, operator } = useOperatorStore();
   const location = useLocation();
 
   // 세션 확인 중
@@ -186,6 +193,11 @@ function OperatorProtectedRoute({ children }: { children: React.ReactNode }) {
   // 운영자가 아니면 운영자 로그인 페이지로
   if (!isOperator) {
     return <Navigate to="/operator/login" state={{ from: location }} replace />;
+  }
+
+  // 권한 검사 — 슈퍼 운영자는 모든 권한 보유
+  if (permission && operator && !operator.isSuper && !operator.permissions?.[permission]) {
+    return <Navigate to="/operator" replace />;
   }
 
   return <>{children}</>;
@@ -603,7 +615,7 @@ function App() {
             <Route
               path="/operator/members"
               element={
-                <OperatorProtectedRoute>
+                <OperatorProtectedRoute permission="members">
                   <MemberManagement />
                 </OperatorProtectedRoute>
               }
@@ -611,7 +623,7 @@ function App() {
             <Route
               path="/operator/reports"
               element={
-                <OperatorProtectedRoute>
+                <OperatorProtectedRoute permission="reports">
                   <ReportManagement />
                 </OperatorProtectedRoute>
               }
@@ -619,7 +631,7 @@ function App() {
             <Route
               path="/operator/notices"
               element={
-                <OperatorProtectedRoute>
+                <OperatorProtectedRoute permission="notices">
                   <SystemNotices />
                 </OperatorProtectedRoute>
               }
@@ -627,7 +639,7 @@ function App() {
             <Route
               path="/operator/inquiries"
               element={
-                <OperatorProtectedRoute>
+                <OperatorProtectedRoute permission="inquiries">
                   <InquiryManagement />
                 </OperatorProtectedRoute>
               }
@@ -635,7 +647,7 @@ function App() {
             <Route
               path="/operator/companies"
               element={
-                <OperatorProtectedRoute>
+                <OperatorProtectedRoute permission="companies">
                   <CompanyManagement />
                 </OperatorProtectedRoute>
               }

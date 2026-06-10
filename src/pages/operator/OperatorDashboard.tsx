@@ -55,7 +55,6 @@ export function OperatorDashboard() {
               delta={stats?.newUsers7d ? `+${stats.newUsers7d}` : undefined}
               deltaTone="up"
               sub="명"
-              data={[45, 52, 48, 61, 55, 67, 72]}
             />
           </Link>
 
@@ -65,10 +64,9 @@ export function OperatorDashboard() {
               value={isLoading ? '...' : (stats?.totalCompanies ?? 0).toLocaleString()}
               icon={Building2}
               color={V1.emerald}
-              delta="+3"
+              delta={stats?.newCompanies7d ? `+${stats.newCompanies7d}` : undefined}
               deltaTone="up"
               sub="개"
-              data={[12, 14, 13, 15, 14, 16, 18]}
             />
           </Link>
 
@@ -88,7 +86,7 @@ export function OperatorDashboard() {
           <Link to="/operator/inquiries">
             <V1StatTile
               title="평균 응답"
-              value={isLoading ? '...' : '2.4'}
+              value={isLoading ? '...' : stats?.avgResponseHours != null ? stats.avgResponseHours.toFixed(1) : '–'}
               icon={Clock}
               color={V1.amber}
               delta={`${stats?.openInquiries ?? 0} 대기`}
