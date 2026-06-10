@@ -186,9 +186,22 @@ themeStore.setMode('dark')
 - `Capacitor.isNativePlatform()`으로 분기하는 코드가 여러 곳에 산재
 - 네이티브에서만 발생하는 버그는 웹 콘솔에서 재현 불가
 
-## 6. 주요 데이터 흐름
+## 6. DB 스키마 참조
 
-### 6.1 문서 업로드 흐름
+실제 Supabase DB의 스키마 덤프가 `docs/schema.sql`에 있다.
+마이그레이션 파일(`supabase/migrations/`)과 실제 DB 상태가 다를 수 있으므로,
+**DB 관련 디버깅 시에는 반드시 `docs/schema.sql`을 참조**한다.
+
+- `docs/schema.sql` — 테이블, 컬럼, FK, RLS 정책, 트리거, 함수, 뷰 전체
+- `docs/roles.sql` — DB 역할(role) 정의
+- `supabase/migrations/` — 마이그레이션 이력 (참고용, 실제 DB와 다를 수 있음)
+- `supabase/functions/` — Edge Function 14개
+
+> **스키마 동기화**: DB 변경 시 `SUPABASE_DB_PASSWORD='...' supabase db dump --linked -s public -f docs/schema.sql` 명령으로 덤프를 갱신할 것.
+
+## 7. 주요 데이터 흐름
+
+### 7.1 문서 업로드 흐름
 
 ```
 사용자가 파일 선택
@@ -201,7 +214,7 @@ themeStore.setMode('dark')
         → notificationStore → Realtime → 다른 사용자에게 전달
 ```
 
-### 6.2 사용자 인증 흐름
+### 7.2 사용자 인증 흐름
 
 ```
 LoginPage → authStore.login(email, pw, role)
@@ -216,7 +229,7 @@ LoginPage → authStore.login(email, pw, role)
     → notificationStore Realtime 구독 시작
 ```
 
-### 6.3 운영자 인증 흐름
+### 7.3 운영자 인증 흐름
 
 ```
 OperatorLogin → operatorStore.operatorLogin(email, pw)
