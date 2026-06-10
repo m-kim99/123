@@ -104,7 +104,11 @@
     "enterprise": "Enterprise",
     "perPersonMonth": "/Person/Monat",
     "minMembers": "Mindestens 3 Mitglieder",
-    "comingSoon": "In Vorbereitung"
+    "comingSoon": "In Vorbereitung",
+    "addMembersDesc": "Wählen Sie die Anzahl der Mitglieder und sehen Sie die monatlichen Kosten.",
+    "memberCountLabel": "Anzahl der hinzuzufügenden Mitglieder",
+    "unitPrice": "Preis pro Person",
+    "monthlyTotal": "Monatliche Summe"
   },
   "nav": {
     "home": "Startseite",

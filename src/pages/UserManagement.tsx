@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
@@ -55,6 +56,12 @@ export function UserManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const { user: authUser } = useAuthStore();
   const [memberLimit, setMemberLimit] = useState<{ current: number; limit: number | null } | null>(null);
+
+  // 플랜 업그레이드(인원 추가) 다이얼로그
+  const PRICE_PER_MEMBER = 3300;
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [additionalMembers, setAdditionalMembers] = useState('1');
+  const parsedMembers = Math.max(0, parseInt(additionalMembers, 10) || 0);
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -238,7 +245,11 @@ export function UserManagement() {
                 <span className="text-lg font-semibold text-slate-700">{memberLimit.limit}</span>
               </div>
               {memberLimit.current >= memberLimit.limit && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge
+                  variant="destructive"
+                  className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setUpgradeDialogOpen(true)}
+                >
                   <Crown className="h-3 w-3 mr-1" />
                   {t('subscription.upgrade')}
                 </Badge>
@@ -450,6 +461,59 @@ export function UserManagement() {
                 className="rounded-[10px] h-9 "
               >
                 {isSaving ? t('common.saving') : t('common.save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 플랜 업그레이드 — 인원 추가 다이얼로그 */}
+        <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-500" />
+                {t('subscription.upgrade')}
+              </DialogTitle>
+              <DialogDescription>{t('subscription.addMembersDesc')}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="additional-members">{t('subscription.memberCountLabel')}</Label>
+                <Input
+                  id="additional-members"
+                  type="number"
+                  min={1}
+                  value={additionalMembers}
+                  onChange={(e) => setAdditionalMembers(e.target.value)}
+                />
+              </div>
+              <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">{t('subscription.unitPrice')}</span>
+                  <span className="font-medium">₩3,300{t('subscription.perPersonMonth')}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
+                  <span className="text-xl font-bold text-[#2563eb]">
+                    ₩{(parsedMembers * PRICE_PER_MEMBER).toLocaleString()}
+                    <span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
+                🚧 {t('subscription.paymentNotReady')}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                className="rounded-[10px] h-9"
+                onClick={() => setUpgradeDialogOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button className="rounded-[10px] h-9" disabled>
+                {t('subscription.subscribe')}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -104,7 +104,11 @@
     "enterprise": "Enterprise",
     "perPersonMonth": "/person/mo",
     "minMembers": "Minimum 3 members",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "addMembersDesc": "Choose how many members to add and see the monthly cost.",
+    "memberCountLabel": "Number of members to add",
+    "unitPrice": "Price per person",
+    "monthlyTotal": "Monthly total"
   },
   "nav": {
     "home": "Home",

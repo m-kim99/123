@@ -104,7 +104,11 @@
     "enterprise": "엔터프라이즈",
     "perPersonMonth": "/인/월",
     "minMembers": "기본 3인 이상",
-    "comingSoon": "준비 중"
+    "comingSoon": "준비 중",
+    "addMembersDesc": "추가할 인원 수를 선택하면 월 요금이 계산됩니다.",
+    "memberCountLabel": "추가할 인원 수",
+    "unitPrice": "인당 요금",
+    "monthlyTotal": "월 합계"
   },
   "nav": {
     "home": "홈",

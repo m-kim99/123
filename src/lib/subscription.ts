@@ -26,9 +26,9 @@ export interface UsageCheckResult {
   remaining: number | null;
 }
 
-// 무료 플랜 기본값 (DB에 연결되지 않았을 때 fallback)
+// 무료 플랜 기본값 (DB에 연결되지 않았을 때 fallback) — DB plans 시드(free)와 일치해야 함
 const FREE_PLAN_DEFAULTS: PlanLimits = {
-  max_members: 5,
+  max_members: 10,
   max_departments: 3,
   max_documents: 100,
   max_storage_mb: 1024,

@@ -104,7 +104,11 @@
     "enterprise": "エンタープライズ",
     "perPersonMonth": "/人/月",
     "minMembers": "最低3人以上",
-    "comingSoon": "準備中"
+    "comingSoon": "準備中",
+    "addMembersDesc": "追加する人数を選択すると月額料金が計算されます。",
+    "memberCountLabel": "追加する人数",
+    "unitPrice": "1人あたりの料金",
+    "monthlyTotal": "月額合計"
   },
   "nav": {
     "home": "ホーム",
