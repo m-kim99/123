@@ -12,6 +12,107 @@ export interface OcrExtractResult {
   maskedFile: File | null;
 }
 
+/**
+ * 클라이언트측 개인정보 포함 여부 판단
+ */
+const PII_PATTERNS = [
+  /(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))\s*[-–]\s*([1-4]\d{6})/,  // 주민등록번호
+  /(\d{2})-(\d{6})-(\d{2})/,  // 운전면허번호
+  /\b([A-Z]{1,2})(\d{7,8})\b/,  // 여권번호
+  /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/,  // 카드번호
+  /(01[016789])[-.]?\s?(\d{3,4})[-.]?\s?(\d{4})/,  // 휴대전화
+  /(0[2-6]\d?)[-.](\d{3,4})[-.](\d{4})/,  // 일반전화
+  /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/,  // 이메일
+];
+
+function containsPersonalInfo(text: string): boolean {
+  return PII_PATTERNS.some((re) => re.test(text));
+}
+
+function maskPersonalInfo(text: string): string {
+  let masked = text;
+  masked = masked.replace(
+    /(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))\s*[-–]\s*([1-4]\d{6})/g,
+    '$1-*******',
+  );
+  masked = masked.replace(/(\d{2})-(\d{6})-(\d{2})/g, '$1-******-$3');
+  masked = masked.replace(
+    /\b([A-Z]{1,2})(\d{7,8})\b/g,
+    (_: string, prefix: string, nums: string) =>
+      prefix + nums[0] + '*'.repeat(nums.length - 2) + nums[nums.length - 1],
+  );
+  masked = masked.replace(
+    /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/g,
+    '$1-****-****-$4',
+  );
+  masked = masked.replace(
+    /(01[016789])[-.]?\s?(\d{3,4})[-.]?\s?(\d{4})/g,
+    '$1-****-$3',
+  );
+  masked = masked.replace(
+    /(0[2-6]\d?)[-.](\d{3,4})[-.](\d{4})/g,
+    '$1-****-$3',
+  );
+  masked = masked.replace(
+    /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g,
+    (_: string, local: string, domain: string) => {
+      if (local.length <= 2) return '**@' + domain;
+      return local[0] + '*'.repeat(local.length - 2) + local[local.length - 1] + '@' + domain;
+    },
+  );
+  return masked;
+}
+
+/**
+ * PDF.js textContent items에서 PII 영역의 바운딩박스 추출 (캔버스 좌표계)
+ */
+function extractPiiRegionsFromTextContent(
+  textItems: any[],
+  viewport: any,
+): PiiRegion[] {
+  const regions: PiiRegion[] = [];
+
+  // 라인별로 그룹핑 (y좌표 기준)
+  const lineGroups: Map<number, any[]> = new Map();
+  for (const item of textItems) {
+    if (!item.str || !item.str.trim()) continue;
+    // transform: [scaleX, skewX, skewY, scaleY, tx, ty]
+    const ty = Math.round(item.transform[5]);
+    if (!lineGroups.has(ty)) lineGroups.set(ty, []);
+    lineGroups.get(ty)!.push(item);
+  }
+
+  for (const [, items] of lineGroups) {
+    const lineText = items.map((it: any) => it.str).join(' ');
+    if (!containsPersonalInfo(lineText)) continue;
+
+    // 이 라인의 모든 아이템 바운딩박스 수집
+    for (const item of items) {
+      const tx = item.transform[4];
+      const ty = item.transform[5];
+      const fontSize = Math.abs(item.transform[0]) || 12;
+      const w = item.width || fontSize * item.str.length * 0.6;
+      const h = item.height || fontSize;
+
+      // PDF 좌표(좌하단 원점) → 캔버스 좌표(좌상단 원점) 변환
+      const [canvasX, canvasY] = viewport.convertToViewportPoint(tx, ty);
+      // PDF의 ty는 글자 baseline이므로 위로 fontSize만큼 올림
+      const [, topY] = viewport.convertToViewportPoint(tx, ty + h);
+
+      const scaledW = w * viewport.scale;
+
+      regions.push({
+        x: canvasX,
+        y: topY,
+        w: scaledW,
+        h: Math.abs(canvasY - topY),
+      });
+    }
+  }
+
+  return regions;
+}
+
 // Dynamic Import로 필요할 때만 로드
 let pdfjsLib: any = null;
 
@@ -223,7 +324,26 @@ export async function extractTextFromPDF(
         if (textLayerText.length > 0) {
           // 텍스트 레이어에 텍스트가 있으면 OCR 불필요 (워드 문서 PDF 등)
           console.log(`✅ 페이지 ${pageNum}: 텍스트 레이어 발견 (${textLayerText.length}자)`);
-          extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${textLayerText}\n`);
+
+          // 개인정보 마스킹 적용
+          const maskedTextLayerText = maskPersonalInfo(textLayerText);
+          extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${maskedTextLayerText}\n`);
+
+          // PII가 감지되면 textContent 좌표에서 바운딩박스 추출
+          if (containsPersonalInfo(textLayerText)) {
+            try {
+              const textContent = await page.getTextContent();
+              const viewport = page.getViewport({ scale: 2.0 });
+              const pagePiiRegions = extractPiiRegionsFromTextContent(textContent.items, viewport);
+              if (pagePiiRegions.length > 0) {
+                piiRegionsByPage.set(pageNum, pagePiiRegions);
+                console.log(`🔒 페이지 ${pageNum}: 텍스트 레이어에서 PII ${pagePiiRegions.length}개 영역 감지`);
+              }
+            } catch (piiError) {
+              console.warn(`⚠️ 페이지 ${pageNum}: PII 좌표 추출 실패`, piiError);
+            }
+          }
+
           textLayerPageCount++;
           
           onProgress?.({

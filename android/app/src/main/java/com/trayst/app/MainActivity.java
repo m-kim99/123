@@ -17,11 +17,14 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NotificationPlugin.class);
         super.onCreate(savedInstanceState);
 
-        // WebView 캐시 비활성화 - 항상 최신 원격 콘텐츠 로드
+        // WebView 설정
         WebView webView = getBridge().getWebView();
         if (webView != null) {
             WebSettings settings = webView.getSettings();
             settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            settings.setAllowFileAccess(true);
+            settings.setAllowContentAccess(true);
+            settings.setDomStorageEnabled(true);
         }
 
         // Cold start: 앱이 NFC 태그로 실행된 경우 initial intent 처리

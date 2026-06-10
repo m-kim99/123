@@ -67,6 +67,7 @@ import { extractText } from '@/lib/ocr';
 import { supabase } from '@/lib/supabase';
 import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
+import { Capacitor } from '@capacitor/core';
 import { toast } from '@/hooks/use-toast';
 import { NFCRegistrationDialog } from '@/components/NFCRegistrationDialog';
 import { createDocumentNotification } from '@/lib/notifications';
@@ -1438,10 +1439,12 @@ export function DocumentManagement() {
     isDragActive: isReplaceDragActive,
   } = useDropzone({
     onDrop: handleReplaceFileDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png'],
-      'application/pdf': ['.pdf'],
-    },
+    ...(Capacitor.isNativePlatform() ? {} : {
+      accept: {
+        'image/*': ['.jpg', '.jpeg', '.png'],
+        'application/pdf': ['.pdf'],
+      },
+    }),
     multiple: false,
   });
 
@@ -1663,10 +1666,12 @@ export function DocumentManagement() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png'],
-      'application/pdf': ['.pdf'],
-    },
+    ...(Capacitor.isNativePlatform() ? {} : {
+      accept: {
+        'image/*': ['.jpg', '.jpeg', '.png'],
+        'application/pdf': ['.pdf'],
+      },
+    }),
     multiple: true,
     onDropRejected: (fileRejections) => {
       const rejection = fileRejections[0];

@@ -33,6 +33,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
+import { Capacitor } from '@capacitor/core';
 import { extractText } from '@/lib/ocr';
 import { toast } from '@/hooks/use-toast';
 import { formatDateTimeSimple } from '@/lib/utils';
@@ -310,10 +311,12 @@ export function CategoryDetail() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png'],
-      'application/pdf': ['.pdf'],
-    },
+    ...(Capacitor.isNativePlatform() ? {} : {
+      accept: {
+        'image/*': ['.jpg', '.jpeg', '.png'],
+        'application/pdf': ['.pdf'],
+      },
+    }),
     multiple: true,
     onDropRejected: (fileRejections) => {
       const rejection = fileRejections[0];
@@ -398,9 +401,12 @@ export function CategoryDetail() {
           });
 
           let ocrText = '';
+          let maskedFile: File | null = null;
 
           try {
-            ocrText = await extractText(file);
+            const result = await extractText(file);
+            ocrText = result.text;
+            maskedFile = result.maskedFile;
           } catch (ocrError) {
             console.error('OCR 처리 오류:', file.name, ocrError);
           }
@@ -420,7 +426,7 @@ export function CategoryDetail() {
             departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
-            file,
+            file: maskedFile || file,
             ocrText,
           });
 
@@ -489,8 +495,11 @@ export function CategoryDetail() {
             });
 
             let ocrText = '';
+            let maskedFile: File | null = null;
             try {
-              ocrText = await extractText(file);
+              const result = await extractText(file);
+              ocrText = result.text;
+              maskedFile = result.maskedFile;
             } catch (ocrError) {
               console.error('OCR 처리 오류:', file.name, ocrError);
             }
@@ -509,6 +518,7 @@ export function CategoryDetail() {
               text: ocrText && ocrText.trim()
                 ? `--- ${t('categoryDetail.page')} ${i + 1} ---\n${ocrText.trim()}\n`
                 : '',
+              maskedFile,
             };
           } catch (fileError) {
             console.error('이미지 OCR 오류:', file.name, fileError);
@@ -528,7 +538,7 @@ export function CategoryDetail() {
               return next;
             });
 
-            return { index: i, text: '' };
+            return { index: i, text: '', maskedFile: null as File | null };
           } finally {
             completedCount += 1;
             setUploadProgress(Math.round((completedCount / totalFiles) * 100));
@@ -556,15 +566,18 @@ export function CategoryDetail() {
 
           for (let i = 0; i < imageFiles.length; i++) {
             const file = imageFiles[i];
-            const imgData = await readFileAsDataURL(file);
+            // 마스킹된 파일이 있으면 그것을 사용
+            const maskedForPage = ocrResults.find(r => r.index === i)?.maskedFile;
+            const fileForPdf = maskedForPage || file;
+            const imgData = await readFileAsDataURL(fileForPdf);
 
             if (i > 0) {
               pdf.addPage();
             }
 
-            const lowerName = file.name.toLowerCase();
+            const lowerName = fileForPdf.name.toLowerCase();
             const isPng =
-              file.type === 'image/png' ||
+              fileForPdf.type === 'image/png' ||
               lowerName.endsWith('.png');
 
             pdf.addImage(
@@ -632,8 +645,11 @@ export function CategoryDetail() {
           setUploadStatus(t('categoryDetail.singleImageOcr'));
 
           let ocrText = '';
+          let maskedFile: File | null = null;
           try {
-            ocrText = await extractText(file);
+            const result = await extractText(file);
+            ocrText = result.text;
+            maskedFile = result.maskedFile;
           } catch (ocrError) {
             console.error('OCR 처리 오류:', file.name, ocrError);
           }
@@ -652,7 +668,7 @@ export function CategoryDetail() {
             departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
-            file,
+            file: maskedFile || file,
             ocrText,
           });
 

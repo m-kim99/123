@@ -38,6 +38,7 @@ import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
 import { r2Storage } from '@/lib/r2';
 import { downloadFile } from '@/lib/appBridge';
+import { Capacitor } from '@capacitor/core';
 import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
@@ -72,6 +73,7 @@ export function SubcategoryDetail() {
   const { addFavorite, removeFavorite, isFavorite, recordVisit } = useFavoriteStore();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadMaskedFile, setUploadMaskedFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isExtractingUploadOcr, setIsExtractingUploadOcr] = useState(false);
@@ -138,6 +140,7 @@ export function SubcategoryDetail() {
   const [fileReplaceDialogOpen, setFileReplaceDialogOpen] = useState(false);
   const [replacingDocumentId, setReplacingDocumentId] = useState<string | null>(null);
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
+  const [replaceMaskedFile, setReplaceMaskedFile] = useState<File | null>(null);
   const [isReplacingFile, setIsReplacingFile] = useState(false);
   const [replaceOcrText, setReplaceOcrText] = useState('');
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
@@ -258,15 +261,16 @@ export function SubcategoryDetail() {
     setUploadOcrStatus(t('subcategoryDetail.ocrExtracting'));
 
     try {
-      const ocrText = await extractText(file, (progress) => {
+      const result = await extractText(file, (progress) => {
         setOcrPageProgress({
           page: progress.page ?? 0,
           totalPages: progress.totalPages ?? 0,
           percent: progress.percent,
         });
       });
-      setUploadOcrText(ocrText);
-      setUploadOcrPreview(ocrText);
+      setUploadOcrText(result.text);
+      setUploadOcrPreview(result.text);
+      setUploadMaskedFile(result.maskedFile);
       setUploadOcrStatus(t('subcategoryDetail.ocrDoneUploadReady'));
     } catch (error) {
       console.error('OCR 추출 오류:', error);
@@ -283,10 +287,12 @@ export function SubcategoryDetail() {
     isDragActive: isNewFileDragActive,
   } = useDropzone({
     onDrop: handleNewFileDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png'],
-      'application/pdf': ['.pdf'],
-    },
+    ...(Capacitor.isNativePlatform() ? {} : {
+      accept: {
+        'image/*': ['.jpg', '.jpeg', '.png'],
+        'application/pdf': ['.pdf'],
+      },
+    }),
     multiple: false,
   });
 
@@ -368,7 +374,7 @@ export function SubcategoryDetail() {
         departmentId: subcategory.departmentId,
         uploader: user?.name || user?.email || 'Unknown',
         classified: false,
-        file: selectedFile,
+        file: uploadMaskedFile || selectedFile,
         ocrText: finalOcrText || undefined,
       });
 
@@ -378,6 +384,7 @@ export function SubcategoryDetail() {
       });
 
       setSelectedFile(null);
+      setUploadMaskedFile(null);
       setUploadTitle('');
       setUploadOcrText('');
       setUploadOcrPreview('');
@@ -905,11 +912,12 @@ export function SubcategoryDetail() {
     setIsExtractingOcr(true);
 
     try {
-      const ocrText = await extractText(file);
-      setReplaceOcrText(ocrText);
+      const result = await extractText(file);
+      setReplaceOcrText(result.text);
+      setReplaceMaskedFile(result.maskedFile);
       toast({
         title: t('documentMgmt.ocrExtractComplete'),
-        description: t('documentMgmt.ocrCharsExtracted', { count: ocrText.length.toLocaleString() }),
+        description: t('documentMgmt.ocrCharsExtracted', { count: result.text.length.toLocaleString() }),
       });
     } catch (error) {
       console.error('OCR 추출 오류:', error);
@@ -926,10 +934,12 @@ export function SubcategoryDetail() {
 
   const { getRootProps: getReplaceRootProps, getInputProps: getReplaceInputProps, isDragActive: isReplaceDragActive } = useDropzone({
     onDrop: handleReplaceFileDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png'],
-      'application/pdf': ['.pdf'],
-    },
+    ...(Capacitor.isNativePlatform() ? {} : {
+      accept: {
+        'image/*': ['.jpg', '.jpeg', '.png'],
+        'application/pdf': ['.pdf'],
+      },
+    }),
     multiple: false,
   });
 
@@ -947,7 +957,7 @@ export function SubcategoryDetail() {
     setIsReplacingFile(true);
 
     try {
-      await updateDocumentFile(replacingDocumentId, replaceFile, replaceOcrText);
+      await updateDocumentFile(replacingDocumentId, replaceMaskedFile || replaceFile, replaceOcrText);
       await fetchDocuments();
       handleCloseFileReplaceDialog();
     } catch (error) {
