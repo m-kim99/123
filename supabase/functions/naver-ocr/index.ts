@@ -57,6 +57,22 @@ function maskPersonalInfo(text: string): string {
   return masked;
 }
 
+/**
+ * 텍스트에 개인정보 패턴이 포함되어 있는지 여부 판단 (바운딩박스 수집용)
+ */
+function containsPersonalInfo(text: string): boolean {
+  const patterns = [
+    /(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))\s*[-–]\s*([1-4]\d{6})/,  // 주민등록번호
+    /(\d{2})-(\d{6})-(\d{2})/,  // 운전면허번호
+    /\b([A-Z]{1,2})(\d{7,8})\b/,  // 여권번호
+    /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/,  // 카드번호
+    /(01[016789])[-.]?\s?(\d{3,4})[-.]?\s?(\d{4})/,  // 휴대전화
+    /(0[2-6]\d?)[-.]\s?(\d{3,4})[-.]\s?(\d{4})/,  // 일반전화
+    /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/,  // 이메일
+  ];
+  return patterns.some((re) => re.test(text));
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -162,10 +178,37 @@ serve(async (req) => {
     }
 
     const textPieces: string[] = [];
+    // PII 바운딩박스 수집: 개인정보가 포함된 텍스트 영역의 좌표
+    const piiRegions: Array<{ x: number; y: number; w: number; h: number }> = [];
 
     if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
       for (const line of ocrJson.result.listOfInferTexts) {
         if (Array.isArray(line?.inferTexts)) {
+          for (const field of line.inferTexts) {
+            const value = field?.value;
+            if (typeof value !== 'string' || !value.trim()) continue;
+
+            // 개인정보 패턴 매칭 여부 확인
+            if (containsPersonalInfo(value)) {
+              // NHN OCR boundingPoly → { x, y, w, h } 변환
+              const vertices = field?.boundingPoly?.vertices;
+              if (Array.isArray(vertices) && vertices.length >= 4) {
+                const xs = vertices.map((v: { x: number }) => v.x);
+                const ys = vertices.map((v: { y: number }) => v.y);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
+                piiRegions.push({
+                  x: minX,
+                  y: minY,
+                  w: maxX - minX,
+                  h: maxY - minY,
+                });
+              }
+            }
+          }
+
           const lineText = line.inferTexts
             .filter((t: { value?: string }) => typeof t?.value === 'string' && t.value.trim())
             .map((t: { value: string }) => t.value.trim())
@@ -182,7 +225,7 @@ serve(async (req) => {
     // 개인정보 마스킹 적용
     const maskedText = maskPersonalInfo(fullText);
 
-    return new Response(JSON.stringify({ text: maskedText }), {
+    return new Response(JSON.stringify({ text: maskedText, piiRegions }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

@@ -1,5 +1,17 @@
 import { supabase } from '@/lib/supabase';
 
+export interface PiiRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface OcrExtractResult {
+  text: string;
+  maskedFile: File | null;
+}
+
 // Dynamic Import로 필요할 때만 로드
 let pdfjsLib: any = null;
 
@@ -10,6 +22,94 @@ async function loadPDFLib() {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
   }
   return pdfjsLib;
+}
+
+/**
+ * Canvas에 PII 영역을 블랙박스로 마스킹
+ */
+function applyPiiMaskToCanvas(
+  canvas: HTMLCanvasElement,
+  piiRegions: PiiRegion[],
+  ocrImageWidth: number,
+  ocrImageHeight: number,
+): void {
+  if (!piiRegions || piiRegions.length === 0) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // OCR 좌표 → Canvas 좌표 비율 계산
+  const scaleX = canvas.width / ocrImageWidth;
+  const scaleY = canvas.height / ocrImageHeight;
+
+  ctx.fillStyle = '#000000';
+  for (const region of piiRegions) {
+    const padding = 4;
+    const x = region.x * scaleX - padding;
+    const y = region.y * scaleY - padding;
+    const w = region.w * scaleX + padding * 2;
+    const h = region.h * scaleY + padding * 2;
+    ctx.fillRect(x, y, w, h);
+  }
+}
+
+/**
+ * dataURL에서 실제 이미지 크기(px)를 구함 (OCR 좌표 스케일링에 사용)
+ */
+async function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error('이미지 크기를 읽을 수 없습니다.'));
+    img.src = dataUrl;
+  });
+}
+
+/**
+ * dataURL 이미지에 PII 마스킹을 적용하고 마스킹된 dataURL 반환
+ */
+async function maskImageDataUrl(
+  dataUrl: string,
+  piiRegions: PiiRegion[],
+): Promise<string> {
+  if (!piiRegions || piiRegions.length === 0) return dataUrl;
+
+  const { width, height } = await getImageDimensions(dataUrl);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  // 원본 이미지 그리기
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('이미지 로드 실패'));
+    img.src = dataUrl;
+  });
+  ctx.drawImage(img, 0, 0);
+
+  // OCR는 원본 이미지 크기 기준 좌표를 반환하므로 스케일 1:1
+  applyPiiMaskToCanvas(canvas, piiRegions, width, height);
+
+  const maskedUrl = canvas.toDataURL('image/png');
+  canvas.width = 0;
+  canvas.height = 0;
+  return maskedUrl;
+}
+
+/**
+ * dataURL을 File 객체로 변환
+ */
+function dataUrlToFile(dataUrl: string, fileName: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    arr[i] = binary.charCodeAt(i);
+  }
+  return new File([arr], fileName, { type: mime });
 }
 
 /**
@@ -63,14 +163,15 @@ async function convertPDFPageToImage(
 
 /**
  * PDF 파일에서 텍스트 추출 (텍스트 레이어 우선, 없으면 OCR)
+ * PII 좌표가 감지되면 마스킹된 PDF도 생성하여 반환
  * @param file PDF 파일
  * @param onProgress 진행 상황 콜백 함수 (선택사항)
- * @returns 추출된 텍스트
+ * @returns { text, maskedFile }
  */
 export async function extractTextFromPDF(
   file: File,
   onProgress?: (progress: { page: number; totalPages: number; percent: number; status: string }) => void
-): Promise<string> {
+): Promise<OcrExtractResult> {
   try {
     // 파일 타입 확인
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
@@ -89,6 +190,8 @@ export async function extractTextFromPDF(
     console.log(`📚 총 ${totalPages}페이지 발견`);
 
     const extractedTexts: string[] = [];
+    // 페이지별 PII 좌표 수집 (key: pageNum)
+    const piiRegionsByPage: Map<number, PiiRegion[]> = new Map();
     let textLayerPageCount = 0;
     let ocrPageCount = 0;
 
@@ -151,6 +254,9 @@ export async function extractTextFromPDF(
         canvas.width = 0;
         canvas.height = 0;
         const imageSizeMB = (dataUrl.length * 3) / 4 / 1024 / 1024;
+
+        // 이 페이지의 PII 좌표를 수집할 배열
+        const pagePiiRegions: PiiRegion[] = [];
         
         if (imageSizeMB > 4.5) {
           console.warn(`⚠️ 페이지 ${pageNum}: 이미지 크기 초과 (${imageSizeMB.toFixed(2)}MB), 해상도 낮춤`);
@@ -167,10 +273,14 @@ export async function extractTextFromPDF(
             throw new Error(`페이지 ${pageNum} 이미지 크기가 너무 큽니다 (${smallerSizeMB.toFixed(2)}MB). OCR 처리를 건너뜁니다.`);
           }
           
-          await performOCR(smallerDataUrl, pageNum, totalPages, extractedTexts, onProgress);
+          await performOCR(smallerDataUrl, pageNum, totalPages, extractedTexts, pagePiiRegions, onProgress);
         } else {
           console.log(`📊 페이지 ${pageNum} 이미지 크기: ${imageSizeMB.toFixed(2)}MB`);
-          await performOCR(dataUrl, pageNum, totalPages, extractedTexts, onProgress);
+          await performOCR(dataUrl, pageNum, totalPages, extractedTexts, pagePiiRegions, onProgress);
+        }
+
+        if (pagePiiRegions.length > 0) {
+          piiRegionsByPage.set(pageNum, pagePiiRegions);
         }
         
         ocrPageCount++;
@@ -197,7 +307,45 @@ export async function extractTextFromPDF(
       status: `완료 (텍스트 ${textLayerPageCount}p, OCR ${ocrPageCount}p)`,
     });
 
-    return fullText.trim();
+    // PII가 감지된 페이지가 있으면 마스킹된 PDF 생성
+    let maskedFile: File | null = null;
+    if (piiRegionsByPage.size > 0) {
+      console.log(`🔒 PDF PII 마스킹 시작 (${piiRegionsByPage.size}페이지에 PII 감지)`);
+      try {
+        const { jsPDF } = await import('jspdf');
+        const maskedPdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = maskedPdf.internal.pageSize.getWidth();
+        const pageHeight = maskedPdf.internal.pageSize.getHeight();
+
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          if (pageNum > 1) maskedPdf.addPage();
+
+          // 페이지를 이미지로 렌더링
+          const canvas = await convertPDFPageToImage(pdf, pageNum, 2.0);
+          
+          // PII 영역이 있으면 블랙박스 적용
+          const regions = piiRegionsByPage.get(pageNum);
+          if (regions && regions.length > 0) {
+            applyPiiMaskToCanvas(canvas, regions, canvas.width, canvas.height);
+          }
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.9);
+          canvas.width = 0;
+          canvas.height = 0;
+
+          maskedPdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+        }
+
+        const pdfBlob = maskedPdf.output('blob');
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        maskedFile = new File([pdfBlob], `${baseName}.pdf`, { type: 'application/pdf' });
+        console.log(`🔒 PDF PII 마스킹 완료`);
+      } catch (maskError) {
+        console.error('PDF 마스킹 실패 (원본 파일 사용):', maskError);
+      }
+    }
+
+    return { text: fullText.trim(), maskedFile };
   } catch (error) {
     console.error('❌ PDF 텍스트 추출 오류:', error);
     throw new Error(
@@ -209,13 +357,14 @@ export async function extractTextFromPDF(
 }
 
 /**
- * OCR 처리 헬퍼 함수 (타임아웃 및 에러 핸들링)
+ * OCR 처리 헬퍼 함수 (타임아웃 및 에러 핸들링) — piiRegions도 수집
  */
 async function performOCR(
   dataUrl: string,
   pageNum: number,
   totalPages: number,
   extractedTexts: string[],
+  collectedPiiRegions: PiiRegion[],
   onProgress?: (progress: { page: number; totalPages: number; percent: number; status: string }) => void
 ): Promise<void> {
   onProgress?.({
@@ -247,10 +396,15 @@ async function performOCR(
     }
 
     const text = (data as any)?.text as string | undefined;
+    const piiRegions = (data as any)?.piiRegions as PiiRegion[] | undefined;
+
+    if (piiRegions && piiRegions.length > 0) {
+      collectedPiiRegions.push(...piiRegions);
+    }
 
     if (text && text.trim()) {
       extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n${text.trim()}\n`);
-      console.log(`✅ 페이지 ${pageNum} OCR 완료 (${text.length}자)`);
+      console.log(`✅ 페이지 ${pageNum} OCR 완료 (${text.length}자, PII영역: ${piiRegions?.length ?? 0}개)`);
     } else {
       console.warn(`⚠️ 페이지 ${pageNum}: OCR 결과 텍스트 없음`);
       extractedTexts.push(`\n--- 페이지 ${pageNum} ---\n(텍스트 없음)\n`);
@@ -271,7 +425,7 @@ async function performOCR(
 export async function extractTextFromImage(
   file: File,
   onProgress?: (progress: { percent: number; status: string }) => void
-): Promise<string> {
+): Promise<OcrExtractResult> {
   try {
     const mimeType = file.type;
     const fileName = file.name.toLowerCase();
@@ -333,17 +487,27 @@ export async function extractTextFromImage(
     }
 
     const text = (data as any)?.text as string | undefined;
+    const piiRegions = (data as any)?.piiRegions as PiiRegion[] | undefined;
     const result = (text || '').trim();
 
     if (!result) {
       console.warn('⚠️ 이미지에서 텍스트를 찾을 수 없습니다.');
     } else {
-      console.log(`✅ 이미지 OCR 완료 (${result.length}자)`);
+      console.log(`✅ 이미지 OCR 완료 (${result.length}자, PII영역: ${piiRegions?.length ?? 0}개)`);
+    }
+
+    // PII 영역이 있으면 이미지에 블랙박스 마스킹 적용
+    let maskedFile: File | null = null;
+    if (piiRegions && piiRegions.length > 0) {
+      onProgress?.({ percent: 80, status: '개인정보 마스킹 중...' });
+      const maskedDataUrl = await maskImageDataUrl(dataUrl, piiRegions);
+      maskedFile = dataUrlToFile(maskedDataUrl, file.name);
+      console.log(`🔒 이미지 PII 마스킹 완료 (${piiRegions.length}개 영역)`);
     }
 
     onProgress?.({ percent: 100, status: 'OCR 처리 완료' });
 
-    return result;
+    return { text: result, maskedFile };
   } catch (error) {
     console.error('❌ 이미지 텍스트 추출 오류:', error);
     throw new Error(
@@ -357,7 +521,7 @@ export async function extractTextFromImage(
 export async function extractText(
   file: File,
   onProgress?: (progress: { percent: number; status: string; type: 'pdf' | 'image'; page?: number; totalPages?: number }) => void
-): Promise<string> {
+): Promise<OcrExtractResult> {
   const mimeType = file.type;
   const fileName = file.name.toLowerCase();
 
@@ -370,7 +534,7 @@ export async function extractText(
 
   if (isPdf) {
     onProgress?.({ percent: 0, status: 'PDF 처리 중...', type: 'pdf', page: 0, totalPages: 0 });
-    const text = await extractTextFromPDF(file, (progress) => {
+    const result = await extractTextFromPDF(file, (progress) => {
       onProgress?.({
         percent: progress.percent,
         status: progress.status,
@@ -379,16 +543,16 @@ export async function extractText(
         totalPages: progress.totalPages,
       });
     });
-    return text;
+    return result;
   }
 
   if (isImage) {
     onProgress?.({ percent: 0, status: '이미지 처리 중...', type: 'image', page: 1, totalPages: 1 });
-    const text = await extractTextFromImage(file, ({ percent, status }) => {
+    const result = await extractTextFromImage(file, ({ percent, status }) => {
       onProgress?.({ percent, status, type: 'image', page: 1, totalPages: 1 });
     });
     onProgress?.({ percent: 100, status: '이미지 처리 완료', type: 'image', page: 1, totalPages: 1 });
-    return text;
+    return result;
   }
 
   throw new Error('지원하지 않는 파일 형식입니다. PDF, JPG, PNG만 지원됩니다.');

@@ -227,6 +227,8 @@ export function DocumentManagement() {
   const [isUnsharing, setIsUnsharing] = useState(false);
 
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  // PII 마스킹된 파일 맵 (원본 파일 인덱스 → 마스킹된 파일)
+  const [maskedFiles, setMaskedFiles] = useState<Map<number, File>>(new Map());
   const [uploadSelection, setUploadSelection] = useState({
     departmentId: '',
     parentCategoryId: '',
@@ -1407,8 +1409,12 @@ export function DocumentManagement() {
     setIsExtractingReplaceOcr(true);
 
     try {
-      const ocrText = await extractText(file);
+      const { text: ocrText, maskedFile } = await extractText(file);
       setReplaceOcrText(ocrText);
+      // 마스킹된 파일이 있으면 그것을 교체 파일로 사용
+      if (maskedFile) {
+        setReplaceFile(maskedFile);
+      }
       toast({
         title: t('documentMgmt.ocrComplete'),
         description: t('documentMgmt.ocrCharCount', { count: ocrText.length.toLocaleString() }),
@@ -1521,6 +1527,7 @@ export function DocumentManagement() {
 
     try {
       let allOcrText = '';
+      const newMaskedFiles = new Map<number, File>();
 
       // PDF 파일 OCR 추출
       for (let i = 0; i < pdfFiles.length; i++) {
@@ -1536,13 +1543,16 @@ export function DocumentManagement() {
         });
 
         try {
-          const ocrText = await extractText(file, (progress) => {
+          const { text: ocrText, maskedFile } = await extractText(file, (progress) => {
             setOcrPageProgress({
               page: progress.page ?? 0,
               totalPages: progress.totalPages ?? 0,
               percent: progress.percent,
             });
           });
+          if (maskedFile) {
+            newMaskedFiles.set(index, maskedFile);
+          }
           if (pdfFiles.length === 1 && imageFiles.length === 0) {
             allOcrText = ocrText;
           } else if (ocrText && ocrText.trim()) {
@@ -1585,13 +1595,16 @@ export function DocumentManagement() {
           });
 
           try {
-            const ocrText = await extractText(file, (progress) => {
+            const { text: ocrText, maskedFile } = await extractText(file, (progress) => {
               setOcrPageProgress({
                 page: i + 1,
                 totalPages: imageFiles.length,
                 percent: Math.round(((i + progress.percent / 100) / imageFiles.length) * 100),
               });
             });
+            if (maskedFile) {
+              newMaskedFiles.set(index, maskedFile);
+            }
             if (ocrText && ocrText.trim()) {
               ocrParts.push({
                 index: i,
@@ -1633,6 +1646,8 @@ export function DocumentManagement() {
         }
       }
 
+      // 마스킹된 파일 맵 저장
+      setMaskedFiles(newMaskedFiles);
       setExtractedOcrText(allOcrText);
       setOcrTextPreview(allOcrText);
       setUploadStatus('OCR 추출 완료. 업로드 버튼을 눌러 업로드하세요.');
@@ -1745,6 +1760,9 @@ export function DocumentManagement() {
             ? finalOcrText 
             : '';
 
+          // 마스킹된 파일이 있으면 그것을 업로드
+          const fileToUpload = maskedFiles.get(index) || file;
+
           await uploadDocument({
             name: title,
             originalFileName: file.name,
@@ -1754,7 +1772,7 @@ export function DocumentManagement() {
             departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
-            file,
+            file: fileToUpload,
             ocrText: ocrTextForFile,
           });
 
@@ -1819,15 +1837,18 @@ export function DocumentManagement() {
 
           for (let i = 0; i < imageFiles.length; i++) {
             const file = imageFiles[i];
-            const imgData = await readFileAsDataURL(file);
+            const index = uploadFiles.indexOf(file);
+            // 마스킹된 파일이 있으면 그것을 사용
+            const fileForPdf = maskedFiles.get(index) || file;
+            const imgData = await readFileAsDataURL(fileForPdf);
 
             if (i > 0) {
               pdf.addPage();
             }
 
-            const lowerName = file.name.toLowerCase();
+            const lowerName = fileForPdf.name.toLowerCase();
             const isPng =
-              file.type === 'image/png' ||
+              fileForPdf.type === 'image/png' ||
               lowerName.endsWith('.png');
 
             pdf.addImage(
@@ -1840,7 +1861,6 @@ export function DocumentManagement() {
             );
 
             // 파일 상태 업데이트
-            const index = uploadFiles.indexOf(file);
             setFileStatuses((prev) => {
               const next = [...prev];
               if (next[index]) {
@@ -1907,6 +1927,9 @@ export function DocumentManagement() {
               ? getSingleDocTitle()
               : getBaseNameWithoutExt(file.name);
 
+          // 마스킹된 파일이 있으면 그것을 업로드
+          const fileToUpload = maskedFiles.get(index) || file;
+
           await uploadDocument({
             name: imageTitle,
             originalFileName: file.name,
@@ -1916,7 +1939,7 @@ export function DocumentManagement() {
             departmentId,
             uploader: user.name || user.email || 'Unknown',
             classified: false,
-            file,
+            file: fileToUpload,
             ocrText: finalOcrText,
           });
 
@@ -1975,6 +1998,7 @@ export function DocumentManagement() {
 
       // 즉시 폼 초기화
       setUploadFiles([]);
+      setMaskedFiles(new Map());
       setDocumentTitle('');
       setUploadProgress(0);
       setUploadStatus('');
