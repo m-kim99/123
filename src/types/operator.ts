@@ -40,8 +40,19 @@ export interface UserSuspension {
 }
 
 export type ReportTargetType = 'document' | 'user' | 'announcement' | 'comment';
-export type ReportCategory = 'spam' | 'inappropriate' | 'copyright' | 'privacy' | 'illegal' | 'other';
+export type ReportCategory =
+  | 'spam'          // 스팸/광고
+  | 'inappropriate' // 부적절한 콘텐츠
+  | 'adult'         // 음란물/성적 콘텐츠
+  | 'harassment'    // 욕설/괴롭힘/혐오 발언
+  | 'violence'      // 폭력적이거나 위험한 콘텐츠
+  | 'false_info'    // 허위 정보
+  | 'privacy'       // 개인정보 노출
+  | 'copyright'     // 저작권/지식재산권 침해
+  | 'illegal'       // 불법 정보 또는 행위
+  | 'other';        // 기타
 export type ReportStatus = 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+export type ReportResolveAction = 'restore' | 'warn' | 'remove';
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
 export interface Report {

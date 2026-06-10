@@ -43,6 +43,7 @@ export function TeamAnnouncements() {
           author:users!announcements_created_by_fkey(name)
         `)
         .eq('company_id', user.companyId)
+        .eq('is_hidden', false) // 신고 누적으로 숨김 처리된 게시물 제외
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -82,6 +83,7 @@ export function TeamAnnouncements() {
           commenter:users!announcement_comments_user_id_fkey(name)
         `)
         .eq('announcement_id', announcementId)
+        .eq('is_hidden', false) // 신고 누적으로 숨김 처리된 댓글 제외
         .order('created_at', { ascending: true });
 
       if (error) throw error;

@@ -18,6 +18,20 @@ import type {
 // 신고 제출
 // ------------------------------------------------------------
 
+/** 신고 사유 목록 (시중 앱 표준 참고) — UI 셀렉트에 사용 */
+export const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
+  { value: 'spam', label: '스팸/광고' },
+  { value: 'inappropriate', label: '부적절한 콘텐츠' },
+  { value: 'adult', label: '음란물/성적 콘텐츠' },
+  { value: 'harassment', label: '욕설/괴롭힘/혐오 발언' },
+  { value: 'violence', label: '폭력적이거나 위험한 콘텐츠' },
+  { value: 'false_info', label: '허위 정보' },
+  { value: 'privacy', label: '개인정보 노출' },
+  { value: 'copyright', label: '저작권/지식재산권 침해' },
+  { value: 'illegal', label: '불법 정보 또는 행위' },
+  { value: 'other', label: '기타' },
+];
+
 export interface SubmitReportParams {
   targetType: ReportTargetType;
   targetId: string;
@@ -49,7 +63,13 @@ export async function submitReport(
       evidence_urls: params.evidenceUrls ?? null,
     });
 
-    if (error) throw error;
+    if (error) {
+      // 23505: 같은 대상에 대한 중복 신고 (idx_reports_unique_active)
+      if (error.code === '23505') {
+        return { success: false, error: '이미 신고한 콘텐츠입니다. 검토가 진행 중입니다.' };
+      }
+      throw error;
+    }
     return { success: true };
   } catch (error) {
     console.error('신고 제출 실패:', error);

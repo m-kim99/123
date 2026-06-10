@@ -6,6 +6,7 @@ import type {
   ManagedUser,
   UserSuspension,
   Report,
+  ReportResolveAction,
   SystemNotice,
   Inquiry,
   InquiryReply,
@@ -66,6 +67,7 @@ interface OperatorState {
     limit?: number;
   }) => Promise<void>;
   updateReport: (reportId: string, data: Partial<Report>) => Promise<{ success: boolean; error?: string }>;
+  resolveReport: (reportId: string, action: ReportResolveAction, note?: string) => Promise<{ success: boolean; error?: string }>;
 
   fetchNotices: () => Promise<void>;
   createNotice: (notice: Partial<SystemNotice>) => Promise<{ success: boolean; error?: string }>;
@@ -547,6 +549,43 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         target_type: 'report',
         target_id: reportId,
         details: updateData,
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '신고 처리 실패';
+      return { success: false, error: errorMsg };
+    }
+  },
+
+  resolveReport: async (reportId, action, note) => {
+    const { operator } = get();
+    if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
+    if (!operator.isSuper && !operator.permissions?.reports) {
+      return { success: false, error: '신고 처리 권한이 없습니다.' };
+    }
+
+    try {
+      // restore: 기각·복원 / warn: 복원+작성자 경고 알림 / remove: 콘텐츠 삭제+작성자 알림
+      // 같은 대상의 활성 신고를 일괄 처리함 (SECURITY DEFINER RPC)
+      const { data, error } = await supabase.rpc('operator_resolve_report', {
+        p_report_id: reportId,
+        p_action: action,
+        p_note: note ?? null,
+      });
+
+      if (error) throw error;
+      if (data && data.success === false) {
+        return { success: false, error: data.error ?? '신고 처리에 실패했습니다.' };
+      }
+
+      // 활동 로그
+      await supabase.from('operator_activity_logs').insert({
+        operator_id: operator.id,
+        action: 'resolve_report',
+        target_type: 'report',
+        target_id: reportId,
+        details: { action, note: note ?? null },
       });
 
       return { success: true };
