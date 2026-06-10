@@ -101,7 +101,10 @@
     "paymentNotReady": "Payment feature is currently under development. Coming soon.",
     "subscribe": "Subscribe",
     "pro": "Pro",
-    "enterprise": "Enterprise"
+    "enterprise": "Enterprise",
+    "perPersonMonth": "/person/mo",
+    "minMembers": "Minimum 3 members",
+    "comingSoon": "Coming Soon"
   },
   "nav": {
     "home": "Home",

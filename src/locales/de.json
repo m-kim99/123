@@ -101,7 +101,10 @@
     "paymentNotReady": "Die Zahlungsfunktion ist derzeit in Entwicklung. Bald verfügbar.",
     "subscribe": "Abonnieren",
     "pro": "Pro",
-    "enterprise": "Enterprise"
+    "enterprise": "Enterprise",
+    "perPersonMonth": "/Person/Monat",
+    "minMembers": "Mindestens 3 Mitglieder",
+    "comingSoon": "In Vorbereitung"
   },
   "nav": {
     "home": "Startseite",

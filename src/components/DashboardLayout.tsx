@@ -1888,10 +1888,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-slate-50 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.basic')}</span>
-                        <span className="text-2xl font-bold text-[#2563eb]">₩5,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩3,300<span className="text-sm font-normal text-slate-500">{t('subscription.perPersonMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
-                        <li className="flex items-center gap-2">✓ {t('subscription.members')} 3{t('subscription.personUnit')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.minMembers')}</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.documents')} 200</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.departments')} 2</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.storage')} 2GB</li>
@@ -1906,7 +1906,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.pro')}</span>
-                        <span className="text-2xl font-bold text-[#2563eb]">₩29,900<span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">{t('subscription.comingSoon')}</span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-center gap-2">✓ {t('subscription.members')} 10{t('subscription.personUnit')}</li>
@@ -1998,10 +1998,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {[
-                          { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free' },
-                          { name: 'basic', display: t('subscription.basic'), price: '5,900', members: '3', highlight: subscriptionInfo.planName === 'basic' },
-                          { name: 'pro', display: t('subscription.pro'), price: '29,900', members: '10', highlight: subscriptionInfo.planName === 'pro' },
-                          { name: 'enterprise', display: t('subscription.enterprise'), price: t('subscription.contact'), members: '∞', highlight: subscriptionInfo.planName === 'enterprise' },
+                          { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free', comingSoon: false },
+                          { name: 'basic', display: t('subscription.basic'), price: '3,300', members: '3', highlight: subscriptionInfo.planName === 'basic', comingSoon: false },
+                          { name: 'pro', display: t('subscription.pro'), price: '', members: '10', highlight: subscriptionInfo.planName === 'pro', comingSoon: true },
+                          { name: 'enterprise', display: t('subscription.enterprise'), price: '', members: '∞', highlight: subscriptionInfo.planName === 'enterprise', comingSoon: true },
                         ].map((plan) => (
                           <div
                             key={plan.name}
@@ -2018,22 +2018,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             )}
                             <p className="font-semibold text-sm mt-1">{plan.display}</p>
                             <p className="text-lg font-bold text-slate-900 mt-1">
-                              {plan.name === 'enterprise' ? plan.price : `₩${plan.price}`}
+                              {plan.comingSoon ? t('subscription.comingSoon') : `₩${plan.price}`}
                             </p>
-                            {plan.name !== 'enterprise' && (
-                              <p className="text-[11px] text-slate-500">{t('subscription.perMonth')}</p>
+                            {!plan.comingSoon && (
+                              <p className="text-[11px] text-slate-500">
+                                {plan.name === 'basic' ? t('subscription.perPersonMonth') : t('subscription.perMonth')}
+                              </p>
                             )}
                             <div className="mt-2 pt-2 border-t text-xs text-slate-600">
-                              <p>{t('subscription.members')} {plan.members}{t('subscription.personUnit')}</p>
+                              <p>{plan.name === 'basic' ? t('subscription.minMembers') : `${t('subscription.members')} ${plan.members}${t('subscription.personUnit')}`}</p>
                             </div>
                             {!plan.highlight && plan.name !== 'free' && (
                               <Button
                                 size="sm"
-                                variant={plan.name === 'enterprise' ? 'outline' : 'default'}
+                                variant={plan.comingSoon ? 'outline' : 'default'}
                                 className="w-full mt-2 text-xs h-7"
+                                disabled={plan.comingSoon}
                                 onClick={() => setSelectedPlan(plan.name)}
                               >
-                                {plan.name === 'enterprise' ? t('subscription.contactUs') : t('subscription.selectPlan')}
+                                {plan.comingSoon ? t('subscription.comingSoon') : t('subscription.selectPlan')}
                               </Button>
                             )}
                           </div>

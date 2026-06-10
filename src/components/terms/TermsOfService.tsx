@@ -101,7 +101,7 @@ const TermsKo = () => (
     <p>② 현재 서비스는 베타 테스트 기간으로 무료로 제공되며, 베타 테스트 종료 후 유료로 전환됩니다. 유료 전환 시 회사는 최소 30일 전에 요금제 및 결제 방법을 공지합니다.</p>
     <p>③ 베타 테스트 종료 후 예상 요금제는 다음과 같습니다(향후 변경될 수 있음).</p>
     <ul className="list-disc pl-5 space-y-1">
-      <li>월 구독 방식: 사용자 수에 따른 요금 부과(1인당 월 20,000원 예정)</li>
+      <li>월 구독 방식: 사용자 수에 따른 요금 부과(1인당 월 3,300원 예정)</li>
       <li>신규 가입 회원에게는 최초 1개월 무료 이용 혜택 제공</li>
     </ul>
     <p>④ 회원은 신용카드 결제, 무통장 입금, 가상계좌 이체, 기타 회사가 지정하는 결제 수단을 이용하여 이용요금을 납부할 수 있습니다.</p>
@@ -374,7 +374,7 @@ const TermsEn = () => (
     <p>② The Service is currently provided free of charge during the beta testing period. Upon conclusion of the beta test, the Service will transition to paid plans. The Company shall announce pricing plans and payment methods at least thirty (30) days prior to the paid transition.</p>
     <p>③ The anticipated pricing plans after beta testing are as follows (subject to change):</p>
     <ul className="list-disc pl-5 space-y-1">
-      <li>Monthly subscription: Fees charged per user (estimated at KRW 20,000 per person per month);</li>
+      <li>Monthly subscription: Fees charged per user (estimated at KRW 3,300 per person per month);</li>
       <li>New Members shall receive one (1) month of free use upon initial registration.</li>
     </ul>
     <p>④ Members may pay service fees using the following payment methods: credit card payment; bank transfer; virtual account transfer; other payment methods designated by the Company.</p>

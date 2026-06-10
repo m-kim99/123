@@ -101,7 +101,10 @@
     "paymentNotReady": "決済機能は現在準備中です。近日中に提供予定です。",
     "subscribe": "購読する",
     "pro": "プロ",
-    "enterprise": "エンタープライズ"
+    "enterprise": "エンタープライズ",
+    "perPersonMonth": "/人/月",
+    "minMembers": "最低3人以上",
+    "comingSoon": "準備中"
   },
   "nav": {
     "home": "ホーム",
