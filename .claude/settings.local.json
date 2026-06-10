@@ -35,7 +35,10 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(claude --model claude-fable-5 --print \"test\")",
+      "Bash(claude *)",
+      "Bash(npm show *)"
     ]
   }
 }

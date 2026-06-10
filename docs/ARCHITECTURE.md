@@ -188,16 +188,31 @@ themeStore.setMode('dark')
 
 ## 6. DB 스키마 참조
 
-실제 Supabase DB의 스키마 덤프가 `docs/schema.sql`에 있다.
-마이그레이션 파일(`supabase/migrations/`)과 실제 DB 상태가 다를 수 있으므로,
-**DB 관련 디버깅 시에는 반드시 `docs/schema.sql`을 참조**한다.
+### 6.1 Prisma (메인 스키마 관리 도구)
 
-- `docs/schema.sql` — 테이블, 컬럼, FK, RLS 정책, 트리거, 함수, 뷰 전체
+`prisma/schema.prisma`가 DB 스키마의 **Single Source of Truth**이다.
+Prisma는 마이그레이션 도구로만 사용하며, 쿼리는 기존 Supabase JS Client를 그대로 사용한다.
+
+- `prisma/schema.prisma` — 테이블, 컬럼, FK, 인덱스 정의 (auth + public 스키마)
+- `prisma/migrations/` — Prisma 마이그레이션 이력
+- `prisma.config.ts` — Prisma 설정 (DB 연결 등)
+
+> **스키마 변경 시**:
+> 1. `prisma/schema.prisma` 수정
+> 2. `npx prisma migrate dev --name 변경사항` 실행
+> 3. Git 커밋
+>
+> **DB에서 직접 변경한 경우**: `npx prisma db pull`로 schema.prisma 갱신 후 커밋
+
+### 6.2 보조 참조 파일
+
+- `docs/schema.sql` — pg_dump로 추출한 전체 스키마 (RLS 정책, 트리거, 함수 포함)
 - `docs/roles.sql` — DB 역할(role) 정의
-- `supabase/migrations/` — 마이그레이션 이력 (참고용, 실제 DB와 다를 수 있음)
+- `supabase/migrations/` — 레거시 마이그레이션 이력 (참고용)
 - `supabase/functions/` — Edge Function 14개
 
-> **스키마 동기화**: DB 변경 시 `SUPABASE_DB_PASSWORD='...' supabase db dump --linked -s public -f docs/schema.sql` 명령으로 덤프를 갱신할 것.
+> **RLS/트리거/함수**: Prisma가 관리하지 못하는 영역이므로 `docs/schema.sql` 참조.
+> 갱신: `SUPABASE_DB_PASSWORD='...' supabase db dump --linked -s public -f docs/schema.sql`
 
 ## 7. 주요 데이터 흐름
 
