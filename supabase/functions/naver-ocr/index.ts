@@ -184,45 +184,37 @@ serve(async (req) => {
     if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
       for (const line of ocrJson.result.listOfInferTexts) {
         if (Array.isArray(line?.inferTexts)) {
-          // 줄 단위 텍스트 결합
+          for (const field of line.inferTexts) {
+            const value = field?.value;
+            if (typeof value !== 'string' || !value.trim()) continue;
+
+            // 개인정보 패턴 매칭 여부 확인
+            if (containsPersonalInfo(value)) {
+              // NHN OCR boundingPoly → { x, y, w, h } 변환
+              const vertices = field?.boundingPoly?.vertices;
+              if (Array.isArray(vertices) && vertices.length >= 4) {
+                const xs = vertices.map((v: { x: number }) => v.x);
+                const ys = vertices.map((v: { y: number }) => v.y);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
+                piiRegions.push({
+                  x: minX,
+                  y: minY,
+                  w: maxX - minX,
+                  h: maxY - minY,
+                });
+              }
+            }
+          }
+
           const lineText = line.inferTexts
             .filter((t: { value?: string }) => typeof t?.value === 'string' && t.value.trim())
             .map((t: { value: string }) => t.value.trim())
             .join(' ');
-
           if (lineText) {
             textPieces.push(lineText);
-          }
-
-          // 줄 단위로 개인정보 패턴 매칭 (개별 단어가 아닌 전체 줄 검사)
-          if (lineText && containsPersonalInfo(lineText)) {
-            // 1순위: line 레벨 boundingPoly (NHN OCR 표준 구조)
-            const lineVertices = line?.boundingPoly?.vertices;
-            if (Array.isArray(lineVertices) && lineVertices.length >= 4) {
-              const xs = lineVertices.map((v: { x: number }) => v.x);
-              const ys = lineVertices.map((v: { y: number }) => v.y);
-              piiRegions.push({
-                x: Math.min(...xs),
-                y: Math.min(...ys),
-                w: Math.max(...xs) - Math.min(...xs),
-                h: Math.max(...ys) - Math.min(...ys),
-              });
-            } else {
-              // 2순위: field 레벨 boundingPoly (fallback)
-              for (const field of line.inferTexts) {
-                const fv = field?.boundingPoly?.vertices;
-                if (Array.isArray(fv) && fv.length >= 4) {
-                  const xs = fv.map((v: { x: number }) => v.x);
-                  const ys = fv.map((v: { y: number }) => v.y);
-                  piiRegions.push({
-                    x: Math.min(...xs),
-                    y: Math.min(...ys),
-                    w: Math.max(...xs) - Math.min(...xs),
-                    h: Math.max(...ys) - Math.min(...ys),
-                  });
-                }
-              }
-            }
           }
         }
       }
