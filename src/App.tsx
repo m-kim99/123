@@ -19,6 +19,7 @@ import { OnboardingPage } from './pages/OnboardingPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AccountDeletionPage } from './pages/AccountDeletionPage';
 import { SignupPage } from './pages/SignupPage';
+import { BillingSuccessPage, BillingFailPage } from './pages/BillingResultPage';
 
 const AdminDashboard = lazy(() =>
   import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
@@ -391,6 +392,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/account/delete" element={<AccountDeletionPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/billing/success" element={<BillingSuccessPage />} />
+            <Route path="/billing/fail" element={<BillingFailPage />} />
 
             <Route
               path="/admin"

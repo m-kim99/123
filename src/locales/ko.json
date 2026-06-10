@@ -108,7 +108,14 @@
     "addMembersDesc": "추가할 인원 수를 선택하면 월 요금이 계산됩니다.",
     "memberCountLabel": "추가할 인원 수",
     "unitPrice": "인당 요금",
-    "monthlyTotal": "월 합계"
+    "monthlyTotal": "월 합계",
+    "productLabel": "상품",
+    "productName": "베이직 플랜 (인원 추가)",
+    "paymentMethod": "결제수단",
+    "creditCard": "신용카드",
+    "agreeTerms": "구매조건 확인 및 정기결제 진행에 동의합니다.",
+    "pay": "결제하기",
+    "paymentRequestFailed": "결제 요청에 실패했습니다. 다시 시도해주세요."
   },
   "nav": {
     "home": "홈",
@@ -1212,5 +1219,13 @@
     "emptyTrashTitle": "휴지통 비우기",
     "emptyTrashDesc": "휴지통의 모든 문서({{count}}개)를 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "emptyTrashConfirm": "모두 삭제"
+  },
+  "billing": {
+    "successTitle": "카드 등록 완료",
+    "successDesc": "정기결제 카드가 정상적으로 등록되었습니다.",
+    "approvalPending": "결제 승인 처리는 준비 중입니다. 서비스 적용까지 다소 시간이 걸릴 수 있습니다.",
+    "failTitle": "카드 등록 실패",
+    "failDesc": "카드 등록에 실패했습니다. 다시 시도해주세요.",
+    "backToApp": "팀원 관리로 돌아가기"
   }
 }

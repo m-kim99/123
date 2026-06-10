@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
+import { requestBillingAuth } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +64,32 @@ export function UserManagement() {
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [additionalMembers, setAdditionalMembers] = useState('1');
   const parsedMembers = Math.max(0, parseInt(additionalMembers, 10) || 0);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isRequestingPayment, setIsRequestingPayment] = useState(false);
+
+  // 토스페이먼츠 정기결제용 카드 등록창 호출
+  const handleSubscribe = async () => {
+    if (!authUser || parsedMembers < 1 || !agreedToTerms) return;
+    setIsRequestingPayment(true);
+    try {
+      await requestBillingAuth({
+        customerKey: authUser.id,
+        customerEmail: authUser.email,
+        customerName: authUser.name,
+        memberCount: parsedMembers,
+        amount: parsedMembers * PRICE_PER_MEMBER,
+      });
+    } catch (error) {
+      // 사용자가 결제창을 닫은 경우 등
+      console.error('빌링 카드 등록 요청 실패:', error);
+      toast({
+        title: t('subscription.paymentRequestFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRequestingPayment(false);
+    }
+  };
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -489,8 +517,16 @@ export function UserManagement() {
               </div>
               <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                 <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">{t('subscription.productLabel')}</span>
+                  <span className="font-medium">{t('subscription.productName')}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">{t('subscription.unitPrice')}</span>
                   <span className="font-medium">₩3,300{t('subscription.perPersonMonth')}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">{t('subscription.paymentMethod')}</span>
+                  <span className="font-medium">{t('subscription.creditCard')}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
@@ -500,8 +536,16 @@ export function UserManagement() {
                   </span>
                 </div>
               </div>
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
-                🚧 {t('subscription.paymentNotReady')}
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="agree-terms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="agree-terms" className="text-sm text-slate-700 leading-snug cursor-pointer">
+                  {t('subscription.agreeTerms')}
+                </Label>
               </div>
             </div>
             <DialogFooter>
@@ -512,8 +556,12 @@ export function UserManagement() {
               >
                 {t('common.cancel')}
               </Button>
-              <Button className="rounded-[10px] h-9" disabled>
-                {t('subscription.subscribe')}
+              <Button
+                className="rounded-[10px] h-9"
+                disabled={parsedMembers < 1 || !agreedToTerms || isRequestingPayment}
+                onClick={handleSubscribe}
+              >
+                {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
               </Button>
             </DialogFooter>
           </DialogContent>

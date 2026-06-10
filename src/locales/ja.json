@@ -108,7 +108,14 @@
     "addMembersDesc": "追加する人数を選択すると月額料金が計算されます。",
     "memberCountLabel": "追加する人数",
     "unitPrice": "1人あたりの料金",
-    "monthlyTotal": "月額合計"
+    "monthlyTotal": "月額合計",
+    "productLabel": "商品",
+    "productName": "ベーシックプラン（メンバー追加）",
+    "paymentMethod": "お支払い方法",
+    "creditCard": "クレジットカード",
+    "agreeTerms": "購入条件を確認し、定期決済の実行に同意します。",
+    "pay": "決済する",
+    "paymentRequestFailed": "決済リクエストに失敗しました。もう一度お試しください。"
   },
   "nav": {
     "home": "ホーム",
@@ -1212,5 +1219,13 @@
     "emptyTrashTitle": "ゴミ箱を空にする",
     "emptyTrashDesc": "ゴミ箱のすべてのドキュメント({{count}}個)を完全に削除しますか？この操作は元に戻せません。",
     "emptyTrashConfirm": "すべて削除"
+  },
+  "billing": {
+    "successTitle": "カード登録完了",
+    "successDesc": "定期決済用カードが正常に登録されました。",
+    "approvalPending": "決済承認処理は準備中です。サービスの適用まで時間がかかる場合があります。",
+    "failTitle": "カード登録失敗",
+    "failDesc": "カード登録に失敗しました。もう一度お試しください。",
+    "backToApp": "チーム管理に戻る"
   }
 }

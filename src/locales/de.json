@@ -108,7 +108,14 @@
     "addMembersDesc": "Wählen Sie die Anzahl der Mitglieder und sehen Sie die monatlichen Kosten.",
     "memberCountLabel": "Anzahl der hinzuzufügenden Mitglieder",
     "unitPrice": "Preis pro Person",
-    "monthlyTotal": "Monatliche Summe"
+    "monthlyTotal": "Monatliche Summe",
+    "productLabel": "Produkt",
+    "productName": "Basic-Plan (Mitglieder hinzufügen)",
+    "paymentMethod": "Zahlungsmethode",
+    "creditCard": "Kreditkarte",
+    "agreeTerms": "Ich bestätige die Kaufbedingungen und stimme wiederkehrenden Zahlungen zu.",
+    "pay": "Jetzt bezahlen",
+    "paymentRequestFailed": "Zahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
   "nav": {
     "home": "Startseite",
@@ -1212,5 +1219,13 @@
     "emptyTrashTitle": "Papierkorb leeren",
     "emptyTrashDesc": "Sind Sie sicher, dass Sie alle {{count}} Dokumente dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "emptyTrashConfirm": "Alle löschen"
+  },
+  "billing": {
+    "successTitle": "Karte registriert",
+    "successDesc": "Ihre Karte für wiederkehrende Zahlungen wurde erfolgreich registriert.",
+    "approvalPending": "Die Zahlungsfreigabe wird vorbereitet. Es kann einige Zeit dauern, bis der Dienst aktiviert wird.",
+    "failTitle": "Kartenregistrierung fehlgeschlagen",
+    "failDesc": "Kartenregistrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "backToApp": "Zurück zur Teamverwaltung"
   }
 }

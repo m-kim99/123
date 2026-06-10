@@ -108,7 +108,14 @@
     "addMembersDesc": "Choose how many members to add and see the monthly cost.",
     "memberCountLabel": "Number of members to add",
     "unitPrice": "Price per person",
-    "monthlyTotal": "Monthly total"
+    "monthlyTotal": "Monthly total",
+    "productLabel": "Product",
+    "productName": "Basic Plan (Add Members)",
+    "paymentMethod": "Payment Method",
+    "creditCard": "Credit Card",
+    "agreeTerms": "I confirm the purchase terms and agree to recurring payments.",
+    "pay": "Pay Now",
+    "paymentRequestFailed": "Payment request failed. Please try again."
   },
   "nav": {
     "home": "Home",
@@ -1212,5 +1219,13 @@
     "emptyTrashTitle": "Empty Trash",
     "emptyTrashDesc": "Are you sure you want to permanently delete all {{count}} documents? This action cannot be undone.",
     "emptyTrashConfirm": "Delete All"
+  },
+  "billing": {
+    "successTitle": "Card Registered",
+    "successDesc": "Your card for recurring payments has been registered successfully.",
+    "approvalPending": "Payment approval is being prepared. It may take some time before the service is applied.",
+    "failTitle": "Card Registration Failed",
+    "failDesc": "Card registration failed. Please try again.",
+    "backToApp": "Back to Team Management"
   }
 }
