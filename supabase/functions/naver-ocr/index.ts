@@ -181,55 +181,105 @@ serve(async (req) => {
     // PII 바운딩박스 수집: 개인정보가 포함된 텍스트 영역의 좌표
     const piiRegions: Array<{ x: number; y: number; w: number; h: number }> = [];
 
-    if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
-      for (const line of ocrJson.result.listOfInferTexts) {
-        if (Array.isArray(line?.inferTexts)) {
-          const validFields = line.inferTexts.filter(
-            (t: { value?: string }) => typeof t?.value === 'string' && t.value.trim()
-          );
+    // NHN General OCR 좌표 형식 {x1,y1,x2,y2,x3,y3,x4,y4} → {x,y,w,h} 변환
+    const boxToRegion = (box: any): { x: number; y: number; w: number; h: number } | null => {
+      if (!box || typeof box !== 'object') return null;
+      const xs = [box.x1, box.x2, box.x3, box.x4].filter((n: any) => typeof n === 'number');
+      const ys = [box.y1, box.y2, box.y3, box.y4].filter((n: any) => typeof n === 'number');
+      if (xs.length < 4 || ys.length < 4) return null;
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys);
+      return { x: minX, y: minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+    };
 
-          // 라인 전체 텍스트를 합쳐서 PII 검사 (개별 필드는 단어가 쪼개져 패턴 매칭 실패)
-          const lineText = validFields
-            .map((t: { value: string }) => t.value.trim())
-            .join(' ');
+    // boundingPoly.vertices 형식 fallback 변환
+    const verticesToRegion = (vertices: any): { x: number; y: number; w: number; h: number } | null => {
+      if (!Array.isArray(vertices) || vertices.length < 4) return null;
+      const xs = vertices.map((v: { x: number }) => v.x);
+      const ys = vertices.map((v: { y: number }) => v.y);
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys);
+      return { x: minX, y: minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+    };
 
-          if (lineText) {
-            textPieces.push(lineText);
+    const inferLines = Array.isArray(ocrJson?.result?.listOfInferTexts)
+      ? ocrJson.result.listOfInferTexts
+      : [];
+    // ★ NHN General OCR은 좌표를 listOfInferTexts와 병렬 배열인 listOfBoundingBoxes로 반환
+    //   (inferTexts에는 value/conf만 있고 boundingPoly는 존재하지 않음)
+    const boundingBoxes = Array.isArray(ocrJson?.result?.listOfBoundingBoxes)
+      ? ocrJson.result.listOfBoundingBoxes
+      : [];
+
+    for (let lineIdx = 0; lineIdx < inferLines.length; lineIdx++) {
+      const line = inferLines[lineIdx];
+      if (!Array.isArray(line?.inferTexts)) continue;
+
+      const validFields = line.inferTexts.filter(
+        (t: { value?: string }) => typeof t?.value === 'string' && t.value.trim()
+      );
+
+      // 라인 전체 텍스트를 합쳐서 PII 검사 (개별 필드는 단어가 쪼개져 패턴 매칭 실패)
+      const lineText = validFields
+        .map((t: { value: string }) => t.value.trim())
+        .join(' ');
+
+      if (lineText) {
+        textPieces.push(lineText);
+      }
+
+      if (!lineText || !containsPersonalInfo(lineText)) continue;
+
+      let collected = 0;
+
+      // 1순위: listOfBoundingBoxes[lineIdx] (NHN General OCR 표준 좌표)
+      const lineBoxes = boundingBoxes[lineIdx];
+      if (Array.isArray(lineBoxes)) {
+        // 라인 내 단어별 박스 배열
+        for (const box of lineBoxes) {
+          const region = boxToRegion(box);
+          if (region) {
+            piiRegions.push(region);
+            collected++;
           }
+        }
+      } else {
+        const region = boxToRegion(lineBoxes);
+        if (region) {
+          piiRegions.push(region);
+          collected++;
+        }
+      }
 
-          // 라인 단위로 PII 패턴 매칭 → 라인 boundingPoly 우선, 필드 단위 fallback
-          if (lineText && containsPersonalInfo(lineText)) {
-            // LINE 레벨 boundingPoly 우선 사용 (NHN OCR API는 라인 레벨에서만 안정적으로 제공)
-            const lineVertices = line?.boundingPoly?.vertices;
-            if (Array.isArray(lineVertices) && lineVertices.length >= 4) {
-              const xs = lineVertices.map((v: { x: number }) => v.x);
-              const ys = lineVertices.map((v: { y: number }) => v.y);
-              piiRegions.push({
-                x: Math.min(...xs),
-                y: Math.min(...ys),
-                w: Math.max(...xs) - Math.min(...xs),
-                h: Math.max(...ys) - Math.min(...ys),
-              });
-              console.log(`🔒 PII 감지 라인 (line 레벨): "${lineText}"`);
-            } else {
-              // FIELD 레벨 fallback
-              for (const field of validFields) {
-                const vertices = field?.boundingPoly?.vertices;
-                if (Array.isArray(vertices) && vertices.length >= 4) {
-                  const xs = vertices.map((v: { x: number }) => v.x);
-                  const ys = vertices.map((v: { y: number }) => v.y);
-                  piiRegions.push({
-                    x: Math.min(...xs),
-                    y: Math.min(...ys),
-                    w: Math.max(...xs) - Math.min(...xs),
-                    h: Math.max(...ys) - Math.min(...ys),
-                  });
-                }
-              }
-              console.log(`🔒 PII 감지 라인 (field 레벨): "${lineText}" → ${validFields.length}개 영역 수집`);
+      // 2순위: boundingPoly 형식 fallback (다른 OCR 응답 호환)
+      if (collected === 0) {
+        const lineRegion = verticesToRegion(line?.boundingPoly?.vertices);
+        if (lineRegion) {
+          piiRegions.push(lineRegion);
+          collected++;
+        } else {
+          for (const field of validFields) {
+            const fieldRegion = verticesToRegion(field?.boundingPoly?.vertices);
+            if (fieldRegion) {
+              piiRegions.push(fieldRegion);
+              collected++;
             }
           }
         }
+      }
+
+      if (collected > 0) {
+        console.log(`🔒 PII 감지 라인: "${lineText}" → ${collected}개 영역 수집`);
+      } else {
+        // 좌표 수집 실패 시 디버깅용 구조 로그
+        console.warn(
+          `⚠️ PII 감지됐으나 좌표 없음 (lineIdx=${lineIdx}):`,
+          JSON.stringify({
+            lineKeys: Object.keys(line || {}),
+            boxSample: boundingBoxes[lineIdx] ?? null,
+            totalBoxes: boundingBoxes.length,
+          }).slice(0, 500),
+        );
       }
     }
 

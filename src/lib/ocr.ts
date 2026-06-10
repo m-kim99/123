@@ -293,6 +293,8 @@ export async function extractTextFromPDF(
     const extractedTexts: string[] = [];
     // 페이지별 PII 좌표 수집 (key: pageNum)
     const piiRegionsByPage: Map<number, PiiRegion[]> = new Map();
+    // 페이지별 OCR/좌표 기준 이미지 크기 (마스킹 시 좌표 스케일링용)
+    const ocrDimsByPage: Map<number, { width: number; height: number }> = new Map();
     let textLayerPageCount = 0;
     let ocrPageCount = 0;
 
@@ -337,6 +339,7 @@ export async function extractTextFromPDF(
               const pagePiiRegions = extractPiiRegionsFromTextContent(textContent.items, viewport);
               if (pagePiiRegions.length > 0) {
                 piiRegionsByPage.set(pageNum, pagePiiRegions);
+                ocrDimsByPage.set(pageNum, { width: viewport.width, height: viewport.height });
                 console.log(`🔒 페이지 ${pageNum}: 텍스트 레이어에서 PII ${pagePiiRegions.length}개 영역 감지`);
               }
             } catch (piiError) {
@@ -370,6 +373,8 @@ export async function extractTextFromPDF(
         
         // 이미지 크기 확인 (네이버 OCR 제한: 5MB)
         const dataUrl = canvas.toDataURL('image/png');
+        // OCR에 보낸 이미지 크기 기록 (좌표 스케일링 기준)
+        let ocrImageDims = { width: canvas.width, height: canvas.height };
         // Canvas 메모리 해제
         canvas.width = 0;
         canvas.height = 0;
@@ -383,6 +388,8 @@ export async function extractTextFromPDF(
           // 해상도를 낮춰서 다시 변환
           const smallerCanvas = await convertPDFPageToImage(pdf, pageNum, 1.5);
           const smallerDataUrl = smallerCanvas.toDataURL('image/jpeg', 0.85);
+          // 축소된 이미지 기준으로 좌표 스케일링 기준 갱신
+          ocrImageDims = { width: smallerCanvas.width, height: smallerCanvas.height };
           // Canvas 메모리 해제
           smallerCanvas.width = 0;
           smallerCanvas.height = 0;
@@ -401,6 +408,7 @@ export async function extractTextFromPDF(
 
         if (pagePiiRegions.length > 0) {
           piiRegionsByPage.set(pageNum, pagePiiRegions);
+          ocrDimsByPage.set(pageNum, ocrImageDims);
         }
         
         ocrPageCount++;
@@ -443,10 +451,16 @@ export async function extractTextFromPDF(
           // 페이지를 이미지로 렌더링
           const canvas = await convertPDFPageToImage(pdf, pageNum, 2.0);
           
-          // PII 영역이 있으면 블랙박스 적용
+          // PII 영역이 있으면 블랙박스 적용 (OCR 기준 이미지 크기로 좌표 스케일링)
           const regions = piiRegionsByPage.get(pageNum);
           if (regions && regions.length > 0) {
-            applyPiiMaskToCanvas(canvas, regions, canvas.width, canvas.height);
+            const dims = ocrDimsByPage.get(pageNum);
+            applyPiiMaskToCanvas(
+              canvas,
+              regions,
+              dims?.width ?? canvas.width,
+              dims?.height ?? canvas.height,
+            );
           }
 
           const imgData = canvas.toDataURL('image/jpeg', 0.9);
