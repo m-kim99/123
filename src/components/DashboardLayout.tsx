@@ -35,6 +35,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import logo from '@/assets/logos/logo-header.png';
 import logoDark from '@/assets/logos/logo-header-dark.png';
 import searchIcon from '@/assets/icons/search.svg';
@@ -61,6 +62,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
+import { requestBillingAuth } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -146,6 +148,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+  // 베이직 플랜 결제 (토스페이먼츠 빌링 — 인당 3,300원, 기본 3인 이상)
+  const BASIC_PRICE_PER_MEMBER = 3300;
+  const [basicMembers, setBasicMembers] = useState('3');
+  const [basicAgreed, setBasicAgreed] = useState(false);
+  const [isRequestingPayment, setIsRequestingPayment] = useState(false);
+  const parsedBasicMembers = Math.max(0, parseInt(basicMembers, 10) || 0);
+
+  const handleBasicSubscribe = async () => {
+    if (!user || parsedBasicMembers < 3 || !basicAgreed) return;
+    setIsRequestingPayment(true);
+    try {
+      await requestBillingAuth({
+        customerKey: user.id,
+        customerEmail: user.email,
+        customerName: user.name,
+        memberCount: parsedBasicMembers,
+        amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
+      });
+    } catch (error) {
+      // 사용자가 결제창을 닫은 경우 등
+      console.error('빌링 카드 등록 요청 실패:', error);
+      toast({
+        title: t('subscription.paymentRequestFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRequestingPayment(false);
+    }
+  };
+
   const [mobilePermExpanded, setMobilePermExpanded] = useState(false);
   const [mobileLangExpanded, setMobileLangExpanded] = useState(false);
   const [mobileThemeExpanded, setMobileThemeExpanded] = useState(false);
@@ -1868,7 +1901,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) setSelectedPlan(null); }}>
+      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedPlan ? (
             <>
@@ -1898,6 +1931,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <li className="flex items-center gap-2 text-slate-400">✗ AI {t('chatbot.title')}</li>
                         <li className="flex items-center gap-2 text-slate-400">✗ NFC</li>
                       </ul>
+                    </div>
+                    {/* 주문 정보 — 인원수 입력 + 결제수단 + 월 합계 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="basic-members">{t('subscription.memberCountLabel')}</Label>
+                      <Input
+                        id="basic-members"
+                        type="number"
+                        min={3}
+                        value={basicMembers}
+                        onChange={(e) => setBasicMembers(e.target.value)}
+                      />
+                      {parsedBasicMembers > 0 && parsedBasicMembers < 3 && (
+                        <p className="text-xs text-red-500">{t('subscription.minMembers')}</p>
+                      )}
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">{t('subscription.paymentMethod')}</span>
+                        <span className="font-medium">{t('subscription.creditCard')}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
+                        <span className="text-xl font-bold text-[#2563eb]">
+                          ₩{(parsedBasicMembers * BASIC_PRICE_PER_MEMBER).toLocaleString()}
+                          <span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="basic-agree-terms"
+                        checked={basicAgreed}
+                        onCheckedChange={(checked) => setBasicAgreed(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="basic-agree-terms" className="text-sm text-slate-700 leading-snug cursor-pointer">
+                        {t('subscription.agreeTerms')}
+                      </Label>
                     </div>
                   </div>
                 )}
@@ -1942,15 +2013,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </div>
                 )}
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
-                  🚧 {t('subscription.paymentNotReady')}
-                </div>
+                {selectedPlan !== 'basic' && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
+                    🚧 {t('subscription.paymentNotReady')}
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => setSelectedPlan(null)}>
                     {t('common.back')}
                   </Button>
-                  <Button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white" disabled>
-                    {t('subscription.subscribe')}
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                    disabled={
+                      selectedPlan !== 'basic' ||
+                      parsedBasicMembers < 3 ||
+                      !basicAgreed ||
+                      isRequestingPayment
+                    }
+                    onClick={handleBasicSubscribe}
+                  >
+                    {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
                   </Button>
                 </div>
               </div>
