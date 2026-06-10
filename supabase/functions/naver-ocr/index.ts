@@ -184,13 +184,22 @@ serve(async (req) => {
     if (Array.isArray(ocrJson?.result?.listOfInferTexts)) {
       for (const line of ocrJson.result.listOfInferTexts) {
         if (Array.isArray(line?.inferTexts)) {
-          for (const field of line.inferTexts) {
-            const value = field?.value;
-            if (typeof value !== 'string' || !value.trim()) continue;
+          const validFields = line.inferTexts.filter(
+            (t: { value?: string }) => typeof t?.value === 'string' && t.value.trim()
+          );
 
-            // 개인정보 패턴 매칭 여부 확인
-            if (containsPersonalInfo(value)) {
-              // NHN OCR boundingPoly → { x, y, w, h } 변환
+          // 라인 전체 텍스트를 합쳐서 PII 검사 (개별 필드는 단어가 쪼개져 패턴 매칭 실패)
+          const lineText = validFields
+            .map((t: { value: string }) => t.value.trim())
+            .join(' ');
+
+          if (lineText) {
+            textPieces.push(lineText);
+          }
+
+          // 라인 단위로 PII 패턴 매칭 → 해당 라인의 모든 필드 바운딩박스 수집
+          if (lineText && containsPersonalInfo(lineText)) {
+            for (const field of validFields) {
               const vertices = field?.boundingPoly?.vertices;
               if (Array.isArray(vertices) && vertices.length >= 4) {
                 const xs = vertices.map((v: { x: number }) => v.x);
@@ -207,14 +216,7 @@ serve(async (req) => {
                 });
               }
             }
-          }
-
-          const lineText = line.inferTexts
-            .filter((t: { value?: string }) => typeof t?.value === 'string' && t.value.trim())
-            .map((t: { value: string }) => t.value.trim())
-            .join(' ');
-          if (lineText) {
-            textPieces.push(lineText);
+            console.log(`🔒 PII 감지 라인: "${lineText}" → ${validFields.length}개 영역 수집`);
           }
         }
       }
