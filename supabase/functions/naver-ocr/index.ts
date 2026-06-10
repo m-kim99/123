@@ -197,26 +197,37 @@ serve(async (req) => {
             textPieces.push(lineText);
           }
 
-          // 라인 단위로 PII 패턴 매칭 → 해당 라인의 모든 필드 바운딩박스 수집
+          // 라인 단위로 PII 패턴 매칭 → 라인 boundingPoly 우선, 필드 단위 fallback
           if (lineText && containsPersonalInfo(lineText)) {
-            for (const field of validFields) {
-              const vertices = field?.boundingPoly?.vertices;
-              if (Array.isArray(vertices) && vertices.length >= 4) {
-                const xs = vertices.map((v: { x: number }) => v.x);
-                const ys = vertices.map((v: { y: number }) => v.y);
-                const minX = Math.min(...xs);
-                const minY = Math.min(...ys);
-                const maxX = Math.max(...xs);
-                const maxY = Math.max(...ys);
-                piiRegions.push({
-                  x: minX,
-                  y: minY,
-                  w: maxX - minX,
-                  h: maxY - minY,
-                });
+            // LINE 레벨 boundingPoly 우선 사용 (NHN OCR API는 라인 레벨에서만 안정적으로 제공)
+            const lineVertices = line?.boundingPoly?.vertices;
+            if (Array.isArray(lineVertices) && lineVertices.length >= 4) {
+              const xs = lineVertices.map((v: { x: number }) => v.x);
+              const ys = lineVertices.map((v: { y: number }) => v.y);
+              piiRegions.push({
+                x: Math.min(...xs),
+                y: Math.min(...ys),
+                w: Math.max(...xs) - Math.min(...xs),
+                h: Math.max(...ys) - Math.min(...ys),
+              });
+              console.log(`🔒 PII 감지 라인 (line 레벨): "${lineText}"`);
+            } else {
+              // FIELD 레벨 fallback
+              for (const field of validFields) {
+                const vertices = field?.boundingPoly?.vertices;
+                if (Array.isArray(vertices) && vertices.length >= 4) {
+                  const xs = vertices.map((v: { x: number }) => v.x);
+                  const ys = vertices.map((v: { y: number }) => v.y);
+                  piiRegions.push({
+                    x: Math.min(...xs),
+                    y: Math.min(...ys),
+                    w: Math.max(...xs) - Math.min(...xs),
+                    h: Math.max(...ys) - Math.min(...ys),
+                  });
+                }
               }
+              console.log(`🔒 PII 감지 라인 (field 레벨): "${lineText}" → ${validFields.length}개 영역 수집`);
             }
-            console.log(`🔒 PII 감지 라인: "${lineText}" → ${validFields.length}개 영역 수집`);
           }
         }
       }
