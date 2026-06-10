@@ -115,6 +115,7 @@ serve(async (req) => {
 
     const imageBase64Input = body.imageBase64 as string;
     const mimeType = typeof body.mimeType === 'string' ? (body.mimeType as string) : undefined;
+    const debugMode = body.debug === true;
 
     let base64Data = imageBase64Input;
     let format = 'jpg';
@@ -232,19 +233,15 @@ serve(async (req) => {
 
       let collected = 0;
 
-      // 1순위: listOfBoundingBoxes[lineIdx] (NHN General OCR 표준 좌표)
-      const lineBoxes = boundingBoxes[lineIdx];
-      if (Array.isArray(lineBoxes)) {
-        // 라인 내 단어별 박스 배열
-        for (const box of lineBoxes) {
-          const region = boxToRegion(box);
-          if (region) {
-            piiRegions.push(region);
-            collected++;
-          }
-        }
-      } else {
-        const region = boxToRegion(lineBoxes);
+      // 1순위: listOfBoundingBoxes[lineIdx].boundingBoxes (NHN General OCR 실제 구조, 라이브 응답으로 검증됨)
+      const lineBoxEntry = boundingBoxes[lineIdx];
+      const lineBoxes = Array.isArray(lineBoxEntry?.boundingBoxes)
+        ? lineBoxEntry.boundingBoxes
+        : Array.isArray(lineBoxEntry)
+          ? lineBoxEntry
+          : [];
+      for (const box of lineBoxes) {
+        const region = boxToRegion(box);
         if (region) {
           piiRegions.push(region);
           collected++;
@@ -288,7 +285,12 @@ serve(async (req) => {
     // 개인정보 마스킹 적용
     const maskedText = maskPersonalInfo(fullText);
 
-    return new Response(JSON.stringify({ text: maskedText, piiRegions }), {
+    const responsePayload: Record<string, unknown> = { text: maskedText, piiRegions };
+    if (debugMode) {
+      responsePayload.rawResult = ocrJson?.result ?? null;
+    }
+
+    return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
