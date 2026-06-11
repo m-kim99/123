@@ -51,6 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON public.payments (subs
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
 -- 같은 회사 admin만 결제 내역 조회 가능
+DROP POLICY IF EXISTS "Admins can view own company payments" ON public.payments;
 CREATE POLICY "Admins can view own company payments"
   ON public.payments FOR SELECT
   TO authenticated

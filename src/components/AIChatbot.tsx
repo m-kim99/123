@@ -1003,7 +1003,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           const plan = (sub as any)?.plans;
           const planName = plan?.name || 'free';

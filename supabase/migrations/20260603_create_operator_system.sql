@@ -217,11 +217,13 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- operators 테이블 정책
+DROP POLICY IF EXISTS "Operators can view all operators" ON operators;
 CREATE POLICY "Operators can view all operators"
   ON operators FOR SELECT
   TO authenticated
   USING (is_operator());
 
+DROP POLICY IF EXISTS "Super operators can manage operators" ON operators;
 CREATE POLICY "Super operators can manage operators"
   ON operators FOR ALL
   TO authenticated
@@ -229,38 +231,45 @@ CREATE POLICY "Super operators can manage operators"
   WITH CHECK (is_super_operator());
 
 -- user_suspensions 테이블 정책
+DROP POLICY IF EXISTS "Operators can view all suspensions" ON user_suspensions;
 CREATE POLICY "Operators can view all suspensions"
   ON user_suspensions FOR SELECT
   TO authenticated
   USING (is_operator());
 
+DROP POLICY IF EXISTS "Operators can create suspensions" ON user_suspensions;
 CREATE POLICY "Operators can create suspensions"
   ON user_suspensions FOR INSERT
   TO authenticated
   WITH CHECK (is_operator() AND suspended_by = auth.uid());
 
+DROP POLICY IF EXISTS "Operators can update suspensions" ON user_suspensions;
 CREATE POLICY "Operators can update suspensions"
   ON user_suspensions FOR UPDATE
   TO authenticated
   USING (is_operator());
 
 -- reports 테이블 정책
+DROP POLICY IF EXISTS "Users can create reports" ON reports;
 CREATE POLICY "Users can create reports"
   ON reports FOR INSERT
   TO authenticated
   WITH CHECK (reporter_id = auth.uid() OR reporter_id IS NULL);
 
+DROP POLICY IF EXISTS "Operators can view all reports" ON reports;
 CREATE POLICY "Operators can view all reports"
   ON reports FOR SELECT
   TO authenticated
   USING (is_operator() OR reporter_id = auth.uid());
 
+DROP POLICY IF EXISTS "Operators can update reports" ON reports;
 CREATE POLICY "Operators can update reports"
   ON reports FOR UPDATE
   TO authenticated
   USING (is_operator());
 
 -- system_notices 테이블 정책
+DROP POLICY IF EXISTS "Anyone can read active notices" ON system_notices;
 CREATE POLICY "Anyone can read active notices"
   ON system_notices FOR SELECT
   TO authenticated
@@ -270,6 +279,7 @@ CREATE POLICY "Anyone can read active notices"
     AND published_at <= now()
   );
 
+DROP POLICY IF EXISTS "Operators can manage all notices" ON system_notices;
 CREATE POLICY "Operators can manage all notices"
   ON system_notices FOR ALL
   TO authenticated
@@ -277,22 +287,26 @@ CREATE POLICY "Operators can manage all notices"
   WITH CHECK (is_operator());
 
 -- inquiries 테이블 정책
+DROP POLICY IF EXISTS "Users can create inquiries" ON inquiries;
 CREATE POLICY "Users can create inquiries"
   ON inquiries FOR INSERT
   TO authenticated
   WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
+DROP POLICY IF EXISTS "Users can view their own inquiries" ON inquiries;
 CREATE POLICY "Users can view their own inquiries"
   ON inquiries FOR SELECT
   TO authenticated
   USING (user_id = auth.uid() OR is_operator());
 
+DROP POLICY IF EXISTS "Operators can update inquiries" ON inquiries;
 CREATE POLICY "Operators can update inquiries"
   ON inquiries FOR UPDATE
   TO authenticated
   USING (is_operator());
 
 -- inquiry_replies 테이블 정책
+DROP POLICY IF EXISTS "Users can view replies to their inquiries" ON inquiry_replies;
 CREATE POLICY "Users can view replies to their inquiries"
   ON inquiry_replies FOR SELECT
   TO authenticated
@@ -305,22 +319,26 @@ CREATE POLICY "Users can view replies to their inquiries"
     AND (NOT is_internal OR is_operator())  -- 내부 메모는 운영자만
   );
 
+DROP POLICY IF EXISTS "Operators can create replies" ON inquiry_replies;
 CREATE POLICY "Operators can create replies"
   ON inquiry_replies FOR INSERT
   TO authenticated
   WITH CHECK (is_operator() AND operator_id = auth.uid());
 
+DROP POLICY IF EXISTS "Operators can update their replies" ON inquiry_replies;
 CREATE POLICY "Operators can update their replies"
   ON inquiry_replies FOR UPDATE
   TO authenticated
   USING (is_operator() AND operator_id = auth.uid());
 
 -- operator_activity_logs 테이블 정책
+DROP POLICY IF EXISTS "Operators can view logs" ON operator_activity_logs;
 CREATE POLICY "Operators can view logs"
   ON operator_activity_logs FOR SELECT
   TO authenticated
   USING (is_operator());
 
+DROP POLICY IF EXISTS "System can insert logs" ON operator_activity_logs;
 CREATE POLICY "System can insert logs"
   ON operator_activity_logs FOR INSERT
   TO authenticated
@@ -338,22 +356,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_operators_updated_at ON operators;
 CREATE TRIGGER update_operators_updated_at
   BEFORE UPDATE ON operators
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reports_updated_at ON reports;
 CREATE TRIGGER update_reports_updated_at
   BEFORE UPDATE ON reports
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_system_notices_updated_at ON system_notices;
 CREATE TRIGGER update_system_notices_updated_at
   BEFORE UPDATE ON system_notices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_inquiries_updated_at ON inquiries;
 CREATE TRIGGER update_inquiries_updated_at
   BEFORE UPDATE ON inquiries
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_inquiry_replies_updated_at ON inquiry_replies;
 CREATE TRIGGER update_inquiry_replies_updated_at
   BEFORE UPDATE ON inquiry_replies
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -300,7 +300,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       let plan: any = null;
       if (sub && (sub as any).plans) {
