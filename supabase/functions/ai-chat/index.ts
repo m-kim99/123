@@ -343,9 +343,13 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   
   try {
-    const { message, userId, history = [], locale = 'ko' } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+    const { message, userId, history = [], locale = 'ko', model } = await req.json();
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
+
+    // 허용된 OpenAI 모델 화이트리스트 (경량 모델 제외)
+    const ALLOWED_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-4.1', 'gpt-4o-2024-11-20'];
+    const selectedModel = ALLOWED_MODELS.includes(model) ? model : 'gpt-5.5';
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -425,42 +429,42 @@ ${searchDataBlockEn}
     const systemInstruction = locale?.startsWith('en') ? systemInstructionEn : systemInstructionKo;
     
     // ==========================================
-    // Gemini API 호출
+    // OpenAI API 호출
     // ==========================================
     
-    const contents = [
+    const openaiTools = functionDeclarations.map((fd) => ({ type: 'function', function: fd }));
+    
+    const chatMessages: any[] = [
+      { role: 'system', content: systemInstruction },
       ...history.map((h: any) => ({ 
-        role: h.role === 'user' ? 'user' : 'model', 
-        parts: [{ text: h.content }] 
+        role: h.role === 'user' ? 'user' : 'assistant', 
+        content: h.content 
       })), 
-      { role: 'user', parts: [{ text: message }] }
+      { role: 'user', content: message }
     ];
     
-    const initialResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${GEMINI_API_KEY}`, //NEVER CHANGE THE MODEL NAME.
-      { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          system_instruction: { parts: [{ text: systemInstruction }] }, 
-          contents, 
-          tools: [{ function_declarations: functionDeclarations }], 
-          tool_config: { function_calling_config: { mode: 'AUTO' } } 
-        }) 
-      }
-    );
+    const initialResponse = await fetch('https://api.openai.com/v1/chat/completions', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` }, 
+      body: JSON.stringify({ 
+        model: selectedModel, 
+        messages: chatMessages, 
+        tools: openaiTools, 
+        tool_choice: 'auto' 
+      }) 
+    });
     
     if (!initialResponse.ok) { 
       const errorText = await initialResponse.text(); 
-      console.error('Gemini API error:', errorText); 
-      throw new Error('Gemini API request failed'); 
+      console.error('OpenAI API error:', errorText); 
+      throw new Error('OpenAI API request failed'); 
     }
     
     const initialData = await initialResponse.json();
-    const candidate = initialData.candidates?.[0];
-    if (!candidate) throw new Error('No response from Gemini');
+    const assistantMessage = initialData.choices?.[0]?.message;
+    if (!assistantMessage) throw new Error('No response from OpenAI');
     
-    const functionCalls = candidate.content?.parts?.filter((p: any) => p.functionCall) || [];
+    const toolCalls = assistantMessage.tool_calls || [];
     
     // 프리서치 결과로 docsMetadata 생성
     let docsMetadata: any[] = [];
@@ -491,47 +495,41 @@ ${searchDataBlockEn}
       });
     }
     
-    if (functionCalls.length > 0) {
-      const functionResults = [];
-      for (const fc of functionCalls) { 
-        const { name, args } = fc.functionCall; 
+    if (toolCalls.length > 0) {
+      const functionResults: any[] = [];
+      const toolMessages: any[] = [];
+      for (const tc of toolCalls) { 
+        const name = tc.function?.name; 
+        let args: any = {};
+        try { args = JSON.parse(tc.function?.arguments || '{}'); } catch { args = {}; }
         console.log(`Executing function: ${name}`, args); 
-        const result = await executeFunction(name, args || {}, supabase, userCompanyId, userId); 
+        const result = await executeFunction(name, args, supabase, userCompanyId, userId); 
         functionResults.push({ functionResponse: { name, response: { result: JSON.parse(result) } } }); 
+        toolMessages.push({ role: 'tool', tool_call_id: tc.id, content: result });
       }
-      
-      const finalContents = [
-        ...contents, 
-        { role: 'model', parts: functionCalls.map((fc: any) => ({ functionCall: fc.functionCall })) }, 
-        { role: 'user', parts: functionResults }
-      ];
       
       let finalText = '';
       try {
-        const finalResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, 
-          { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ 
-              system_instruction: { parts: [{ text: systemInstruction }] }, 
-              contents: finalContents 
-            }) 
-          }
-        );
+        const finalResponse = await fetch('https://api.openai.com/v1/chat/completions', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` }, 
+          body: JSON.stringify({ 
+            model: selectedModel, 
+            messages: [...chatMessages, assistantMessage, ...toolMessages] 
+          }) 
+        });
         
         if (finalResponse.ok) {
           const finalData = await finalResponse.json();
-          const allParts = finalData.candidates?.[0]?.content?.parts || [];
-          finalText = allParts.map((p: any) => p.text).filter(Boolean).join('');
+          finalText = finalData.choices?.[0]?.message?.content || '';
         } else { 
-          console.error('Final Gemini error:', finalResponse.status); 
+          console.error('Final OpenAI error:', finalResponse.status); 
         }
       } catch (e) { 
-        console.error('Final Gemini call failed:', e); 
+        console.error('Final OpenAI call failed:', e); 
       }
       
-      // Gemini 실패 시 함수 결과로 직접 응답
+      // OpenAI 실패 시 함수 결과로 직접 응답
       if (!finalText) {
         const isEn = locale?.startsWith('en');
         const lines: string[] = [];
@@ -586,7 +584,7 @@ ${searchDataBlockEn}
     }
     
     // 함수 호출 없이 직접 답변
-    const directText = candidate.content?.parts?.map((p: any) => p.text).filter(Boolean).join('');
+    const directText = assistantMessage.content || '';
     const responseWithDocs = docsMetadata.length > 0 
       ? `${directText}\n---DOCS---\n${JSON.stringify(docsMetadata)}` 
       : directText;

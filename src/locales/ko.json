@@ -1166,6 +1166,7 @@
     "quickQ3": "카테고리 목록 보여줘",
     "voicePlaceholder": "🎤 음성 대화 중... 말씀하세요",
     "inputPlaceholder": "질문하세요...",
+    "modelLabel": "AI 모델",
     "send": "전송",
     "voiceStop": "음성 대화 종료",
     "voiceStart": "음성 대화 시작",

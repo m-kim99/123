@@ -1166,6 +1166,7 @@
     "quickQ3": "カテゴリ一覧を見せて",
     "voicePlaceholder": "🎤 音声会話中...話してください",
     "inputPlaceholder": "質問してください...",
+    "modelLabel": "AIモデル",
     "send": "送信",
     "voiceStop": "音声会話終了",
     "voiceStart": "音声会話開始",

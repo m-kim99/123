@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { supabase } from '@/lib/supabase';
 import { formatDateTimeSimple } from '@/lib/utils';
@@ -115,6 +116,21 @@ interface AIChatbotProps {
 
 const CHAT_STORAGE_KEY = 'troy_chat_messages';
 const CHAT_OPEN_KEY = 'troy_chat_open';
+const CHAT_MODEL_KEY = 'troy_chat_model';
+
+// OpenAI 모델 목록 (경량 모델 제외)
+const AI_MODELS = [
+  { id: 'gpt-5.5', label: 'GPT-5.5' },
+  { id: 'gpt-5.4', label: 'GPT-5.4' },
+  { id: 'gpt-4.1', label: 'GPT-4.1' },
+  { id: 'gpt-4o-2024-11-20', label: 'GPT-4o (2024-11)' },
+];
+const DEFAULT_MODEL = AI_MODELS[0].id;
+
+function loadSavedModel(): string {
+  const saved = localStorage.getItem(CHAT_MODEL_KEY);
+  return AI_MODELS.some((m) => m.id === saved) ? (saved as string) : DEFAULT_MODEL;
+}
 
 function getChatStorageKey(userId: string | undefined) {
   return userId ? `${CHAT_STORAGE_KEY}_${userId}` : CHAT_STORAGE_KEY;
@@ -154,6 +170,15 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 선택된 OpenAI 모델 (localStorage 영속화, 콜백 closure 대비 ref 병행)
+  const [selectedModel, setSelectedModel] = useState<string>(loadSavedModel);
+  const selectedModelRef = useRef(selectedModel);
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    selectedModelRef.current = modelId;
+    localStorage.setItem(CHAT_MODEL_KEY, modelId);
+  };
 
   // 사용자 전환 감지: user.id가 바뀌면 메시지·열림상태 초기화 (방어적 리셋)
   const prevUserIdRef = useRef<string | undefined>(user?.id);
@@ -428,7 +453,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
               : m
           )
         );
-      }, currentLocale);
+      }, currentLocale, selectedModelRef.current);
       
       // 3. 최종 응답을 브라우저 TTS로 읽기
       if (finalText && isVoiceModeRef.current) {
@@ -1021,7 +1046,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 : m
             )
           );
-        }, currentLocale);
+        }, currentLocale, selectedModelRef.current);
       } finally {
         setIsTyping(false);
       }
@@ -1362,6 +1387,22 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 </button>
               )}
             </form>
+            {/* 모델 셀렉터 */}
+            <div className="px-3 pb-2 flex items-center justify-end gap-2">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">{t('chatbot.modelLabel')}</span>
+              <Select value={selectedModel} onValueChange={handleModelChange}>
+                <SelectTrigger className="h-7 w-auto gap-1 rounded-[8px] border-slate-200 dark:border-white/[0.08] px-2 text-xs text-slate-600 dark:text-slate-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_MODELS.map((m) => (
+                    <SelectItem key={m.id} value={m.id} className="text-xs">
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {isSpeaking && (
               <div className="text-xs text-green-600 animate-pulse text-center pb-2">{t('chatbot.aiSpeaking')}</div>
             )}

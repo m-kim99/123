@@ -1079,12 +1079,13 @@ export interface StreamedDocsResult {
   docs: ChatSearchResult[];
 }
 
-// Google Gemini API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
+// OpenAI API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
 export async function generateResponse(
   message: string,
   history: ChatHistoryItem[] = [],
   onPartialUpdate?: (partial: string, docs?: ChatSearchResult[]) => void,
-  locale: string = 'ko'
+  locale: string = 'ko',
+  model?: string
 ): Promise<StreamedDocsResult> {
   const text = message.trim();
   const emitFallback = (): StreamedDocsResult => {
@@ -1196,6 +1197,7 @@ export async function generateResponse(
         message: text,
         userId: user.id,
         locale,
+        model,
         history: history.map((h) => ({
           role: h.role,
           content: h.content,

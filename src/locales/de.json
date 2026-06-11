@@ -1166,6 +1166,7 @@
     "quickQ3": "Kategorieliste anzeigen",
     "voicePlaceholder": "🎤 Sprachkonversation aktiv... Sprechen Sie jetzt",
     "inputPlaceholder": "Stellen Sie eine Frage...",
+    "modelLabel": "KI-Modell",
     "send": "Senden",
     "voiceStop": "Sprachchat beenden",
     "voiceStart": "Sprachchat starten",

@@ -1166,6 +1166,7 @@
     "quickQ3": "Show category list",
     "voicePlaceholder": "🎤 Voice conversation active... Speak now",
     "inputPlaceholder": "Ask a question...",
+    "modelLabel": "AI Model",
     "send": "Send",
     "voiceStop": "Stop Voice Chat",
     "voiceStart": "Start Voice Chat",
