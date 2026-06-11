@@ -1223,7 +1223,14 @@
   "billing": {
     "successTitle": "カード登録完了",
     "successDesc": "定期決済用カードが正常に登録されました。",
-    "approvalPending": "決済承認処理は準備中です。サービスの適用まで時間がかかる場合があります。",
+    "processingTitle": "決済承認処理中",
+    "processingDesc": "ビリングキーの発行と初回決済を承認しています。しばらくお待ちください。",
+    "approvedTitle": "サブスクリプション決済完了",
+    "approvedDesc": "ベーシックプランの購読が開始されました。毎月、登録されたカードで自動決済されます。",
+    "approvalFailTitle": "決済承認失敗",
+    "approvalFailDesc": "決済の承認に失敗しました。もう一度お試しください。",
+    "cardLabel": "決済カード",
+    "nextBillingDate": "次回決済日",
     "failTitle": "カード登録失敗",
     "failDesc": "カード登録に失敗しました。もう一度お試しください。",
     "backToApp": "チーム管理に戻る"

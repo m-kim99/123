@@ -1223,7 +1223,14 @@
   "billing": {
     "successTitle": "카드 등록 완료",
     "successDesc": "정기결제 카드가 정상적으로 등록되었습니다.",
-    "approvalPending": "결제 승인 처리는 준비 중입니다. 서비스 적용까지 다소 시간이 걸릴 수 있습니다.",
+    "processingTitle": "결제 승인 처리 중",
+    "processingDesc": "빌링키 발급 및 첫 결제를 승인하고 있습니다. 잠시만 기다려주세요.",
+    "approvedTitle": "구독 결제 완료",
+    "approvedDesc": "베이직 플랜 구독이 시작되었습니다. 매월 등록하신 카드로 자동 결제됩니다.",
+    "approvalFailTitle": "결제 승인 실패",
+    "approvalFailDesc": "결제 승인에 실패했습니다. 다시 시도해주세요.",
+    "cardLabel": "결제 카드",
+    "nextBillingDate": "다음 결제일",
     "failTitle": "카드 등록 실패",
     "failDesc": "카드 등록에 실패했습니다. 다시 시도해주세요.",
     "backToApp": "팀원 관리로 돌아가기"

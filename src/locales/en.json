@@ -1223,7 +1223,14 @@
   "billing": {
     "successTitle": "Card Registered",
     "successDesc": "Your card for recurring payments has been registered successfully.",
-    "approvalPending": "Payment approval is being prepared. It may take some time before the service is applied.",
+    "processingTitle": "Processing Payment",
+    "processingDesc": "Issuing the billing key and approving your first payment. Please wait a moment.",
+    "approvedTitle": "Subscription Activated",
+    "approvedDesc": "Your Basic plan subscription has started. Your registered card will be charged automatically every month.",
+    "approvalFailTitle": "Payment Approval Failed",
+    "approvalFailDesc": "Payment approval failed. Please try again.",
+    "cardLabel": "Payment Card",
+    "nextBillingDate": "Next Billing Date",
     "failTitle": "Card Registration Failed",
     "failDesc": "Card registration failed. Please try again.",
     "backToApp": "Back to Team Management"

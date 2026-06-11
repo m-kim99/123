@@ -1223,7 +1223,14 @@
   "billing": {
     "successTitle": "Karte registriert",
     "successDesc": "Ihre Karte für wiederkehrende Zahlungen wurde erfolgreich registriert.",
-    "approvalPending": "Die Zahlungsfreigabe wird vorbereitet. Es kann einige Zeit dauern, bis der Dienst aktiviert wird.",
+    "processingTitle": "Zahlung wird verarbeitet",
+    "processingDesc": "Der Abrechnungsschlüssel wird ausgestellt und Ihre erste Zahlung genehmigt. Bitte warten Sie einen Moment.",
+    "approvedTitle": "Abonnement aktiviert",
+    "approvedDesc": "Ihr Basic-Plan-Abonnement wurde gestartet. Ihre registrierte Karte wird monatlich automatisch belastet.",
+    "approvalFailTitle": "Zahlungsfreigabe fehlgeschlagen",
+    "approvalFailDesc": "Die Zahlungsfreigabe ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "cardLabel": "Zahlungskarte",
+    "nextBillingDate": "Nächstes Abrechnungsdatum",
     "failTitle": "Kartenregistrierung fehlgeschlagen",
     "failDesc": "Kartenregistrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "backToApp": "Zurück zur Teamverwaltung"

@@ -1,8 +1,10 @@
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
+import { supabase } from '@/lib/supabase';
 
 // ============================================================
 // 토스페이먼츠 빌링(정기결제) 연동
-// 카드 등록창(requestBillingAuth)까지 — 빌링키 발급/승인은 시크릿 키 발급 후 서버(Edge Function)에서 처리 예정
+// 1) requestBillingAuth: 카드 등록창 호출 (클라이언트)
+// 2) confirmBilling: 빌링키 발급 + 첫 결제 승인 (Edge Function)
 // ============================================================
 
 // 실 클라이언트 키 발급 전까지는 토스 공식 문서용 테스트 키 사용 (테스트 결제창으로도 카드사 심사 가능)
@@ -35,4 +37,51 @@ export async function requestBillingAuth(params: BillingAuthParams): Promise<voi
     customerEmail: params.customerEmail,
     customerName: params.customerName,
   });
+}
+
+export interface ConfirmBillingParams {
+  authKey: string;
+  customerKey: string;
+  memberCount: number;
+  amount: number;
+}
+
+export interface ConfirmBillingResult {
+  success: boolean;
+  subscriptionId?: string;
+  orderId?: string;
+  amount?: number;
+  memberCount?: number;
+  cardCompany?: string | null;
+  cardNumber?: string | null;
+  nextBillingDate?: string;
+  error?: string;
+  code?: string;
+  message?: string;
+}
+
+/**
+ * 빌링키 발급 + 첫 결제 승인 (Edge Function 호출)
+ * 카드 등록 성공 후 /billing/success 페이지에서 호출
+ */
+export async function confirmBilling(params: ConfirmBillingParams): Promise<ConfirmBillingResult> {
+  const { data, error } = await supabase.functions.invoke('toss-billing-confirm', {
+    body: params,
+  });
+
+  if (error) {
+    // Edge Function이 4xx/5xx를 반환한 경우 응답 본문에서 상세 메시지 추출
+    try {
+      const context = (error as { context?: Response }).context;
+      if (context) {
+        const body = await context.json();
+        return { success: false, ...body };
+      }
+    } catch {
+      // 본문 파싱 실패 시 아래 기본 오류 반환
+    }
+    return { success: false, error: 'REQUEST_FAILED', message: error.message };
+  }
+
+  return data as ConfirmBillingResult;
 }
