@@ -40,6 +40,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
+import { ReportDialog } from '@/components/ReportDialog';
 import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
 
 function splitFilesByType(files: File[]) {
@@ -1402,6 +1403,9 @@ export function CategoryDetail() {
                   <Download className="h-3.5 w-3.5" />
                   {t('documentMgmt.download')}
                 </button>
+              )}
+              {previewDoc && (
+                <ReportDialog targetType="document" targetId={previewDoc.id} />
               )}
               <button
                 onClick={() => { setPreviewOpen(false); setImageZoom(100); setImageRotation(0); }}

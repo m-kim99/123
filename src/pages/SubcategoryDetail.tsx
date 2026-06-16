@@ -43,6 +43,7 @@ import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
 import { trackEvent } from '@/lib/analytics';
 import { BackButton } from '@/components/BackButton';
+import { ReportDialog } from '@/components/ReportDialog';
 import { checkUserAccess, hasPermission, type Role, type Action } from '@/lib/permissions';
 
 export function SubcategoryDetail() {
@@ -1589,6 +1590,7 @@ export function SubcategoryDetail() {
                     <Share2 className="h-3.5 w-3.5" />
                     {t('documentMgmt.share', { defaultValue: '공유' })}
                   </button>
+                  <ReportDialog targetType="document" targetId={previewDoc.id} />
                 </>
               )}
               <button

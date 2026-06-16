@@ -31,6 +31,7 @@ import { downloadFile } from '@/lib/appBridge';
 import { toast } from '@/hooks/use-toast';
 import { PdfViewer } from '@/components/PdfViewer';
 import { BackButton } from '@/components/BackButton';
+import { ReportDialog } from '@/components/ReportDialog';
 
 export function SharedDocuments() {
   const { t } = useTranslation();
@@ -353,6 +354,9 @@ export function SharedDocuments() {
                   <Download className="h-3.5 w-3.5" />
                   {t('sharedDocs.download')}
                 </button>
+              )}
+              {previewDoc && (
+                <ReportDialog targetType="document" targetId={previewDoc.id} />
               )}
               <button
                 onClick={() => { setPreviewOpen(false); setImageZoom(100); setImageRotation(0); }}

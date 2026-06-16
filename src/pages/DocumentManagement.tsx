@@ -73,6 +73,7 @@ import { NFCRegistrationDialog } from '@/components/NFCRegistrationDialog';
 import { createDocumentNotification } from '@/lib/notifications';
 import { DocumentBreadcrumb } from '@/components/DocumentBreadcrumb';
 import { PdfViewer } from '@/components/PdfViewer';
+import { ReportDialog } from '@/components/ReportDialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, formatDateTimeSimple } from '@/lib/utils';
@@ -3629,6 +3630,7 @@ export function DocumentManagement() {
                     <Share2 className="h-3.5 w-3.5" />
                     {t('documentMgmt.share', { defaultValue: '공유' })}
                   </button>
+                  <ReportDialog targetType="document" targetId={previewDoc.id} />
                 </>
               )}
               <button
