@@ -20,13 +20,20 @@ export async function sendPushNotification({
   customUrl,
   imageUrl,
 }: SendPushParams): Promise<void> {
-  const { error } = await supabase.functions.invoke('send-push-notification', {
-    body: { playerIds, title, message, customUrl, imageUrl },
-  });
+  console.log('[PUSH-CLIENT] supabase.functions.invoke 호출 시작:', { tokenCount: playerIds.length, title });
+  try {
+    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+      body: { playerIds, title, message, customUrl, imageUrl },
+    });
+    console.log('[PUSH-CLIENT] invoke 응답:', { data, error: error?.message });
 
-  if (error) {
-    console.error('푸시 발송 오류:', error);
-    throw new Error(`푸시 발송 실패: ${error.message}`);
+    if (error) {
+      console.error('[PUSH-CLIENT] 푸시 발송 오류:', error);
+      throw new Error(`푸시 발송 실패: ${error.message}`);
+    }
+  } catch (err) {
+    console.error('[PUSH-CLIENT] invoke 예외:', err);
+    throw err;
   }
 }
 

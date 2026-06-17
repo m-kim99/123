@@ -90,6 +90,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('[PUSH] Edge Function 호출됨');
+
     // 사용자 세션 검증
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -119,6 +121,7 @@ serve(async (req) => {
     const serviceAccount = JSON.parse(serviceAccountJson);
 
     const { playerIds, title, message, customUrl } = await req.json();
+    console.log('[PUSH] 요청 데이터:', { tokenCount: playerIds?.length, title, message });
 
     // playerIds는 실제로 FCM 토큰 배열
     if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
@@ -142,10 +145,25 @@ serve(async (req) => {
               body: message,
             },
             android: {
-              priority: 'high',
+              priority: 'high' as const,
               notification: {
                 sound: 'default',
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              },
+            },
+            apns: {
+              headers: {
+                'apns-priority': '10',
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title,
+                    body: message,
+                  },
+                  sound: 'default',
+                  badge: 1,
+                },
               },
             },
             data: customUrl ? { custom_url: customUrl } : undefined,
@@ -175,6 +193,10 @@ serve(async (req) => {
 
     const successCount = results.filter((r) => r.status === 'fulfilled').length;
     const failCount = results.filter((r) => r.status === 'rejected').length;
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => r.reason?.message || String(r.reason));
+    console.log('[PUSH] 결과:', { successCount, failCount, errors });
 
     return new Response(
       JSON.stringify({ success: true, sent: successCount, failed: failCount }),
