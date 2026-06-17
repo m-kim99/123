@@ -53,7 +53,10 @@
       "Bash(python3 *)",
       "Bash(grep -n \"selectedPlan, setSelectedPlan\\\\|const { user\" /Users/mini/Downloads/123-main/src/components/DashboardLayout.tsx)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit -p tsconfig.json)",
-      "Bash(bun run *)"
+      "Bash(bun run *)",
+      "Bash(git check-ignore *)",
+      "Bash(gh api *)",
+      "Bash(gh repo *)"
     ]
   }
 }
