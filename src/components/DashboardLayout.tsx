@@ -63,7 +63,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestBillingAuth, requestPayAppBilling, type PaymentProvider } from '@/lib/payments';
+import { requestPayAppBilling } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -150,43 +150,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  // 베이직 플랜 결제 (토스페이먼츠 빌링 — 인당 3,300원, 기본 3인 이상)
+  // 베이직 플랜 결제 (PayApp — 인당 3,300원, 기본 3인 이상)
   const BASIC_PRICE_PER_MEMBER = 3300;
   const [basicMembers, setBasicMembers] = useState('3');
   const [basicAgreed, setBasicAgreed] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const parsedBasicMembers = Math.max(0, parseInt(basicMembers, 10) || 0);
-  const [selectedPG, setSelectedPG] = useState<PaymentProvider>('tosspayments');
   const [customerPhone, setCustomerPhone] = useState('');
 
   const handleBasicSubscribe = async () => {
     if (!user || parsedBasicMembers < 3 || !basicAgreed) return;
-    if (selectedPG === 'payapp' && !customerPhone) {
+    if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
     setIsRequestingPayment(true);
     try {
-      if (selectedPG === 'tosspayments') {
-        await requestBillingAuth({
-          customerKey: user.id,
-          customerEmail: user.email,
-          customerName: user.name,
-          memberCount: parsedBasicMembers,
-          amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
-        });
-      } else {
-        await requestPayAppBilling({
-          customerKey: user.id,
-          customerEmail: user.email,
-          customerName: user.name,
-          customerPhone,
-          memberCount: parsedBasicMembers,
-          amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
-        });
-      }
+      await requestPayAppBilling({
+        customerKey: user.id,
+        customerEmail: user.email,
+        customerName: user.name,
+        customerPhone,
+        memberCount: parsedBasicMembers,
+        amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
+      });
     } catch (error) {
-      console.error('빌링 카드 등록 요청 실패:', error);
+      console.error('결제 요청 실패:', error);
       toast({
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
@@ -1967,33 +1956,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-600">{t('subscription.paymentProvider')}</span>
-                        </div>
-                        <Select value={selectedPG} onValueChange={(v) => setSelectedPG(v as PaymentProvider)}>
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="tosspayments">토스페이먼츠</SelectItem>
-                            <SelectItem value="payapp">PayApp</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="basic-customer-phone" className="text-sm text-slate-600">
+                          {t('subscription.phoneLabel')}
+                        </Label>
+                        <Input
+                          id="basic-customer-phone"
+                          type="tel"
+                          placeholder="010-1234-5678"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                        />
                       </div>
-                      {selectedPG === 'payapp' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="basic-customer-phone" className="text-sm text-slate-600">
-                            {t('subscription.phoneLabel')}
-                          </Label>
-                          <Input
-                            id="basic-customer-phone"
-                            type="tel"
-                            placeholder="010-1234-5678"
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                          />
-                        </div>
-                      )}
                       <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                         <span className="text-xl font-bold text-[#2563eb]">

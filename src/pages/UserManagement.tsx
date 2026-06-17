@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { requestBillingAuth, requestPayAppBilling, type PaymentProvider } from '@/lib/payments';
+import { requestPayAppBilling } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -66,38 +66,27 @@ export function UserManagement() {
   const parsedMembers = Math.max(0, parseInt(additionalMembers, 10) || 0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
-  const [selectedPG, setSelectedPG] = useState<PaymentProvider>('tosspayments');
   const [customerPhone, setCustomerPhone] = useState('');
 
-  // 정기결제용 카드 등록창 호출 (토스 or PayApp)
+  // PayApp 정기결제 요청
   const handleSubscribe = async () => {
     if (!authUser || parsedMembers < 1 || !agreedToTerms) return;
-    if (selectedPG === 'payapp' && !customerPhone) {
+    if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
     setIsRequestingPayment(true);
     try {
-      if (selectedPG === 'tosspayments') {
-        await requestBillingAuth({
-          customerKey: authUser.id,
-          customerEmail: authUser.email,
-          customerName: authUser.name,
-          memberCount: parsedMembers,
-          amount: parsedMembers * PRICE_PER_MEMBER,
-        });
-      } else {
-        await requestPayAppBilling({
-          customerKey: authUser.id,
-          customerEmail: authUser.email,
-          customerName: authUser.name,
-          customerPhone,
-          memberCount: parsedMembers,
-          amount: parsedMembers * PRICE_PER_MEMBER,
-        });
-      }
+      await requestPayAppBilling({
+        customerKey: authUser.id,
+        customerEmail: authUser.email,
+        customerName: authUser.name,
+        customerPhone,
+        memberCount: parsedMembers,
+        amount: parsedMembers * PRICE_PER_MEMBER,
+      });
     } catch (error) {
-      console.error('빌링 카드 등록 요청 실패:', error);
+      console.error('결제 요청 실패:', error);
       toast({
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
@@ -541,33 +530,17 @@ export function UserManagement() {
                   <span className="font-medium">₩3,300{t('subscription.perPersonMonth')}</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-600">{t('subscription.paymentProvider')}</span>
-                  </div>
-                  <Select value={selectedPG} onValueChange={(v) => setSelectedPG(v as PaymentProvider)}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tosspayments">토스페이먼츠</SelectItem>
-                      <SelectItem value="payapp">PayApp</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="customer-phone" className="text-sm text-slate-600">
+                    {t('subscription.phoneLabel')}
+                  </Label>
+                  <Input
+                    id="customer-phone"
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                  />
                 </div>
-                {selectedPG === 'payapp' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="customer-phone" className="text-sm text-slate-600">
-                      {t('subscription.phoneLabel')}
-                    </Label>
-                    <Input
-                      id="customer-phone"
-                      type="tel"
-                      placeholder="010-1234-5678"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                    />
-                  </div>
-                )}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                   <span className="text-xl font-bold text-[#2563eb]">
