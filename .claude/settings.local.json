@@ -45,7 +45,13 @@
       "Bash(git mv *)",
       "Bash(sed -n '979,996p' /Users/mini/Downloads/123-main/prisma/schema.prisma)",
       "Bash(sed -n '1153,1210p' /Users/mini/Downloads/123-main/prisma/schema.prisma)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(sed -n '274,305p' /Users/mini/Downloads/123-main/docs/schema.sql)",
+      "Bash(sed -n '360,380p' /Users/mini/Downloads/123-main/docs/schema.sql)",
+      "Read(//Users/mini/Downloads/**)",
+      "Bash(mdls -name kMDItemNumberOfPages \"/Users/mini/Downloads/토스페이먼츠_홈페이지_결제경로_제작_가이드_정기결제용.pdf\")",
+      "Bash(python3 *)",
+      "Bash(grep -n \"selectedPlan, setSelectedPlan\\\\|const { user\" /Users/mini/Downloads/123-main/src/components/DashboardLayout.tsx)"
     ]
   }
 }

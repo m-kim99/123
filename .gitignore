@@ -41,3 +41,8 @@ dist-ssr
 Thumbs.db
 
 /generated/prisma
+
+# Firebase (sensitive)
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
+**/firebase-service-account*.json

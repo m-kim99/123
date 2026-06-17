@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { requestLocalNotificationPermission } from '@/lib/pushNotification';
+import { initFCMPush } from '@/lib/fcmPush';
 import {
   FileText,
   Home,
@@ -208,11 +209,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const basePath = isAdmin ? '/admin' : '/team';
   const primaryColor = '#2563eb';
 
-  // Realtime 구독 시작 (권한 요청은 알림 버튼 클릭 시)
+  // Realtime 구독 시작 + FCM 푸시 초기화
   useEffect(() => {
     if (!user?.id) return;
     fetchPreferences();
     startRealtimeSubscription();
+    // FCM 푸시 알림 초기화 (네이티브 앱에서 백그라운드 푸시 수신용)
+    initFCMPush();
     return () => { stopRealtimeSubscription(); };
   }, [user?.id]);
 

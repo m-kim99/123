@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { sendPushNotification } from '@/lib/pushNotifications';
 
 export type NotificationEventType =
   | 'document_created'
@@ -112,7 +113,16 @@ export async function createDocumentNotification({
 
     if (error) {
       console.error('알림 생성 실패:', error);
+      return;
     }
+
+    // 푸시 알림 발송 (백그라운드에서 비동기 처리)
+    sendPushToCompanyUsers({
+      companyId,
+      departmentId,
+      title: prefix,
+      message: baseMessage,
+    }).catch((err) => console.error('푸시 발송 실패:', err));
   } catch (err) {
     console.error('알림 생성 중 예외 발생:', err);
   }
@@ -149,7 +159,15 @@ export async function createShareNotification({
 
     if (error) {
       console.error('공유 알림 생성 실패:', error);
+      return;
     }
+
+    // 대상 사용자에게 푸시 알림 발송
+    sendPushToUser({
+      userId: targetUserId,
+      title: '📤 문서 공유',
+      message: `${sharedByUserName}님이 "${documentTitle}" 문서를 공유했습니다.`,
+    }).catch((err) => console.error('푸시 발송 실패:', err));
   } catch (err) {
     console.error('공유 알림 생성 중 예외 발생:', err);
   }
@@ -161,6 +179,97 @@ export async function createShareNotification({
 interface DeleteShareNotificationParams {
   documentId: string;
   targetUserId: string;
+}
+
+// ============================================================
+// 푸시 알림 발송 헬퍼 함수
+// ============================================================
+
+interface SendPushToCompanyUsersParams {
+  companyId: string;
+  departmentId: string | null;
+  title: string;
+  message: string;
+}
+
+/**
+ * 회사/부서 사용자들에게 푸시 알림 발송
+ * - departmentId가 있으면 해당 부서 사용자만
+ * - 없으면 회사 전체 사용자
+ */
+async function sendPushToCompanyUsers({
+  companyId,
+  departmentId,
+  title,
+  message,
+}: SendPushToCompanyUsersParams): Promise<void> {
+  try {
+    // 푸시 대상 사용자 조회
+    let query = supabase
+      .from('users')
+      .select('push_id')
+      .eq('company_id', companyId)
+      .not('push_id', 'is', null);
+
+    if (departmentId) {
+      query = query.eq('department_id', departmentId);
+    }
+
+    const { data: users, error } = await query;
+
+    if (error || !users || users.length === 0) {
+      return;
+    }
+
+    const pushIds = users
+      .map((u) => u.push_id)
+      .filter((pid): pid is string => !!pid);
+
+    if (pushIds.length > 0) {
+      await sendPushNotification({
+        playerIds: pushIds,
+        title,
+        message,
+      });
+    }
+  } catch (err) {
+    console.error('회사 푸시 발송 오류:', err);
+  }
+}
+
+interface SendPushToUserParams {
+  userId: string;
+  title: string;
+  message: string;
+}
+
+/**
+ * 특정 사용자에게 푸시 알림 발송
+ */
+async function sendPushToUser({
+  userId,
+  title,
+  message,
+}: SendPushToUserParams): Promise<void> {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('push_id')
+      .eq('id', userId)
+      .single();
+
+    if (error || !user?.push_id) {
+      return;
+    }
+
+    await sendPushNotification({
+      playerIds: [user.push_id],
+      title,
+      message,
+    });
+  } catch (err) {
+    console.error('개인 푸시 발송 오류:', err);
+  }
 }
 
 export async function deleteShareNotification({
