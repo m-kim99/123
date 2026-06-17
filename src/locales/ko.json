@@ -115,7 +115,10 @@
     "creditCard": "신용카드",
     "agreeTerms": "구매조건 확인 및 정기결제 진행에 동의합니다.",
     "pay": "결제하기",
-    "paymentRequestFailed": "결제 요청에 실패했습니다. 다시 시도해주세요."
+    "paymentRequestFailed": "결제 요청에 실패했습니다. 다시 시도해주세요.",
+    "paymentProvider": "결제사",
+    "phoneLabel": "휴대폰 번호 (PayApp 결제용)",
+    "phoneRequired": "PayApp 결제 시 휴대폰 번호가 필요합니다."
   },
   "nav": {
     "home": "홈",

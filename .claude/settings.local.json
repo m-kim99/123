@@ -51,7 +51,9 @@
       "Read(//Users/mini/Downloads/**)",
       "Bash(mdls -name kMDItemNumberOfPages \"/Users/mini/Downloads/토스페이먼츠_홈페이지_결제경로_제작_가이드_정기결제용.pdf\")",
       "Bash(python3 *)",
-      "Bash(grep -n \"selectedPlan, setSelectedPlan\\\\|const { user\" /Users/mini/Downloads/123-main/src/components/DashboardLayout.tsx)"
+      "Bash(grep -n \"selectedPlan, setSelectedPlan\\\\|const { user\" /Users/mini/Downloads/123-main/src/components/DashboardLayout.tsx)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit -p tsconfig.json)",
+      "Bash(bun run *)"
     ]
   }
 }

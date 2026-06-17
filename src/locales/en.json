@@ -115,7 +115,10 @@
     "creditCard": "Credit Card",
     "agreeTerms": "I confirm the purchase terms and agree to recurring payments.",
     "pay": "Pay Now",
-    "paymentRequestFailed": "Payment request failed. Please try again."
+    "paymentRequestFailed": "Payment request failed. Please try again.",
+    "paymentProvider": "Payment Provider",
+    "phoneLabel": "Phone Number (for PayApp)",
+    "phoneRequired": "Phone number is required for PayApp payment."
   },
   "nav": {
     "home": "Home",

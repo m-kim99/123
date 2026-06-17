@@ -16,5 +16,7 @@
 		     traystorageconnect.com/.well-known/apple-app-site-association 파일을 배포해야 합니다. -->
 		<string>applinks:traystorageconnect.com</string>
 	</array>
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>

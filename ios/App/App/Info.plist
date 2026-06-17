@@ -48,6 +48,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC 태그를 읽고 쓰기 위해 NFC 기능이 필요합니다.</string>
 	<key>NSMicrophoneUsageDescription</key>
