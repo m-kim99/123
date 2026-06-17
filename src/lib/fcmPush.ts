@@ -16,14 +16,21 @@ let isInitialized = false;
  * - 권한 요청 → 토큰 발급 → DB 저장
  */
 export async function initFCMPush(): Promise<void> {
+  console.log('[FCM] initFCMPush 호출됨');
+  console.log('[FCM] isNativePlatform:', Capacitor.isNativePlatform());
+  console.log('[FCM] isInitialized:', isInitialized);
+  
   // 웹이나 이미 초기화된 경우 스킵
   if (!Capacitor.isNativePlatform() || isInitialized) {
+    console.log('[FCM] 스킵 - 네이티브 아니거나 이미 초기화됨');
     return;
   }
 
   try {
+    console.log('[FCM] 권한 요청 시작...');
     // 권한 요청
     const permResult = await PushNotifications.requestPermissions();
+    console.log('[FCM] 권한 결과:', JSON.stringify(permResult));
     
     if (permResult.receive !== 'granted') {
       console.log('[FCM] 푸시 권한 거부됨');

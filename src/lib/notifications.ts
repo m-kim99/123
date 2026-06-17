@@ -204,6 +204,7 @@ async function sendPushToCompanyUsers({
   message,
 }: SendPushToCompanyUsersParams): Promise<void> {
   try {
+    console.log('[PUSH] sendPushToCompanyUsers 호출:', { companyId, departmentId, title, message });
     // 푸시 대상 사용자 조회
     let query = supabase
       .from('users')
@@ -216,8 +217,10 @@ async function sendPushToCompanyUsers({
     }
 
     const { data: users, error } = await query;
+    console.log('[PUSH] 조회 결과:', { users: users?.length, error });
 
     if (error || !users || users.length === 0) {
+      console.log('[PUSH] 대상 없음, 종료');
       return;
     }
 
@@ -225,15 +228,18 @@ async function sendPushToCompanyUsers({
       .map((u) => u.push_id)
       .filter((pid): pid is string => !!pid);
 
+    console.log('[PUSH] 발송 대상 토큰 수:', pushIds.length);
+
     if (pushIds.length > 0) {
-      await sendPushNotification({
+      const result = await sendPushNotification({
         playerIds: pushIds,
         title,
         message,
       });
+      console.log('[PUSH] 발송 완료:', result);
     }
   } catch (err) {
-    console.error('회사 푸시 발송 오류:', err);
+    console.error('[PUSH] 회사 푸시 발송 오류:', err);
   }
 }
 
