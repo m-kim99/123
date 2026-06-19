@@ -66,7 +66,7 @@ const PrivacyKo = () => (
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">수탁업체</th><th className="border border-slate-300 p-2 text-left">위탁 업무 내용</th><th className="border border-slate-300 p-2 text-left">보유 및 이용 기간</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">클라우드 서버 호스팅 및 데이터 저장</td><td className="border border-slate-300 p-2">회원 탈퇴 시까지 또는 위탁 계약 종료 시</td></tr>
-        <tr><td className="border border-slate-300 p-2">Google LLC</td><td className="border border-slate-300 p-2">AI 서비스(Gemini) 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
+        <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI 서비스(GPT) 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
         <tr><td className="border border-slate-300 p-2">네이버 주식회사</td><td className="border border-slate-300 p-2">AI OCR(클로바 OCR) 서비스 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
       </tbody>
     </table>
@@ -77,7 +77,7 @@ const PrivacyKo = () => (
     <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">항목</th><th className="border border-slate-300 p-2 text-left">내용</th></tr></thead>
       <tbody>
-        <tr><td className="border border-slate-300 p-2">이전받는 자</td><td className="border border-slate-300 p-2">Supabase Inc., Google LLC</td></tr>
+        <tr><td className="border border-slate-300 p-2">이전받는 자</td><td className="border border-slate-300 p-2">Supabase Inc., OpenAI, L.L.C.</td></tr>
         <tr><td className="border border-slate-300 p-2">이전되는 국가</td><td className="border border-slate-300 p-2">미국 등 클라우드 서버 소재지(구체적 위치는 변경될 수 있음)</td></tr>
         <tr><td className="border border-slate-300 p-2">이전 일시 및 방법</td><td className="border border-slate-300 p-2">서비스 이용 시 네트워크를 통한 전송</td></tr>
         <tr><td className="border border-slate-300 p-2">이전되는 개인정보 항목</td><td className="border border-slate-300 p-2">회원정보, 업로드 문서, AI 처리 데이터</td></tr>
@@ -100,7 +100,7 @@ const PrivacyKo = () => (
     <ul className="list-disc pl-5 space-y-1">
       <li>이용자가 문서를 업로드하면 AI OCR(네이버 클로바 OCR)을 통해 텍스트가 추출됩니다.</li>
       <li>추출된 텍스트는 Supabase 서버에 저장됩니다.</li>
-      <li>이용자의 질의에 대해 Google Gemini API를 통해 응답이 생성됩니다.</li>
+      <li>이용자의 질의에 대해 OpenAI GPT API를 통해 응답이 생성됩니다.</li>
     </ul>
     <p>④ 회사는 현재 이용자의 개인정보를 AI 모델 학습에 활용하지 않습니다. 향후 AI 학습 목적으로 활용하고자 하는 경우, 이용자의 명시적 동의를 받습니다.</p>
 
@@ -276,7 +276,7 @@ const PrivacyEn = () => (
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Entrusted Company</th><th className="border border-slate-300 p-2 text-left">Entrusted Tasks</th><th className="border border-slate-300 p-2 text-left">Retention and Use Period</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">Supabase, Inc.</td><td className="border border-slate-300 p-2">Cloud server provision and data storage</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
-        <tr><td className="border border-slate-300 p-2">Google Cloud Platform</td><td className="border border-slate-300 p-2">AI-based document analysis service; AI voice recognition service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal (voice data: 1 year from collection)</td></tr>
+        <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI-based document analysis service; AI voice recognition service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal (voice data: 1 year from collection)</td></tr>
         <tr><td className="border border-slate-300 p-2">Naver Cloud Platform</td><td className="border border-slate-300 p-2">AI OCR service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
         <tr><td className="border border-slate-300 p-2">Kakao Corporation</td><td className="border border-slate-300 p-2">Sending notification messages (KakaoTalk alerts, SMS, etc.)</td><td className="border border-slate-300 p-2">Until message delivery is completed</td></tr>
         <tr><td className="border border-slate-300 p-2">Korea Cyber Payment Co., Ltd. (KCP)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
@@ -343,7 +343,7 @@ const PrivacyEn = () => (
     <p>② In accordance with the Framework Act on Artificial Intelligence, the Company provides the following notices when Data Subjects use AI services: AI technology is applied to the services used by the Data Subject; documents and voice data registered by the Data Subject may be processed during the AI processing; AI processing results are generated by automated algorithms and may contain errors.</p>
     <p>③ The Company does not use documents registered by Members as general training data for AI models. However, the Company may collect and use the following data for service quality improvement: service usage patterns and feedback data; usage records excluding sensitive information within documents (resident registration numbers, bank account information, medical information, etc.). The above data is anonymized or pseudonymized before use and processed so as to prevent identification of specific individuals.</p>
     <p>④ The Company plans to add a feature for automatic masking of sensitive information in the course of future AI model improvement.</p>
-    <p>⑤ The AI service providers to whom the Company entrusts AI service provision are as follows: Google Cloud Platform (AI document analysis service, voice recognition service); Naver Cloud Platform (AI OCR).</p>
+    <p>⑤ The AI service providers to whom the Company entrusts AI service provision are as follows: OpenAI, L.L.C. (AI document analysis service, voice recognition service); Naver Cloud Platform (AI OCR).</p>
 
     <h3 className="font-semibold text-slate-900">Article 11 (Matters Concerning the Operation and Management of Video Information Processing Devices)</h3>
     <p>① The Company installs and operates video information processing devices (CCTV) for office security and safety accident prevention.</p>

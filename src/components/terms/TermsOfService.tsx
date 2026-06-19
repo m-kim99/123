@@ -16,7 +16,7 @@ const TermsKo = () => (
       <li>"관리자"란 조직 내에서 부서 생성, 권한 관리, 전체 문서 통계 확인 등의 관리 기능을 수행할 수 있는 권한을 부여받은 회원을 말합니다.</li>
       <li>"팀원"이란 관리자가 부여한 권한 범위 내에서 문서를 등록·조회·편집할 수 있는 회원을 말합니다.</li>
       <li>"게시물"이란 회원이 서비스에 업로드한 문서 파일, 사진, 이미지 등 일체의 자료를 말합니다.</li>
-      <li>"AI 서비스"란 광학문자인식(OCR), 문서 내용 분석, 검색, 요약, 분류, 질의응답 등 인공지능 기술을 활용하여 자동화된 방식으로 문서 관련 정보를 제공하는 기능을 말하며, 구글 제미나이(Gemini) 및 네이버 클로바 OCR 등 제3자가 제공하는 AI 모델을 포함합니다.</li>
+      <li>"AI 서비스"란 광학문자인식(OCR), 문서 내용 분석, 검색, 요약, 분류, 질의응답 등 인공지능 기술을 활용하여 자동화된 방식으로 문서 관련 정보를 제공하는 기능을 말하며, OpenAI GPT 및 네이버 클로바 OCR 등 제3자가 제공하는 AI 모델을 포함합니다.</li>
       <li>"AI OCR"이란 이미지 또는 스캔된 문서에서 문자 정보를 자동으로 인식·추출하는 광학문자인식 기술을 말합니다.</li>
       <li>"트레이 스토리지 제품"이란 종이문서를 보관·관리하기 위한 물리적 보관함으로서, NFC 태그를 부착하여 서비스와 연동할 수 있는 회사의 유료 판매 제품을 말합니다.</li>
       <li>"NFC 태그"란 근거리 무선통신(Near Field Communication) 기술을 활용하여 트레이 스토리지 제품과 서비스를 연동하는 스티커 형태의 장치를 말합니다.</li>
@@ -155,7 +155,7 @@ const TermsKo = () => (
       <li>질의응답: 채팅 또는 음성 명령을 통한 문서 정보 조회</li>
       <li>문서 요약 및 분석: 문서 내용의 요약 및 통계 분석</li>
     </ul>
-    <p>② 회사는 AI 서비스 제공을 위해 구글 제미나이(Gemini) Pro 및 네이버 클로바 OCR 등 제3자가 제공하는 AI 모델을 활용합니다.</p>
+    <p>② 회사는 AI 서비스 제공을 위해 OpenAI GPT 및 네이버 클로바 OCR 등 제3자가 제공하는 AI 모델을 활용합니다.</p>
     <p>③ AI OCR은 회원이 게시물을 업로드하는 즉시 실시간으로 처리되며, 처리 결과는 Supabase 클라우드 서버(AWS 기반)에 저장됩니다.</p>
     <p>④ 회사가 제공하는 AI 서비스는 다음과 같은 특성 및 제한사항이 있습니다.</p>
     <ul className="list-disc pl-5 space-y-1">
@@ -289,7 +289,7 @@ const TermsEn = () => (
       <li>"Administrator" refers to a Member who has been granted administrative privileges within an organization, including the ability to create departments, manage access permissions, and view overall document statistics.</li>
       <li>"Team Member" refers to a Member who may register, view, and edit documents within the scope of permissions granted by the Administrator.</li>
       <li>"Posting" refers to any and all materials uploaded to the Service by a Member, including document files, photographs, and images.</li>
-      <li>"AI Service" refers to functionalities that provide document-related information through automated processes utilizing AI technology, including optical character recognition (OCR), document content analysis, search, summarization, classification, and question-answering. This includes third-party AI models such as Google Gemini and Naver Clova OCR.</li>
+      <li>"AI Service" refers to functionalities that provide document-related information through automated processes utilizing AI technology, including optical character recognition (OCR), document content analysis, search, summarization, classification, and question-answering. This includes third-party AI models such as OpenAI GPT and Naver Clova OCR.</li>
       <li>"AI OCR" refers to optical character recognition technology that automatically recognizes and extracts textual information from images or scanned documents.</li>
       <li>"Tray Storage Product" refers to a physical storage unit for paper documents sold by the Company, which can be linked to the Service via an attached NFC tag.</li>
       <li>"NFC Tag" refers to a sticker-type device that links the Tray Storage Product with the Service using Near Field Communication technology.</li>
@@ -428,7 +428,7 @@ const TermsEn = () => (
       <li>Question-answering: Document information retrieval through chat or voice commands;</li>
       <li>Document summarization and analysis: Summarization and statistical analysis of document contents.</li>
     </ul>
-    <p>② The Company utilizes third-party AI models, including Google Gemini Pro and Naver Clova OCR, for the provision of AI Services.</p>
+    <p>② The Company utilizes third-party AI models, including OpenAI GPT and Naver Clova OCR, for the provision of AI Services.</p>
     <p>③ AI OCR processes documents in real time as Members upload Postings, and the processing results are stored on Supabase cloud servers (AWS-based).</p>
     <p>④ The AI Services provided by the Company have the following characteristics and limitations:</p>
     <ul className="list-disc pl-5 space-y-1">

@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { V1ModalHeader, V1ModalFooter } from '@/components/ui/v1-components';
-import { Smartphone } from 'lucide-react';
+import { Smartphone, X } from 'lucide-react';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
@@ -100,13 +100,25 @@ export function NFCRegistrationDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent variant="v1" className="max-w-[420px]" hideClose>
+        <button
+          type="button"
+          onClick={() => handleClose(false)}
+          aria-label={t('common.close')}
+          className="absolute right-3 top-3 z-10 h-8 w-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-white/[0.08] transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
         <V1ModalHeader icon={Smartphone} title={t('nfc.tagRegistration')} sub={t('nfcRegDialog.confirmRegister', { name: categoryName })} />
 
         {/* NFC Pulse Animation */}
         <div className="px-[22px] py-4 flex flex-col items-center gap-[18px]">
           <div className="relative w-[120px] h-[120px] flex items-center justify-center">
-            <div className="absolute inset-3 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite' }} />
-            <div className="absolute inset-7 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite 0.6s' }} />
+            {isRegistering && (
+              <>
+                <div className="absolute inset-3 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite' }} />
+                <div className="absolute inset-7 rounded-full bg-[#2563eb]/[0.12]" style={{ animation: 'nfc-pulse 2s ease-out infinite 0.6s' }} />
+              </>
+            )}
             <div className="w-16 h-16 rounded-full bg-[#2563eb] flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(37,99,235,0.45)]">
               <Smartphone className="h-[30px] w-[30px] text-white" />
             </div>
@@ -133,9 +145,8 @@ export function NFCRegistrationDialog({
             type="button"
             variant="outline"
             onClick={() => handleClose(false)}
-            disabled={isRegistering}
           >
-            {t('nfcRegDialog.later')}
+            {t('common.close')}
           </Button>
           <Button
             type="button"
