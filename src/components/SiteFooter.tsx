@@ -68,19 +68,19 @@ export function SiteFooter() {
               </a>
               <p className="mt-2 text-[13px] text-slate-500 dark:text-[#94a3b8]">
                 {isKo
-                  ? '월~금 10:00–17:00 (점심시간 12:30–13:30)'
-                  : 'Mon–Fri 10:00–17:00 (Lunch 12:30–13:30)'}
+                  ? '월~금 10:00–18:00 (점심시간 12:00–13:00)'
+                  : 'Mon–Fri 10:00–18:00 (Lunch 12:00–13:00)'}
               </p>
               <div className="flex gap-2 mt-4">
                 <Link
                   to={`${basePath}/qna`}
-                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 transition-colors"
+                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
                 >
                   FAQ
                 </Link>
                 <Link
                   to={`${basePath}/qna`}
-                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 transition-colors"
+                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
                 >
                   {isKo ? '1:1 문의' : '1:1 Inquiry'}
                 </Link>
