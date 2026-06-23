@@ -75,6 +75,7 @@ import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { validatePasswordClient, PasswordValidation } from '@/lib/password-validator';
 import { type Role, ROLE_LABELS } from '@/lib/permissions';
 import { V1ModalHeader, V1ModalBody, V1ModalFooter, V1Chip } from '@/components/ui/v1-components';
+import { SiteFooter } from '@/components/SiteFooter';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -1535,10 +1536,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto w-full">
-          <div className={`max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'pb-20' : ''}`}>
+        <main className="flex-1 overflow-auto w-full flex flex-col">
+          <div className={`flex-1 max-w-7xl w-full mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'pb-20' : ''}`}>
             {children}
           </div>
+          <SiteFooter />
         </main>
       </div>
 
