@@ -64,7 +64,12 @@
       "Bash(git reset *)",
       "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8000/)",
       "Bash(curl -sS http://localhost:8000/)",
-      "Bash(xargs kill)"
+      "Bash(xargs kill)",
+      "Bash(npx cap *)",
+      "Bash(command -v psql)",
+      "Bash(node -e \"try{require.resolve\\('pg'\\);console.log\\('pg 모듈 있음'\\)}catch\\(e\\){console.log\\('pg 모듈 없음'\\)}\")",
+      "Bash(timeout 40 supabase migration list)",
+      "Bash(awk '/^model user_favorites /{f=1} f{print NR\": \"$0} /^}/{if\\(f\\)exit}' prisma/schema.prisma)"
     ]
   }
 }
