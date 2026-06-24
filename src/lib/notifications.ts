@@ -206,30 +206,37 @@ async function sendPushToCompanyUsers({
 }: SendPushToCompanyUsersParams): Promise<void> {
   try {
     console.log('[PUSH] 사용자 조회 시작:', { companyId, departmentId });
-    // 푸시 대상 사용자 조회
-    let query = supabase
+    // 회사 전체에서 토큰을 가진 사용자를 조회한 뒤,
+    // in-app 알림(notificationStore.fetchNotifications)과 동일한 수신 대상 규칙으로 필터링한다.
+    //  - 관리자(admin): 부서와 무관하게 회사 전체 알림 수신
+    //  - 팀원(team): 알림이 속한 부서(departmentId)의 알림만 수신
+    // 기존에는 departmentId로만 필터링해, 해당 부서가 아닌 관리자에게 푸시가 가지 않는 문제가 있었다.
+    const { data: users, error } = await supabase
       .from('users')
-      .select('push_id')
+      .select('role, department_id, push_id')
       .eq('company_id', companyId)
       .not('push_id', 'is', null);
 
-    if (departmentId) {
-      query = query.eq('department_id', departmentId);
-    }
-
-    const { data: users, error } = await query;
-    console.log('[PUSH] 조회결과:', { count: users?.length ?? 0, error: error?.message || null });
-
     if (error || !users || users.length === 0) {
-      console.log('[PUSH] 발송 대상 없음, 종료');
+      console.log('[PUSH] 발송 대상 없음, 종료', { error: error?.message || null });
       return;
     }
 
-    const pushIds = users
+    const recipients = users.filter((u) => {
+      if (u.role === 'admin') return true; // 관리자: 부서 무관 전체 수신
+      if (!departmentId) return true; // 부서 미지정 알림: 전체 수신
+      return u.department_id === departmentId; // 팀원: 같은 부서만
+    });
+
+    const pushIds = recipients
       .map((u) => u.push_id)
       .filter((pid): pid is string => !!pid);
 
-    console.log('[PUSH] 발송 대상 토큰 수:', pushIds.length);
+    console.log('[PUSH] 발송 대상 토큰 수:', {
+      total: users.length,
+      recipients: pushIds.length,
+      departmentId,
+    });
 
     if (pushIds.length > 0) {
       await sendPushNotification({
@@ -238,6 +245,8 @@ async function sendPushToCompanyUsers({
         message,
       });
       console.log('[PUSH] 발송 완료');
+    } else {
+      console.log('[PUSH] 필터 후 발송 대상 없음, 종료');
     }
   } catch (err) {
     console.error('[PUSH] 회사 푸시 발송 오류:', err);
