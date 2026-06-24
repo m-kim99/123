@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 const TermsKo = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. 시행 2026.02.09.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.07.01. 시행 2026.07.01.</p>
 
     <h3 className="font-semibold text-slate-900">제1조 (목적)</h3>
     <p>이 약관은 주식회사 인포크리에이티브(이하 "회사")가 제공하는 문서 관리 서비스인 트레이 스토리지 커넥트(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 서비스 이용 조건 및 절차, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
@@ -18,6 +18,9 @@ const TermsKo = () => (
       <li>"게시물"이란 회원이 서비스에 업로드한 문서 파일, 사진, 이미지 등 일체의 자료를 말합니다.</li>
       <li>"AI 서비스"란 광학문자인식(OCR), 문서 내용 분석, 검색, 요약, 분류, 질의응답 등 인공지능 기술을 활용하여 자동화된 방식으로 문서 관련 정보를 제공하는 기능을 말하며, OpenAI GPT 및 네이버 클로바 OCR 등 제3자가 제공하는 AI 모델을 포함합니다.</li>
       <li>"AI OCR"이란 이미지 또는 스캔된 문서에서 문자 정보를 자동으로 인식·추출하는 광학문자인식 기술을 말합니다.</li>
+      <li>"무료 요금제"란 회사가 정한 범위 내에서 이용요금 없이 서비스를 이용할 수 있는 요금제를 말하며, 조직당 멤버 수 등 회사가 정한 제한이 적용됩니다.</li>
+      <li>"유료 요금제"란 회원이 이용요금을 납부하고 회사가 제공하는 기본 기능을 이용할 수 있는 요금제(베이직 요금제 등)를 말합니다.</li>
+      <li>"멤버"란 하나의 조직(회원 계정) 내에서 서비스를 이용하도록 등록된 관리자 및 팀원을 통칭하여 말합니다.</li>
       <li>"트레이 스토리지 제품"이란 종이문서를 보관·관리하기 위한 물리적 보관함으로서, NFC 태그를 부착하여 서비스와 연동할 수 있는 회사의 유료 판매 제품을 말합니다.</li>
       <li>"NFC 태그"란 근거리 무선통신(Near Field Communication) 기술을 활용하여 트레이 스토리지 제품과 서비스를 연동하는 스티커 형태의 장치를 말합니다.</li>
     </ul>
@@ -96,40 +99,51 @@ const TermsKo = () => (
     <p>③ 회사는 제2항의 사유로 서비스 제공이 일시적으로 중단됨으로 인하여 회원 또는 제3자가 입은 손해에 대하여 회사의 고의 또는 중과실이 없는 한 책임을 지지 않습니다.</p>
     <p>④ 회사는 서비스를 중단하는 경우 제3항의 불가항력적 사유가 있는 경우를 제외하고는 최소 7일 전에 서비스 화면에 공지하거나 회원에게 통지합니다.</p>
 
-    <h3 className="font-semibold text-slate-900">제10조 (유료서비스 및 결제)</h3>
-    <p>① 회사는 일부 서비스를 유료로 제공할 수 있으며, 회원이 유료서비스를 이용하는 경우 이용요금을 납부해야 합니다.</p>
-    <p>② 현재 서비스는 베타 테스트 기간으로 무료로 제공되며, 베타 테스트 종료 후 유료로 전환됩니다. 유료 전환 시 회사는 최소 30일 전에 요금제 및 결제 방법을 공지합니다.</p>
-    <p>③ 베타 테스트 종료 후 예상 요금제는 다음과 같습니다(향후 변경될 수 있음).</p>
-    <ul className="list-disc pl-5 space-y-1">
-      <li>월 구독 방식: 사용자 수에 따른 요금 부과(1인당 월 3,300원 예정)</li>
-      <li>신규 가입 회원에게는 최초 1개월 무료 이용 혜택 제공</li>
-    </ul>
-    <p>④ 회원은 신용카드 결제, 무통장 입금, 가상계좌 이체, 기타 회사가 지정하는 결제 수단을 이용하여 이용요금을 납부할 수 있습니다.</p>
-    <p>⑤ 회원이 결제수단에 대해 정당한 사용권한을 가지고 있지 않거나, 결제 이후 해당 결제수단에 대한 이의를 제기하거나 결제를 거부하는 경우 회사는 서비스 제공을 중단할 수 있습니다.</p>
+    <h3 className="font-semibold text-slate-900">제10조 (요금제 및 결제)</h3>
+    <p>① 회사는 서비스를 무료 요금제와 유료 요금제로 구분하여 제공합니다. 각 요금제의 구체적인 이용 범위 및 제한 사항은 제12조에서 정하는 바에 따릅니다.</p>
+    <p>② 회사가 제공하는 요금제의 종류 및 이용요금은 다음과 같습니다. 표시된 이용요금은 부가가치세(VAT)가 포함된 금액입니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">요금제</th><th className="border border-slate-300 p-2 text-left">이용요금</th><th className="border border-slate-300 p-2 text-left">주요 내용</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">무료 요금제</td><td className="border border-slate-300 p-2">무료</td><td className="border border-slate-300 p-2">조직(회원 계정)당 최대 10명의 멤버까지 이용 가능</td></tr>
+        <tr><td className="border border-slate-300 p-2">베이직 요금제</td><td className="border border-slate-300 p-2">멤버 1인당 월 3,300원 (최소 3인 이상 구독)</td><td className="border border-slate-300 p-2">유료 결제 시 회사가 제공하는 기본 기능을 모두 이용 가능</td></tr>
+      </tbody>
+    </table>
+    <p>③ 베이직 요금제는 멤버 1인당 월 3,300원(부가가치세 포함)의 정기 결제형 상품으로, 최소 3인 이상부터 구독할 수 있습니다. 따라서 베이직 요금제의 최소 월 이용요금은 3인 기준 월 9,900원입니다.</p>
+    <p>④ 유료 요금제(베이직 요금제)를 결제한 회원은 회사가 제공하는 기본 기능을 멤버 수 및 용량 등의 제한 없이 모두 이용할 수 있습니다. 다만, 회사가 별도로 정한 부가 서비스 또는 추가 기능에 대해서는 별도의 요금이 부과될 수 있으며, 이 경우 사전에 공지합니다.</p>
+    <p>⑤ 정기 결제는 최초 결제일을 기준으로 매월 같은 일자에 회원이 선택한 결제 수단으로 자동 결제되며, 회원이 해지하지 않는 한 1개월 단위로 자동 갱신됩니다. 매월 결제일이 정기적으로 도래하지 않는 경우(예: 31일이 없는 달) 해당 월의 말일에 결제되며, 결제일이 휴일 또는 공휴일인 경우에도 정상적으로 결제가 진행됩니다.</p>
+    <p>⑥ 구독 기간 중 멤버를 추가하거나 감원하는 경우, 변경된 멤버 수는 다음 정기 결제일부터 반영됩니다. 멤버 추가에 따른 차액 정산 방식 등 세부 사항은 서비스 화면 또는 회사가 정한 운영정책에 따릅니다.</p>
+    <p>⑦ 회원은 신용카드 결제, 무통장 입금, 가상계좌 이체, 기타 회사가 지정하는 결제 수단을 이용하여 이용요금을 납부할 수 있습니다.</p>
+    <p>⑧ 회원이 결제 시 선택한 결제 수단의 한도 초과, 잔고 부족, 결제 수단의 임의 해지 등으로 이용요금을 체납하는 경우, 회사는 연체가 발생한 일자에 유료 요금제의 서비스 이용을 중단하거나 무료 요금제로 전환할 수 있습니다.</p>
+    <p>⑨ 회원이 결제수단에 대해 정당한 사용권한을 가지고 있지 않거나, 결제 이후 해당 결제수단에 대한 이의를 제기하거나 결제를 거부하는 경우 회사는 서비스 제공을 중단할 수 있습니다.</p>
+    <p>⑩ 회사는 이용요금을 서비스의 종류 및 기간에 따라 변경할 수 있으며, 이 경우 제3조에 따른 절차를 거쳐 공지 및 통지합니다. 다만 변경 이전에 계약한 금액은 소급하여 적용하지 않습니다.</p>
 
     <h3 className="font-semibold text-slate-900">제11조 (청약철회 및 환불)</h3>
-    <p>① 회원은 유료서비스 결제일로부터 7일 이내에 청약을 철회할 수 있으며, 이 경우 회사는 결제대금 전액을 환불합니다.</p>
+    <p>① 유료 요금제를 신규로 결제한 회원은 결제일로부터 7일 이내에 서비스를 이용하지 아니한 경우 청약을 철회할 수 있으며, 이 경우 회사는 결제대금 전액을 환불합니다.</p>
     <p>② 제1항에도 불구하고 다음 각 호의 경우에는 청약철회가 제한될 수 있습니다.</p>
     <ul className="list-disc pl-5 space-y-1">
       <li>회원의 책임 있는 사유로 서비스가 멸실되거나 훼손된 경우</li>
       <li>회원이 서비스를 상당 부분 사용하여 그 가치가 현저히 감소한 경우</li>
     </ul>
-    <p>③ 결제일로부터 7일 경과 후 환불을 요청하는 경우, 1개월분 이용요금을 공제한 잔액을 환불합니다.</p>
-    <p>④ 환불은 회원이 결제한 방법과 동일한 방법으로 처리하는 것을 원칙으로 하며, 동일한 방법으로 환불이 불가능한 경우 회사가 정하는 방법으로 환불합니다.</p>
-    <p>⑤ 환불 처리는 환불 요청일로부터 영업일 기준 7일 이내에 완료됩니다.</p>
+    <p>③ 정기 결제형 유료 요금제를 이용 중인 회원이 결제일로부터 7일이 경과한 후 해지 및 환불을 요청하는 경우, 원칙적으로 이미 결제된 해당 결제 주기(당월)에 대한 환불은 이루어지지 않으며, 해당 결제 주기가 만료되는 시점까지 서비스 이용 권한은 유지되고 그 이후 자동 갱신이 중단됩니다.</p>
+    <p>④ 회원이 정부가 고시하는 "콘텐츠이용자보호지침" 등 관련 법령에 따라 환불을 받을 수 있는 경우, 회사는 해당 지침이 정하는 범위 내에서 환불 수수료를 부과할 수 있습니다.</p>
+    <p>⑤ 환불은 회원이 결제한 방법과 동일한 방법으로 처리하는 것을 원칙으로 하며, 동일한 방법으로 환불이 불가능한 경우 회사가 정하는 방법으로 환불합니다.</p>
+    <p>⑥ 환불 처리는 환불 요청일로부터 영업일 기준 7일 이내에 완료됩니다.</p>
+    <p>⑦ 무료 요금제 이용에 대하여는 환불 대상 금액이 존재하지 아니합니다.</p>
 
-    <h3 className="font-semibold text-slate-900">제12조 (서비스 이용 제한)</h3>
-    <p>① 회원의 서비스 이용 범위 및 제한은 다음과 같습니다.</p>
+    <h3 className="font-semibold text-slate-900">제12조 (요금제별 서비스 이용 범위 및 제한)</h3>
+    <p>① 무료 요금제와 유료 요금제의 서비스 이용 범위 및 제한은 다음과 같습니다.</p>
     <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">구분</th><th className="border border-slate-300 p-2 text-left">내용</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">파일 업로드</td><td className="border border-slate-300 p-2">1회 업로드 시 최대 50MB, 지원 형식은 PDF, JPG, PNG</td></tr>
         <tr><td className="border border-slate-300 p-2">동시 접속</td><td className="border border-slate-300 p-2">1계정당 1기기에서만 동시 접속 가능</td></tr>
-        <tr><td className="border border-slate-300 p-2">무료 회원</td><td className="border border-slate-300 p-2">가입 후 1개월간만 서비스 이용 가능</td></tr>
-        <tr><td className="border border-slate-300 p-2">유료 회원</td><td className="border border-slate-300 p-2">기능 및 용량 제한 없이 서비스 이용 가능</td></tr>
+        <tr><td className="border border-slate-300 p-2">무료 요금제</td><td className="border border-slate-300 p-2">조직(회원 계정)당 최대 10명의 멤버까지 이용 가능하며, 회사가 정한 기본 기능을 이용할 수 있습니다.</td></tr>
+        <tr><td className="border border-slate-300 p-2">유료 요금제(베이직)</td><td className="border border-slate-300 p-2">멤버 1인당 월 3,300원(최소 3인 이상 구독)으로, 회사가 제공하는 기본 기능을 멤버 수 및 용량 등의 제한 없이 모두 이용할 수 있습니다.</td></tr>
       </tbody>
     </table>
-    <p>② 회사는 서비스의 안정적 운영을 위해 필요한 경우 상기 제한 사항을 변경할 수 있으며, 변경 시 사전에 공지합니다.</p>
+    <p>② 무료 요금제를 이용 중인 조직의 멤버 수가 10명을 초과하게 되는 경우, 회사는 유료 요금제로의 전환을 안내할 수 있으며, 전환 전까지 멤버 추가 등 일부 기능의 이용이 제한될 수 있습니다.</p>
+    <p>③ 회사는 서비스의 안정적 운영을 위해 필요한 경우 상기 제한 사항을 변경할 수 있으며, 변경 시 제3조에 따라 사전에 공지합니다.</p>
 
     <h3 className="font-semibold text-slate-900">제13조 (게시물의 관리)</h3>
     <p>① 회원이 서비스 내에 게시한 게시물의 저작권은 해당 게시물의 저작자에게 귀속됩니다.</p>
@@ -191,7 +205,8 @@ const TermsKo = () => (
     <h3 className="font-semibold text-slate-900">제18조 (회원의 의무)</h3>
     <p>① 회원은 다음 행위를 하여서는 안 됩니다: 신청 또는 변경 시 허위내용의 등록, 타인의 정보 도용, 회사 또는 제3자의 지적재산권 등 권리 침해, 회사 또는 제3자의 명예를 손상시키거나 업무를 방해하는 행위, 외설 또는 폭력적인 정보 게시, 회사의 동의 없이 영리를 목적으로 서비스를 사용하는 행위, 컴퓨터 바이러스 등 악성 프로그램을 유포하는 행위, 회사의 서비스를 이용하여 얻은 정보를 회사의 사전 승낙 없이 사용하거나 타인에게 제공하는 행위, 자동화된 수단을 이용하여 서비스에 무단 접근하거나 데이터를 수집하는 행위, 회사의 서버에 부정적인 영향을 미치거나 서비스 운영을 방해하는 행위, 기타 관련 법령에 위배되거나 선량한 풍속 기타 사회통념에 반하는 행위</p>
     <p>② 관리자는 부서 생성, 접근 권한 부여, 팀원 관리 등에 대한 책임을 부담하며, 권한 설정의 오류 또는 부적절한 권한 부여로 인해 발생한 문제에 대하여 일차적 책임을 집니다.</p>
-    <p>③ 회원은 이 약관 및 관련 법령에서 규정한 사항을 준수하여야 합니다.</p>
+    <p>③ 회원은 멤버 등록 및 관리에 관한 책임을 부담하며, 유료 요금제 이용 시 등록된 멤버 수에 따라 이용요금이 산정됨을 인지하고 이를 준수하여야 합니다.</p>
+    <p>④ 회원은 이 약관 및 관련 법령에서 규정한 사항을 준수하여야 합니다.</p>
 
     <h3 className="font-semibold text-slate-900">제19조 (권한 관리)</h3>
     <p>① 서비스는 관리자와 팀원으로 구분되는 역할 기반 권한 관리 체계를 운영합니다.</p>
@@ -204,7 +219,8 @@ const TermsKo = () => (
     <p>① 회사는 관련 법령과 이 약관이 금지하거나 미풍양속에 반하는 행위를 하지 않으며, 계속적이고 안정적으로 서비스를 제공하기 위하여 최선을 다하여 노력합니다.</p>
     <p>② 회사는 회원이 안전하게 서비스를 이용할 수 있도록 개인정보(신용정보 포함)보호를 위해 보안시스템을 갖추어야 하며 개인정보 처리방침을 공시하고 준수합니다.</p>
     <p>③ 회사는 서비스 이용과 관련하여 회원으로부터 제기된 의견이나 불만이 정당하다고 인정할 경우 이를 처리하여야 합니다.</p>
-    <p>④ 회사는 생산물배상책임보험, 개인정보보호배상책임보험, 영업배상책임보험, 사이버보험에 가입하여 서비스 제공 중 발생할 수 있는 위험에 대비합니다.</p>
+    <p>④ 회사는 유료 결제와 관련한 결제사항 정보를 관련 법령에서 정한 기간 동안 보존합니다.</p>
+    <p>⑤ 회사는 생산물배상책임보험, 개인정보보호배상책임보험, 영업배상책임보험, 사이버보험에 가입하여 서비스 제공 중 발생할 수 있는 위험에 대비합니다.</p>
 
     <h3 className="font-semibold text-slate-900">제21조 (저작권의 귀속 및 이용제한)</h3>
     <p>① 회사가 작성한 저작물에 대한 저작권 기타 지적재산권은 회사에 귀속합니다.</p>
@@ -258,8 +274,8 @@ const TermsKo = () => (
     </ul>
 
     <h3 className="font-semibold text-slate-900">부칙</h3>
-    <p><strong>제1조 (시행일)</strong> 이 약관은 2026년 2월 9일부터 시행합니다.</p>
-    <p><strong>제2조 (경과조치)</strong> ① 이 약관 시행 이전에 가입한 회원에 대해서는 개정된 약관을 적용합니다. ② 베타 테스트 기간 중 가입한 회원에게는 유료 전환 시 별도의 우대 혜택이 제공될 수 있습니다.</p>
+    <p><strong>제1조 (시행일)</strong> 이 약관은 2026년 7월 1일부터 시행합니다.</p>
+    <p><strong>제2조 (경과조치)</strong> ① 이 약관 시행 이전에 가입한 회원에 대해서는 개정된 약관을 적용합니다. ② 베타 테스트 기간 중 가입한 회원에게는 유료 요금제 전환 시 별도의 우대 혜택이 제공될 수 있습니다. ③ 이 약관 시행 당시 무료로 서비스를 이용 중인 회원은 무료 요금제 회원으로 전환되며, 멤버 수가 10명을 초과하는 경우 회사가 정한 유예기간 내에 유료 요금제로 전환하여야 합니다.</p>
 
     <h3 className="font-semibold text-slate-900">[회사 정보]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -275,7 +291,7 @@ const TermsKo = () => (
 
 const TermsEn = () => (
   <>
-    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Effective: February 9, 2026</p>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Revised: July 1, 2026 | Effective: July 1, 2026</p>
 
     <h3 className="font-semibold text-slate-900">Article 1 (Purpose)</h3>
     <p>These Terms of Service (hereinafter "Terms") are intended to prescribe the rights, obligations, and responsibilities between InfoCreative Co., Ltd. (hereinafter "Company") and its Members, as well as the conditions, procedures, and other necessary matters pertaining to the use of Tray Storage Connect (hereinafter "Service"), a document management service provided by the Company.</p>
@@ -291,6 +307,9 @@ const TermsEn = () => (
       <li>"Posting" refers to any and all materials uploaded to the Service by a Member, including document files, photographs, and images.</li>
       <li>"AI Service" refers to functionalities that provide document-related information through automated processes utilizing AI technology, including optical character recognition (OCR), document content analysis, search, summarization, classification, and question-answering. This includes third-party AI models such as OpenAI GPT and Naver Clova OCR.</li>
       <li>"AI OCR" refers to optical character recognition technology that automatically recognizes and extracts textual information from images or scanned documents.</li>
+      <li>"Free Plan" refers to a pricing plan under which the Service may be used without usage fees within the scope determined by the Company, subject to limitations set by the Company such as the number of Seats per organization.</li>
+      <li>"Paid Plan" refers to a pricing plan (such as the Basic Plan) under which a Member pays usage fees to use the basic features provided by the Company.</li>
+      <li>"Seat" refers collectively to the Administrators and Team Members registered within a single organization (member account) to use the Service.</li>
       <li>"Tray Storage Product" refers to a physical storage unit for paper documents sold by the Company, which can be linked to the Service via an attached NFC tag.</li>
       <li>"NFC Tag" refers to a sticker-type device that links the Tray Storage Product with the Service using Near Field Communication technology.</li>
     </ul>
@@ -369,40 +388,51 @@ const TermsEn = () => (
     <p>③ The Company shall not be liable for any damages incurred by Members or third parties due to temporary suspension of Service pursuant to Paragraph 2, unless caused by the Company's willful misconduct or gross negligence.</p>
     <p>④ When suspending the Service, the Company shall post notice on the Service or notify Members at least seven (7) days in advance, except in cases of force majeure pursuant to Paragraph 3.</p>
 
-    <h3 className="font-semibold text-slate-900">Article 10 (Paid Services and Payment)</h3>
-    <p>① The Company may offer certain services on a paid basis, and Members who use paid services shall pay the applicable fees.</p>
-    <p>② The Service is currently provided free of charge during the beta testing period. Upon conclusion of the beta test, the Service will transition to paid plans. The Company shall announce pricing plans and payment methods at least thirty (30) days prior to the paid transition.</p>
-    <p>③ The anticipated pricing plans after beta testing are as follows (subject to change):</p>
-    <ul className="list-disc pl-5 space-y-1">
-      <li>Monthly subscription: Fees charged per user (estimated at KRW 3,300 per person per month);</li>
-      <li>New Members shall receive one (1) month of free use upon initial registration.</li>
-    </ul>
-    <p>④ Members may pay service fees using the following payment methods: credit card payment; bank transfer; virtual account transfer; other payment methods designated by the Company.</p>
-    <p>⑤ If a Member does not have legitimate authorization to use the payment method, or raises an objection to or refuses the payment after it has been made, the Company may suspend the provision of the Service.</p>
+    <h3 className="font-semibold text-slate-900">Article 10 (Pricing Plans and Payment)</h3>
+    <p>① The Company provides the Service under two types of plans: the Free Plan and the Paid Plan. The specific scope of use and limitations of each plan shall be governed by Article 12.</p>
+    <p>② The types of plans offered by the Company and their fees are as follows. The fees displayed are amounts inclusive of value-added tax (VAT).</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Plan</th><th className="border border-slate-300 p-2 text-left">Fee</th><th className="border border-slate-300 p-2 text-left">Key Details</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Free Plan</td><td className="border border-slate-300 p-2">Free</td><td className="border border-slate-300 p-2">Up to ten (10) Seats per organization (member account)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Basic Plan</td><td className="border border-slate-300 p-2">KRW 3,300 per Seat per month (minimum 3 Seats)</td><td className="border border-slate-300 p-2">Full access to the basic features provided by the Company upon paid subscription</td></tr>
+      </tbody>
+    </table>
+    <p>③ The Basic Plan is a recurring subscription product priced at KRW 3,300 per Seat per month (VAT included), available for subscription from a minimum of three (3) Seats. Accordingly, the minimum monthly fee for the Basic Plan is KRW 9,900 based on three (3) Seats.</p>
+    <p>④ A Member who has subscribed to the Paid Plan (Basic Plan) may use all basic features provided by the Company without limitations on the number of Seats, capacity, or the like. However, separate fees may apply to add-on services or additional features separately determined by the Company, in which case prior notice shall be given.</p>
+    <p>⑤ Recurring payments are automatically charged to the Member's selected payment method on the same date each month based on the initial payment date, and are automatically renewed on a monthly basis unless the Member cancels. If the payment date does not regularly occur in a given month (e.g., a month without the 31st), payment shall be made on the last day of that month, and payment shall proceed normally even if the payment date falls on a holiday or public holiday.</p>
+    <p>⑥ If Seats are added or reduced during the subscription period, the changed number of Seats shall be reflected from the next recurring payment date. Detailed matters such as the method of settling differences arising from added Seats shall be governed by the Service screen or the operational policy determined by the Company.</p>
+    <p>⑦ Members may pay service fees using the following payment methods: credit card payment; bank transfer; virtual account transfer; other payment methods designated by the Company.</p>
+    <p>⑧ If a Member fails to pay fees due to exceeding the limit of, insufficient balance in, or unilateral cancellation of the selected payment method, the Company may suspend the Paid Plan service or convert the account to the Free Plan on the date the delinquency occurs.</p>
+    <p>⑨ If a Member does not have legitimate authorization to use the payment method, or raises an objection to or refuses the payment after it has been made, the Company may suspend the provision of the Service.</p>
+    <p>⑩ The Company may change fees according to the type and period of the Service, in which case it shall provide notice and notification through the procedures under Article 3. However, amounts contracted prior to such change shall not be applied retroactively.</p>
 
     <h3 className="font-semibold text-slate-900">Article 11 (Withdrawal of Subscription and Refund)</h3>
-    <p>① A Member may withdraw the subscription within seven (7) days from the date of payment for a paid service, and the Company shall refund the full payment amount.</p>
+    <p>① A Member who newly subscribes to a Paid Plan may withdraw the subscription within seven (7) days from the date of payment, provided that the Member has not used the Service, in which case the Company shall refund the full payment amount.</p>
     <p>② Notwithstanding Paragraph 1, withdrawal of subscription may be restricted in the following cases:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li>The service has been destroyed or damaged due to reasons attributable to the Member;</li>
       <li>The value of the service has significantly decreased due to substantial use by the Member.</li>
     </ul>
-    <p>③ If a refund is requested after seven (7) days from the payment date, the remaining balance after deducting one (1) month's usage fee shall be refunded.</p>
-    <p>④ Refunds shall, in principle, be processed through the same payment method used by the Member. If a refund through the same method is not possible, the Company shall process the refund through an alternative method determined by the Company.</p>
-    <p>⑤ Refund processing shall be completed within seven (7) business days from the date of the refund request.</p>
+    <p>③ If a Member using a recurring-payment Paid Plan requests cancellation and refund after seven (7) days have elapsed from the payment date, in principle no refund shall be made for the already-paid billing cycle (the current month); the right to use the Service shall be maintained until the end of that billing cycle, after which automatic renewal shall be discontinued.</p>
+    <p>④ Where a Member is entitled to a refund under applicable laws such as the government-issued "Guidelines for the Protection of Content Users," the Company may charge a refund fee within the scope prescribed by such guidelines.</p>
+    <p>⑤ Refunds shall, in principle, be processed through the same payment method used by the Member. If a refund through the same method is not possible, the Company shall process the refund through an alternative method determined by the Company.</p>
+    <p>⑥ Refund processing shall be completed within seven (7) business days from the date of the refund request.</p>
+    <p>⑦ No refundable amount exists for use of the Free Plan.</p>
 
-    <h3 className="font-semibold text-slate-900">Article 12 (Service Usage Limitations)</h3>
-    <p>① The scope and limitations of Service usage by Members are as follows:</p>
+    <h3 className="font-semibold text-slate-900">Article 12 (Service Usage Scope and Limitations by Plan)</h3>
+    <p>① The scope of use and limitations of the Free Plan and the Paid Plan are as follows:</p>
     <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Category</th><th className="border border-slate-300 p-2 text-left">Details</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">File Upload</td><td className="border border-slate-300 p-2">Maximum 50 MB per upload; supported formats: PDF, JPG, PNG</td></tr>
         <tr><td className="border border-slate-300 p-2">Simultaneous Access</td><td className="border border-slate-300 p-2">Only one (1) device per account may be logged in simultaneously</td></tr>
-        <tr><td className="border border-slate-300 p-2">Free Members</td><td className="border border-slate-300 p-2">Service is available for one (1) month from the date of registration</td></tr>
-        <tr><td className="border border-slate-300 p-2">Paid Members</td><td className="border border-slate-300 p-2">Service is available without feature or capacity limitations</td></tr>
+        <tr><td className="border border-slate-300 p-2">Free Plan</td><td className="border border-slate-300 p-2">Up to ten (10) Seats per organization (member account); access to the basic features determined by the Company</td></tr>
+        <tr><td className="border border-slate-300 p-2">Paid Plan (Basic)</td><td className="border border-slate-300 p-2">KRW 3,300 per Seat per month (minimum 3 Seats); full access to the basic features provided by the Company without limitations on the number of Seats, capacity, or the like</td></tr>
       </tbody>
     </table>
-    <p>② The Company may change the above limitations as necessary for the stable operation of the Service, and shall provide prior notice of any such changes.</p>
+    <p>② If the number of Seats in an organization using the Free Plan exceeds ten (10), the Company may guide the organization to transition to the Paid Plan, and the use of certain features such as adding Seats may be restricted until the transition.</p>
+    <p>③ The Company may change the above limitations as necessary for the stable operation of the Service, and shall provide prior notice of any such changes in accordance with Article 3.</p>
 
     <h3 className="font-semibold text-slate-900">Article 13 (Management of Postings)</h3>
     <p>① The copyright of Postings made by a Member within the Service shall belong to the respective author of such Postings.</p>
@@ -464,7 +494,8 @@ const TermsEn = () => (
     <h3 className="font-semibold text-slate-900">Article 18 (Member Obligations)</h3>
     <p>① Members shall not engage in the following conduct: registering false information at the time of application or modification; misappropriating another person's information; infringing on the intellectual property rights or other rights of the Company or third parties; damaging the reputation or disrupting the operations of the Company or third parties; publicly disclosing or posting obscene or violent information, images, or audio; using the Service for commercial purposes without the Company's consent; distributing computer viruses or other malicious programs; using information obtained through the Service without the Company's prior consent or providing such information to third parties; gaining unauthorized access to the Service or collecting data using automated means; negatively affecting the Company's servers or interfering with service operations; any other conduct that violates applicable laws or is contrary to good morals and social norms.</p>
     <p>② Administrators shall bear responsibility for department creation, access permission assignment, and team member management. The Administrator shall bear primary liability for issues arising from errors in or inappropriate assignment of permissions.</p>
-    <p>③ Members shall comply with the provisions of these Terms and applicable laws, and shall not engage in any conduct that interferes with the Company's operations.</p>
+    <p>③ Members shall bear responsibility for the registration and management of Seats and, when using a Paid Plan, shall acknowledge and comply with the fact that fees are calculated based on the number of registered Seats.</p>
+    <p>④ Members shall comply with the provisions of these Terms and applicable laws, and shall not engage in any conduct that interferes with the Company's operations.</p>
 
     <h3 className="font-semibold text-slate-900">Article 19 (Access Permission Management)</h3>
     <p>① The Service operates a role-based access permission management system divided into Administrators and Team Members.</p>
@@ -477,7 +508,8 @@ const TermsEn = () => (
     <p>① The Company shall not engage in conduct prohibited by applicable laws and these Terms or contrary to public morals, and shall endeavor to provide the Service on a continuous and stable basis.</p>
     <p>② The Company shall maintain security systems to protect personal information (including credit information) to ensure Members can use the Service safely, and shall publicly disclose and comply with its Privacy Policy.</p>
     <p>③ The Company shall address opinions or complaints raised by Members regarding Service use when deemed legitimate. The Company shall communicate the process and results of handling such opinions or complaints through bulletin boards or email.</p>
-    <p>④ The Company maintains the following insurance policies to prepare for risks that may arise during Service provision: Product Liability Insurance; Personal Information Protection Liability Insurance; Commercial General Liability Insurance; Cyber Insurance.</p>
+    <p>④ The Company shall retain payment-related information concerning paid transactions for the period prescribed by applicable laws.</p>
+    <p>⑤ The Company maintains the following insurance policies to prepare for risks that may arise during Service provision: Product Liability Insurance; Personal Information Protection Liability Insurance; Commercial General Liability Insurance; Cyber Insurance.</p>
 
     <h3 className="font-semibold text-slate-900">Article 21 (Ownership and Restrictions on Intellectual Property)</h3>
     <p>① Copyright and other intellectual property rights to works created by the Company shall belong to the Company.</p>
@@ -531,8 +563,8 @@ const TermsEn = () => (
     </ul>
 
     <h3 className="font-semibold text-slate-900">Supplementary Provisions</h3>
-    <p><strong>Article 1 (Effective Date)</strong> These Terms shall take effect on February 9, 2026.</p>
-    <p><strong>Article 2 (Transitional Measures)</strong> ① Members who registered prior to the effective date of these Terms shall be subject to the revised Terms. ② Members who registered during the beta testing period may receive preferential benefits upon the transition to paid services.</p>
+    <p><strong>Article 1 (Effective Date)</strong> These Terms shall take effect on July 1, 2026.</p>
+    <p><strong>Article 2 (Transitional Measures)</strong> ① Members who registered prior to the effective date of these Terms shall be subject to the revised Terms. ② Members who registered during the beta testing period may receive preferential benefits upon the transition to the Paid Plan. ③ Members using the Service free of charge as of the effective date of these Terms shall be converted to Free Plan members; if the number of Seats exceeds ten (10), they shall transition to a Paid Plan within the grace period determined by the Company.</p>
 
     <h3 className="font-semibold text-slate-900">[Company Information]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -546,9 +578,300 @@ const TermsEn = () => (
   </>
 );
 
+const TermsJa = () => (
+  <>
+    <p className="text-xs text-slate-500">制定 2026.02.09. / 改定 2026.07.01. 施行 2026.07.01.</p>
+
+    <h3 className="font-semibold text-slate-900">第1条 (目的)</h3>
+    <p>この約款は、株式会社インフォクリエイティブ（以下「当社」）が提供する文書管理サービスであるトレイストレージコネクト（以下「本サービス」）の利用に関して、当社と会員との間の権利、義務及び責任事項、本サービスの利用条件及び手続き、その他必要な事項を定めることを目的とします。</p>
+
+    <h3 className="font-semibold text-slate-900">第2条 (定義)</h3>
+    <p>① この約款で使用する用語の定義は次のとおりです。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>「本サービス」とは、会員が保有する文書をクラウドベースで保存・管理し、人工知能（AI）技術を活用して文書情報を探索・検索・分析できるよう当社が提供するオンラインプラットフォームサービスをいいます。</li>
+      <li>「トレイストレージコネクト」とは、当社が本サービスを提供するために運営するウェブ及びモバイルベースのプラットフォームをいいます。</li>
+      <li>「会員」とは、この約款に同意し、当社が定める手続きに従って会員登録を完了して本サービスを利用する者をいいます。</li>
+      <li>「管理者」とは、組織内で部署の作成、権限管理、全体文書統計の確認等の管理機能を遂行できる権限を付与された会員をいいます。</li>
+      <li>「チームメンバー」とは、管理者が付与した権限の範囲内で文書を登録・照会・編集できる会員をいいます。</li>
+      <li>「投稿物」とは、会員が本サービスにアップロードした文書ファイル、写真、画像等一切の資料をいいます。</li>
+      <li>「AIサービス」とは、光学文字認識（OCR）、文書内容分析、検索、要約、分類、質疑応答等、人工知能技術を活用して自動化された方式で文書関連情報を提供する機能をいい、OpenAI GPT及びNAVERクローバOCR等、第三者が提供するAIモデルを含みます。</li>
+      <li>「AI OCR」とは、画像又はスキャンされた文書から文字情報を自動的に認識・抽出する光学文字認識技術をいいます。</li>
+      <li>「無料プラン」とは、当社が定める範囲内で利用料金なしに本サービスを利用できるプランをいい、組織当たりのメンバー数等、当社が定める制限が適用されます。</li>
+      <li>「有料プラン」とは、会員が利用料金を支払い、当社が提供する基本機能を利用できるプラン（ベーシックプラン等）をいいます。</li>
+      <li>「メンバー」とは、一つの組織（会員アカウント）内で本サービスを利用するよう登録された管理者及びチームメンバーを総称していいます。</li>
+      <li>「トレイストレージ製品」とは、紙文書を保管・管理するための物理的保管箱であり、NFCタグを取り付けて本サービスと連動できる当社の有料販売製品をいいます。</li>
+      <li>「NFCタグ」とは、近距離無線通信（Near Field Communication）技術を活用してトレイストレージ製品と本サービスを連動するステッカー形態の装置をいいます。</li>
+    </ul>
+    <p>② この約款で定めていない用語の意味は、関連法令及び一般的な商取引の慣行に従います。</p>
+
+    <h3 className="font-semibold text-slate-900">第3条 (約款の明示と改定)</h3>
+    <p>① 当社は、この約款の内容を会員が容易に確認できるよう、本サービスの初期画面又は当社ホームページ（www.traystorage.net）に掲示します。</p>
+    <p>② 当社は、「約款の規制に関する法律」、「情報通信網利用促進及び情報保護等に関する法律」（以下「情報通信網法」）、「電子商取引等における消費者保護に関する法律」等の関連法令に違反しない範囲でこの約款を改定することができます。</p>
+    <p>③ 当社が約款を改定する場合、改定内容と適用日を明示して、適用日の7日前から本サービス画面及び当社ホームページに告知します。ただし、会員に不利又は重大な事項を変更する場合には、適用日の30日前から告知し、会員が登録した電子メール又は携帯電話番号へ個別に通知します。</p>
+    <p>④ 当社が第3項により改定約款を告知又は通知する際、会員に適用日前までに意思表示をしなければ意思表示が表明されたものとみなす旨を明確に告知又は通知したにもかかわらず、会員が明示的に拒否の意思表示をしなかった場合、会員が改定約款に同意したものとみなします。</p>
+    <p>⑤ 会員が改定約款の適用に同意しない場合、当社は改定約款の内容を適用することができず、この場合、会員は利用契約を解約することができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第4条 (約款外の準則)</h3>
+    <p>① この約款で定めていない事項及びこの約款の解釈については、「約款の規制に関する法律」、情報通信網法、「個人情報保護法」、「電子商取引等における消費者保護に関する法律」、「人工知能基本法」、「電子文書及び電子取引基本法」等の関連法令又は商慣例に従います。</p>
+    <p>② 当社は、必要な場合、本サービスの詳細利用指針（運営方針）を定めることができ、これを本サービス画面に掲示するか、その他の方法で会員に告知します。</p>
+
+    <h3 className="font-semibold text-slate-900">第5条 (会員登録)</h3>
+    <p>① 利用者は、当社が定める登録様式に従って会員情報を記入した後、この約款に同意するという意思表示をすることにより会員登録を申請します。</p>
+    <p>② 当社は、第1項のとおり会員として登録することを申請した利用者のうち、次の各号に該当しない限り会員として登録します。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>登録申請者がこの約款により以前に会員資格を喪失したことがある場合（ただし、会員資格喪失後2年が経過した者であって、当社の会員再登録の承諾を得た場合は例外）</li>
+      <li>登録内容に虚偽、記載漏れ、誤記がある場合</li>
+      <li>会員退会後7日が経過していない者が再登録を申請する場合</li>
+      <li>利用停止期間中にある会員が利用契約を任意に解約して再登録を申請する場合</li>
+      <li>その他、会員として登録することが当社の技術上著しく支障があると判断される場合</li>
+    </ul>
+    <p>③ 会員登録契約の成立時期は、当社の承諾が会員に到達した時点とします。</p>
+    <p>④ 会員は、会員登録時に登録した事項に変更がある場合、直ちに電子メールその他の方法で当社に対してその変更事項を知らせなければなりません。</p>
+    <p>⑤ 第4項の変更事項を当社に知らせなかったことにより発生した不利益について、当社は責任を負いません。</p>
+
+    <h3 className="font-semibold text-slate-900">第6条 (会員退会及び資格喪失)</h3>
+    <p>① 会員はいつでも当社に退会を要請することができ、当社は直ちに会員退会を処理します。</p>
+    <p>② 会員が次の各号の事由に該当する場合、当社は会員資格を制限及び停止させることができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>登録申請時に虚偽の内容を登録した場合</li>
+      <li>他の会員の本サービス利用を妨害し、又はその情報を盗用する等、電子商取引の秩序を脅かす場合</li>
+      <li>本サービスを利用して法令又はこの約款が禁止し、若しくは公序良俗に反する行為をする場合</li>
+    </ul>
+    <p>③ 当社が会員資格を制限・停止させた後、同一の行為が2回以上繰り返され、又は30日以内にその事由が是正されない場合、当社は会員資格を喪失させることができます。</p>
+    <p>④ 当社が会員資格を喪失させる場合には、会員登録を抹消します。この場合、会員にこれを通知し、会員登録抹消前に最低30日以上の期間を定めて疎明する機会を付与します。</p>
+    <p>⑤ 会員退会又は会員資格喪失時、会員の投稿物及び個人情報は直ちに削除されます。ただし、関連法令及び当社の個人情報処理方針により保管する必要がある情報は、一定期間保管後に削除します。</p>
+
+    <h3 className="font-semibold text-slate-900">第7条 (休眠会員への転換)</h3>
+    <p>① 会員が1年間本サービスにログインしない場合、当社は当該会員を休眠会員に転換し、個人情報を別途分離して保管します。</p>
+    <p>② 休眠会員に転換された後3年が経過すると、会員の個人情報及び投稿物は完全に削除されます。</p>
+    <p>③ 当社は、休眠会員転換予定日の30日前までに会員に電子メール等で休眠転換予定の事実を通知します。</p>
+    <p>④ 休眠会員は、ログインを通じて本人確認手続きを経て休眠状態を解除し、本サービスを再開することができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第8条 (サービスの提供及び変更)</h3>
+    <p>① 当社は、会員に次のようなサービスを提供します。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>文書ファイル及び画像のクラウドベースの保存及び管理サービス</li>
+      <li>部署別文書分類及び管理機能</li>
+      <li>NFCタグを活用した物理的保管箱との連動サービス</li>
+      <li>AI OCRによる文書テキストの自動認識及び抽出</li>
+      <li>AIベースの文書検索、分析、要約、質疑応答機能</li>
+      <li>チャット及び音声命令方式のAIインターフェース</li>
+      <li>文書保管期間設定、統計データ提供、お知らせ掲示等の付加機能</li>
+      <li>権限管理機能（アクセス不可／ビューア／編集者／管理者の4段階）</li>
+      <li>その他、当社が追加で開発し、又は提携契約等を通じて会員に提供する一切のサービス</li>
+    </ul>
+    <p>② 当社は、本サービスの品質向上、技術発展、運営上の必要に応じて、本サービスの全部又は一部を変更することができます。</p>
+    <p>③ 本サービスの内容、利用方法、利用時間について変更がある場合には、変更事由、変更されるサービスの内容及び提供日等を、その変更前7日以上、本サービス画面に掲示し、又は会員に通知します。</p>
+    <p>④ 当社は、無料で提供されるサービスの一部又は全部を、当社の方針及び運営の必要上、修正、中断、変更することができ、これについて関連法令に特別な規定がない限り、会員に別途の補償をしません。</p>
+
+    <h3 className="font-semibold text-slate-900">第9条 (サービス利用時間及び中断)</h3>
+    <p>① 本サービスの利用は、当社の業務上又は技術上特別な支障がない限り、年中無休、1日24時間を原則とします。</p>
+    <p>② 第1項にもかかわらず、当社は次の各号の場合、本サービスの全部又は一部を制限し、又は中断することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>コンピュータ等の情報通信設備の保守点検、交換及び故障、通信途絶等の事由が発生した場合</li>
+      <li>本サービスのための設備の保守等の工事によりやむを得ない場合</li>
+      <li>停電、諸設備の障害又は利用量の輻輳等により正常なサービス利用に支障がある場合</li>
+      <li>サービス提供業者との契約終了等のような当社の諸事情により本サービスを維持できない場合</li>
+      <li>その他、天災地変、国家非常事態等の不可抗力的事由がある場合</li>
+    </ul>
+    <p>③ 当社は、第2項の事由により本サービスの提供が一時的に中断されることにより会員又は第三者が被った損害について、当社の故意又は重過失がない限り責任を負いません。</p>
+    <p>④ 当社は、本サービスを中断する場合、第3項の不可抗力的事由がある場合を除いては、最低7日前に本サービス画面に告知し、又は会員に通知します。</p>
+
+    <h3 className="font-semibold text-slate-900">第10条 (プラン及び決済)</h3>
+    <p>① 当社は、本サービスを無料プランと有料プランに区分して提供します。各プランの具体的な利用範囲及び制限事項は、第12条で定めるところに従います。</p>
+    <p>② 当社が提供するプランの種類及び利用料金は次のとおりです。表示された利用料金は、付加価値税（VAT）が含まれた金額です。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">プラン</th><th className="border border-slate-300 p-2 text-left">利用料金</th><th className="border border-slate-300 p-2 text-left">主な内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">無料プラン</td><td className="border border-slate-300 p-2">無料</td><td className="border border-slate-300 p-2">組織（会員アカウント）当たり最大10名のメンバーまで利用可能</td></tr>
+        <tr><td className="border border-slate-300 p-2">ベーシックプラン</td><td className="border border-slate-300 p-2">メンバー1人当たり月3,300ウォン（最低3人以上の購読）</td><td className="border border-slate-300 p-2">有料決済時、当社が提供する基本機能をすべて利用可能</td></tr>
+      </tbody>
+    </table>
+    <p>③ ベーシックプランは、メンバー1人当たり月3,300ウォン（付加価値税込み）の定期決済型商品であり、最低3人以上から購読することができます。したがって、ベーシックプランの最低月利用料金は、3人基準で月9,900ウォンです。</p>
+    <p>④ 有料プラン（ベーシックプラン）を決済した会員は、当社が提供する基本機能を、メンバー数及び容量等の制限なくすべて利用することができます。ただし、当社が別途定める付加サービス又は追加機能については、別途の料金が課される場合があり、この場合は事前に告知します。</p>
+    <p>⑤ 定期決済は、最初の決済日を基準に毎月同じ日付に会員が選択した決済手段で自動決済され、会員が解約しない限り1か月単位で自動更新されます。毎月の決済日が定期的に到来しない場合（例：31日がない月）は当該月の末日に決済され、決済日が休日又は祝日である場合にも正常に決済が進行します。</p>
+    <p>⑥ 購読期間中にメンバーを追加又は減員する場合、変更されたメンバー数は次回の定期決済日から反映されます。メンバー追加に伴う差額精算方式等の詳細事項は、本サービス画面又は当社が定める運営方針に従います。</p>
+    <p>⑦ 会員は、クレジットカード決済、銀行振込、仮想口座振替、その他当社が指定する決済手段を利用して利用料金を納付することができます。</p>
+    <p>⑧ 会員が決済時に選択した決済手段の限度超過、残高不足、決済手段の任意解約等により利用料金を滞納する場合、当社は延滞が発生した日に有料プランのサービス利用を中断し、又は無料プランに転換することができます。</p>
+    <p>⑨ 会員が決済手段について正当な使用権限を有していない場合、又は決済以後に当該決済手段について異議を申し立て、若しくは決済を拒否する場合、当社は本サービスの提供を中断することができます。</p>
+    <p>⑩ 当社は、利用料金を本サービスの種類及び期間に応じて変更することができ、この場合、第3条による手続きを経て告知及び通知します。ただし、変更以前に契約した金額は遡及して適用しません。</p>
+
+    <h3 className="font-semibold text-slate-900">第11条 (申込みの撤回及び返金)</h3>
+    <p>① 有料プランを新規に決済した会員は、決済日から7日以内に本サービスを利用しなかった場合、申込みを撤回することができ、この場合、当社は決済代金の全額を返金します。</p>
+    <p>② 第1項にもかかわらず、次の各号の場合には申込みの撤回が制限される場合があります。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>会員の責めに帰すべき事由により本サービスが滅失又は毀損した場合</li>
+      <li>会員が本サービスを相当部分使用してその価値が著しく減少した場合</li>
+    </ul>
+    <p>③ 定期決済型の有料プランを利用中の会員が、決済日から7日が経過した後に解約及び返金を要請する場合、原則としてすでに決済された当該決済周期（当月分）についての返金は行われず、当該決済周期が満了する時点までサービス利用権限は維持され、その後の自動更新が中断されます。</p>
+    <p>④ 会員が、政府が告示する「コンテンツ利用者保護指針」等の関連法令により返金を受けることができる場合、当社は当該指針が定める範囲内で返金手数料を課すことができます。</p>
+    <p>⑤ 返金は、会員が決済した方法と同一の方法で処理することを原則とし、同一の方法で返金が不可能な場合は、当社が定める方法で返金します。</p>
+    <p>⑥ 返金処理は、返金要請日から営業日基準で7日以内に完了します。</p>
+    <p>⑦ 無料プランの利用については、返金対象となる金額は存在しません。</p>
+
+    <h3 className="font-semibold text-slate-900">第12条 (プラン別サービス利用範囲及び制限)</h3>
+    <p>① 無料プランと有料プランのサービス利用範囲及び制限は次のとおりです。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">区分</th><th className="border border-slate-300 p-2 text-left">内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">ファイルアップロード</td><td className="border border-slate-300 p-2">1回のアップロード時最大50MB、対応形式はPDF、JPG、PNG</td></tr>
+        <tr><td className="border border-slate-300 p-2">同時接続</td><td className="border border-slate-300 p-2">1アカウント当たり1台の端末でのみ同時接続可能</td></tr>
+        <tr><td className="border border-slate-300 p-2">無料プラン</td><td className="border border-slate-300 p-2">組織（会員アカウント）当たり最大10名のメンバーまで利用可能であり、当社が定める基本機能を利用することができます。</td></tr>
+        <tr><td className="border border-slate-300 p-2">有料プラン（ベーシック）</td><td className="border border-slate-300 p-2">メンバー1人当たり月3,300ウォン（最低3人以上の購読）で、当社が提供する基本機能を、メンバー数及び容量等の制限なくすべて利用することができます。</td></tr>
+      </tbody>
+    </table>
+    <p>② 無料プランを利用中の組織のメンバー数が10名を超過することになる場合、当社は有料プランへの転換を案内することができ、転換前まではメンバー追加等一部機能の利用が制限される場合があります。</p>
+    <p>③ 当社は、本サービスの安定的運営のために必要な場合、上記の制限事項を変更することができ、変更時には第3条により事前に告知します。</p>
+
+    <h3 className="font-semibold text-slate-900">第13条 (投稿物の管理)</h3>
+    <p>① 会員が本サービス内に掲載した投稿物の著作権は、当該投稿物の著作者に帰属します。</p>
+    <p>② 会員は、本サービスに次の各号に該当する投稿物を登録することはできません。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>他人の権利や名誉、信用その他正当な利益を侵害する内容</li>
+      <li>犯罪行為と関連があると判断される内容</li>
+      <li>当社又は第三者の著作権等の知的財産権を侵害する内容</li>
+      <li>当社又は第三者の名誉を毀損し、又は業務を妨害する内容</li>
+      <li>わいせつ又は暴力的なメッセージ、画像、音声その他公序良俗に反する内容</li>
+      <li>次の個人情報及び機微情報が含まれた文書：住民登録番号・パスポート番号・運転免許番号・外国人登録番号等の個人識別情報／印鑑証明書・登記権利証等の法的権利・義務を証明する文書／家族関係証明書・住民登録票謄本・抄本等の身分関係証明文書／通帳の写し・クレジットカード情報等の金融情報が含まれた文書／健康診断結果・診療記録等の医療情報が含まれた文書／履歴書・経歴証明書等の個人の経歴事項を詳細に記載した文書</li>
+    </ul>
+    <p>③ 会員が第2項に該当する情報が含まれた文書を登録しようとする場合、必ず当該情報を削除し、又はマスキング（隠し）処理した後に登録しなければなりません。</p>
+    <p>④ 当社は、会員が第2項に違反して投稿物を登録した場合、事前通知なく当該投稿物を削除し、又は掲載を拒否することができ、当該会員の本サービス利用を制限し、又は利用契約を解約することができます。</p>
+    <p>⑤ 会員が第2項に違反して掲載した投稿物により当社又は第三者に損害が発生した場合、当該会員はその損害を賠償する責任があります。</p>
+    <p>⑥ 当社は、NFCタグと連動して使用する場合、物理的保管箱に入れられた文書の種類及び概略的な内容のみ把握できる最小限の情報のみを登録することを推奨します。</p>
+
+    <h3 className="font-semibold text-slate-900">第14条 (AIサービスの提供及び告知事項)</h3>
+    <p>① 当社は、会員が登録した投稿物に対して次のAIサービスを提供します。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AI OCR（光学文字認識）：画像又はスキャン文書からのテキスト自動抽出</li>
+      <li>文書検索及び分類：文書内容を分析して自動分類及び検索機能を提供</li>
+      <li>質疑応答：チャット又は音声命令を通じた文書情報の照会</li>
+      <li>文書要約及び分析：文書内容の要約及び統計分析</li>
+    </ul>
+    <p>② 当社は、AIサービスの提供のため、OpenAI GPT及びNAVERクローバOCR等、第三者が提供するAIモデルを活用します。</p>
+    <p>③ AI OCRは、会員が投稿物をアップロードすると直ちにリアルタイムで処理され、処理結果はSupabaseクラウドサーバー（AWSベース）に保存されます。</p>
+    <p>④ 当社が提供するAIサービスは、次のような特性及び制限事項があります。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AIサービスは補助的な情報提供手段であり、法律、会計、税務、医療、人事等の専門的判断に代わるものではありません。</li>
+      <li>AIが提供する情報の完全性、正確性、最新性は保証されないため、会員は最終判断時に必ず原本文書を確認しなければなりません。</li>
+      <li>AI分析結果は参考資料としてのみ活用されるべきであり、重要な意思決定の唯一の根拠として使用されてはなりません。</li>
+    </ul>
+    <p>⑤ 当社は、AIサービスの誤り、不正確性、又は会員がAIサービスの結果を信頼して発生した損害について、故意又は重過失がない限り責任を負いません。</p>
+
+    <h3 className="font-semibold text-slate-900">第15条 (AI処理に関する会員の権利)</h3>
+    <p>① 会員は、AIサービスが提供した結果に対して次の権利を行使することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>説明要請権：AI処理結果に対する説明を要請する権利</li>
+      <li>異議申立権：明白な誤り又は不適切な結果について異議を申し立てる権利</li>
+      <li>人的介入要請権：自動化された処理に対する人的検討を要請する権利</li>
+    </ul>
+    <p>② 当社は、第1項の要請を受けた場合、技術的に可能な範囲内でこれを検討し、必要な措置を取ります。</p>
+    <p>③ 会員は、カスタマーセンター（support@traystorage.net、02-333-7334）を通じて第1項の権利を行使することができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第16条 (投稿物のAI学習への活用)</h3>
+    <p>① 当社は、現在、会員の投稿物を一般的なAIモデルの学習データとして活用しません。</p>
+    <p>② ただし、サービス品質改善及び機能高度化のため、個人識別情報を完全に除去した非識別化された統計情報の生成及び分析、サービスの誤り改善及び品質向上のための技術検証の目的で投稿物を活用することができます。</p>
+    <p>③ 今後、当社がAIモデルの学習のために会員の投稿物を活用しようとする場合、事前に会員の明示的同意を得ます。</p>
+    <p>④ 会員はいつでも、自身の投稿物がAI学習に活用されることを拒否することができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第17条 (個人情報の保護及び国外移転)</h3>
+    <p>① 当社は、関連法令の定めるところに従って会員の個人情報を保護するよう努力し、個人情報の保護及び利用については、関連法令及び当社の個人情報処理方針が適用されます。</p>
+    <p>② 当社は、本サービスの提供のため、会員の投稿物及び個人情報をクラウドサーバー（Supabase、AWSベース）に保存し、当該サーバーは海外に所在する場合があります。</p>
+    <p>③ 個人情報の国外移転に関する事項：移転される個人情報の項目（会員情報、投稿物、AI処理結果）、移転先の国（米国等Supabaseサーバー所在地）、移転目的（クラウドベースのサービス提供及びデータ保存）、保有及び利用期間（会員退会時まで又は関連法令による保管期間）</p>
+    <p>④ 当社は、今後、国内サーバーへの転換を検討することができ、サーバー位置の変更時には事前に告知します。</p>
+    <p>⑤ 当社の個人情報処理方針は、本サービス画面及び当社ホームページで確認することができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第18条 (会員の義務)</h3>
+    <p>① 会員は、次の行為をしてはなりません：申請又は変更時の虚偽内容の登録、他人の情報の盗用、当社又は第三者の知的財産権等の権利侵害、当社又は第三者の名誉を毀損し若しくは業務を妨害する行為、わいせつ又は暴力的な情報の掲示、当社の同意なく営利を目的として本サービスを使用する行為、コンピュータウイルス等の悪性プログラムを流布する行為、当社のサービスを利用して得た情報を当社の事前承諾なく使用し若しくは他人に提供する行為、自動化された手段を利用して本サービスに無断でアクセスし若しくはデータを収集する行為、当社のサーバーに否定的な影響を及ぼし若しくはサービス運営を妨害する行為、その他関連法令に違反し若しくは善良な風俗その他の社会通念に反する行為</p>
+    <p>② 管理者は、部署の作成、アクセス権限の付与、チームメンバー管理等についての責任を負い、権限設定の誤り又は不適切な権限付与により発生した問題について第一次的責任を負います。</p>
+    <p>③ 会員は、メンバーの登録及び管理に関する責任を負い、有料プランの利用時に登録されたメンバー数に応じて利用料金が算定されることを認識し、これを遵守しなければなりません。</p>
+    <p>④ 会員は、この約款及び関連法令で定める事項を遵守しなければなりません。</p>
+
+    <h3 className="font-semibold text-slate-900">第19条 (権限管理)</h3>
+    <p>① 本サービスは、管理者とチームメンバーに区分される役割ベースの権限管理体系を運営します。</p>
+    <p>② 管理者の権限及び責任：部署の作成及び削除、文書の大分類及び詳細カテゴリの作成及び管理、チームメンバー別の部署アクセス権限の設定（アクセス不可／ビューア／編集者／管理者の4段階）、全部署の文書照会及び統計確認（現在、組織当たり管理者は1名であり、今後、複数の管理者の指定が可能となるよう更新される場合があります。）</p>
+    <p>③ チームメンバーの権限：自身が所属する部署内での文書の大分類及び詳細カテゴリの作成、自身が所属する部署の文書の登録、照会、編集、管理者が許可した他部署の文書に対する制限的アクセス</p>
+    <p>④ 他部署アクセス権限の要請手続き：チームメンバーが管理者に他部署アクセス権限を要請 → 管理者がアクセスレベルを設定 → 設定完了後、チームメンバーは当該部署にアクセス可能</p>
+    <p>⑤ 管理者は、権限設定時に最小権限の原則に従い、業務遂行に必要な最小限の権限のみを付与しなければなりません。</p>
+
+    <h3 className="font-semibold text-slate-900">第20条 (当社の義務)</h3>
+    <p>① 当社は、関連法令とこの約款が禁止し、又は美風良俗に反する行為をせず、継続的かつ安定的に本サービスを提供するために最善を尽くして努力します。</p>
+    <p>② 当社は、会員が安全に本サービスを利用できるよう、個人情報（信用情報を含む）保護のためのセキュリティシステムを備えなければならず、個人情報処理方針を公示し遵守します。</p>
+    <p>③ 当社は、本サービスの利用に関連して会員から提起された意見や不満が正当であると認める場合、これを処理しなければなりません。</p>
+    <p>④ 当社は、有料決済に関する決済事項情報を、関連法令で定める期間保存します。</p>
+    <p>⑤ 当社は、生産物賠償責任保険、個人情報保護賠償責任保険、営業賠償責任保険、サイバー保険に加入し、本サービス提供中に発生し得る危険に備えます。</p>
+
+    <h3 className="font-semibold text-slate-900">第21条 (著作権の帰属及び利用制限)</h3>
+    <p>① 当社が作成した著作物に対する著作権その他の知的財産権は当社に帰属します。</p>
+    <p>② 会員は、本サービスを利用することにより得た情報のうち、当社に知的財産権が帰属する情報を、当社の事前承諾なく営利目的で利用し、又は第三者に利用させてはなりません。</p>
+    <p>③ 会員が本サービス内に掲載した投稿物の著作権は、当該投稿物の著作者に帰属します。</p>
+    <p>④ 会員は、本サービスを利用して取得した情報を加工、販売する行為等、本サービスに掲載された資料を商業的に利用することはできません。</p>
+
+    <h3 className="font-semibold text-slate-900">第22条 (NFC製品の販売及び瑕疵処理)</h3>
+    <p>① 当社は、トレイストレージ製品（NFCタグを含む）を、当社直営販売店及びオンライン販売店（オークション、Gマーケット、11st、NAVERスマートストア、Cafe24自社モール等）を通じて販売します。</p>
+    <p>② トレイストレージ製品に瑕疵がある場合、会員は購入日から1年以内に無償A/Sを要請することができます。</p>
+    <p>③ 製品の瑕疵に関するA/Sのお問い合わせは、カスタマーセンター（02-333-7334、support@traystorage.net）へ受け付けることができます。</p>
+    <p>④ 製品の交換、返品、返金に関する事項は、「電子商取引等における消費者保護に関する法律」等の関連法令に従います。</p>
+
+    <h3 className="font-semibold text-slate-900">第23条 (データ保管及びバックアップ)</h3>
+    <p>① 当社は、会員の投稿物及びサービス利用データを安全に保管するよう努力します。</p>
+    <p>② 会員退会時、会員の投稿物及び個人情報は直ちに削除されます。ただし、バックアップデータ（1年）、AI処理ログ（1年）、関連法令により保存が必要な情報（当該法令で定める期間）は、明示した期間保管されます。</p>
+    <p>③ 休眠会員に転換された場合、個人情報は別途分離保管され、休眠転換後3年が経過すると、すべてのデータは完全に削除されます。</p>
+    <p>④ 当社は、天災地変、ハッキング、システム障害等の不可抗力的事由によるデータ損失について、故意又は重過失がない限り責任を負いません。</p>
+    <p>⑤ 会員は、重要なデータについては別途バックアップを維持することを推奨します。</p>
+
+    <h3 className="font-semibold text-slate-900">第24条 (免責条項)</h3>
+    <p>① 当社は、天災地変、戦争、基幹通信事業者のサービス中止、ハッキング、DDoS攻撃等、当社の帰責事由なく発生したサービス中断及びそれによる損害について責任を負いません。</p>
+    <p>② 当社は、会員の帰責事由によるサービス利用の障害について責任を負いません。</p>
+    <p>③ 当社は、会員が本サービスを利用して期待する収益を喪失したことについて責任を負いません。</p>
+    <p>④ 当社は、会員が本サービスに掲載した情報、資料、事実の信頼度、正確性等の内容については責任を負いません。</p>
+    <p>⑤ 当社は、会員間又は会員と第三者相互間で本サービスを媒介として取引等を行った場合には責任を負いません。</p>
+    <p>⑥ 当社は、無料で提供されるサービスの利用に関連して、関連法令に特別な規定がない限り責任を負いません。</p>
+    <p>⑦ AIサービスの特性上発生し得る誤り、不正確な情報提供、予期しない結果について、当社は故意又は重過失がない限り責任を負いません。</p>
+
+    <h3 className="font-semibold text-slate-900">第25条 (損害賠償)</h3>
+    <p>① 当社又は会員がこの約款に違反して相手方に損害を与えた場合、その損害を賠償する責任があります。ただし、故意又は過失がない場合には、この限りではありません。</p>
+    <p>② 当社は、サービス中断、誤り等により会員に損害が発生した場合、有料会員には1か月～3か月の無料利用券を提供し、無料会員には別途補償しません。</p>
+    <p>③ 当社が提供する補償は現金賠償に代わるものではなく、会員は損害の程度に応じて別途損害賠償を請求することができます。</p>
+    <p>④ 会員がこの約款に違反して当社に損害が発生した場合、会員は当社に対してその損害を賠償する責任があります。</p>
+
+    <h3 className="font-semibold text-slate-900">第26条 (紛争の解決)</h3>
+    <p>① 当社は、会員が提起する正当な意見や不満を反映し、その被害を補償処理するため、被害補償処理機構を設置・運営します。</p>
+    <p>② 当社は、会員から提出される不満事項及び意見は優先的にその事項を処理します。ただし、迅速な処理が困難な場合には、会員にその事由と処理日程を直ちに通報いたします。</p>
+    <p>③ 当社と会員との間で発生した電子商取引紛争に関連して会員の被害救済申請がある場合には、公正取引委員会又は市・道知事が依頼する紛争調停機関の調停に従うことができます。</p>
+
+    <h3 className="font-semibold text-slate-900">第27条 (裁判権及び準拠法)</h3>
+    <p>① この約款に明示されていない事項は、「電子商取引等における消費者保護に関する法律」、「約款の規制に関する法律」、情報通信網法、「個人情報保護法」、「人工知能基本法」等の関連法令及び商慣例に従います。</p>
+    <p>② 本サービスの利用により発生した紛争について訴訟が必要な場合、民事訴訟法上の管轄裁判所に提起します。</p>
+
+    <h3 className="font-semibold text-slate-900">第28条 (カスタマーセンター)</h3>
+    <p>会員は、本サービスの利用に関連してお問い合わせ事項がある場合、次のカスタマーセンターに連絡することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>電話番号：02-333-7334</li>
+      <li>メール：support@traystorage.net</li>
+      <li>営業時間：平日09:00～18:00（土日・祝日を除く）</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">附則</h3>
+    <p><strong>第1条 (施行日)</strong> この約款は2026年7月1日から施行します。</p>
+    <p><strong>第2条 (経過措置)</strong> ① この約款の施行以前に登録した会員については、改定された約款を適用します。 ② ベータテスト期間中に登録した会員には、有料プランへの転換時に別途の優待特典が提供される場合があります。 ③ この約款の施行当時、無料で本サービスを利用中の会員は無料プラン会員に転換され、メンバー数が10名を超過する場合は、当社が定める猶予期間内に有料プランへ転換しなければなりません。</p>
+
+    <h3 className="font-semibold text-slate-900">[会社情報]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>商号：株式会社インフォクリエイティブ</li>
+      <li>代表者：チョン・ドチョン</li>
+      <li>住所：ソウル特別市衿川区加山デジタル2路43-14 加山ハンファビズメトロ2次708号、709号</li>
+      <li>事業者登録番号：841-86-03004</li>
+      <li>カスタマーセンター：02-333-7334</li>
+      <li>メール：support@traystorage.net</li>
+    </ul>
+  </>
+);
+
 export const TermsOfServiceContent = () => {
   const { i18n } = useTranslation();
-  return i18n.language === 'en' ? <TermsEn /> : <TermsKo />;
+  if (i18n.language === 'en') return <TermsEn />;
+  if (i18n.language === 'ja') return <TermsJa />;
+  return <TermsKo />;
 };
 
 export default TermsOfServiceContent;

@@ -916,6 +916,11 @@ export function LoginPage() {
                 ? '주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'
                 : 'InfoCreative Inc.\nCEO: Do-Cheon Jeong\nBusiness Registration No: 841-86-03004\nMail-order Sales No: 2024-Seoul Geumcheon-0112\n\nSupport: support@traystorage.net\nBusiness Inquiries: support@traystorage.net\nSupport Line: 02-333-7334\n\n708-709, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Korea'}
             </div>
+            <div className="mt-3 flex items-center justify-center gap-2.5 text-[10px]">
+              <button type="button" onClick={() => setTermsPopupType('tos')} className="text-slate-500 hover:text-[#2563eb] underline underline-offset-2">{t('terms.tos')}</button>
+              <span className="text-slate-300">|</span>
+              <button type="button" onClick={() => setTermsPopupType('privacy')} className="text-slate-500 hover:text-[#2563eb] underline underline-offset-2">{t('terms.privacy')}</button>
+            </div>
           </div>
 
           {/* 카드 아래 저작권 */}
@@ -1181,6 +1186,11 @@ export function LoginPage() {
               {i18n.language === 'ko'
                 ? '주식회사 인포크리에이티브\n대표: 정도천\n사업자등록번호: 841-86-03004\n통신판매업신고번호: 2024-서울금천-0112호\n\n고객지원: support@traystorage.net\n도입문의 및 비즈니스 제안: support@traystorage.net\n고객지원번호: 02-333-7334\n\n서울특별시 금천구 가산디지털2로 43-14 708-709호\n(가산동, 가산한화비즈메트로2차)'
                 : 'InfoCreative Inc.\nCEO: Do-Cheon Jeong\nBusiness Registration No: 841-86-03004\nMail-order Sales No: 2024-Seoul Geumcheon-0112\n\nSupport: support@traystorage.net\nBusiness Inquiries: support@traystorage.net\nSupport Line: 02-333-7334\n\n708-709, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Korea'}
+            </div>
+            <div className="mt-3 flex items-center justify-center gap-3 text-xs">
+              <button type="button" onClick={() => setTermsPopupType('tos')} className="text-slate-500 hover:text-[#2563eb] underline underline-offset-2">{t('terms.tos')}</button>
+              <span className="text-slate-300">|</span>
+              <button type="button" onClick={() => setTermsPopupType('privacy')} className="text-slate-500 hover:text-[#2563eb] underline underline-offset-2">{t('terms.privacy')}</button>
             </div>
           </div>
         </div>

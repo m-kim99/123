@@ -15,6 +15,7 @@ const PrivacyKo = () => (
         <tr><td className="border border-slate-300 p-2">선택 항목</td><td className="border border-slate-300 p-2">프로필 이미지</td></tr>
         <tr><td className="border border-slate-300 p-2">자동 수집 항목</td><td className="border border-slate-300 p-2">IP 주소, 기기 정보, 접속 로그, 서비스 이용 기록, 쿠키</td></tr>
         <tr><td className="border border-slate-300 p-2">서비스 이용 과정에서 수집</td><td className="border border-slate-300 p-2">업로드된 문서 파일 및 이미지, AI OCR 처리 결과, 문서 검색 기록, AI 질의응답 내역</td></tr>
+        <tr><td className="border border-slate-300 p-2">유료 결제 시 수집</td><td className="border border-slate-300 p-2">결제 정보(결제 수단, 카드사명, 결제 승인 정보, 결제 일시 등)</td></tr>
       </tbody>
     </table>
     <p>② 개인정보 수집 방법</p>
@@ -23,6 +24,7 @@ const PrivacyKo = () => (
       <li>서비스 이용 과정에서 자동 생성·수집</li>
       <li>고객센터 문의 과정에서 수집</li>
     </ul>
+    <p>③ 회사는 결제 정보를 직접 저장하지 않으며, 결제대행사인 KCP(엔에이치엔케이씨피 주식회사)를 통하여 안전하게 처리합니다.</p>
 
     <h3 className="font-semibold text-slate-900">제2조 (개인정보의 수집 및 이용 목적)</h3>
     <p>회사는 수집한 개인정보를 다음의 목적을 위해 이용합니다.</p>
@@ -68,6 +70,7 @@ const PrivacyKo = () => (
         <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">클라우드 서버 호스팅 및 데이터 저장</td><td className="border border-slate-300 p-2">회원 탈퇴 시까지 또는 위탁 계약 종료 시</td></tr>
         <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI 서비스(GPT) 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
         <tr><td className="border border-slate-300 p-2">네이버 주식회사</td><td className="border border-slate-300 p-2">AI OCR(클로바 OCR) 서비스 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
+        <tr><td className="border border-slate-300 p-2">엔에이치엔케이씨피 주식회사(KCP)</td><td className="border border-slate-300 p-2">신용카드 결제, 계좌이체, 가상계좌 등 결제 처리 및 결제 도용 방지</td><td className="border border-slate-300 p-2">관련 법령에 따른 보존기간 또는 위탁 계약 종료 시</td></tr>
       </tbody>
     </table>
     <p>② 회사는 위탁계약 체결 시 「개인정보 보호법」에 따라 위탁업무 수행 목적 외 개인정보 처리 금지, 기술적·관리적 보호조치, 재위탁 제한, 수탁자에 대한 관리·감독, 손해배상 등 책임에 관한 사항을 계약서 등 문서에 명시하고, 수탁자가 개인정보를 안전하게 처리하는지를 감독하고 있습니다.</p>
@@ -242,7 +245,7 @@ const PrivacyEn = () => (
       </tbody>
     </table>
     <p>② The Company does not accept membership registration from children under the age of 14.</p>
-    <p>③ The Company does not directly store payment information and processes such information securely through the payment service provider, KCP (Korea Cyber Payment Co., Ltd.).</p>
+    <p>③ The Company does not directly store payment information and processes such information securely through the payment service provider, NHN KCP Corp. (KCP).</p>
 
     <h3 className="font-semibold text-slate-900">Article 3 (Retention and Use Period of Personal Information)</h3>
     <p>① The Company processes personal information within the retention and use period consented to at the time of collection, or within the retention and use period prescribed by applicable laws.</p>
@@ -279,7 +282,7 @@ const PrivacyEn = () => (
         <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI-based document analysis service; AI voice recognition service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal (voice data: 1 year from collection)</td></tr>
         <tr><td className="border border-slate-300 p-2">Naver Cloud Platform</td><td className="border border-slate-300 p-2">AI OCR service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
         <tr><td className="border border-slate-300 p-2">Kakao Corporation</td><td className="border border-slate-300 p-2">Sending notification messages (KakaoTalk alerts, SMS, etc.)</td><td className="border border-slate-300 p-2">Until message delivery is completed</td></tr>
-        <tr><td className="border border-slate-300 p-2">Korea Cyber Payment Co., Ltd. (KCP)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
+        <tr><td className="border border-slate-300 p-2">NHN KCP Corp. (KCP)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
       </tbody>
     </table>
     <p>② When entering into entrustment contracts, the Company specifies in the contract the prohibition of processing personal information beyond the scope of the entrusted task, technical and managerial safeguards, restrictions on sub-entrustment, supervision of the entrusted party, and liability including damages, in accordance with Article 26 of the Personal Information Protection Act.</p>
@@ -398,9 +401,215 @@ const PrivacyEn = () => (
   </>
 );
 
+const PrivacyJa = () => (
+  <>
+    <p className="text-xs text-slate-500">制定 2026.02.09. 施行 2026.02.09.</p>
+
+    <p>株式会社インフォクリエイティブ（以下「当社」）は、「個人情報保護法」、「情報通信網利用促進及び情報保護等に関する法律」（以下「情報通信網法」）等の関連法令に従って利用者の個人情報を保護し、これに関する苦情を迅速かつ円滑に処理できるよう、次のとおり個人情報処理方針を策定・公開します。</p>
+
+    <h3 className="font-semibold text-slate-900">第1条 (個人情報の収集項目及び収集方法)</h3>
+    <p>① 当社は、本サービスの提供のため、次の個人情報を収集します。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">区分</th><th className="border border-slate-300 p-2 text-left">収集項目</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">必須項目</td><td className="border border-slate-300 p-2">氏名、メールアドレス、パスワード、携帯電話番号、所属会社名、部署名</td></tr>
+        <tr><td className="border border-slate-300 p-2">選択項目</td><td className="border border-slate-300 p-2">プロフィール画像</td></tr>
+        <tr><td className="border border-slate-300 p-2">自動収集項目</td><td className="border border-slate-300 p-2">IPアドレス、端末情報、アクセスログ、サービス利用記録、クッキー</td></tr>
+        <tr><td className="border border-slate-300 p-2">サービス利用過程で収集</td><td className="border border-slate-300 p-2">アップロードされた文書ファイル及び画像、AI OCR処理結果、文書検索記録、AI質疑応答内訳</td></tr>
+        <tr><td className="border border-slate-300 p-2">有料決済時に収集</td><td className="border border-slate-300 p-2">決済情報（決済手段、カード会社名、決済承認情報、決済日時等）</td></tr>
+      </tbody>
+    </table>
+    <p>② 個人情報の収集方法</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>会員登録時の利用者の直接入力</li>
+      <li>サービス利用過程での自動生成・収集</li>
+      <li>カスタマーセンターへのお問い合わせ過程での収集</li>
+    </ul>
+    <p>③ 当社は決済情報を直接保存せず、決済代行会社であるKCP（NHN KCP株式会社）を通じて安全に処理します。</p>
+
+    <h3 className="font-semibold text-slate-900">第2条 (個人情報の収集及び利用目的)</h3>
+    <p>当社は、収集した個人情報を次の目的のために利用します。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">利用目的</th><th className="border border-slate-300 p-2 text-left">詳細内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">会員管理</td><td className="border border-slate-300 p-2">会員登録及び本人確認、会員資格の維持・管理、サービスの不正利用防止、告知事項の伝達</td></tr>
+        <tr><td className="border border-slate-300 p-2">サービス提供</td><td className="border border-slate-300 p-2">文書の保存・管理、AI OCR処理、AIベースの検索・分析・質疑応答機能の提供、NFC連動サービスの提供</td></tr>
+        <tr><td className="border border-slate-300 p-2">サービス改善</td><td className="border border-slate-300 p-2">サービス品質の向上、新規機能の開発、統計分析</td></tr>
+        <tr><td className="border border-slate-300 p-2">顧客サポート</td><td className="border border-slate-300 p-2">お問い合わせ事項の処理、不満の受付及び処理、お知らせの伝達</td></tr>
+        <tr><td className="border border-slate-300 p-2">マーケティング及び広告</td><td className="border border-slate-300 p-2">新規サービスの案内、イベント情報の提供（同意時のみ）</td></tr>
+      </tbody>
+    </table>
+
+    <h3 className="font-semibold text-slate-900">第3条 (個人情報の保有及び利用期間)</h3>
+    <p>① 当社は、個人情報の収集及び利用目的が達成された後には、当該情報を遅滞なく破棄します。ただし、関連法令により保存する必要がある場合には、以下のとおり保管します。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">保存項目</th><th className="border border-slate-300 p-2 text-left">保存期間</th><th className="border border-slate-300 p-2 text-left">保存根拠</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">契約又は申込み撤回等に関する記録</td><td className="border border-slate-300 p-2">5年</td><td className="border border-slate-300 p-2">電子商取引法</td></tr>
+        <tr><td className="border border-slate-300 p-2">代金決済及び財貨等の供給に関する記録</td><td className="border border-slate-300 p-2">5年</td><td className="border border-slate-300 p-2">電子商取引法</td></tr>
+        <tr><td className="border border-slate-300 p-2">消費者の不満又は紛争処理に関する記録</td><td className="border border-slate-300 p-2">3年</td><td className="border border-slate-300 p-2">電子商取引法</td></tr>
+        <tr><td className="border border-slate-300 p-2">サービス利用記録、アクセスログ</td><td className="border border-slate-300 p-2">3か月</td><td className="border border-slate-300 p-2">通信秘密保護法</td></tr>
+        <tr><td className="border border-slate-300 p-2">バックアップデータ</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部方針</td></tr>
+        <tr><td className="border border-slate-300 p-2">AI処理ログ</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部方針</td></tr>
+      </tbody>
+    </table>
+    <p>② 休眠会員への転換時、個人情報は別途分離して保管され、休眠転換後3年が経過すると完全に削除されます。</p>
+
+    <h3 className="font-semibold text-slate-900">第4条 (個人情報の第三者提供)</h3>
+    <p>① 当社は、原則として利用者の個人情報を第三者に提供しません。ただし、次の場合には例外とします。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>利用者が事前に同意した場合</li>
+      <li>法令の規定に基づくか、又は捜査目的で法令に定められた手続き及び方法により捜査機関の要求がある場合</li>
+    </ul>
+    <p>② 現在、当社は利用者の個人情報を第三者に提供していません。</p>
+
+    <h3 className="font-semibold text-slate-900">第5条 (個人情報の処理委託)</h3>
+    <p>① 当社は、本サービスの提供のため、次のとおり個人情報処理業務を委託しています。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">受託業者</th><th className="border border-slate-300 p-2 text-left">委託業務の内容</th><th className="border border-slate-300 p-2 text-left">保有及び利用期間</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">クラウドサーバーのホスティング及びデータ保存</td><td className="border border-slate-300 p-2">会員退会時まで又は委託契約終了時</td></tr>
+        <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AIサービス（GPT）の提供</td><td className="border border-slate-300 p-2">サービス利用期間</td></tr>
+        <tr><td className="border border-slate-300 p-2">NAVER株式会社</td><td className="border border-slate-300 p-2">AI OCR（クローバOCR）サービスの提供</td><td className="border border-slate-300 p-2">サービス利用期間</td></tr>
+        <tr><td className="border border-slate-300 p-2">NHN KCP株式会社（KCP）</td><td className="border border-slate-300 p-2">クレジットカード決済、口座振替、仮想口座等の決済処理及び決済盗用防止</td><td className="border border-slate-300 p-2">関連法令による保存期間又は委託契約終了時</td></tr>
+      </tbody>
+    </table>
+    <p>② 当社は、委託契約締結時に「個人情報保護法」により、委託業務遂行目的外の個人情報処理の禁止、技術的・管理的保護措置、再委託の制限、受託者に対する管理・監督、損害賠償等の責任に関する事項を契約書等の文書に明示し、受託者が個人情報を安全に処理しているかを監督しています。</p>
+
+    <h3 className="font-semibold text-slate-900">第6条 (個人情報の国外移転)</h3>
+    <p>① 当社は、本サービスの提供のため、利用者の個人情報を国外に移転しています。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">項目</th><th className="border border-slate-300 p-2 text-left">内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">移転を受ける者</td><td className="border border-slate-300 p-2">Supabase Inc., OpenAI, L.L.C.</td></tr>
+        <tr><td className="border border-slate-300 p-2">移転される国</td><td className="border border-slate-300 p-2">米国等クラウドサーバー所在地（具体的な位置は変更される場合があります）</td></tr>
+        <tr><td className="border border-slate-300 p-2">移転日時及び方法</td><td className="border border-slate-300 p-2">サービス利用時のネットワークを通じた送信</td></tr>
+        <tr><td className="border border-slate-300 p-2">移転される個人情報の項目</td><td className="border border-slate-300 p-2">会員情報、アップロード文書、AI処理データ</td></tr>
+        <tr><td className="border border-slate-300 p-2">移転目的</td><td className="border border-slate-300 p-2">クラウドベースのサービス提供、AIサービスの提供</td></tr>
+        <tr><td className="border border-slate-300 p-2">保有及び利用期間</td><td className="border border-slate-300 p-2">会員退会時まで又は委託契約終了時</td></tr>
+      </tbody>
+    </table>
+    <p>② 利用者は個人情報の国外移転を拒否することができ、拒否時にはサービス利用が制限される場合があります。</p>
+
+    <h3 className="font-semibold text-slate-900">第7条 (AIサービスにおける個人情報の処理)</h3>
+    <p>① 当社は、AIサービスの提供のため、利用者がアップロードした文書からテキストを抽出し分析します。</p>
+    <p>② AIサービスで処理される個人情報の項目</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>アップロードされた文書ファイル及び画像</li>
+      <li>AI OCRで抽出されたテキストデータ</li>
+      <li>AI質疑応答内訳</li>
+      <li>文書検索記録</li>
+    </ul>
+    <p>③ AI処理過程</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>利用者が文書をアップロードすると、AI OCR（NAVERクローバOCR）を通じてテキストが抽出されます。</li>
+      <li>抽出されたテキストはSupabaseサーバーに保存されます。</li>
+      <li>利用者の質疑に対してOpenAI GPT APIを通じて応答が生成されます。</li>
+    </ul>
+    <p>④ 当社は、現在、利用者の個人情報をAIモデルの学習に活用しません。今後、AI学習の目的で活用しようとする場合、利用者の明示的同意を得ます。</p>
+
+    <h3 className="font-semibold text-slate-900">第8条 (個人情報の破棄)</h3>
+    <p>① 当社は、個人情報の保有期間の経過、処理目的の達成等、個人情報が不要となった場合には、遅滞なく当該個人情報を破棄します。</p>
+    <p>② 破棄の手続き</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>利用者が入力した情報は、目的達成後に別途のDBに移され、内部方針及びその他の関連法令により一定期間保存された後、又は直ちに破棄されます。</li>
+      <li>この際、別途のDBに移された個人情報は、法律による場合を除き、他の目的で利用されません。</li>
+    </ul>
+    <p>③ 破棄の方法</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>電子的ファイル形態の情報：復旧が不可能な方法で永久削除</li>
+      <li>紙に記録された個人情報：シュレッダーで裁断するか焼却</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第9条 (利用者の権利・義務及び行使方法)</h3>
+    <p>① 利用者は、当社に対していつでも次の各号の個人情報保護関連の権利を行使することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>個人情報の閲覧要求</li>
+      <li>誤り等がある場合の訂正要求</li>
+      <li>削除要求</li>
+      <li>処理停止要求</li>
+    </ul>
+    <p>② 第1項による権利の行使は、当社に対して書面、電子メール、カスタマーセンターを通じて行うことができ、当社はこれに対して遅滞なく措置いたします。</p>
+    <p>③ 第1項による権利の行使は、利用者の法定代理人又は委任を受けた者等の代理人を通じて行うこともできます。この場合、「個人情報の処理方法に関する告示」別紙第11号書式による委任状を提出しなければなりません。</p>
+    <p>④ 個人情報の閲覧及び処理停止の要求は、「個人情報保護法」第35条第4項、第37条第2項により利用者の権利が制限される場合があります。</p>
+    <p>⑤ 個人情報の訂正及び削除の要求は、他の法令でその個人情報が収集対象として明示されている場合には、その削除を要求することができません。</p>
+    <p>⑥ 当社は、利用者の権利による閲覧の要求、訂正・削除の要求、処理停止の要求時に、閲覧等の要求をした者が本人又は正当な代理人であるかを確認します。</p>
+
+    <h3 className="font-semibold text-slate-900">第10条 (AI処理に関する利用者の権利)</h3>
+    <p>① 利用者は、AIサービスが提供した結果に対して次の権利を行使することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>説明要請権：AI処理結果に対する説明を要請する権利</li>
+      <li>異議申立権：明白な誤り又は不適切な結果について異議を申し立てる権利</li>
+      <li>人的介入要請権：自動化された処理に対する人的検討を要請する権利</li>
+    </ul>
+    <p>② 第1項の権利は、カスタマーセンター（support@traystorage.net、02-333-7334）を通じて行使することができます。</p>
+    <p>③ 当社は、技術的に可能な範囲内で利用者の要請を検討し、必要な措置を取ります。</p>
+
+    <h3 className="font-semibold text-slate-900">第11条 (個人情報の安全性確保措置)</h3>
+    <p>当社は、個人情報の安全性確保のため、次のような措置を取っています。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>管理的措置：</strong>内部管理計画の策定・施行、個人情報取扱職員の最小化及び教育</li>
+      <li><strong>技術的措置：</strong>個人情報処理システムへのアクセス制限、暗号化技術の適用、セキュリティプログラムの設置及び更新</li>
+      <li><strong>物理的措置：</strong>電算室、資料保管室等へのアクセス統制</li>
+      <li><strong>データ暗号化：</strong>パスワードは暗号化して保存、送信データはSSL/TLS暗号化</li>
+      <li><strong>アクセス権限管理：</strong>個人情報にアクセスできる担当者を最小化し、アクセス権限を差等付与</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第12条 (クッキーの設置・運営及び拒否)</h3>
+    <p>① 当社は、利用者に個別のカスタマイズサービスを提供するため、利用情報を保存し随時呼び出す「クッキー（cookie）」を使用します。</p>
+    <p>② クッキーの使用目的</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>利用者のアクセス頻度や訪問時間等を分析してサービス利用に関する統計を収集</li>
+      <li>利用者の関心分野の把握及びカスタマイズサービスの提供</li>
+      <li>ログイン状態の維持</li>
+    </ul>
+    <p>③ クッキーの設置・運営及び拒否：利用者はクッキーの設置について選択権を有しています。ウェブブラウザでオプションを設定することにより、すべてのクッキーを許可するか、クッキーが保存されるたびに確認を経るか、すべてのクッキーの保存を拒否することができます。</p>
+    <p>④ クッキーの保存を拒否する場合、カスタマイズサービスの利用に困難が生じる場合があります。</p>
+
+    <h3 className="font-semibold text-slate-900">第13条 (個人情報保護責任者)</h3>
+    <p>① 当社は、個人情報の処理に関する業務を総括して責任を負い、個人情報の処理に関連する利用者の苦情処理及び被害救済等のため、以下のとおり個人情報保護責任者を指定しています。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <tbody>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">氏名</td><td className="border border-slate-300 p-2">チョン・ドチョン</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">役職</td><td className="border border-slate-300 p-2">代表理事</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">連絡先</td><td className="border border-slate-300 p-2">02-333-7334 / support@traystorage.net</td></tr>
+      </tbody>
+    </table>
+    <p>② 利用者は、当社のサービスを利用する中で発生したすべての個人情報保護関連のお問い合わせ、苦情処理、被害救済等に関する事項を、個人情報保護責任者にお問い合わせいただけます。</p>
+
+    <h3 className="font-semibold text-slate-900">第14条 (権益侵害の救済方法)</h3>
+    <p>利用者は、個人情報の侵害による救済を受けるため、個人情報紛争調停委員会、韓国インターネット振興院個人情報侵害申告センター等に紛争解決や相談等を申請することができます。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>個人情報紛争調停委員会：（局番なし）1833-6972 (www.kopico.go.kr)</li>
+      <li>個人情報侵害申告センター：（局番なし）118 (privacy.kisa.or.kr)</li>
+      <li>大検察庁：（局番なし）1301 (www.spo.go.kr)</li>
+      <li>警察庁：（局番なし）182 (ecrm.cyber.go.kr)</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第15条 (個人情報処理方針の変更)</h3>
+    <p>① この個人情報処理方針は施行日から適用され、法令及び方針による変更内容の追加、削除及び訂正がある場合には、変更事項の施行7日前からお知らせを通じて告知いたします。</p>
+    <p>② 利用者に不利な重要な内容の変更がある場合には、最低30日前に告知し、電子メール等で個別に通知します。</p>
+
+    <h3 className="font-semibold text-slate-900">附則</h3>
+    <p><strong>第1条 (施行日)</strong> この個人情報処理方針は2026年2月9日から施行します。</p>
+
+    <h3 className="font-semibold text-slate-900">[会社情報]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>商号：株式会社インフォクリエイティブ</li>
+      <li>代表者：チョン・ドチョン</li>
+      <li>住所：ソウル特別市衿川区加山デジタル2路43-14 加山ハンファビズメトロ2次708号、709号</li>
+      <li>事業者登録番号：841-86-03004</li>
+      <li>カスタマーセンター：02-333-7334</li>
+      <li>メール：support@traystorage.net</li>
+    </ul>
+  </>
+);
+
 export const PrivacyPolicyContent = () => {
   const { i18n } = useTranslation();
-  return i18n.language === 'en' ? <PrivacyEn /> : <PrivacyKo />;
+  if (i18n.language === 'en') return <PrivacyEn />;
+  if (i18n.language === 'ja') return <PrivacyJa />;
+  return <PrivacyKo />;
 };
 
 export default PrivacyPolicyContent;
