@@ -284,3 +284,38 @@ h1 {
   0% { transform: scale(0.9); opacity: 0.8; }
   100% { transform: scale(1.5); opacity: 0; }
 }
+
+/* ═══════════════════════════════════════════════════
+   Safe Area Insets for Native Mobile Apps
+   NativeBottomBar height = h-14 (3.5rem) + safe-area-inset-bottom
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  /* Total height occupied by the fixed NativeBottomBar */
+  --native-bottom-bar: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Sidebar: clear the status bar / notch at the top */
+.sidebar-safe-area {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Sidebar footer: sit directly above the NativeBottomBar */
+.sidebar-footer-safe-area {
+  bottom: var(--native-bottom-bar);
+}
+
+/* Chatbot FAB: above the NativeBottomBar with a 1rem gap */
+.chatbot-fab-safe-area {
+  bottom: calc(var(--native-bottom-bar) + 1rem);
+}
+
+/* Chatbot card: above the NativeBottomBar with a 0.5rem gap */
+.chatbot-card-safe-area {
+  bottom: calc(var(--native-bottom-bar) + 0.5rem);
+}
+
+/* Main content: bottom padding so content isn't hidden behind the bar */
+.main-content-safe-area {
+  padding-bottom: calc(var(--native-bottom-bar) + 1rem);
+}

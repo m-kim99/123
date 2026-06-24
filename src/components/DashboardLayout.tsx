@@ -880,7 +880,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside
         className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0`}
+        } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0 ${Capacitor.isNativePlatform() ? 'sidebar-safe-area' : ''}`}
       >
         <div className="flex items-center justify-center h-16 px-4 border-b overflow-hidden">
           <button
@@ -958,7 +958,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        <div className={`absolute left-0 right-0 ${Capacitor.isNativePlatform() ? 'bottom-14' : 'bottom-0'}`}>
+        <div className={`absolute left-0 right-0 ${Capacitor.isNativePlatform() ? 'sidebar-footer-safe-area' : 'bottom-0'}`}>
           {/* 가로바 + 저작권: 프로필 아래 */}
           <div className="border-t" />
 
@@ -1537,7 +1537,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         <main className="flex-1 overflow-auto w-full flex flex-col">
-          <div className={`flex-1 max-w-7xl w-full mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'pb-20' : ''}`}>
+          <div className={`flex-1 max-w-7xl w-full mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'main-content-safe-area' : ''}`}>
             {children}
           </div>
           <SiteFooter />

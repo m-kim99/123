@@ -1119,7 +1119,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
       {!isOpen && (
         <Button
           size="icon"
-          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-[0_4px_14px_rgba(37,99,235,0.35)] z-40 transition-all duration-300 hover:scale-110  dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa]"
+          className={`fixed right-4 h-14 w-14 rounded-full shadow-[0_4px_14px_rgba(37,99,235,0.35)] z-40 transition-all duration-300 hover:scale-110 dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] ${Capacitor.isNativePlatform() ? 'chatbot-fab-safe-area' : 'bottom-20'}`}
           onClick={() => setIsOpen(true)}
         >
           <MessageSquare className="h-6 w-6" />
@@ -1127,7 +1127,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
       )}
 
       {isOpen && (
-        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'bottom-[4.5rem]' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain rounded-[14px] border-[#e5e7eb] dark:border-white/[0.08] dark:bg-[#111827]`}>
+        <Card className={`fixed ${Capacitor.isNativePlatform() ? 'chatbot-card-safe-area' : 'bottom-4'} left-4 right-4 sm:left-auto sm:right-4 sm:w-96 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 animate-in slide-in-from-bottom duration-300 overscroll-contain rounded-[14px] border-[#e5e7eb] dark:border-white/[0.08] dark:bg-[#111827]`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-slate-100 dark:border-white/[0.06] px-4 pt-4">
             <CardTitle className="flex items-center gap-2.5 text-sm font-semibold">
               <div className="w-8 h-8 rounded-[9px] flex items-center justify-center bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
