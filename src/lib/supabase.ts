@@ -19,6 +19,9 @@ export const supabase: SupabaseClient = isSupabaseConfigured
         autoRefreshToken: true,
         storageKey: 'troy-auth-token',
         storage: localStorage,
+        // PKCE: 네이티브 딥링크 콜백에서 exchangeCodeForSession으로 세션을 만들기 위해 필요.
+        // 웹에서는 detectSessionInUrl이 ?code= 를 자동 교환한다.
+        flowType: 'pkce',
       },
     })
   : (new Proxy({} as SupabaseClient, {

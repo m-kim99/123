@@ -19,12 +19,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Supabase OAuth 콜백 딥링크 -->
+            <!-- Supabase OAuth 콜백 딥링크 (구글/카카오/애플 소셜 로그인) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="com.trayst.app" />
+            </intent-filter>
+
+            <!-- 네이버 OAuth https 콜백 (App Link) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="traystorageconnect.com" android:pathPrefix="/auth/naver/callback" />
             </intent-filter>
 
             <!-- NFC: NDEF URL 태그 감지 (앱 URL 패턴 매칭) -->

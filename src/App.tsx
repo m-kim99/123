@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { NativeBottomBar } from '@/components/NativeBottomBar';
+import { NativeDeepLinkHandler } from '@/components/NativeDeepLinkHandler';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useOperatorStore } from './store/operatorStore';
@@ -389,6 +390,7 @@ function App() {
     <>
       <BrowserRouter>
         <RouteAnalytics />
+        <NativeDeepLinkHandler />
         <div className={Capacitor.isNativePlatform() ? 'pb-14' : ''}>
         <Suspense fallback={<PageLoader />}>
           <Routes>

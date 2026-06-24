@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { nativeSocialLogin } from '@/lib/nativeAuth';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -142,34 +144,33 @@ export function LoginPage() {
     useAuthStore();
 
   const handleGoogleLogin = async () => {
-    console.log('🔵 Google 로그인 시작');
     try {
-      const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.infocreative.traystorageconnect://login-callback'
-        : `${window.location.origin}`;
+      // 네이티브: 시스템 브라우저 + 딥링크 콜백 (WebView 내 OAuth는 구글 정책상 차단됨)
+      if (Capacitor.isNativePlatform()) {
+        const { error } = await nativeSocialLogin('google');
+        if (error) {
+          toast({
+            title: t('login.googleLoginFailed'),
+            description: error || t('login.tryAgain'),
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
 
-      console.log('🔵 signInWithOAuth 호출 전');
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      // 웹: 현재 창에서 OAuth 리다이렉트 (detectSessionInUrl이 세션 처리)
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo,
-        },
+        options: { redirectTo: `${window.location.origin}` },
       });
-
-      console.log('🔵 signInWithOAuth 응답:', { data, error });
-
       if (error) {
-        console.error('❌ Google 로그인 실패:', error);
         toast({
           title: t('login.googleLoginFailed'),
           description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
-      } else {
-        console.log('✅ Google 로그인 성공, 리디렉션 시작');
       }
     } catch (error: any) {
-      console.error('❌ Google 로그인 예외:', error);
       toast({
         title: t('login.googleLoginError'),
         description: error?.message || t('login.googleLoginErrorDesc'),
@@ -179,37 +180,31 @@ export function LoginPage() {
   };
 
   const handleKakaoLogin = async () => {
-    console.log('🟡 Kakao 로그인 시작');
-    console.log('🟡 Supabase 객체:', supabase);
-    console.log('🟡 window.location.origin:', window.location.origin);
-
     try {
-      const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.infocreative.traystorageconnect://login-callback'
-        : `${window.location.origin}`;
+      if (Capacitor.isNativePlatform()) {
+        const { error } = await nativeSocialLogin('kakao');
+        if (error) {
+          toast({
+            title: t('login.kakaoLoginFailed'),
+            description: error || t('login.tryAgain'),
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
 
-      console.log('🟡 signInWithOAuth 호출 전');
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
-        options: {
-          redirectTo,
-        },
+        options: { redirectTo: `${window.location.origin}` },
       });
-
-      console.log('🟡 signInWithOAuth 응답:', { data, error });
-
       if (error) {
-        console.error('❌ Kakao 로그인 실패:', error);
         toast({
           title: t('login.kakaoLoginFailed'),
           description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
-      } else {
-        console.log('✅ Kakao 로그인 성공, 리디렉션 시작');
       }
     } catch (error: any) {
-      console.error('❌ Kakao 로그인 예외:', error);
       toast({
         title: t('login.kakaoLoginError'),
         description: error?.message || t('login.kakaoLoginErrorDesc'),
@@ -244,8 +239,13 @@ export function LoginPage() {
 
       console.log('🟢 네이버 로그인 페이지로 리다이렉트');
 
-      // 네이버 로그인 페이지로 이동
-      window.location.href = naverAuthUrl;
+      // 네이티브: 시스템 브라우저에서 열고 App Link(https) 콜백으로 앱 복귀
+      // 웹: 현재 창에서 네이버 인증 페이지로 이동
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: naverAuthUrl });
+      } else {
+        window.location.href = naverAuthUrl;
+      }
     } catch (error: any) {
       console.error('❌ Naver 로그인 오류:', error);
       toast({
@@ -257,37 +257,31 @@ export function LoginPage() {
   };
 
   const handleAppleLogin = async () => {
-    console.log('🍎 Apple 로그인 시작');
-    console.log('🍎 Supabase 객체:', supabase);
-    console.log('🍎 window.location.origin:', window.location.origin);
-
     try {
-      const redirectTo = Capacitor.isNativePlatform()
-        ? 'com.infocreative.traystorageconnect://login-callback'
-        : `${window.location.origin}`;
+      if (Capacitor.isNativePlatform()) {
+        const { error } = await nativeSocialLogin('apple');
+        if (error) {
+          toast({
+            title: t('login.appleLoginFailed'),
+            description: error || t('login.tryAgain'),
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
 
-      console.log('🍎 signInWithOAuth 호출 전');
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
-        options: {
-          redirectTo,
-        },
+        options: { redirectTo: `${window.location.origin}` },
       });
-
-      console.log('🍎 signInWithOAuth 응답:', { data, error });
-
       if (error) {
-        console.error('❌ Apple 로그인 실패:', error);
         toast({
           title: t('login.appleLoginFailed'),
           description: error.message || t('login.tryAgain'),
           variant: 'destructive',
         });
-      } else {
-        console.log('✅ Apple 로그인 성공, 리디렉션 시작');
       }
     } catch (error: any) {
-      console.error('❌ Apple 로그인 예외:', error);
       toast({
         title: t('login.appleLoginError'),
         description: error?.message || t('login.appleLoginErrorDesc'),
