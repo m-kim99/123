@@ -342,7 +342,11 @@ function App() {
         } else {
           useAuthStore.getState().logout();
         }
-      } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+      } else if (event === 'SIGNED_IN') {
+        // TOKEN_REFRESHED는 JWT만 갱신될 뿐 사용자 정보는 바뀌지 않으므로
+        // 전체 세션 재검증을 생략한다. 앱(WebView)에서 파일 선택기 등으로
+        // 포커스가 복귀할 때 토큰 갱신 이벤트가 발행되어 불필요한 재검증 →
+        // 화면 깜빡임/업로드 중단/홈 튕김이 발생하던 문제를 방지한다.
         if (isOperatorPath()) {
           useOperatorStore.getState().checkOperatorSession();
         } else {

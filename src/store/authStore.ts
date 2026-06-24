@@ -448,7 +448,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkSession: async () => {
-    set({ isLoading: true });
+    // 이미 로그인된 사용자가 있으면 "조용한 재검증"으로 처리한다.
+    // 앱(WebView)에서 파일 선택기 등으로 포커스가 복귀하면 Supabase가
+    // 인증 이벤트를 재발행 → checkSession 재실행 시 isLoading=true 로
+    // 전환되면서 ProtectedRoute가 현재 페이지(업로드 다이얼로그/선택 파일 포함)를
+    // 통째로 언마운트한다. 그 결과 업로드가 중단되고 홈으로 튕기는 문제가 발생한다.
+    // 따라서 이미 인증된 상태에서는 로딩 상태로 전환하지 않고 백그라운드에서만 갱신한다.
+    const isSilentRevalidate = get().isAuthenticated && !!get().user;
+
+    if (!isSilentRevalidate) {
+      set({ isLoading: true });
+    }
 
     try {
       const {
@@ -609,6 +619,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (error) {
       console.error('세션 체크 오류:', error);
+      // 조용한 재검증 중 일시적 오류(예: 파일 선택기 복귀 직후 네트워크 재연결 타이밍)는
+      // 기존 세션을 그대로 유지한다. 실제 로그아웃은 onAuthStateChange('SIGNED_OUT')에서 처리되므로
+      // 여기서 인증 상태를 덮어쓰면 다른 페이지로 튕기는 부작용만 발생한다.
+      if (isSilentRevalidate) {
+        return;
+      }
       set({
         user: null,
         isAuthenticated: false,
