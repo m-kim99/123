@@ -117,13 +117,13 @@ export async function createDocumentNotification({
     }
 
     // 푸시 알림 발송 (백그라운드에서 비동기 처리)
-    alert(`[DEBUG-1] 푸시 발송 시작: companyId=${companyId}`);
+    console.log('[PUSH] 발송 시작:', { companyId });
     sendPushToCompanyUsers({
       companyId,
       departmentId,
       title: prefix,
       message: baseMessage,
-    }).catch((err) => alert(`[DEBUG-ERR] 푸시 발송 실패: ${err}`));
+    }).catch((err) => console.error('[PUSH] 발송 실패:', err));
   } catch (err) {
     console.error('알림 생성 중 예외 발생:', err);
   }
@@ -205,7 +205,7 @@ async function sendPushToCompanyUsers({
   message,
 }: SendPushToCompanyUsersParams): Promise<void> {
   try {
-    alert(`[DEBUG-2] 사용자 조회 시작: company=${companyId}, dept=${departmentId}`);
+    console.log('[PUSH] 사용자 조회 시작:', { companyId, departmentId });
     // 푸시 대상 사용자 조회
     let query = supabase
       .from('users')
@@ -218,10 +218,10 @@ async function sendPushToCompanyUsers({
     }
 
     const { data: users, error } = await query;
-    alert(`[DEBUG-3] 조회결과: ${users?.length}명, 에러=${error?.message || '없음'}`);
+    console.log('[PUSH] 조회결과:', { count: users?.length ?? 0, error: error?.message || null });
 
     if (error || !users || users.length === 0) {
-      alert('[DEBUG-4] 대상 없음, 종료');
+      console.log('[PUSH] 발송 대상 없음, 종료');
       return;
     }
 
@@ -229,7 +229,7 @@ async function sendPushToCompanyUsers({
       .map((u) => u.push_id)
       .filter((pid): pid is string => !!pid);
 
-    alert(`[DEBUG-5] 발송 대상 토큰 수: ${pushIds.length}`);
+    console.log('[PUSH] 발송 대상 토큰 수:', pushIds.length);
 
     if (pushIds.length > 0) {
       await sendPushNotification({
@@ -237,10 +237,10 @@ async function sendPushToCompanyUsers({
         title,
         message,
       });
-      alert('[DEBUG-6] 발송 완료!');
+      console.log('[PUSH] 발송 완료');
     }
   } catch (err) {
-    alert(`[DEBUG-ERR] 회사 푸시 발송 오류: ${err}`);
+    console.error('[PUSH] 회사 푸시 발송 오류:', err);
   }
 }
 

@@ -37,31 +37,34 @@ export async function initFCMPush(): Promise<void> {
       return;
     }
 
-    // 푸시 알림 등록
-    await PushNotifications.register();
-
+    // 리스너를 register() 이전에 등록한다.
+    // register()가 토큰 발급(registration) 이벤트를 즉시 발화할 수 있어,
+    // 리스너를 나중에 붙이면 토큰을 놓쳐 users.push_id가 저장되지 않을 수 있다.
     // 토큰 수신 리스너
-    PushNotifications.addListener('registration', async (token) => {
+    await PushNotifications.addListener('registration', async (token) => {
       console.log('[FCM] 토큰 발급:', token.value);
       await saveTokenToDatabase(token.value);
     });
 
     // 토큰 발급 실패
-    PushNotifications.addListener('registrationError', (error) => {
+    await PushNotifications.addListener('registrationError', (error) => {
       console.error('[FCM] 등록 실패:', error);
     });
 
     // 푸시 수신 (포그라운드)
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('[FCM] 푸시 수신 (포그라운드):', notification);
       // 포그라운드에서는 로컬 알림으로 표시하거나 인앱 토스트 사용
     });
 
     // 푸시 탭 (백그라운드에서 알림 클릭)
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+    await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
       console.log('[FCM] 푸시 클릭:', action);
       // 필요시 특정 화면으로 이동
     });
+
+    // 푸시 알림 등록 (리스너 등록 후 호출해야 토큰 이벤트를 안전하게 수신)
+    await PushNotifications.register();
 
     isInitialized = true;
     console.log('[FCM] 초기화 완료');
