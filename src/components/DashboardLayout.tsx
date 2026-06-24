@@ -975,7 +975,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       <div className="lg:pl-64 w-full min-w-full">
-        <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full h-16 px-4 flex items-center gap-3">
+        <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full h-[calc(4rem_+_env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -1276,7 +1276,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </DropdownMenu>
         </header>
 
-        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full">
+        <header className="hidden md:flex sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-[#0f172a] dark:border-white/[0.08] w-full pt-[env(safe-area-inset-top)]">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6 w-full">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex-1 flex gap-2 max-w-2xl">

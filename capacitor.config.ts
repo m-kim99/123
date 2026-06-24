@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'TrayStorageConnect',
-    contentInset: 'automatic',
+    contentInset: 'never',
   },
   plugins: {
     SplashScreen: {
