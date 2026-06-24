@@ -117,6 +117,12 @@
     "pay": "Jetzt bezahlen",
     "paymentRequestFailed": "Zahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
+  "bottomBar": {
+    "back": "Zurück",
+    "forward": "Vorwärts",
+    "home": "Start",
+    "refresh": "Aktualisieren"
+  },
   "nav": {
     "home": "Startseite",
     "documentManagement": "Dokumente",

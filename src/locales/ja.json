@@ -117,6 +117,12 @@
     "pay": "決済する",
     "paymentRequestFailed": "決済リクエストに失敗しました。もう一度お試しください。"
   },
+  "bottomBar": {
+    "back": "戻る",
+    "forward": "進む",
+    "home": "ホーム",
+    "refresh": "更新"
+  },
   "nav": {
     "home": "ホーム",
     "documentManagement": "ドキュメント管理",

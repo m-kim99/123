@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
 import { ChevronLeft, ChevronRight, Home, RotateCw } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -9,6 +10,7 @@ export function NativeBottomBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   if (!Capacitor.isNativePlatform()) return null;
   if (HIDDEN_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith('/nfc-redirect'))) return null;
@@ -31,24 +33,24 @@ export function NativeBottomBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex items-stretch h-14 px-1">
-        <button onClick={handleBack} className={btnBase} aria-label="뒤로가기">
+        <button onClick={handleBack} className={btnBase} aria-label={t('bottomBar.back')}>
           <ChevronLeft className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">뒤로</span>
+          <span className="text-[10px] text-gray-400 font-medium">{t('bottomBar.back')}</span>
         </button>
 
-        <button onClick={handleForward} className={btnBase} aria-label="앞으로가기">
+        <button onClick={handleForward} className={btnBase} aria-label={t('bottomBar.forward')}>
           <ChevronRight className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">앞으로</span>
+          <span className="text-[10px] text-gray-400 font-medium">{t('bottomBar.forward')}</span>
         </button>
 
-        <button onClick={handleHome} className={btnBase} aria-label="홈">
+        <button onClick={handleHome} className={btnBase} aria-label={t('bottomBar.home')}>
           <Home className="w-5 h-5 text-blue-500" />
-          <span className="text-[10px] text-blue-400 font-medium">홈</span>
+          <span className="text-[10px] text-blue-400 font-medium">{t('bottomBar.home')}</span>
         </button>
 
-        <button onClick={handleRefresh} className={btnBase} aria-label="새로고침">
+        <button onClick={handleRefresh} className={btnBase} aria-label={t('bottomBar.refresh')}>
           <RotateCw className="w-5 h-5 text-gray-500" />
-          <span className="text-[10px] text-gray-400 font-medium">새로고침</span>
+          <span className="text-[10px] text-gray-400 font-medium">{t('bottomBar.refresh')}</span>
         </button>
       </div>
     </div>

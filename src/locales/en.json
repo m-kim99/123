@@ -120,6 +120,12 @@
     "phoneLabel": "Phone Number (for PayApp)",
     "phoneRequired": "Phone number is required for PayApp payment."
   },
+  "bottomBar": {
+    "back": "Back",
+    "forward": "Forward",
+    "home": "Home",
+    "refresh": "Refresh"
+  },
   "nav": {
     "home": "Home",
     "documentManagement": "Documents",
