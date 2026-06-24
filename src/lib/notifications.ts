@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { sendPushNotification } from '@/lib/pushNotifications';
+import { getDeviceTokensForUsers } from '@/lib/deviceTokens';
 
 export type NotificationEventType =
   | 'document_created'
@@ -213,9 +214,8 @@ async function sendPushToCompanyUsers({
     // 기존에는 departmentId로만 필터링해, 해당 부서가 아닌 관리자에게 푸시가 가지 않는 문제가 있었다.
     const { data: users, error } = await supabase
       .from('users')
-      .select('role, department_id, push_id')
-      .eq('company_id', companyId)
-      .not('push_id', 'is', null);
+      .select('id, role, department_id')
+      .eq('company_id', companyId);
 
     if (error || !users || users.length === 0) {
       console.log('[PUSH] 발송 대상 없음, 종료', { error: error?.message || null });
@@ -228,13 +228,12 @@ async function sendPushToCompanyUsers({
       return u.department_id === departmentId; // 팀원: 같은 부서만
     });
 
-    const pushIds = recipients
-      .map((u) => u.push_id)
-      .filter((pid): pid is string => !!pid);
+    // 대상 사용자들의 모든 기기 토큰 수집 (다중 기기)
+    const pushIds = await getDeviceTokensForUsers(recipients.map((u) => u.id));
 
     console.log('[PUSH] 발송 대상 토큰 수:', {
-      total: users.length,
-      recipients: pushIds.length,
+      recipientUsers: recipients.length,
+      tokens: pushIds.length,
       departmentId,
     });
 
@@ -268,18 +267,11 @@ async function sendPushToUser({
   message,
 }: SendPushToUserParams): Promise<void> {
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('push_id')
-      .eq('id', userId)
-      .single();
-
-    if (error || !user?.push_id) {
-      return;
-    }
+    const pushIds = await getDeviceTokensForUsers([userId]);
+    if (pushIds.length === 0) return;
 
     await sendPushNotification({
-      playerIds: [user.push_id],
+      playerIds: pushIds,
       title,
       message,
     });

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getDeviceTokensForUsers } from './deviceTokens';
 
 /**
  * OneSignal 개별 푸시 발송
@@ -38,7 +39,7 @@ export async function sendPushNotification({
 }
 
 /**
- * 특정 사용자에게 푸시 발송 (DB에서 push_id 조회 후 발송)
+ * 특정 사용자에게 푸시 발송 (user_device_tokens에서 기기 토큰 조회 후 발송)
  * @param userIds users 테이블의 id 배열
  * @param title 푸시 알림 제목
  * @param message 푸시 알림 내용
@@ -50,20 +51,7 @@ export async function sendPushToUsers(
   message: string,
   customUrl?: string
 ): Promise<void> {
-  const { data: users, error } = await supabase
-    .from('users')
-    .select('push_id')
-    .in('id', userIds)
-    .not('push_id', 'is', null);
-
-  if (error || !users || users.length === 0) {
-    console.warn('푸시 발송 대상 없음:', error);
-    return;
-  }
-
-  const pushIds = users
-    .map((u: { push_id: string | null }) => u.push_id)
-    .filter((pid: string | null): pid is string => !!pid);
+  const pushIds = await getDeviceTokensForUsers(userIds);
 
   if (pushIds.length > 0) {
     await sendPushNotification({

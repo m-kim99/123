@@ -6,9 +6,10 @@
 
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { supabase } from '@/lib/supabase';
+import { saveDeviceToken, removeDeviceToken } from '@/lib/deviceTokens';
 
 let isInitialized = false;
+let currentToken: string | null = null;
 
 /**
  * FCM 푸시 알림 초기화
@@ -43,7 +44,8 @@ export async function initFCMPush(): Promise<void> {
     // 토큰 수신 리스너
     await PushNotifications.addListener('registration', async (token) => {
       console.log('[FCM] 토큰 발급:', token.value);
-      await saveTokenToDatabase(token.value);
+      currentToken = token.value;
+      await saveDeviceToken(token.value);
     });
 
     // 토큰 발급 실패
@@ -74,50 +76,19 @@ export async function initFCMPush(): Promise<void> {
 }
 
 /**
- * FCM 토큰을 users.push_id에 저장
- */
-async function saveTokenToDatabase(token: string): Promise<void> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.log('[FCM] 로그인된 사용자 없음, 토큰 저장 스킵');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('users')
-      .update({ push_id: token })
-      .eq('id', user.id);
-
-    if (error) {
-      console.error('[FCM] 토큰 저장 실패:', error);
-    } else {
-      console.log('[FCM] 토큰 저장 완료');
-    }
-  } catch (error) {
-    console.error('[FCM] 토큰 저장 중 오류:', error);
-  }
-}
-
-/**
- * 로그아웃 시 토큰 제거
+ * 로그아웃 시 이 기기 토큰만 제거 (다른 기기 토큰은 유지)
  */
 export async function clearFCMToken(): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      await supabase
-        .from('users')
-        .update({ push_id: null })
-        .eq('id', user.id);
+    if (currentToken) {
+      await removeDeviceToken(currentToken);
+      currentToken = null;
     }
 
     if (Capacitor.isNativePlatform()) {
       await PushNotifications.unregister();
     }
-    
+
     isInitialized = false;
     console.log('[FCM] 토큰 제거 완료');
   } catch (error) {

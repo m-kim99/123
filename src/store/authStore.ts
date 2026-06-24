@@ -4,6 +4,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { trackEvent } from '@/lib/analytics';
 import { checkMemberLimit } from '@/lib/subscription';
 import { requestPushId } from '@/lib/appBridge';
+import { saveDeviceToken } from '@/lib/deviceTokens';
 
 export type UserRole = 'admin' | 'team';
 
@@ -205,15 +206,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (llError) console.error('마지막 로그인 기록 실패:', llError);
         });
 
-      // 앱 환경에서 푸시키 저장
+      // 앱 환경에서 푸시키 저장 (다중 기기)
       requestPushId((pushId) => {
-        supabase
-          .from('users')
-          .update({ push_id: pushId })
-          .eq('id', userData.id)
-          .then(({ error: pushError }: { error: any }) => {
-            if (pushError) console.error('푸시키 저장 실패:', pushError);
-          });
+        saveDeviceToken(pushId).catch((e) => console.error('푸시키 저장 실패:', e));
       });
 
       return { success: true };
@@ -597,13 +592,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // 앱 환경에서 푸시키 저장 (세션 복원 시에도)
         if (!needsOnboarding) {
           requestPushId((pushId) => {
-            supabase
-              .from('users')
-              .update({ push_id: pushId })
-              .eq('id', userData.id)
-              .then(({ error: pushError }: { error: any }) => {
-                if (pushError) console.error('푸시키 저장 실패:', pushError);
-              });
+            saveDeviceToken(pushId).catch((e) => console.error('푸시키 저장 실패:', e));
           });
         }
 

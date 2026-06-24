@@ -1186,6 +1186,7 @@ model public_users {
   user_favorites                                              user_favorites[]
   user_permissions                                            user_permissions[]
   user_recent_visits                                          user_recent_visits[]
+  user_device_tokens                                          user_device_tokens[]
   departments                                                 departments?               @relation(fields: [department_id], references: [id], onUpdate: NoAction, map: "fk_users_departments")
   companies                                                   companies?                 @relation(fields: [company_id], references: [id], onUpdate: NoAction)
 
@@ -1195,6 +1196,20 @@ model public_users {
   @@index([push_id], map: "idx_users_push_id", where: raw("(push_id IS NOT NULL)"))
   @@index([role], map: "idx_users_role")
   @@map("users")
+  @@schema("public")
+}
+
+model user_device_tokens {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  token      String   @unique(map: "user_device_tokens_token_key")
+  platform   String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  users      public_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_user_device_tokens_user_id")
+  @@map("user_device_tokens")
   @@schema("public")
 }
 
