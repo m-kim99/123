@@ -36,7 +36,7 @@ export function SiteFooter() {
       title: isKo ? '고객지원' : 'Support',
       links: [
         { label: isKo ? '공지사항' : 'Announcements', to: `${basePath}/announcements` },
-        { label: isKo ? '문의 / Q&A' : 'Inquiry / Q&A', to: `${basePath}/qna` },
+        { label: isKo ? '문의 / FAQ' : 'Inquiry / FAQ', to: `${basePath}/qna` },
         { label: isKo ? '휴지통' : 'Trash', to: `${basePath}/trash` },
       ],
     },
@@ -71,20 +71,6 @@ export function SiteFooter() {
                   ? '월~금 10:00–18:00 (점심시간 12:00–13:00)'
                   : 'Mon–Fri 10:00–18:00 (Lunch 12:00–13:00)'}
               </p>
-              <div className="flex gap-2 mt-4">
-                <Link
-                  to={`${basePath}/qna`}
-                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
-                >
-                  FAQ
-                </Link>
-                <Link
-                  to={`${basePath}/qna`}
-                  className="h-9 px-5 inline-flex items-center justify-center rounded-[8px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] dark:bg-[#3b82f6] dark:hover:bg-[#60a5fa] transition-colors"
-                >
-                  {isKo ? '1:1 문의' : '1:1 Inquiry'}
-                </Link>
-              </div>
             </div>
 
             {/* 링크 컬럼 */}
@@ -143,7 +129,7 @@ export function SiteFooter() {
               {isKo ? COMPANY_INFO_KO : COMPANY_INFO_EN}
             </p>
             <p className="mt-3 text-[11px] text-slate-400 dark:text-[#64748b]">
-              Copyright © {new Date().getFullYear()} InfoCreative Inc. All rights reserved.
+              Copyright © InfoCreative Co., Ltd. All rights reserved.
             </p>
           </div>
         </div>
