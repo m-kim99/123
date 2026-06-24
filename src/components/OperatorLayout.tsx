@@ -157,7 +157,7 @@ export function OperatorLayout({ children }: OperatorLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center justify-between h-14 px-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export function OperatorLayout({ children }: OperatorLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-[232px] pt-14 min-h-screen">
+      <main className="lg:ml-[232px] pt-[calc(3.5rem_+_env(safe-area-inset-top))] min-h-screen">
         <div className="p-4 lg:p-6">
           {children}
         </div>
