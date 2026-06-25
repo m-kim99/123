@@ -795,7 +795,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [
           {
             name: t('nav.customerService'),
-            href: 'https://traystorage.net/contact/',
+            href: 'https://pf.kakao.com/_hFiPG',
             icon: FAQIcon,
             external: true,
           },
