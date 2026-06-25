@@ -344,7 +344,7 @@ export function QnAPage() {
     <DashboardLayout>
       <V1PageHeader
         eyebrow="HELP CENTER"
-        title="자주 묻는 질문 (FAQ)"
+        title="FAQ"
         sub="TrayStorage Connect 사용 중 궁금한 점을 빠르게 찾아보세요."
       />
 

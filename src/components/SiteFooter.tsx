@@ -113,7 +113,7 @@ export function SiteFooter() {
                     <button
                       type="button"
                       onClick={() => setTermsPopupType('privacy')}
-                      className="text-[13px] font-medium text-slate-700 dark:text-[#cbd5e1] hover:text-[#2563eb] dark:hover:text-[#3b82f6] transition-colors"
+                      className="text-[13px] text-slate-500 dark:text-[#94a3b8] hover:text-[#2563eb] dark:hover:text-[#3b82f6] transition-colors"
                     >
                       {isKo ? '개인정보 처리방침' : 'Privacy Policy'}
                     </button>
