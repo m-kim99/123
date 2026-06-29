@@ -24,7 +24,7 @@ const PrivacyKo = () => (
       <li>서비스 이용 과정에서 자동 생성·수집</li>
       <li>고객센터 문의 과정에서 수집</li>
     </ul>
-    <p>③ 회사는 결제 정보를 직접 저장하지 않으며, 결제대행사인 KCP(엔에이치엔케이씨피 주식회사)를 통하여 안전하게 처리합니다.</p>
+    <p>③ 회사는 결제 정보를 직접 저장하지 않으며, 결제대행사인 이노페이(주식회사 이노페이)를 통하여 안전하게 처리합니다.</p>
 
     <h3 className="font-semibold text-slate-900">제2조 (개인정보의 수집 및 이용 목적)</h3>
     <p>회사는 수집한 개인정보를 다음의 목적을 위해 이용합니다.</p>
@@ -70,7 +70,7 @@ const PrivacyKo = () => (
         <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">클라우드 서버 호스팅 및 데이터 저장</td><td className="border border-slate-300 p-2">회원 탈퇴 시까지 또는 위탁 계약 종료 시</td></tr>
         <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI 서비스(GPT) 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
         <tr><td className="border border-slate-300 p-2">네이버 주식회사</td><td className="border border-slate-300 p-2">AI OCR(클로바 OCR) 서비스 제공</td><td className="border border-slate-300 p-2">서비스 이용 기간</td></tr>
-        <tr><td className="border border-slate-300 p-2">엔에이치엔케이씨피 주식회사(KCP)</td><td className="border border-slate-300 p-2">신용카드 결제, 계좌이체, 가상계좌 등 결제 처리 및 결제 도용 방지</td><td className="border border-slate-300 p-2">관련 법령에 따른 보존기간 또는 위탁 계약 종료 시</td></tr>
+        <tr><td className="border border-slate-300 p-2">주식회사 이노페이(이노페이)</td><td className="border border-slate-300 p-2">신용카드 결제, 계좌이체, 가상계좌 등 결제 처리 및 결제 도용 방지</td><td className="border border-slate-300 p-2">관련 법령에 따른 보존기간 또는 위탁 계약 종료 시</td></tr>
       </tbody>
     </table>
     <p>② 회사는 위탁계약 체결 시 「개인정보 보호법」에 따라 위탁업무 수행 목적 외 개인정보 처리 금지, 기술적·관리적 보호조치, 재위탁 제한, 수탁자에 대한 관리·감독, 손해배상 등 책임에 관한 사항을 계약서 등 문서에 명시하고, 수탁자가 개인정보를 안전하게 처리하는지를 감독하고 있습니다.</p>
@@ -245,7 +245,7 @@ const PrivacyEn = () => (
       </tbody>
     </table>
     <p>② The Company does not accept membership registration from children under the age of 14.</p>
-    <p>③ The Company does not directly store payment information and processes such information securely through the payment service provider, NHN KCP Corp. (KCP).</p>
+    <p>③ The Company does not directly store payment information and processes such information securely through the payment service provider, Innopay Co., Ltd. (Innopay).</p>
 
     <h3 className="font-semibold text-slate-900">Article 3 (Retention and Use Period of Personal Information)</h3>
     <p>① The Company processes personal information within the retention and use period consented to at the time of collection, or within the retention and use period prescribed by applicable laws.</p>
@@ -282,7 +282,7 @@ const PrivacyEn = () => (
         <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AI-based document analysis service; AI voice recognition service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal (voice data: 1 year from collection)</td></tr>
         <tr><td className="border border-slate-300 p-2">Naver Cloud Platform</td><td className="border border-slate-300 p-2">AI OCR service</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or membership withdrawal</td></tr>
         <tr><td className="border border-slate-300 p-2">Kakao Corporation</td><td className="border border-slate-300 p-2">Sending notification messages (KakaoTalk alerts, SMS, etc.)</td><td className="border border-slate-300 p-2">Until message delivery is completed</td></tr>
-        <tr><td className="border border-slate-300 p-2">NHN KCP Corp. (KCP)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
+        <tr><td className="border border-slate-300 p-2">Innopay Co., Ltd. (Innopay)</td><td className="border border-slate-300 p-2">Payment processing and payment information handling</td><td className="border border-slate-300 p-2">Until termination of entrustment contract or retention period under applicable laws</td></tr>
       </tbody>
     </table>
     <p>② When entering into entrustment contracts, the Company specifies in the contract the prohibition of processing personal information beyond the scope of the entrusted task, technical and managerial safeguards, restrictions on sub-entrustment, supervision of the entrusted party, and liability including damages, in accordance with Article 26 of the Personal Information Protection Act.</p>
@@ -425,7 +425,7 @@ const PrivacyJa = () => (
       <li>サービス利用過程での自動生成・収集</li>
       <li>カスタマーセンターへのお問い合わせ過程での収集</li>
     </ul>
-    <p>③ 当社は決済情報を直接保存せず、決済代行会社であるKCP（NHN KCP株式会社）を通じて安全に処理します。</p>
+    <p>③ 当社は決済情報を直接保存せず、決済代行会社であるイノペイ（株式会社イノペイ）を通じて安全に処理します。</p>
 
     <h3 className="font-semibold text-slate-900">第2条 (個人情報の収集及び利用目的)</h3>
     <p>当社は、収集した個人情報を次の目的のために利用します。</p>
@@ -471,7 +471,7 @@ const PrivacyJa = () => (
         <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">クラウドサーバーのホスティング及びデータ保存</td><td className="border border-slate-300 p-2">会員退会時まで又は委託契約終了時</td></tr>
         <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">AIサービス（GPT）の提供</td><td className="border border-slate-300 p-2">サービス利用期間</td></tr>
         <tr><td className="border border-slate-300 p-2">NAVER株式会社</td><td className="border border-slate-300 p-2">AI OCR（クローバOCR）サービスの提供</td><td className="border border-slate-300 p-2">サービス利用期間</td></tr>
-        <tr><td className="border border-slate-300 p-2">NHN KCP株式会社（KCP）</td><td className="border border-slate-300 p-2">クレジットカード決済、口座振替、仮想口座等の決済処理及び決済盗用防止</td><td className="border border-slate-300 p-2">関連法令による保存期間又は委託契約終了時</td></tr>
+        <tr><td className="border border-slate-300 p-2">株式会社イノペイ（イノペイ）</td><td className="border border-slate-300 p-2">クレジットカード決済、口座振替、仮想口座等の決済処理及び決済盗用防止</td><td className="border border-slate-300 p-2">関連法令による保存期間又は委託契約終了時</td></tr>
       </tbody>
     </table>
     <p>② 当社は、委託契約締結時に「個人情報保護法」により、委託業務遂行目的外の個人情報処理の禁止、技術的・管理的保護措置、再委託の制限、受託者に対する管理・監督、損害賠償等の責任に関する事項を契約書等の文書に明示し、受託者が個人情報を安全に処理しているかを監督しています。</p>
