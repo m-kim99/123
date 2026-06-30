@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { requestPayAppBilling } from '@/lib/payments';
+import { requestInnopayPayment } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -77,13 +77,14 @@ export function UserManagement() {
     }
     setIsRequestingPayment(true);
     try {
-      await requestPayAppBilling({
+      await requestInnopayPayment({
         customerKey: authUser.id,
         customerEmail: authUser.email,
         customerName: authUser.name,
         customerPhone,
         memberCount: parsedMembers,
         amount: parsedMembers * PRICE_PER_MEMBER,
+        goodsName: t('subscription.productName'),
       });
     } catch (error) {
       console.error('결제 요청 실패:', error);

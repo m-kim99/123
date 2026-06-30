@@ -64,7 +64,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestPayAppBilling } from '@/lib/payments';
+import { requestInnopayPayment } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -168,13 +168,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     setIsRequestingPayment(true);
     try {
-      await requestPayAppBilling({
+      await requestInnopayPayment({
         customerKey: user.id,
         customerEmail: user.email,
         customerName: user.name,
         customerPhone,
         memberCount: parsedBasicMembers,
         amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
+        goodsName: t('subscription.productName'),
       });
     } catch (error) {
       console.error('결제 요청 실패:', error);
