@@ -64,7 +64,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestInnopayPayment } from '@/lib/payments';
+import { requestInnopayPayment, cancelInnopaySubscription } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -148,9 +148,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     currentDepartments: number;
     status: string;
     billingCycle: string;
+    subscriptionId: string | null;
+    paymentProvider: string | null;
+    currentPeriodEnd: string | null;
+    canceledAt: string | null;
+    cardCompany: string | null;
+    cardNumber: string | null;
+    monthlyAmount: number | null;
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   // 베이직 플랜 결제 (PayApp — 인당 3,300원, 기본 3인 이상)
   const BASIC_PRICE_PER_MEMBER = 3300;
@@ -185,6 +194,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       });
     } finally {
       setIsRequestingPayment(false);
+    }
+  };
+
+  // 정기결제(자동갱신) 해지 — 현재 기간까지 이용 후 종료
+  const handleCancelSubscription = async () => {
+    if (!subscriptionInfo?.subscriptionId) return;
+    setIsCanceling(true);
+    try {
+      const res = await cancelInnopaySubscription(subscriptionInfo.subscriptionId);
+      if (res.success) {
+        toast({ title: t('billing.cancelSuccess') });
+        setCancelDialogOpen(false);
+        setSubscriptionInfo((prev) =>
+          prev ? { ...prev, canceledAt: res.canceledAt ?? new Date().toISOString() } : prev,
+        );
+      } else {
+        toast({ title: res.message || t('billing.cancelFailed'), variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('구독 해지 실패:', error);
+      toast({ title: t('billing.cancelFailed'), variant: 'destructive' });
+    } finally {
+      setIsCanceling(false);
     }
   };
 
@@ -341,6 +373,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .select('*', { count: 'exact', head: true })
         .eq('company_id', user.companyId);
 
+      const subRow = sub as unknown as {
+        id?: string;
+        status?: string;
+        billing_cycle?: string;
+        payment_provider?: string | null;
+        current_period_end?: string | null;
+        canceled_at?: string | null;
+        card_company?: string | null;
+        card_number?: string | null;
+        monthly_amount?: number | null;
+      } | null;
+
       setSubscriptionInfo({
         planName: plan?.name || 'free',
         displayName: plan?.display_name || t('subscription.free'),
@@ -352,8 +396,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         currentMembers: memberCount ?? 0,
         currentDocuments: docCount ?? 0,
         currentDepartments: deptCount ?? 0,
-        status: sub?.status || 'free',
-        billingCycle: sub?.billing_cycle || 'monthly',
+        status: subRow?.status || 'free',
+        billingCycle: subRow?.billing_cycle || 'monthly',
+        subscriptionId: subRow?.id ?? null,
+        paymentProvider: subRow?.payment_provider ?? null,
+        currentPeriodEnd: subRow?.current_period_end ?? null,
+        canceledAt: subRow?.canceled_at ?? null,
+        cardCompany: subRow?.card_company ?? null,
+        cardNumber: subRow?.card_number ?? null,
+        monthlyAmount: subRow?.monthly_amount ?? null,
       });
     } catch (err) {
       console.error('구독 정보 조회 실패:', err);
@@ -2096,6 +2147,66 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </div>
 
+                  {isAdmin && subscriptionInfo.status === 'active' && subscriptionInfo.planName !== 'free' && (
+                    <div className="p-4 bg-white border border-slate-200 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-slate-800">{t('billing.billingManagement')}</h4>
+                        <span
+                          className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                            subscriptionInfo.canceledAt
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {subscriptionInfo.canceledAt
+                            ? t('billing.autoRenewCanceled')
+                            : t('billing.autoRenewActive')}
+                        </span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        {subscriptionInfo.monthlyAmount != null && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('billing.monthlyAmountLabel')}</span>
+                            <span className="font-medium">
+                              ₩{subscriptionInfo.monthlyAmount.toLocaleString()}
+                              {t('subscription.perMonth')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('billing.cardLabel')}</span>
+                          <span className="font-medium">
+                            {subscriptionInfo.cardCompany
+                              ? `${subscriptionInfo.cardCompany}${subscriptionInfo.cardNumber ? ' ' + subscriptionInfo.cardNumber : ''}`
+                              : t('billing.noCard')}
+                          </span>
+                        </div>
+                        {subscriptionInfo.currentPeriodEnd && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('billing.nextBillingDate')}</span>
+                            <span className="font-medium">
+                              {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {subscriptionInfo.canceledAt ? (
+                        <p className="text-xs text-amber-600 text-center pt-1">
+                          {t('billing.autoRenewCanceled')}
+                        </p>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setCancelDialogOpen(true)}
+                        >
+                          {t('billing.cancelAutoRenew')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
                   {isAdmin && (
                     <div className="space-y-3">
                       <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
@@ -2155,6 +2266,41 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('billing.cancelConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('billing.cancelConfirmDesc')}</DialogDescription>
+          </DialogHeader>
+          {subscriptionInfo?.currentPeriodEnd && (
+            <div className="p-3 bg-slate-50 rounded-lg border text-sm flex justify-between">
+              <span className="text-slate-500">{t('billing.nextBillingDate')}</span>
+              <span className="font-medium">
+                {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={isCanceling}
+              onClick={() => setCancelDialogOpen(false)}
+            >
+              {t('billing.cancelKeep')}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={isCanceling}
+              onClick={handleCancelSubscription}
+            >
+              {isCanceling ? t('common.loading') : t('billing.cancelConfirmBtn')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

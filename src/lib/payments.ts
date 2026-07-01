@@ -260,6 +260,48 @@ export async function confirmInnopayPayment(
 }
 
 // ============================================================
+// 이노페이 정기결제 관리 (해지 / 자동갱신)
+// 자동갱신 결제(빌링)는 이노페이 자동결제 API 스펙 확보 후 연동.
+// 해지는 DB 상태만 변경하므로 현재 적용 가능.
+// ============================================================
+
+export interface CancelSubscriptionResult {
+  success: boolean;
+  canceledAt?: string;
+  currentPeriodEnd?: string;
+  error?: string;
+  message?: string;
+}
+
+/**
+ * 정기결제(자동갱신) 해지 예약.
+ * 현재 결제 기간(current_period_end)까지는 이용 가능하며, 이후 자동 갱신되지 않는다.
+ * 결제대행사 호출 없이 구독 상태(canceled_at)만 변경한다.
+ */
+export async function cancelInnopaySubscription(
+  subscriptionId: string,
+): Promise<CancelSubscriptionResult> {
+  const { data, error } = await supabase.functions.invoke('innopay-subscription-cancel', {
+    body: { subscriptionId },
+  });
+
+  if (error) {
+    try {
+      const context = (error as { context?: Response }).context;
+      if (context) {
+        const body = await context.json();
+        return { success: false, ...body };
+      }
+    } catch {
+      // 본문 파싱 실패 시 아래 기본 오류 반환
+    }
+    return { success: false, error: 'REQUEST_FAILED', message: error.message };
+  }
+
+  return data as CancelSubscriptionResult;
+}
+
+// ============================================================
 // PayApp 정기결제 (레거시 — 이노페이 전환 전까지 유지)
 // ============================================================
 
