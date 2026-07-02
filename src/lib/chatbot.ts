@@ -1079,6 +1079,37 @@ export interface StreamedDocsResult {
   docs: ChatSearchResult[];
 }
 
+// 일반 질문 단어(엔티티/동사/수량/상태/날짜표현) 목록 — 이 단어들만으로 구성된 질문은 로컬 fast reply 허용
+const GENERIC_QUERY_TOKENS = new Set([
+  '문서', '파일', '자료', '서류', '부서', '대분류', '세부', '세부카테고리', '세부스토리지', '스토리지', '카테고리',
+  '목록', '리스트', '전체', '모든', '모두', '현황', '통계', '상태', 'nfc', '수', '몇', '개', '갯수', '개수', '건', '건수', '총', '합계',
+  '알려줘', '알려주세요', '알려줄래', '알려', '보여줘', '보여주세요', '보여줄래', '보여', '말해줘', '말해', '해줘', '주세요', '좀',
+  '얼마나', '얼마', '있어', '있나', '있나요', '있지', '있음', '뭐야', '뭔지', '뭐가', '뭐', '어떻게', '어떤', '궁금해', '궁금해요', '궁금합니다',
+  '확인', '조회', '현재', '지금', '우리', '시스템', '등록된', '등록',
+  '오늘', '어제', '그제', '이번', '지난', '최근', '이번주', '지난주', '이번달', '지난달', '올해', '작년',
+  'document', 'documents', 'file', 'files', 'department', 'departments', 'category', 'categories', 'storage', 'subcategory', 'subcategories',
+  'list', 'show', 'display', 'tell', 'me', 'how', 'many', 'much', 'count', 'total', 'all', 'status', 'statistics', 'stats', 'overview', 'number',
+  'of', 'the', 'a', 'an', 'what', 'is', 'are', 'in', 'my', 'our', 'current', 'now', 'please', 'do', 'we', 'have', 'there',
+  'today', 'yesterday', 'recent', 'week', 'month', 'year', 'last', 'this',
+]);
+
+// 일반어를 제외하고도 남는 특정 대상 키워드(문서명 등)가 있는지 판별
+function hasSpecificSearchTarget(text: string): boolean {
+  const cleaned = text.toLowerCase().replace(/["'`‘’“”,?!.·(){}[\]<>~^*%\\/|:;+=&#@$]+/g, ' ');
+  for (const raw of cleaned.split(/\s+/)) {
+    if (!raw) continue;
+    // 조사 제거 후 재확인
+    const tok = raw.replace(/(이라는|라는|에서는|에서|으로|은|는|이|가|을|를|의|에|도|만|요|로)$/u, '');
+    const target = tok.length >= 2 ? tok : raw;
+    if (target.length < 2) continue;
+    if (/^\d+(개|건|명|일|주|달|년|월)?$/.test(target)) continue;
+    if (target.startsWith('몇') || target.startsWith('얼마')) continue;
+    if (GENERIC_QUERY_TOKENS.has(target) || GENERIC_QUERY_TOKENS.has(raw)) continue;
+    return true;
+  }
+  return false;
+}
+
 // OpenAI API를 Edge Function을 통해 사용하는 응답 생성 (필요 시 폴백)
 export async function generateResponse(
   message: string,
@@ -1120,7 +1151,8 @@ export async function generateResponse(
     t.includes('member') || t.includes('staff') || t.includes('employee') || t.includes('who') ||
     t.includes('contains') || t.includes('include') || t.includes('find') || t.includes('search for');
   
-  const isFastReply = !needsDbQuery && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
+  // 특정 대상 키워드(문서명 등)가 포함된 질문은 로컬 fast reply 대신 서버 검색으로 라우팅
+  const isFastReply = !needsDbQuery && !hasSpecificSearchTarget(text) && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
   
   if (isFastReply) {
     console.log('[Chatbot] Fast reply 사용:', text);
