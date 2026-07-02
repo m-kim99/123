@@ -95,22 +95,68 @@ function countTokenMatches(text: string | null | undefined, tokens: string[]): n
   return n;
 }
 
+// 문서 후보 수집: 제목 AND(정밀) + 제목 OR(재현) + OCR OR(내용) 3중 조회 후 병합 랭킹
+// 목적: 흔한 토큰(예: "2024")이 수백 건을 매칭해도 모든 토큰이 제목에 있는 문서가 후보에서 밀려나지 않도록 보장
+async function searchDocumentCandidates(
+  supabase: any,
+  deptIds: string[],
+  tokens: string[],
+  opts: { departmentId?: string; topN?: number } = {},
+): Promise<{ row: any; andMatch: boolean; ocrMatch: boolean; score: number }[]> {
+  const topN = opts.topN ?? 5;
+  const docSelect = 'id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(name, storage_location), parent_category:categories(id, name), department:departments(id, name)';
+  const base = () => {
+    let q = supabase.from('documents').select(docSelect).in('department_id', deptIds).not('subcategory_id', 'is', null);
+    if (opts.departmentId) q = q.eq('department_id', opts.departmentId);
+    return q;
+  };
+
+  let andQ = base();
+  for (const tok of tokens) andQ = andQ.ilike('title', `%${tok.replace(/[,()]/g, '')}%`);
+
+  const [andR, titleR, ocrR] = await Promise.all([
+    andQ.order('uploaded_at', { ascending: false }).limit(20),
+    base().or(buildIlikeOr(tokens, ['title'])).order('uploaded_at', { ascending: false }).limit(60),
+    base().or(buildIlikeOr(tokens, ['ocr_text'])).order('uploaded_at', { ascending: false }).limit(20),
+  ]);
+
+  const byId = new Map<string, { row: any; andMatch: boolean; ocrMatch: boolean }>();
+  const merge = (rows: any[], flags: { andMatch?: boolean; ocrMatch?: boolean }) => {
+    for (const d of rows || []) {
+      const cur = byId.get(d.id) || { row: d, andMatch: false, ocrMatch: false };
+      if (flags.andMatch) cur.andMatch = true;
+      if (flags.ocrMatch) cur.ocrMatch = true;
+      byId.set(d.id, cur);
+    }
+  };
+  merge(andR.data || [], { andMatch: true });
+  merge(titleR.data || [], {});
+  merge(ocrR.data || [], { ocrMatch: true });
+
+  const ranked = [...byId.values()]
+    .map((c) => ({ ...c, score: (c.andMatch ? 100 : 0) + countTokenMatches(c.row.title, tokens) * 2 + (c.ocrMatch ? 1 : 0) }))
+    .sort((a, b) => b.score - a.score || new Date(b.row.uploaded_at || 0).getTime() - new Date(a.row.uploaded_at || 0).getTime())
+    .slice(0, topN);
+
+  console.log(`📄 문서 후보: AND=${andR.data?.length || 0}, 제목OR=${titleR.data?.length || 0}, OCR=${ocrR.data?.length || 0} → 상위 ${ranked.length}건`);
+  return ranked;
+}
+
 async function preSearch(supabase: any, companyId: string, deptIds: string[], tokens: string[]) {
   if (!tokens || tokens.length === 0) return null;
   const keyword = tokens.join(' ');
   console.log(`🔍 preSearch 시작: tokens=[${tokens.join(', ')}]`);
 
   const nameFilter = buildIlikeOr(tokens, ['name']);
-  const docFilter = buildIlikeOr(tokens, ['title', 'ocr_text']);
 
-  const [deptR, catR, subR, docR] = await Promise.all([
+  const [deptR, catR, subR, docCandidates] = await Promise.all([
     supabase.from('departments').select('id, name').eq('company_id', companyId).or(nameFilter).limit(10),
     supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).or(nameFilter).limit(10),
     supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(nameFilter).limit(10),
-    supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, parent_category:categories(id, name), department:departments(id, name), ocr_text').in('department_id', deptIds).not('subcategory_id', 'is', null).or(docFilter).limit(20),
+    searchDocumentCandidates(supabase, deptIds, tokens, { topN: 5 }),
   ]);
 
-  // 매칭된 토큰 수 기준 랭킹 후 상위 5건씩 (제목 가중치 2, OCR 1)
+  // 매칭된 토큰 수 기준 랭킹 후 상위 5건씩
   const rankByName = (rows: any[]) => rows
     .map((r: any) => ({ row: r, score: countTokenMatches(r.name, tokens) }))
     .sort((a: any, b: any) => b.score - a.score)
@@ -120,11 +166,17 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], to
   const depts = rankByName(deptR.data || []);
   const cats = rankByName(catR.data || []);
   const subs = rankByName(subR.data || []);
-  const docs = (docR.data || [])
-    .map((d: any) => ({ row: d, score: countTokenMatches(d.title, tokens) * 2 + countTokenMatches(d.ocr_text, tokens) }))
-    .sort((a: any, b: any) => b.score - a.score || new Date(b.row.uploaded_at || 0).getTime() - new Date(a.row.uploaded_at || 0).getTime())
-    .slice(0, 5)
-    .map((x: any) => x.row);
+  const docs = docCandidates.map((c: any) => c.row);
+
+  // OCR 매칭 문서만 본문을 소량 조회해 스니펫 생성 (대용량 ocr_text 전체 전송 방지)
+  const ocrIds = docCandidates.filter((c: any) => c.ocrMatch).map((c: any) => c.row.id);
+  const ocrTextMap = new Map<string, string>();
+  if (ocrIds.length > 0) {
+    const { data: ocrRows } = await supabase.from('documents').select('id, ocr_text').in('id', ocrIds);
+    for (const r of ocrRows || []) {
+      if (r.ocr_text) ocrTextMap.set(r.id, r.ocr_text);
+    }
+  }
 
   const results: any[] = [];
   for (const d of depts) {
@@ -149,16 +201,17 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], to
   
   for (const d of docs) {
     let ocrSnippet = '';
-    if (d.ocr_text) {
-      const lowerOcr = d.ocr_text.toLowerCase();
+    const ocrText = ocrTextMap.get(d.id);
+    if (ocrText) {
+      const lowerOcr = ocrText.toLowerCase();
       const matchedToken = tokens.find((tok) => lowerOcr.indexOf(tok.toLowerCase()) !== -1);
       if (matchedToken) {
         const idx = lowerOcr.indexOf(matchedToken.toLowerCase());
         const start = Math.max(0, idx - 30);
-        const end = Math.min(d.ocr_text.length, idx + matchedToken.length + 50);
-        ocrSnippet = (start > 0 ? '...' : '') + d.ocr_text.substring(start, end).trim() + (end < d.ocr_text.length ? '...' : '');
+        const end = Math.min(ocrText.length, idx + matchedToken.length + 50);
+        ocrSnippet = (start > 0 ? '...' : '') + ocrText.substring(start, end).trim() + (end < ocrText.length ? '...' : '');
       } else {
-        ocrSnippet = d.ocr_text.substring(0, 100).trim() + '...';
+        ocrSnippet = ocrText.substring(0, 100).trim() + '...';
       }
     }
     
@@ -191,18 +244,14 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         let tokens = tokenizeSearchQuery(rawKeyword);
         if (tokens.length === 0 && rawKeyword.length >= 2) tokens = [rawKeyword];
         if (tokens.length === 0) return JSON.stringify({ documents: [], count: 0 });
-        let query = supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(name, storage_location), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).not('subcategory_id', 'is', null).or(buildIlikeOr(tokens, ['title', 'ocr_text']));
+        let departmentId: string | undefined;
         if (department_name) {
           const { data: dept } = await supabase.from('departments').select('id').eq('company_id', companyId).ilike('name', `%${department_name}%`).single();
-          if (dept) query = query.eq('department_id', dept.id);
+          if (dept) departmentId = dept.id;
         }
-        const { data } = await query.order('uploaded_at', { ascending: false }).limit(Math.max(limit * 3, 30));
-        // 제목에 매칭된 토큰 수로 랭킹 (동점은 최신순 유지)
-        const ranked = (data || [])
-          .map((d: any) => ({ row: d, score: countTokenMatches(d.title, tokens) }))
-          .sort((a: any, b: any) => b.score - a.score)
-          .slice(0, limit)
-          .map((x: any) => x.row);
+        // 제목 AND(정밀) + 제목 OR(재현) + OCR OR(내용) 3중 조회 병합 랭킹
+        const candidates = await searchDocumentCandidates(supabase, deptIds, tokens, { departmentId, topN: limit });
+        const ranked = candidates.map((c: any) => c.row);
         // parent_category_id 누락 문서 보정 (링크 생성용)
         const missingParent = ranked.filter((d: any) => d.subcategory_id && !d.parent_category_id);
         const subParentMap = new Map<string, string>();
@@ -396,11 +445,11 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         console.log(`unified_search called with keyword: "${keyword}", tokens=[${tokens.join(', ')}]`);
         const nameFilter = buildIlikeOr(tokens, ['name']);
         
-        const [deptResult, catResult, subResult, docResult] = await Promise.all([
+        const [deptResult, catResult, subResult, docCandidates] = await Promise.all([
           supabase.from('departments').select('id, name').eq('company_id', companyId).or(nameFilter).limit(searchLimit),
           supabase.from('categories').select('id, name, department_id, department:departments(id, name)').in('department_id', deptIds).or(nameFilter).limit(searchLimit),
           supabase.from('subcategories').select('id, name, storage_location, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).or(nameFilter).limit(searchLimit),
-          supabase.from('documents').select('id, title, uploaded_at, subcategory_id, parent_category_id, parent_category:categories(id, name), department:departments(id, name)').in('department_id', deptIds).not('subcategory_id', 'is', null).or(buildIlikeOr(tokens, ['title', 'ocr_text'])).order('uploaded_at', { ascending: false }).limit(searchLimit * 2)
+          searchDocumentCandidates(supabase, deptIds, tokens, { topN: searchLimit })
         ]);
         
         const rankRows = (rows: any[], getText: (r: any) => string) => rows
@@ -412,12 +461,8 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         const depts = rankRows(deptResult.data || [], (r: any) => r.name);
         const cats = rankRows(catResult.data || [], (r: any) => r.name);
         const subs = rankRows(subResult.data || [], (r: any) => r.name);
-        const docs = rankRows(docResult.data || [], (r: any) => r.title);
+        const docs = docCandidates.map((c: any) => c.row);
         console.log(`unified_search results: depts=${depts.length}, cats=${cats.length}, subs=${subs.length}, docs=${docs.length}`);
-        
-        const docSubIds = [...new Set(docs.map((d: any) => d.subcategory_id).filter(Boolean))];
-        const { data: docSubData } = docSubIds.length > 0 ? await supabase.from('subcategories').select('id, name, storage_location').in('id', docSubIds) : { data: [] };
-        const docSubMap = new Map((docSubData || []).map((s: any) => [s.id, s]));
         
         const allResults: any[] = [];
         
@@ -431,7 +476,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정' });
         }
         for (const d of docs) {
-          const docSub = docSubMap.get(d.subcategory_id);
+          const docSub = d.subcategory;
           allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: docSub?.name || '', path: `${d.department?.name} → ${d.parent_category?.name} → ${docSub?.name || ''} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: docSub?.storage_location || '미지정', uploaded_at: d.uploaded_at });
         }
         
