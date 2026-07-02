@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import type {
   Operator,
+  OperatorPermissions,
   OperatorDashboardStats,
   ManagedUser,
   UserSuspension,
@@ -40,6 +41,9 @@ interface OperatorState {
   inquiries: Inquiry[];
   inquiriesTotal: number;
   currentInquiryReplies: InquiryReply[];
+
+  // 운영자 계정 관리
+  operators: Operator[];
 
   // Actions
   checkOperatorSession: () => Promise<void>;
@@ -84,6 +88,10 @@ interface OperatorState {
   updateInquiry: (inquiryId: string, data: Partial<Inquiry>) => Promise<{ success: boolean; error?: string }>;
   createInquiryReply: (inquiryId: string, content: string, isInternal?: boolean) => Promise<{ success: boolean; error?: string }>;
 
+  fetchOperators: () => Promise<void>;
+  updateOperatorPermissions: (operatorId: string, permissions: OperatorPermissions) => Promise<{ success: boolean; error?: string }>;
+  setOperatorActive: (operatorId: string, isActive: boolean) => Promise<{ success: boolean; error?: string }>;
+
   clearError: () => void;
 }
 
@@ -102,6 +110,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   inquiries: [],
   inquiriesTotal: 0,
   currentInquiryReplies: [],
+  operators: [],
 
   checkOperatorSession: async () => {
     set({ isLoading: true });
@@ -226,6 +235,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         reports: [],
         notices: [],
         inquiries: [],
+        operators: [],
       });
     }
   },
@@ -840,6 +850,102 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
       return { success: true };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '답변 등록 실패';
+      return { success: false, error: errorMsg };
+    }
+  },
+
+  fetchOperators: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('operators')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const operators: Operator[] = (data || []).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        email: o.email,
+        permissions: o.permissions ?? {},
+        isSuper: o.is_super,
+        isActive: o.is_active,
+        lastLoginAt: o.last_login_at,
+        createdAt: o.created_at,
+        updatedAt: o.updated_at,
+      }));
+
+      set({ operators });
+    } catch (error) {
+      console.error('운영자 목록 로드 실패:', error);
+    }
+  },
+
+  updateOperatorPermissions: async (operatorId, permissions) => {
+    const { operator } = get();
+    if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
+    // DB RLS("Super operators can manage operators")와 동일한 기준
+    if (!operator.isSuper) {
+      return { success: false, error: '슈퍼 운영자만 권한을 변경할 수 있습니다.' };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('operators')
+        .update({ permissions, updated_at: new Date().toISOString() })
+        .eq('id', operatorId);
+
+      if (error) throw error;
+
+      // 활동 로그 기록
+      await supabase.from('operator_activity_logs').insert({
+        operator_id: operator.id,
+        action: 'update_operator',
+        target_type: 'operator',
+        target_id: operatorId,
+        details: { permissions },
+      });
+
+      await get().fetchOperators();
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '권한 변경 실패';
+      return { success: false, error: errorMsg };
+    }
+  },
+
+  setOperatorActive: async (operatorId, isActive) => {
+    const { operator } = get();
+    if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
+    if (!operator.isSuper) {
+      return { success: false, error: '슈퍼 운영자만 계정 상태를 변경할 수 있습니다.' };
+    }
+    // 잠금 방지: 본인 계정은 비활성화 불가
+    if (operatorId === operator.id && !isActive) {
+      return { success: false, error: '본인 계정은 비활성화할 수 없습니다.' };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('operators')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', operatorId);
+
+      if (error) throw error;
+
+      // 활동 로그 기록
+      await supabase.from('operator_activity_logs').insert({
+        operator_id: operator.id,
+        action: 'update_operator',
+        target_type: 'operator',
+        target_id: operatorId,
+        details: { is_active: isActive },
+      });
+
+      await get().fetchOperators();
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '상태 변경 실패';
       return { success: false, error: errorMsg };
     }
   },

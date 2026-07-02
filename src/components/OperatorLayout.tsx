@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Activity,
   Building2,
+  UserCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +57,7 @@ const navSections: NavSection[] = [
     items: [
       { path: '/operator/members', icon: Users, label: '회원 관리', permission: 'members' },
       { path: '/operator/companies', icon: Building2, label: '회사 관리', permission: 'companies' },
+      { path: '/operator/operators', icon: UserCog, label: '운영자 관리', permission: 'operators' },
     ],
   },
   {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Search,
   ShieldOff,
@@ -12,7 +13,7 @@ import {
   Check,
   Ban,
   Download,
-  UserPlus,
+  UserCog,
 } from 'lucide-react';
 import { OperatorLayout } from '@/components/OperatorLayout';
 import { useOperatorStore } from '@/store/operatorStore';
@@ -61,6 +62,7 @@ function getAvatarColor(id: string) {
 
 export function MemberManagement() {
   const { toast } = useToast();
+  const operator = useOperatorStore((s) => s.operator);
   const users = useOperatorStore((s) => s.users);
   const usersTotal = useOperatorStore((s) => s.usersTotal);
   const fetchUsers = useOperatorStore((s) => s.fetchUsers);
@@ -223,10 +225,15 @@ export function MemberManagement() {
           right={
             <div className="flex items-center gap-2">
               <V1OutlineButton icon={Download}>CSV 내보내기</V1OutlineButton>
-              <button className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white transition-colors">
-                <UserPlus className="w-4 h-4" />
-                운영자 추가
-              </button>
+              {(operator?.isSuper || operator?.permissions?.operators) && (
+                <Link
+                  to="/operator/operators"
+                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+                >
+                  <UserCog className="w-4 h-4" />
+                  운영자 관리
+                </Link>
+              )}
             </div>
           }
         />

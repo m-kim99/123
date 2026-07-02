@@ -112,6 +112,9 @@ const CompanyManagement = lazy(() =>
 const ActivityLogs = lazy(() =>
   import('./pages/operator/ActivityLogs').then((m) => ({ default: m.ActivityLogs })),
 );
+const OperatorManagement = lazy(() =>
+  import('./pages/operator/OperatorManagement').then((m) => ({ default: m.OperatorManagement })),
+);
 
 function ProtectedRoute({
   children,
@@ -687,6 +690,14 @@ function App() {
               element={
                 <OperatorProtectedRoute>
                   <ActivityLogs />
+                </OperatorProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/operators"
+              element={
+                <OperatorProtectedRoute permission="operators">
+                  <OperatorManagement />
                 </OperatorProtectedRoute>
               }
             />

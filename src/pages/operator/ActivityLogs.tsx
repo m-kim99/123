@@ -39,6 +39,7 @@ const actionConfig: Record<string, { label: string; icon: any; variant: ChipVari
   create_notice: { label: '공지 작성', icon: Megaphone, variant: 'violet', color: V1.violet },
   update_notice: { label: '공지 수정', icon: Megaphone, variant: 'violet', color: V1.violet },
   delete_notice: { label: '공지 삭제', icon: Megaphone, variant: 'neutral', color: V1.muted },
+  update_operator: { label: '운영자 계정 변경', icon: Settings, variant: 'violet', color: V1.violet },
   default: { label: '기타', icon: Settings, variant: 'neutral', color: V1.muted },
 };
 
@@ -133,6 +134,7 @@ export function ActivityLogs() {
                   <SelectItem value="create_notice">공지 작성</SelectItem>
                   <SelectItem value="update_notice">공지 수정</SelectItem>
                   <SelectItem value="delete_notice">공지 삭제</SelectItem>
+                  <SelectItem value="update_operator">운영자 계정 변경</SelectItem>
                 </SelectContent>
               </Select>
               <span className="text-sm text-muted-foreground">
