@@ -163,6 +163,20 @@ Netlify/Vercel은 동일 헤더를 `[[headers]]` / `headers`로 추가.
 | 8 | 보안 헤더 | ✅ nginx/netlify/vercel 추가 | `nginx.conf`, `netlify.toml`, `vercel.json` |
 | 9 | CORS `*` | ⏸️ 코드 미변경(모바일 비표준 Origin 깨짐 위험 + 토큰 인증이라 이득 낮음) | — |
 
+## 적용 현황 (2026-07-02 2차 — 개방형 RLS/GRANT 정리)
+
+라이브 DB 점검에서 추가 발견 → `supabase/migrations/20260702000000_rls_hardening.sql`:
+
+| 대상 | 문제 | 조치 |
+|------|------|------|
+| `phone_verifications` | anon/authenticated 전체 GRANT (OTP 해시 공개) | 클라 롤 REVOKE, service_role 전용 정책 |
+| `payapp_pending_rebills` | anon/authenticated 전체 GRANT (결제 데이터 공개) | 클라 롤 REVOKE, service_role 전용 정책 |
+| `notifications` | anon GRANT + INSERT `WITH CHECK(true)` | anon REVOKE, 삽입을 같은 회사로 제한 |
+| `user_device_tokens` | SELECT `USING(true)` (전 유저 토큰 노출) | 본인 토큰만 SELECT |
+| `users` | SELECT `USING(true)` (전 회사 유저 노출) | 본인/같은회사/운영자만 SELECT (+`auth_company_id()` 헬퍼로 재귀 회피) |
+
+> `companies`(name/code만, 회원가입 조회용)와 `plans`/`system_notices` 공개 정책은 의도된 것이라 유지.
+
 ## ⚠️ 배포 후 필수 수동 조치 (코드만으로는 완료 안 됨)
 
 1. **R2 키 rotate + Edge 시크릿 설정**
