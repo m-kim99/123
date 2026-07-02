@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import type { Announcement, AnnouncementComment } from '@/types/announcement';
 import { BackButton } from '@/components/BackButton';
+import { ReportDialog } from '@/components/ReportDialog';
 
 export function TeamAnnouncements() {
   const { t } = useTranslation();
@@ -252,6 +253,14 @@ export function TeamAnnouncements() {
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-semibold text-slate-900 tracking-tight flex-1 min-w-0 truncate">{announcement.title}</h3>
+                    {announcement.createdBy !== user?.id && (
+                      <ReportDialog
+                        targetType="announcement"
+                        targetId={announcement.id}
+                        targetCompanyId={announcement.companyId}
+                        triggerClassName="h-7 px-2 rounded-lg border border-gray-200 bg-white text-[11px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 flex items-center gap-1 shrink-0"
+                      />
+                    )}
                   </div>
                   <p className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">{announcement.content}</p>
                   <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
@@ -310,21 +319,29 @@ export function TeamAnnouncements() {
                                       {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
                                     </p>
                                   </div>
-                                  {(comment.userId === user?.id || isAdmin) && (
-                                    <div className="flex gap-1 shrink-0">
-                                      {comment.userId === user?.id && (
-                                        <Button
-                                          variant="outline"
-                                          size="icon"
-                                          className="h-6 w-6"
-                                          onClick={() => {
-                                            setEditingCommentId(comment.id);
-                                            setEditingCommentContent(comment.content);
-                                          }}
-                                        >
-                                          <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-0.5" />
-                                        </Button>
-                                      )}
+                                  <div className="flex gap-1 shrink-0">
+                                    {comment.userId !== user?.id && (
+                                      <ReportDialog
+                                        targetType="comment"
+                                        targetId={comment.id}
+                                        targetCompanyId={announcement.companyId}
+                                        triggerClassName="h-6 px-1.5 rounded-md border border-gray-200 bg-white text-[10px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 flex items-center gap-1 shrink-0"
+                                      />
+                                    )}
+                                    {comment.userId === user?.id && (
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => {
+                                          setEditingCommentId(comment.id);
+                                          setEditingCommentContent(comment.content);
+                                        }}
+                                      >
+                                        <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-0.5" />
+                                      </Button>
+                                    )}
+                                    {(comment.userId === user?.id || isAdmin) && (
                                       <Button
                                         variant="outline"
                                         size="icon"
@@ -333,8 +350,8 @@ export function TeamAnnouncements() {
                                       >
                                         <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-0.5" />
                                       </Button>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>

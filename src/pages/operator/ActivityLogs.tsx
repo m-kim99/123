@@ -33,7 +33,8 @@ type ChipVariant = 'blue' | 'emerald' | 'amber' | 'red' | 'violet' | 'neutral';
 const actionConfig: Record<string, { label: string; icon: any; variant: ChipVariant; color: string }> = {
   suspend_user: { label: '회원 정지', icon: ShieldOff, variant: 'red', color: V1.red },
   lift_suspension: { label: '정지 해제', icon: ShieldCheck, variant: 'emerald', color: V1.emerald },
-  update_report: { label: '신고 처리', icon: Flag, variant: 'amber', color: V1.amber },
+  update_report: { label: '신고 상태 변경', icon: Flag, variant: 'amber', color: V1.amber },
+  resolve_report: { label: '신고 처리', icon: Flag, variant: 'red', color: V1.red },
   reply_inquiry: { label: '문의 답변', icon: MessageSquare, variant: 'blue', color: V1.blue },
   create_notice: { label: '공지 작성', icon: Megaphone, variant: 'violet', color: V1.violet },
   update_notice: { label: '공지 수정', icon: Megaphone, variant: 'violet', color: V1.violet },
@@ -126,7 +127,8 @@ export function ActivityLogs() {
                   <SelectItem value="all">전체 활동</SelectItem>
                   <SelectItem value="suspend_user">회원 정지</SelectItem>
                   <SelectItem value="lift_suspension">정지 해제</SelectItem>
-                  <SelectItem value="update_report">신고 처리</SelectItem>
+                  <SelectItem value="update_report">신고 상태 변경</SelectItem>
+                  <SelectItem value="resolve_report">신고 처리</SelectItem>
                   <SelectItem value="reply_inquiry">문의 답변</SelectItem>
                   <SelectItem value="create_notice">공지 작성</SelectItem>
                   <SelectItem value="update_notice">공지 수정</SelectItem>

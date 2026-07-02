@@ -11,6 +11,10 @@ import {
   FileText,
   User,
   MessageSquare,
+  RotateCcw,
+  AlertTriangle,
+  Trash2,
+  type LucideIcon,
 } from 'lucide-react';
 import { OperatorLayout } from '@/components/OperatorLayout';
 import { useOperatorStore } from '@/store/operatorStore';
@@ -33,7 +37,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { Report, ReportStatus, Priority } from '@/types/operator';
+import { REPORT_CATEGORIES } from '@/lib/support';
+import type { Report, ReportStatus, Priority, ReportResolveAction } from '@/types/operator';
 import {
   V1PageHeader,
   V1Chip,
@@ -46,7 +51,7 @@ import {
 
 type ChipVariant = 'blue' | 'emerald' | 'amber' | 'red' | 'violet' | 'neutral';
 
-const statusConfig: Record<ReportStatus, { label: string; icon: any; variant: ChipVariant }> = {
+const statusConfig: Record<ReportStatus, { label: string; icon: LucideIcon; variant: ChipVariant }> = {
   pending: { label: '대기', icon: Clock, variant: 'amber' },
   reviewing: { label: '검토중', icon: Eye, variant: 'blue' },
   resolved: { label: '처리완료', icon: CheckCircle, variant: 'emerald' },
@@ -60,16 +65,49 @@ const priorityConfig: Record<Priority, { label: string; variant: ChipVariant }> 
   urgent: { label: '긴급', variant: 'red' },
 };
 
-const categoryLabels: Record<string, string> = {
-  spam: '스팸',
-  inappropriate: '부적절한 콘텐츠',
-  copyright: '저작권 침해',
-  privacy: '개인정보 침해',
-  illegal: '불법 콘텐츠',
-  other: '기타',
+// 신고 사유 라벨 — 사용자 신고 다이얼로그(REPORT_CATEGORIES)와 단일 소스 공유
+const categoryLabels: Record<string, string> = Object.fromEntries(
+  REPORT_CATEGORIES.map((c) => [c.value, c.label])
+);
+
+// 3단계 처리 액션 설정 (operator_resolve_report RPC와 1:1 대응)
+const resolveActionConfig: Record<
+  ReportResolveAction,
+  { label: string; title: string; sub: string; icon: LucideIcon; color: string; noteLabel: string; notePlaceholder: string; confirmLabel: string }
+> = {
+  restore: {
+    label: '기각 · 콘텐츠 복원',
+    title: '신고 기각',
+    sub: '신고를 기각하고 숨김 처리된 콘텐츠를 복원합니다. 같은 대상의 다른 활성 신고도 함께 기각됩니다.',
+    icon: RotateCcw,
+    color: V1.blue,
+    noteLabel: '기각 사유 (내부 기록용)',
+    notePlaceholder: '기각 사유를 입력하세요...',
+    confirmLabel: '기각 · 복원',
+  },
+  warn: {
+    label: '경고 (복원 + 작성자 알림)',
+    title: '경고 처리',
+    sub: '콘텐츠를 복원하되 작성자에게 경고 알림을 보냅니다. 같은 대상의 활성 신고가 모두 처리완료됩니다.',
+    icon: AlertTriangle,
+    color: V1.amber,
+    noteLabel: '경고 사유 (작성자 알림에 포함됨)',
+    notePlaceholder: '작성자에게 전달할 경고 사유를 입력하세요...',
+    confirmLabel: '경고 보내기',
+  },
+  remove: {
+    label: '삭제 (콘텐츠 삭제 + 작성자 알림)',
+    title: '콘텐츠 삭제',
+    sub: '콘텐츠를 삭제하고 작성자에게 알림을 보냅니다. 이 작업은 되돌릴 수 없습니다.',
+    icon: Trash2,
+    color: V1.red,
+    noteLabel: '삭제 사유 (작성자 알림에 포함됨)',
+    notePlaceholder: '작성자에게 전달할 삭제 사유를 입력하세요...',
+    confirmLabel: '삭제하기',
+  },
 };
 
-const targetTypeLabels: Record<string, { label: string; icon: any }> = {
+const targetTypeLabels: Record<string, { label: string; icon: LucideIcon }> = {
   document: { label: '문서', icon: FileText },
   user: { label: '사용자', icon: User },
   announcement: { label: '공지사항', icon: MessageSquare },
@@ -82,6 +120,7 @@ export function ReportManagement() {
   const reportsTotal = useOperatorStore((s) => s.reportsTotal);
   const fetchReports = useOperatorStore((s) => s.fetchReports);
   const updateReport = useOperatorStore((s) => s.updateReport);
+  const resolveReport = useOperatorStore((s) => s.resolveReport);
 
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -93,8 +132,9 @@ export function ReportManagement() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<'resolve' | 'dismiss'>('resolve');
+  const [actionType, setActionType] = useState<ReportResolveAction>('restore');
   const [actionNote, setActionNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadReports();
@@ -116,24 +156,32 @@ export function ReportManagement() {
     setDetailDialogOpen(true);
   };
 
-  const openActionDialog = (report: Report, type: 'resolve' | 'dismiss') => {
+  const openActionDialog = (report: Report, action: ReportResolveAction) => {
     setSelectedReport(report);
-    setActionType(type);
+    setActionType(action);
     setActionDialogOpen(true);
   };
 
   const handleAction = async () => {
-    if (!selectedReport) return;
+    if (!selectedReport || isSubmitting) return;
 
-    const result = await updateReport(selectedReport.id, {
-      status: actionType === 'resolve' ? 'resolved' : 'dismissed',
-      actionTaken: actionNote || (actionType === 'resolve' ? '처리 완료' : '기각'),
-    });
+    setIsSubmitting(true);
+    const result = await resolveReport(
+      selectedReport.id,
+      actionType,
+      actionNote.trim() || undefined
+    );
+    setIsSubmitting(false);
 
     if (result.success) {
+      const doneMsg: Record<ReportResolveAction, string> = {
+        restore: '신고가 기각되고 콘텐츠가 복원되었습니다.',
+        warn: '콘텐츠가 복원되고 작성자에게 경고 알림을 보냈습니다.',
+        remove: '콘텐츠가 삭제되고 작성자에게 알림을 보냈습니다.',
+      };
       toast({
-        title: actionType === 'resolve' ? '처리 완료' : '기각 완료',
-        description: '신고가 처리되었습니다.',
+        title: resolveActionConfig[actionType].title + ' 완료',
+        description: doneMsg[actionType],
       });
       setActionDialogOpen(false);
       setActionNote('');
@@ -289,17 +337,28 @@ export function ReportManagement() {
                               {(report.status === 'pending' || report.status === 'reviewing') && (
                                 <>
                                   <DropdownMenuItem
-                                    onClick={() => openActionDialog(report, 'resolve')}
-                                    className="text-green-600"
+                                    onClick={() => openActionDialog(report, 'restore')}
+                                    className="text-blue-600"
                                   >
-                                    처리 완료
+                                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                                    기각 · 복원
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() => openActionDialog(report, 'dismiss')}
-                                    className="text-slate-600"
+                                    onClick={() => openActionDialog(report, 'warn')}
+                                    className="text-amber-600"
                                   >
-                                    기각
+                                    <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                                    경고 (복원 + 알림)
                                   </DropdownMenuItem>
+                                  {report.targetType !== 'user' && (
+                                    <DropdownMenuItem
+                                      onClick={() => openActionDialog(report, 'remove')}
+                                      className="text-red-600"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                      삭제 (콘텐츠 삭제 + 알림)
+                                    </DropdownMenuItem>
+                                  )}
                                 </>
                               )}
                             </DropdownMenuContent>
@@ -394,35 +453,48 @@ export function ReportManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Action Dialog */}
+      {/* Action Dialog — 3단계 처리 (복원/경고/삭제) */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
         <DialogContent className="p-0 gap-0">
           <V1ModalHeader
-            icon={actionType === 'resolve' ? CheckCircle : XCircle}
-            iconColor={actionType === 'resolve' ? V1.emerald : V1.muted}
-            title={actionType === 'resolve' ? '신고 처리' : '신고 기각'}
-            sub={actionType === 'resolve' ? '이 신고를 처리 완료로 표시합니다.' : '이 신고를 기각합니다.'}
+            icon={resolveActionConfig[actionType].icon}
+            iconColor={resolveActionConfig[actionType].color}
+            title={resolveActionConfig[actionType].title}
+            sub={resolveActionConfig[actionType].sub}
           />
           <V1ModalBody>
+            {selectedReport && (
+              <div className="text-sm bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+                <span className="text-muted-foreground">대상: </span>
+                <span className="font-medium text-foreground">
+                  {targetTypeLabels[selectedReport.targetType]?.label || selectedReport.targetType}
+                </span>
+                <span className="text-muted-foreground"> · 사유: </span>
+                <span className="text-foreground">
+                  {categoryLabels[selectedReport.category] || selectedReport.category}
+                </span>
+              </div>
+            )}
             <div className="space-y-2">
-              <Label>{actionType === 'resolve' ? '처리 내용' : '기각 사유'}</Label>
+              <Label>{resolveActionConfig[actionType].noteLabel}</Label>
               <Textarea
                 value={actionNote}
                 onChange={(e) => setActionNote(e.target.value)}
-                placeholder={actionType === 'resolve' ? '처리 내용을 입력하세요...' : '기각 사유를 입력하세요...'}
+                placeholder={resolveActionConfig[actionType].notePlaceholder}
                 rows={3}
                 className="rounded-[10px]"
               />
             </div>
           </V1ModalBody>
           <V1ModalFooter>
-            <Button variant="outline" onClick={() => setActionDialogOpen(false)} className="rounded-[10px]">취소</Button>
+            <Button variant="outline" onClick={() => setActionDialogOpen(false)} disabled={isSubmitting} className="rounded-[10px]">취소</Button>
             <Button
               onClick={handleAction}
-              variant={actionType === 'resolve' ? 'default' : 'secondary'}
+              disabled={isSubmitting}
+              variant={actionType === 'remove' ? 'destructive' : 'default'}
               className="rounded-[10px]"
             >
-              {actionType === 'resolve' ? '처리 완료' : '기각'}
+              {isSubmitting ? '처리 중...' : resolveActionConfig[actionType].confirmLabel}
             </Button>
           </V1ModalFooter>
         </DialogContent>

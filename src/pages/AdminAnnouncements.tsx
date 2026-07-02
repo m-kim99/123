@@ -36,6 +36,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 import type { Announcement, AnnouncementComment } from '@/types/announcement';
 import { BackButton } from '@/components/BackButton';
+import { ReportDialog } from '@/components/ReportDialog';
 
 export function AdminAnnouncements() {
   const { t } = useTranslation();
@@ -425,6 +426,14 @@ return (
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-base font-semibold text-slate-900 tracking-tight flex-1 min-w-0 truncate">{announcement.title}</h3>
                       <div className="flex gap-1.5 shrink-0">
+                        {announcement.createdBy !== user?.id && (
+                          <ReportDialog
+                            targetType="announcement"
+                            targetId={announcement.id}
+                            targetCompanyId={announcement.companyId}
+                            triggerClassName="h-7 px-2 rounded-lg border border-gray-200 bg-white text-[11px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 flex items-center gap-1 shrink-0"
+                          />
+                        )}
                         <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => openEditDialog(announcement)}>
                           <img src={penIcon} alt={t('common.edit')} className="w-full h-full p-1" />
                         </Button>
@@ -459,9 +468,19 @@ return (
                                 {format(new Date(comment.createdAt), 'PPp', { locale: ko })}
                               </p>
                             </div>
-                            <Button variant="outline" size="icon" className="h-6 w-6 shrink-0 text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500" onClick={() => handleDeleteComment(comment.id, announcement.id)}>
-                              <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-0.5" />
-                            </Button>
+                            <div className="flex gap-1 shrink-0">
+                              {comment.userId !== user?.id && (
+                                <ReportDialog
+                                  targetType="comment"
+                                  targetId={comment.id}
+                                  targetCompanyId={announcement.companyId}
+                                  triggerClassName="h-6 px-1.5 rounded-md border border-gray-200 bg-white text-[10px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 flex items-center gap-1 shrink-0"
+                                />
+                              )}
+                              <Button variant="outline" size="icon" className="h-6 w-6 shrink-0 text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500" onClick={() => handleDeleteComment(comment.id, announcement.id)}>
+                                <img src={binIcon} alt={t('common.delete')} className="w-full h-full p-0.5" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
