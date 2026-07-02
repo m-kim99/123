@@ -30,18 +30,18 @@ export function useGeminiLive({
   const connectRejectRef = useRef<((err: Error) => void) | null>(null);
 
   /**
-   * 서버에서 Gemini API 키를 발급받는 함수
-   * GEMINI_API_KEY는 Supabase Secrets에 저장되어 클라이언트 번들에 노출되지 않음
+   * 서버에서 Gemini Live용 임시 토큰(ephemeral token)을 발급받는 함수.
+   * 원본 API 키는 서버(Supabase Secrets)에만 있고, 클라이언트는 30분·단회용 토큰만 받는다.
    */
   const fetchApiKey = useCallback(async (): Promise<string> => {
     const { data, error } = await supabase.functions.invoke('get-gemini-key');
     if (error) {
-      throw new Error(`Gemini 키 발급 실패: ${error.message}`);
+      throw new Error(`Gemini 토큰 발급 실패: ${error.message}`);
     }
-    if (!data?.apiKey) {
-      throw new Error('Gemini API 키를 받지 못했습니다');
+    if (!data?.token) {
+      throw new Error('Gemini 임시 토큰을 받지 못했습니다');
     }
-    return data.apiKey as string;
+    return data.token as string;
   }, []);
 
   // WebSocket 연결 - Promise로 setup 완료까지 대기
@@ -54,11 +54,11 @@ export function useGeminiLive({
           return;
         }
 
-        // API 키를 서버에서 발급받음 (클라이언트 번들에 포함되지 않음)
-        const apiKey = await fetchApiKey();
+        // 임시 토큰을 서버에서 발급받음 (원본 키는 클라이언트에 노출되지 않음)
+        const accessToken = await fetchApiKey();
 
         const ws = new WebSocket(
-          `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`
+          `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?access_token=${accessToken}`
         );
 
         // setup 완료 시 resolve/reject할 함수 저장

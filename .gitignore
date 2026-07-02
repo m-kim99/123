@@ -18,6 +18,13 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+# .txt 우회 커밋 방지 (시크릿을 .txt로 두는 패턴 차단)
+.env.production.txt
+.env*.txt
+
+# Database dumps (may contain production PII - NEVER commit)
+data.sql
+*.dump
 
 # TypeScript build info
 *.tsbuildinfo

@@ -44,7 +44,43 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ apiKey }), {
+    // 보안: 원본 API 키를 클라이언트에 넘기지 않는다.
+    // Gemini Live는 브라우저에서 직접 WebSocket 연결이 필요하므로
+    // 단기(30분)·단회용 임시 토큰(ephemeral token)을 발급해 반환한다.
+    const now = Date.now();
+    const tokenRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1alpha/auth_tokens?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uses: 1,
+          expireTime: new Date(now + 30 * 60 * 1000).toISOString(),
+          newSessionExpireTime: new Date(now + 60 * 1000).toISOString(),
+        }),
+      }
+    );
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error('ephemeral token 발급 실패:', errText);
+      return new Response(JSON.stringify({ error: `임시 토큰 발급 실패: ${errText}` }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const tokenData = await tokenRes.json();
+    const token = tokenData?.name;
+    if (!token) {
+      return new Response(JSON.stringify({ error: '임시 토큰 응답이 비어있습니다' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 클라이언트는 이 값을 WebSocket ?access_token= 파라미터로 사용한다.
+    return new Response(JSON.stringify({ token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

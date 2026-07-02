@@ -1,13 +1,17 @@
 import { supabase } from './supabase';
-import { getDeviceTokensForUsers } from './deviceTokens';
 
 /**
- * OneSignal 개별 푸시 발송
- * REST API KEY는 서버 사이드(Edge Function)에서만 사용됩니다.
- * 프론트엔드에서 직접 OneSignal API를 호출하지 않습니다.
+ * 푸시 발송 대상.
+ * 보안: 클라이언트는 FCM 토큰을 직접 넘기지 않는다. 대신 대상(회사/부서 또는 유저 ID)만
+ * 넘기고, Edge Function(send-push-notification)이 service_role로 토큰을 조회·발송하며
+ * 발신자가 같은 회사인지 검증한다.
  */
+export type PushTarget =
+  | { companyId: string; departmentId?: string | null }
+  | { userIds: string[] };
+
 interface SendPushParams {
-  playerIds: string[];
+  target: PushTarget;
   title: string;
   message: string;
   customUrl?: string;
@@ -15,16 +19,16 @@ interface SendPushParams {
 }
 
 export async function sendPushNotification({
-  playerIds,
+  target,
   title,
   message,
   customUrl,
   imageUrl,
 }: SendPushParams): Promise<void> {
-  console.log('[PUSH-CLIENT] supabase.functions.invoke 호출 시작:', { tokenCount: playerIds.length, title });
+  console.log('[PUSH-CLIENT] supabase.functions.invoke 호출 시작:', { target, title });
   try {
     const { data, error } = await supabase.functions.invoke('send-push-notification', {
-      body: { playerIds, title, message, customUrl, imageUrl },
+      body: { target, title, message, customUrl, imageUrl },
     });
     console.log('[PUSH-CLIENT] invoke 응답:', { data, error: error?.message });
 
@@ -39,7 +43,7 @@ export async function sendPushNotification({
 }
 
 /**
- * 특정 사용자에게 푸시 발송 (user_device_tokens에서 기기 토큰 조회 후 발송)
+ * 특정 사용자에게 푸시 발송 (토큰 조회/발송은 서버가 담당)
  * @param userIds users 테이블의 id 배열
  * @param title 푸시 알림 제목
  * @param message 푸시 알림 내용
@@ -51,14 +55,11 @@ export async function sendPushToUsers(
   message: string,
   customUrl?: string
 ): Promise<void> {
-  const pushIds = await getDeviceTokensForUsers(userIds);
-
-  if (pushIds.length > 0) {
-    await sendPushNotification({
-      playerIds: pushIds,
-      title,
-      message,
-      customUrl,
-    });
-  }
+  if (userIds.length === 0) return;
+  await sendPushNotification({
+    target: { userIds },
+    title,
+    message,
+    customUrl,
+  });
 }

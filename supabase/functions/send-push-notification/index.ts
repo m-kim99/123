@@ -120,13 +120,92 @@ serve(async (req) => {
 
     const serviceAccount = JSON.parse(serviceAccountJson);
 
-    const { playerIds, title, message, customUrl } = await req.json();
-    console.log('[PUSH] 요청 데이터:', { tokenCount: playerIds?.length, title, message });
+    // 보안: 클라이언트가 FCM 토큰을 직접 넘기지 않는다.
+    // 대신 발송 대상(회사/부서 또는 유저 ID)만 받고, service_role로 서버에서 토큰을 조회한다.
+    // 이렇게 하면 임의 토큰으로의 스팸/피싱 푸시를 막고, 발신자 권한(같은 회사)도 검증할 수 있다.
+    const { target, title, message, customUrl } = await req.json();
+    console.log('[PUSH] 요청 데이터:', { target, title, message });
 
-    // playerIds는 실제로 FCM 토큰 배열
-    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
-      return new Response(JSON.stringify({ error: '유효한 FCM 토큰이 필요합니다' }), {
+    if (!target || typeof target !== 'object') {
+      return new Response(JSON.stringify({ error: 'target(발송 대상)이 필요합니다' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // service_role 클라이언트 (대상/토큰 해석용)
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    // 발신자의 회사 확인 (권한 경계)
+    const { data: caller } = await admin
+      .from('users')
+      .select('id, company_id')
+      .eq('id', user.id)
+      .single();
+    if (!caller?.company_id) {
+      return new Response(JSON.stringify({ error: '발신자 회사 정보를 확인할 수 없습니다' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 발송 대상 유저 ID 해석
+    let recipientIds: string[] = [];
+    if (Array.isArray(target.userIds)) {
+      // 특정 유저 대상: 반드시 같은 회사 유저로 제한
+      const { data: users } = await admin
+        .from('users')
+        .select('id')
+        .eq('company_id', caller.company_id)
+        .in('id', target.userIds);
+      recipientIds = (users ?? []).map((u: { id: string }) => u.id);
+    } else if (target.companyId) {
+      // 회사/부서 대상: 발신자 회사와 일치해야 함
+      if (target.companyId !== caller.company_id) {
+        return new Response(JSON.stringify({ error: '다른 회사로 푸시를 보낼 수 없습니다' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: users } = await admin
+        .from('users')
+        .select('id, role, department_id')
+        .eq('company_id', target.companyId);
+      const deptId = target.departmentId ?? null;
+      recipientIds = (users ?? [])
+        .filter((u: { role: string; department_id: string | null }) => {
+          if (u.role === 'admin') return true; // 관리자: 부서 무관 전체 수신
+          if (!deptId) return true; // 부서 미지정 알림: 전체 수신
+          return u.department_id === deptId; // 팀원: 같은 부서만
+        })
+        .map((u: { id: string }) => u.id);
+    } else {
+      return new Response(JSON.stringify({ error: 'target에 userIds 또는 companyId가 필요합니다' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (recipientIds.length === 0) {
+      return new Response(JSON.stringify({ success: true, sent: 0, failed: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 대상 유저들의 기기 토큰 수집 (다중 기기)
+    const { data: tokenRows } = await admin
+      .from('user_device_tokens')
+      .select('token')
+      .in('user_id', recipientIds);
+    const playerIds = (tokenRows ?? [])
+      .map((r: { token: string }) => r.token)
+      .filter(Boolean);
+
+    if (playerIds.length === 0) {
+      return new Response(JSON.stringify({ success: true, sent: 0, failed: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

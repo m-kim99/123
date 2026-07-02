@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase';
 import { sendPushNotification } from '@/lib/pushNotifications';
-import { getDeviceTokensForUsers } from '@/lib/deviceTokens';
 
 export type NotificationEventType =
   | 'document_created'
@@ -206,47 +205,14 @@ async function sendPushToCompanyUsers({
   message,
 }: SendPushToCompanyUsersParams): Promise<void> {
   try {
-    console.log('[PUSH] 사용자 조회 시작:', { companyId, departmentId });
-    // 회사 전체에서 토큰을 가진 사용자를 조회한 뒤,
-    // in-app 알림(notificationStore.fetchNotifications)과 동일한 수신 대상 규칙으로 필터링한다.
-    //  - 관리자(admin): 부서와 무관하게 회사 전체 알림 수신
-    //  - 팀원(team): 알림이 속한 부서(departmentId)의 알림만 수신
-    // 기존에는 departmentId로만 필터링해, 해당 부서가 아닌 관리자에게 푸시가 가지 않는 문제가 있었다.
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('id, role, department_id')
-      .eq('company_id', companyId);
-
-    if (error || !users || users.length === 0) {
-      console.log('[PUSH] 발송 대상 없음, 종료', { error: error?.message || null });
-      return;
-    }
-
-    const recipients = users.filter((u) => {
-      if (u.role === 'admin') return true; // 관리자: 부서 무관 전체 수신
-      if (!departmentId) return true; // 부서 미지정 알림: 전체 수신
-      return u.department_id === departmentId; // 팀원: 같은 부서만
+    // 보안: 대상 해석(회사/부서 → 유저 → 토큰)과 발신자 권한 검증은 서버(Edge Function)가 담당한다.
+    // 수신 대상 규칙(관리자=전체, 팀원=같은 부서)은 send-push-notification 함수 내부에 있다.
+    await sendPushNotification({
+      target: { companyId, departmentId },
+      title,
+      message,
     });
-
-    // 대상 사용자들의 모든 기기 토큰 수집 (다중 기기)
-    const pushIds = await getDeviceTokensForUsers(recipients.map((u) => u.id));
-
-    console.log('[PUSH] 발송 대상 토큰 수:', {
-      recipientUsers: recipients.length,
-      tokens: pushIds.length,
-      departmentId,
-    });
-
-    if (pushIds.length > 0) {
-      await sendPushNotification({
-        playerIds: pushIds,
-        title,
-        message,
-      });
-      console.log('[PUSH] 발송 완료');
-    } else {
-      console.log('[PUSH] 필터 후 발송 대상 없음, 종료');
-    }
+    console.log('[PUSH] 회사/부서 발송 요청 완료');
   } catch (err) {
     console.error('[PUSH] 회사 푸시 발송 오류:', err);
   }
@@ -267,11 +233,9 @@ async function sendPushToUser({
   message,
 }: SendPushToUserParams): Promise<void> {
   try {
-    const pushIds = await getDeviceTokensForUsers([userId]);
-    if (pushIds.length === 0) return;
-
+    // 토큰 조회/발송은 서버가 담당 (같은 회사 유저로 제한됨)
     await sendPushNotification({
-      playerIds: pushIds,
+      target: { userIds: [userId] },
       title,
       message,
     });

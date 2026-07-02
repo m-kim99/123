@@ -149,6 +149,41 @@ Netlify/Vercel은 동일 헤더를 `[[headers]]` / `headers`로 추가.
 
 ---
 
+## 적용 현황 (2026-07-01 코드 반영)
+
+| # | 항목 | 코드 조치 | 파일 |
+|---|------|-----------|------|
+| 1 | R2 키 노출 | ✅ presigned URL 방식 전환, 클라이언트 키 제거 | `src/lib/r2.ts`, `supabase/functions/r2-presign/` |
+| 2 | data.sql 커밋 | ✅ gitignore + 인덱스 제거 | `.gitignore` |
+| 3 | Gemini 키 반환 | ✅ 30분·단회 임시 토큰 발급으로 변경 | `get-gemini-key`, `src/hooks/useGeminiLive.ts` |
+| 4 | RLS 검증 | ✅ 진단 쿼리 스크립트 작성 | `supabase/rls_verification.sql` |
+| 5 | .env.production.txt | ✅ gitignore + 인덱스 제거 | `.gitignore` |
+| 6 | GRANT anon 과다 | ✅ 축소 마이그레이션 작성 | `supabase/migrations/20260701000000_tighten_grants.sql` |
+| 7 | 푸시 토큰 소유권 | ✅ 서버(service_role) 대상 조회 + 발신자 회사 검증 | `send-push-notification`, `src/lib/notifications.ts`, `src/lib/pushNotifications.ts` |
+| 8 | 보안 헤더 | ✅ nginx/netlify/vercel 추가 | `nginx.conf`, `netlify.toml`, `vercel.json` |
+| 9 | CORS `*` | ⏸️ 코드 미변경(모바일 비표준 Origin 깨짐 위험 + 토큰 인증이라 이득 낮음) | — |
+
+## ⚠️ 배포 후 필수 수동 조치 (코드만으로는 완료 안 됨)
+
+1. **R2 키 rotate + Edge 시크릿 설정**
+   - 노출된 R2 키를 Cloudflare에서 폐기·재발급.
+   - `supabase secrets set R2_ACCOUNT_ID=... R2_ACCESS_KEY=... R2_SECRET_KEY=... R2_BUCKET=...`
+   - `supabase functions deploy r2-presign`
+   - R2 버킷 CORS에 웹 도메인 PUT 허용(브라우저 업로드용). 네이티브만 쓰면 생략 가능.
+2. **Gemini 임시 토큰 함수 재배포 + 음성기능 테스트**
+   - `supabase functions deploy get-gemini-key`
+   - 음성 모드 연결 확인(임시 토큰 미지원 키면 실패 → 키 형식 점검).
+3. **푸시 함수 재배포 + 발송 테스트**
+   - `supabase functions deploy send-push-notification`
+   - `SUPABASE_SERVICE_ROLE_KEY` 시크릿 설정 확인. 문서 업로드→푸시 수신 확인.
+4. **DB 마이그레이션 적용**
+   - `supabase db push` 또는 SQL Editor에서 `20260701000000_tighten_grants.sql` 실행.
+   - `rls_verification.sql`로 (a)~(d) 점검, 개방형 정책 있으면 제거.
+5. **git 히스토리 정리** (과거 커밋에 남은 `data.sql`/`.env.production.txt`)
+   - `git filter-repo --path data.sql --path .env.production.txt --invert-paths` 후 강제 푸시.
+   - 협업자 사전 조율 필요(히스토리 재작성).
+   - `data.sql`에 PII 포함 시 유출 범위 평가.
+
 ## 권장 처리 순서
 1. **#1 R2 키 차단 + 키 rotate** (가장 위험, 즉시)
 2. **#2 data.sql 히스토리 제거**
