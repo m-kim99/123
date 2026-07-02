@@ -1042,7 +1042,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           <div className="flex-1 flex items-center gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <button
+                type="button"
+                onClick={handleSearch}
+                aria-label={t('common.search')}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-[#2563eb] dark:hover:text-[#3b82f6]"
+              >
+                <Search className="h-4 w-4" />
+              </button>
               <Input
                 type="search"
                 placeholder={t('header.searchPlaceholder')}
@@ -1166,16 +1173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
-              onClick={handleSearch}
-            >
-              <img src={searchIcon} alt={t('common.search')} className="h-7 w-7 block object-contain" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg"
+              className="relative bg-white hover:border-[#2563eb] border-slate-200 rounded-lg shrink-0"
               onClick={async () => {
                 if (!isNotificationOpen) {
                   await requestLocalNotificationPermission();

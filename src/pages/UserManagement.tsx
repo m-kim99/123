@@ -405,7 +405,7 @@ export function UserManagement() {
         )}
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="w-[calc(100%-2rem)] max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-3rem)] max-w-xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('userMgmt.permDialogTitle', { name: selectedUser?.name })}</DialogTitle>
               <DialogDescription>{t('userMgmt.permDialogDesc')}</DialogDescription>
