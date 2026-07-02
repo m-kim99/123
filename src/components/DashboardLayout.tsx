@@ -1073,7 +1073,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
 
               {showSuggestions && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-lg overflow-hidden">
+                <div className="fixed left-4 right-4 top-[calc(4rem+env(safe-area-inset-top)+0.25rem)] z-50 max-h-[60vh] overflow-y-auto bg-white dark:bg-[#111827] border border-[#e5e7eb] dark:border-white/[0.08] rounded-xl shadow-lg">
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-slate-500">{t('common.searching')}</div>
                   ) : (
