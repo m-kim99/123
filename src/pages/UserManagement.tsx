@@ -405,7 +405,7 @@ export function UserManagement() {
         )}
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="w-[calc(100%-3rem)] max-w-xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-4rem)] max-w-xl max-h-[80vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>{t('userMgmt.permDialogTitle', { name: selectedUser?.name })}</DialogTitle>
               <DialogDescription>{t('userMgmt.permDialogDesc')}</DialogDescription>
@@ -418,7 +418,7 @@ export function UserManagement() {
 
                 return (
                   <Card key={dept.id}>
-                    <CardHeader className="pb-3">
+                    <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">{dept.name}</CardTitle>
                         {dept.id === selectedUser?.department_id && (
@@ -428,7 +428,7 @@ export function UserManagement() {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                         <Label className="text-sm text-slate-600 sm:min-w-[60px]">
                           {t('userMgmt.accessRole')}
