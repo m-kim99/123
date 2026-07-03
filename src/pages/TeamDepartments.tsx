@@ -84,7 +84,8 @@ export function TeamDepartments() {
           const { count: documentCount } = await supabase
             .from('documents')
             .select('*', { count: 'exact', head: true })
-            .eq('department_id', dept.id);
+            .eq('department_id', dept.id)
+            .is('deleted_at', null);
 
           const { count: memberCount } = await supabase
             .from('users')

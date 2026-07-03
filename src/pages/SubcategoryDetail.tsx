@@ -65,6 +65,7 @@ export function SubcategoryDetail() {
     fetchDocuments,
     uploadDocument,
     updateSubcategory,
+    deleteDocument,
     shareDocument,
     unshareDocument,
     updateDocumentFile,
@@ -587,41 +588,8 @@ export function SubcategoryDetail() {
         delete_context: 'subcategory_detail',
       });
 
-      const { data, error } = await supabase
-        .from('documents')
-        .select('file_path')
-        .eq('id', deletingDocumentId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const filePath = data?.file_path as string | undefined;
-
-      if (!filePath) {
-        console.error('파일 경로가 없습니다');
-      } else {
-        const { error: storageError } = await r2Storage.remove([filePath]);
-
-        if (storageError) {
-          console.error('Storage 삭제 실패:', storageError);
-        }
-      }
-
-      const { error: dbError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', deletingDocumentId);
-
-      if (dbError) {
-        throw dbError;
-      }
-
-      toast({
-        title: t('documentMgmt.deleteComplete'),
-        description: t('documentMgmt.deleteCompleteDesc'),
-      });
+      // 소프트 삭제(휴지통 이동) — 파일은 휴지통에서 영구 삭제할 때 제거된다
+      await deleteDocument(deletingDocumentId);
 
       await fetchDocuments();
 
@@ -653,13 +621,8 @@ export function SubcategoryDetail() {
       setDeleteDocDialogOpen(false);
       setDeletingDocumentId(null);
     } catch (error) {
+      // 실패 토스트는 deleteDocument 내부에서 표시됨
       console.error('문서 삭제 실패:', error);
-
-      toast({
-        title: t('documentMgmt.deleteFailed'),
-        description: t('documentMgmt.deleteFailedDesc'),
-        variant: 'destructive',
-      });
     } finally {
       setIsDeletingDocument(false);
     }

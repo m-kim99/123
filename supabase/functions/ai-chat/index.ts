@@ -106,7 +106,7 @@ async function searchDocumentCandidates(
   const topN = opts.topN ?? 5;
   const docSelect = 'id, title, uploaded_at, subcategory_id, parent_category_id, subcategory:subcategories(name, storage_location), parent_category:categories(id, name), department:departments(id, name)';
   const base = () => {
-    let q = supabase.from('documents').select(docSelect).in('department_id', deptIds).not('subcategory_id', 'is', null);
+    let q = supabase.from('documents').select(docSelect).in('department_id', deptIds).not('subcategory_id', 'is', null).is('deleted_at', null);
     if (opts.departmentId) q = q.eq('department_id', opts.departmentId);
     return q;
   };
@@ -286,7 +286,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           supabase.from('users').select('id', { count: 'exact', head: true }).eq('department_id', dept.id).eq('company_id', companyId),
           supabase.from('categories').select('id', { count: 'exact', head: true }).eq('department_id', dept.id),
           supabase.from('subcategories').select('id', { count: 'exact', head: true }).eq('department_id', dept.id),
-          supabase.from('documents').select('id', { count: 'exact', head: true }).eq('department_id', dept.id),
+          supabase.from('documents').select('id', { count: 'exact', head: true }).eq('department_id', dept.id).is('deleted_at', null),
         ]);
         return JSON.stringify({ department_name: dept.name, user_count: userCount.count, parent_category_count: catCount.count, subcategory_count: subCount.count, document_count: docCount.count });
       }
@@ -295,14 +295,14 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         if (!cat) return JSON.stringify({ error: `'${args.category_name}' 대분류를 찾을 수 없습니다.` });
         const [subCount, docCount] = await Promise.all([
           supabase.from('subcategories').select('id', { count: 'exact', head: true }).eq('parent_category_id', cat.id),
-          supabase.from('documents').select('id', { count: 'exact', head: true }).eq('parent_category_id', cat.id),
+          supabase.from('documents').select('id', { count: 'exact', head: true }).eq('parent_category_id', cat.id).is('deleted_at', null),
         ]);
         return JSON.stringify({ category_name: cat.name, department_name: cat.department?.name, subcategory_count: subCount.count, document_count: docCount.count });
       }
       case 'get_subcategory_stats': {
         const { data: sub } = await supabase.from('subcategories').select('id, name, storage_location, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single();
         if (!sub) return JSON.stringify({ error: `'${args.subcategory_name}' 세부카테고리를 찾을 수 없습니다.` });
-        const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('subcategory_id', sub.id);
+        const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('subcategory_id', sub.id).is('deleted_at', null);
         return JSON.stringify({ subcategory_name: sub.name, parent_category_name: sub.parent_category?.name, department_name: sub.department?.name, storage_location: sub.storage_location || '미지정', document_count: count });
       }
       case 'list_children': {
@@ -320,7 +320,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         } else {
           const { data: sub } = await supabase.from('subcategories').select('id, name').in('department_id', deptIds).ilike('name', `%${parent_name}%`).single();
           if (!sub) return JSON.stringify({ error: `'${parent_name}' 세부카테고리를 찾을 수 없습니다.`, children: [], count: 0 });
-          const { data } = await supabase.from('documents').select('title').eq('subcategory_id', sub.id).limit(limit);
+          const { data } = await supabase.from('documents').select('title').eq('subcategory_id', sub.id).is('deleted_at', null).limit(limit);
           return JSON.stringify({ parent: sub.name, children: (data || []).map((d: any) => d.title), count: data?.length || 0 });
         }
       }
@@ -329,7 +329,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           supabase.from('departments').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
           supabase.from('categories').select('id', { count: 'exact', head: true }).in('department_id', deptIds),
           supabase.from('subcategories').select('id', { count: 'exact', head: true }).in('department_id', deptIds),
-          supabase.from('documents').select('id', { count: 'exact', head: true }).in('department_id', deptIds),
+          supabase.from('documents').select('id', { count: 'exact', head: true }).in('department_id', deptIds).is('deleted_at', null),
           supabase.from('users').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
         ]);
         return JSON.stringify({ departments: deptCount.count, parent_categories: catCount.count, subcategories: subCount.count, documents: docCount.count, users: userCount.count });
@@ -347,7 +347,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           const { data: d } = await supabase.from('subcategories').select('name, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).limit(limit);
           data = d || [];
         } else {
-          const { data: d } = await supabase.from('documents').select('title, department:departments(name)').in('department_id', deptIds).limit(limit);
+          const { data: d } = await supabase.from('documents').select('title, department:departments(name)').in('department_id', deptIds).is('deleted_at', null).limit(limit);
           data = d || [];
         }
         const items = data.map((item: any) => {
@@ -363,7 +363,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         const { limit = 5 } = args;
         const { data } = await supabase.from('departments').select('id, name').eq('company_id', companyId);
         const ranking = await Promise.all((data || []).map(async (dept: any) => {
-          const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('department_id', dept.id);
+          const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('department_id', dept.id).is('deleted_at', null);
           return { name: dept.name, document_count: count };
         }));
         ranking.sort((a, b) => b.document_count - a.document_count);
@@ -374,7 +374,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         const { data } = await supabase.from('subcategories').select('id, name').in('department_id', deptIds).limit(limit * 2);
         const empty = [];
         for (const sub of data || []) {
-          const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('subcategory_id', sub.id);
+          const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('subcategory_id', sub.id).is('deleted_at', null);
           if (count === 0) empty.push(sub.name);
           if (empty.length >= limit) break;
         }
@@ -383,7 +383,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       case 'get_hierarchy_path': {
         const { entity_type, name: n } = args;
         if (entity_type === 'document') {
-          const { data: doc } = await supabase.from('documents').select('title, subcategory:subcategories(name), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('title', `%${n}%`).single();
+          const { data: doc } = await supabase.from('documents').select('title, subcategory:subcategories(name), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).is('deleted_at', null).ilike('title', `%${n}%`).single();
           if (!doc) return JSON.stringify({ error: `'${n}' 문서를 찾을 수 없습니다.` });
           return JSON.stringify({ path: `${doc.department?.name} → ${doc.parent_category?.name} → ${doc.subcategory?.name} → ${doc.title}`, department: doc.department?.name, parent_category: doc.parent_category?.name, subcategory: doc.subcategory?.name, document: doc.title });
         } else if (entity_type === 'parent_category') {

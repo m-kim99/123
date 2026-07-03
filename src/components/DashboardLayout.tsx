@@ -462,6 +462,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .from('documents')
         .select('title, ocr_text')
         .or(`title.ilike.%${trimmed}%,ocr_text.ilike.%${trimmed}%`)
+        .is('deleted_at', null)
         .limit(5);
 
       setSearchSuggestions({

@@ -70,7 +70,7 @@ export function CompanyManagement() {
 
       const [userCounts, docCounts, deptCounts] = await Promise.all([
         supabase.from('users').select('company_id').in('company_id', companyIds),
-        supabase.from('documents').select('company_id').in('company_id', companyIds),
+        supabase.from('documents').select('company_id').in('company_id', companyIds).is('deleted_at', null),
         supabase.from('departments').select('company_id').in('company_id', companyIds),
       ]);
 

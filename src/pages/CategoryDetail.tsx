@@ -99,7 +99,7 @@ export function CategoryDetail() {
   const departments = useDocumentStore((state) => state.departments);
   const subcategories = useDocumentStore((state) => state.subcategories);
   // 함수는 한 번에 가져오기 (참조 안정적)
-  const { fetchDocuments, uploadDocument, shareDocument, unshareDocument } = useDocumentStore();
+  const { fetchDocuments, uploadDocument, deleteDocument, shareDocument, unshareDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
   const primaryColor = '#2563eb';
 
@@ -809,45 +809,10 @@ export function CategoryDetail() {
         delete_context: 'category_detail',
       });
 
-      const { data, error } = await supabase
-        .from('documents')
-        .select('file_path')
-        .eq('id', deletingDocumentId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const filePath = data?.file_path as string | undefined;
-      console.log('삭제할 파일 경로:', filePath);
-      console.log('타입:', typeof filePath);
-
-      if (!filePath) {
-        console.error('파일 경로가 없습니다');
-      } else {
-        const { error: storageError } = await r2Storage.remove([filePath]);
-
-        if (storageError) {
-          console.error('Storage 삭제 실패:', storageError);
-        }
-      }
-
-      const { error: dbError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', deletingDocumentId);
-
-      if (dbError) {
-        throw dbError;
-      }
+      // 소프트 삭제(휴지통 이동) — 파일은 휴지통에서 영구 삭제할 때 제거된다
+      await deleteDocument(deletingDocumentId);
 
       await fetchDocuments();
-
-      toast({
-        title: t('documentMgmt.deleteComplete'),
-        description: t('documentMgmt.deleteCompleteDesc'),
-      });
 
       if (user?.companyId && targetDoc) {
         const subcategoryForDoc = subcategories.find(
@@ -870,14 +835,8 @@ export function CategoryDetail() {
 
       handleCloseDeleteDialog();
     } catch (error) {
+      // 실패 토스트는 deleteDocument 내부에서 표시됨
       console.error('문서 삭제 실패:', error);
-
-
-      toast({
-        title: t('documentMgmt.deleteFailed'),
-        description: t('documentMgmt.deleteFailedDesc'),
-        variant: 'destructive',
-      });
     } finally {
       setIsDeletingDocument(false);
     }

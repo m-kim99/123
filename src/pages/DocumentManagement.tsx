@@ -181,6 +181,7 @@ export function DocumentManagement() {
     fetchDocuments,
     updateSubcategory,
     deleteSubcategory,
+    deleteDocument,
     updateDocumentOcrText,
     shareDocument,
     unshareDocument,
@@ -1052,43 +1053,10 @@ export function DocumentManagement() {
         delete_context: 'document_management',
       });
 
-      const { data, error } = await supabase
-        .from('documents')
-        .select('file_path')
-        .eq('id', deletingDocumentId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const filePath = data?.file_path as string | undefined;
-
-      if (!filePath) {
-        console.error('파일 경로가 없습니다');
-      } else {
-        const { error: storageError } = await r2Storage.remove([filePath]);
-
-        if (storageError) {
-          console.error('Storage 삭제 실패:', storageError);
-        }
-      }
-
-      const { error: dbError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', deletingDocumentId);
-
-      if (dbError) {
-        throw dbError;
-      }
-
       const targetDoc = documents.find((d) => d.id === deletingDocumentId);
 
-      toast({
-        title: t('documentMgmt.deleteComplete'),
-        description: t('documentMgmt.docDeletedDesc'),
-      });
+      // 소프트 삭제(휴지통 이동) — 파일은 휴지통에서 영구 삭제할 때 제거된다
+      await deleteDocument(deletingDocumentId);
 
       await fetchDocuments();
 
@@ -1120,13 +1088,8 @@ export function DocumentManagement() {
       setDeleteDocDialogOpen(false);
       setDeletingDocumentId(null);
     } catch (error) {
+      // 실패 토스트는 deleteDocument 내부에서 표시됨
       console.error('문서 삭제 실패:', error);
-
-      toast({
-        title: t('documentMgmt.deleteFailed'),
-        description: t('documentMgmt.docDeleteFailedDesc'),
-        variant: 'destructive',
-      });
     } finally {
       setIsDeletingDocument(false);
     }

@@ -217,7 +217,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         const { data: docData } = await supabase
           .from('documents')
           .select('parent_category_id')
-          .in('parent_category_id', allCategoryIds);
+          .in('parent_category_id', allCategoryIds)
+          .is('deleted_at', null);
 
         (docData || []).forEach((doc: { parent_category_id: string }) => {
           docsByCategory[doc.parent_category_id] =
@@ -308,7 +309,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { data: docData } = await supabase
         .from('documents')
         .select('parent_category_id')
-        .in('parent_category_id', categoryIds);
+        .in('parent_category_id', categoryIds)
+        .is('deleted_at', null);
 
       (docData || []).forEach((doc: { parent_category_id: string }) => {
         docsByCategory[doc.parent_category_id] =
@@ -392,7 +394,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         supabase
           .from('documents')
           .select('parent_category_id')
-          .in('parent_category_id', catIds),
+          .in('parent_category_id', catIds)
+          .is('deleted_at', null),
       ]);
 
       const subCountByCategory: Record<string, number> = {};
@@ -483,7 +486,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { data: docData } = await supabase
         .from('documents')
         .select('subcategory_id')
-        .in('subcategory_id', subIds);
+        .in('subcategory_id', subIds)
+        .is('deleted_at', null);
 
       const docCountBySub: Record<string, number> = {};
       (docData || []).forEach((d: { subcategory_id: string }) => {
