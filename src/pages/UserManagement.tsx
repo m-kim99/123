@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { requestInnopayPayment } from '@/lib/payments';
+import { requestInnopayPayment, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -59,18 +59,21 @@ export function UserManagement() {
   const { user: authUser } = useAuthStore();
   const [memberLimit, setMemberLimit] = useState<{ current: number; limit: number | null } | null>(null);
 
-  // 플랜 업그레이드(인원 추가) 다이얼로그
-  const PRICE_PER_MEMBER = 3300;
+  // 플랜 업그레이드(구독 결제) 다이얼로그 — 베이직: 인당 6,600원·최대 3인, 프로: 인당 15,000원·인원수 지정
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [upgradePlan, setUpgradePlan] = useState<PaidPlanName>('pro');
   const [additionalMembers, setAdditionalMembers] = useState('1');
   const parsedMembers = Math.max(0, parseInt(additionalMembers, 10) || 0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
+  const upgradePricing = PLAN_PRICING[upgradePlan];
+  const exceedsPlanLimit =
+    upgradePricing.maxMembers !== null && parsedMembers > upgradePricing.maxMembers;
 
-  // PayApp 정기결제 요청
+  // 이노페이 정기결제 요청
   const handleSubscribe = async () => {
-    if (!authUser || parsedMembers < 1 || !agreedToTerms) return;
+    if (!authUser || parsedMembers < 1 || exceedsPlanLimit || !agreedToTerms) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -78,13 +81,17 @@ export function UserManagement() {
     setIsRequestingPayment(true);
     try {
       await requestInnopayPayment({
+        plan: upgradePlan,
         customerKey: authUser.id,
         customerEmail: authUser.email,
         customerName: authUser.name,
         customerPhone,
         memberCount: parsedMembers,
-        amount: parsedMembers * PRICE_PER_MEMBER,
-        goodsName: t('subscription.productName'),
+        amount: parsedMembers * upgradePricing.pricePerMember,
+        goodsName:
+          upgradePlan === 'basic'
+            ? t('subscription.productNameBasic')
+            : t('subscription.productNamePro'),
       });
     } catch (error) {
       console.error('결제 요청 실패:', error);
@@ -512,23 +519,64 @@ export function UserManagement() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label>{t('subscription.planSelectLabel')}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['basic', 'pro'] as const).map((planName) => (
+                    <button
+                      key={planName}
+                      type="button"
+                      onClick={() => setUpgradePlan(planName)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        upgradePlan === planName
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm">
+                        {planName === 'basic' ? t('subscription.basic') : t('subscription.pro')}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1">
+                        ₩{PLAN_PRICING[planName].pricePerMember.toLocaleString()}
+                        {t('subscription.perPersonMonth')}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {planName === 'basic'
+                          ? t('subscription.basicMemberLimit')
+                          : t('subscription.customMemberCount')}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="additional-members">{t('subscription.memberCountLabel')}</Label>
                 <Input
                   id="additional-members"
                   type="number"
                   min={1}
+                  max={upgradePricing.maxMembers ?? undefined}
                   value={additionalMembers}
                   onChange={(e) => setAdditionalMembers(e.target.value)}
                 />
+                {exceedsPlanLimit && (
+                  <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                )}
               </div>
               <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">{t('subscription.productLabel')}</span>
-                  <span className="font-medium">{t('subscription.productName')}</span>
+                  <span className="font-medium">
+                    {upgradePlan === 'basic'
+                      ? t('subscription.productNameBasic')
+                      : t('subscription.productNamePro')}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">{t('subscription.unitPrice')}</span>
-                  <span className="font-medium">₩3,300{t('subscription.perPersonMonth')}</span>
+                  <span className="font-medium">
+                    ₩{upgradePricing.pricePerMember.toLocaleString()}
+                    {t('subscription.perPersonMonth')}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customer-phone" className="text-sm text-slate-600">
@@ -545,7 +593,7 @@ export function UserManagement() {
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                   <span className="text-xl font-bold text-[#2563eb]">
-                    ₩{(parsedMembers * PRICE_PER_MEMBER).toLocaleString()}
+                    ₩{(parsedMembers * upgradePricing.pricePerMember).toLocaleString()}
                     <span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span>
                   </span>
                 </div>
@@ -572,7 +620,7 @@ export function UserManagement() {
               </Button>
               <Button
                 className="rounded-[10px] h-9"
-                disabled={parsedMembers < 1 || !agreedToTerms || isRequestingPayment}
+                disabled={parsedMembers < 1 || exceedsPlanLimit || !agreedToTerms || isRequestingPayment}
                 onClick={handleSubscribe}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}

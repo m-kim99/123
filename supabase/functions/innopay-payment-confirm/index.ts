@@ -16,7 +16,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PRICE_PER_MEMBER = 3300;
+// 유료 플랜 가격 정책 (부가세 포함) — 클라이언트 src/lib/payments.ts의 PLAN_PRICING과 동일하게 유지할 것
+const PLAN_PRICING: Record<string, { pricePerMember: number; maxMembers: number | null }> = {
+  basic: { pricePerMember: 6600, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  pro: { pricePerMember: 15000, maxMembers: null }, // 프로: 인당 15,000원, 인원수 지정 가능
+};
 const INNOPAY_API_URL = 'https://api.innopay.co.kr/v1/transactions/pay';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -62,20 +66,25 @@ serve(async (req) => {
       return jsonResponse({ error: 'PAYMENT_NOT_CONFIGURED' }, 500);
     }
 
-    const { tid, paymentToken, moid, customerKey, memberCount, amount } = await req.json();
+    const { tid, paymentToken, moid, plan, customerKey, memberCount, amount } = await req.json();
 
     if (!tid || !paymentToken || !moid || !customerKey || !memberCount || !amount) {
       return jsonResponse({ error: 'MISSING_PARAMS' }, 400);
     }
 
+    // 구버전 클라이언트 호환: plan 미전달 시 basic으로 처리
+    const planName = typeof plan === 'string' && plan in PLAN_PRICING ? plan : 'basic';
+    const pricing = PLAN_PRICING[planName];
+
     const parsedMembers = Number(memberCount);
     const parsedAmount = Number(amount);
 
-    // 금액 위변조 방지
+    // 금액/인원 위변조 방지 (베이직은 최대 3인)
     if (
       !Number.isInteger(parsedMembers) ||
       parsedMembers < 1 ||
-      parsedAmount !== parsedMembers * PRICE_PER_MEMBER
+      (pricing.maxMembers !== null && parsedMembers > pricing.maxMembers) ||
+      parsedAmount !== parsedMembers * pricing.pricePerMember
     ) {
       return jsonResponse({ error: 'INVALID_AMOUNT' }, 400);
     }
@@ -161,14 +170,14 @@ serve(async (req) => {
     }
 
     // 구독 활성화
-    const { data: basicPlan } = await supabaseAdmin
+    const { data: planRow } = await supabaseAdmin
       .from('plans')
       .select('id')
-      .eq('name', 'basic')
+      .eq('name', planName)
       .single();
 
-    if (!basicPlan) {
-      console.error('basic 플랜을 찾을 수 없습니다.');
+    if (!planRow) {
+      console.error(`${planName} 플랜을 찾을 수 없습니다.`);
       return jsonResponse({ error: 'PLAN_NOT_FOUND' }, 500);
     }
 
@@ -181,7 +190,7 @@ serve(async (req) => {
     const cardNumber = approved.card?.cardNum || null;
 
     const subscriptionFields = {
-      plan_id: basicPlan.id,
+      plan_id: planRow.id,
       status: 'active',
       billing_cycle: 'monthly',
       payment_provider: 'innopay',

@@ -106,13 +106,14 @@ const TermsKo = () => (
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">요금제</th><th className="border border-slate-300 p-2 text-left">이용요금</th><th className="border border-slate-300 p-2 text-left">주요 내용</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">무료 요금제</td><td className="border border-slate-300 p-2">무료</td><td className="border border-slate-300 p-2">조직(회원 계정)당 최대 10명의 멤버까지 이용 가능</td></tr>
-        <tr><td className="border border-slate-300 p-2">베이직 요금제</td><td className="border border-slate-300 p-2">멤버 1인당 월 3,300원 (최소 3인 이상 구독)</td><td className="border border-slate-300 p-2">유료 결제 시 회사가 제공하는 기본 기능을 모두 이용 가능</td></tr>
+        <tr><td className="border border-slate-300 p-2">베이직 요금제</td><td className="border border-slate-300 p-2">멤버 1인당 월 6,600원 (최대 3인, 인원 추가 불가)</td><td className="border border-slate-300 p-2">유료 결제 시 회사가 제공하는 기본 기능을 모두 이용 가능</td></tr>
+        <tr><td className="border border-slate-300 p-2">프로 요금제</td><td className="border border-slate-300 p-2">멤버 1인당 월 15,000원 (인원수 지정 가능)</td><td className="border border-slate-300 p-2">기본 기능에 더하여 AI 챗봇, NFC 등 고급 기능 이용 가능</td></tr>
       </tbody>
     </table>
-    <p>③ 베이직 요금제는 멤버 1인당 월 3,300원(부가가치세 포함)의 정기 결제형 상품으로, 최소 3인 이상부터 구독할 수 있습니다. 따라서 베이직 요금제의 최소 월 이용요금은 3인 기준 월 9,900원입니다.</p>
-    <p>④ 유료 요금제(베이직 요금제)를 결제한 회원은 회사가 제공하는 기본 기능을 멤버 수 및 용량 등의 제한 없이 모두 이용할 수 있습니다. 다만, 회사가 별도로 정한 부가 서비스 또는 추가 기능에 대해서는 별도의 요금이 부과될 수 있으며, 이 경우 사전에 공지합니다.</p>
+    <p>③ 베이직 요금제는 멤버 1인당 월 6,600원(부가가치세 포함)의 정기 결제형 상품으로, 최대 3인까지만 구독할 수 있으며 구독 인원의 추가는 불가능합니다. 프로 요금제는 멤버 1인당 월 15,000원(부가가치세 포함)의 정기 결제형 상품으로, 회원이 필요한 인원수를 자유롭게 지정하여 구독할 수 있습니다.</p>
+    <p>④ 유료 요금제(베이직·프로 요금제)를 결제한 회원은 회사가 제공하는 기본 기능을 모두 이용할 수 있습니다. 다만, 요금제별 이용 범위(구독 인원 수 등)는 제12조 및 서비스 화면에서 정하는 바에 따르며, 회사가 별도로 정한 부가 서비스 또는 추가 기능에 대해서는 별도의 요금이 부과될 수 있으며, 이 경우 사전에 공지합니다.</p>
     <p>⑤ 정기 결제는 최초 결제일을 기준으로 매월 같은 일자에 회원이 선택한 결제 수단으로 자동 결제되며, 회원이 해지하지 않는 한 1개월 단위로 자동 갱신됩니다. 매월 결제일이 정기적으로 도래하지 않는 경우(예: 31일이 없는 달) 해당 월의 말일에 결제되며, 결제일이 휴일 또는 공휴일인 경우에도 정상적으로 결제가 진행됩니다.</p>
-    <p>⑥ 구독 기간 중 멤버를 추가하거나 감원하는 경우, 변경된 멤버 수는 다음 정기 결제일부터 반영됩니다. 멤버 추가에 따른 차액 정산 방식 등 세부 사항은 서비스 화면 또는 회사가 정한 운영정책에 따릅니다.</p>
+    <p>⑥ 구독 기간 중 멤버를 추가하거나 감원하는 경우, 변경된 멤버 수는 다음 정기 결제일부터 반영됩니다. 다만 베이직 요금제는 최대 3인을 초과하여 멤버를 추가할 수 없으며, 3인을 초과하는 인원이 필요한 경우 프로 요금제로 전환해야 합니다. 멤버 추가에 따른 차액 정산 방식 등 세부 사항은 서비스 화면 또는 회사가 정한 운영정책에 따릅니다.</p>
     <p>⑦ 회원은 신용카드 결제, 무통장 입금, 가상계좌 이체, 기타 회사가 지정하는 결제 수단을 이용하여 이용요금을 납부할 수 있습니다.</p>
     <p>⑧ 회원이 결제 시 선택한 결제 수단의 한도 초과, 잔고 부족, 결제 수단의 임의 해지 등으로 이용요금을 체납하는 경우, 회사는 연체가 발생한 일자에 유료 요금제의 서비스 이용을 중단하거나 무료 요금제로 전환할 수 있습니다.</p>
     <p>⑨ 회원이 결제수단에 대해 정당한 사용권한을 가지고 있지 않거나, 결제 이후 해당 결제수단에 대한 이의를 제기하거나 결제를 거부하는 경우 회사는 서비스 제공을 중단할 수 있습니다.</p>
@@ -139,7 +140,8 @@ const TermsKo = () => (
         <tr><td className="border border-slate-300 p-2">파일 업로드</td><td className="border border-slate-300 p-2">1회 업로드 시 최대 50MB, 지원 형식은 PDF, JPG, PNG</td></tr>
         <tr><td className="border border-slate-300 p-2">동시 접속</td><td className="border border-slate-300 p-2">1계정당 1기기에서만 동시 접속 가능</td></tr>
         <tr><td className="border border-slate-300 p-2">무료 요금제</td><td className="border border-slate-300 p-2">조직(회원 계정)당 최대 10명의 멤버까지 이용 가능하며, 회사가 정한 기본 기능을 이용할 수 있습니다.</td></tr>
-        <tr><td className="border border-slate-300 p-2">유료 요금제(베이직)</td><td className="border border-slate-300 p-2">멤버 1인당 월 3,300원(최소 3인 이상 구독)으로, 회사가 제공하는 기본 기능을 멤버 수 및 용량 등의 제한 없이 모두 이용할 수 있습니다.</td></tr>
+        <tr><td className="border border-slate-300 p-2">유료 요금제(베이직)</td><td className="border border-slate-300 p-2">멤버 1인당 월 6,600원(최대 3인, 인원 추가 불가)으로, 회사가 제공하는 기본 기능을 이용할 수 있습니다.</td></tr>
+        <tr><td className="border border-slate-300 p-2">유료 요금제(프로)</td><td className="border border-slate-300 p-2">멤버 1인당 월 15,000원(인원수 지정 가능)으로, 회사가 제공하는 기본 기능 및 고급 기능을 이용할 수 있습니다.</td></tr>
       </tbody>
     </table>
     <p>② 무료 요금제를 이용 중인 조직의 멤버 수가 10명을 초과하게 되는 경우, 회사는 유료 요금제로의 전환을 안내할 수 있으며, 전환 전까지 멤버 추가 등 일부 기능의 이용이 제한될 수 있습니다.</p>
@@ -395,13 +397,14 @@ const TermsEn = () => (
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Plan</th><th className="border border-slate-300 p-2 text-left">Fee</th><th className="border border-slate-300 p-2 text-left">Key Details</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">Free Plan</td><td className="border border-slate-300 p-2">Free</td><td className="border border-slate-300 p-2">Up to ten (10) Seats per organization (member account)</td></tr>
-        <tr><td className="border border-slate-300 p-2">Basic Plan</td><td className="border border-slate-300 p-2">KRW 3,300 per Seat per month (minimum 3 Seats)</td><td className="border border-slate-300 p-2">Full access to the basic features provided by the Company upon paid subscription</td></tr>
+        <tr><td className="border border-slate-300 p-2">Basic Plan</td><td className="border border-slate-300 p-2">KRW 6,600 per Seat per month (up to 3 Seats; no additional Seats)</td><td className="border border-slate-300 p-2">Full access to the basic features provided by the Company upon paid subscription</td></tr>
+        <tr><td className="border border-slate-300 p-2">Pro Plan</td><td className="border border-slate-300 p-2">KRW 15,000 per Seat per month (customizable number of Seats)</td><td className="border border-slate-300 p-2">Access to the basic features plus advanced features such as AI chatbot and NFC</td></tr>
       </tbody>
     </table>
-    <p>③ The Basic Plan is a recurring subscription product priced at KRW 3,300 per Seat per month (VAT included), available for subscription from a minimum of three (3) Seats. Accordingly, the minimum monthly fee for the Basic Plan is KRW 9,900 based on three (3) Seats.</p>
-    <p>④ A Member who has subscribed to the Paid Plan (Basic Plan) may use all basic features provided by the Company without limitations on the number of Seats, capacity, or the like. However, separate fees may apply to add-on services or additional features separately determined by the Company, in which case prior notice shall be given.</p>
+    <p>③ The Basic Plan is a recurring subscription product priced at KRW 6,600 per Seat per month (VAT included), available for up to a maximum of three (3) Seats, and additional Seats cannot be added under the Basic Plan. The Pro Plan is a recurring subscription product priced at KRW 15,000 per Seat per month (VAT included), and Members may freely designate the number of Seats to subscribe to.</p>
+    <p>④ A Member who has subscribed to a Paid Plan (Basic or Pro Plan) may use all basic features provided by the Company. However, the scope of use for each plan (such as the number of subscribed Seats) shall be governed by Article 12 and the Service screen, and separate fees may apply to add-on services or additional features separately determined by the Company, in which case prior notice shall be given.</p>
     <p>⑤ Recurring payments are automatically charged to the Member's selected payment method on the same date each month based on the initial payment date, and are automatically renewed on a monthly basis unless the Member cancels. If the payment date does not regularly occur in a given month (e.g., a month without the 31st), payment shall be made on the last day of that month, and payment shall proceed normally even if the payment date falls on a holiday or public holiday.</p>
-    <p>⑥ If Seats are added or reduced during the subscription period, the changed number of Seats shall be reflected from the next recurring payment date. Detailed matters such as the method of settling differences arising from added Seats shall be governed by the Service screen or the operational policy determined by the Company.</p>
+    <p>⑥ If Seats are added or reduced during the subscription period, the changed number of Seats shall be reflected from the next recurring payment date. However, under the Basic Plan, Seats cannot be added beyond three (3); a Member requiring more than three (3) Seats must switch to the Pro Plan. Detailed matters such as the method of settling differences arising from added Seats shall be governed by the Service screen or the operational policy determined by the Company.</p>
     <p>⑦ Members may pay service fees using the following payment methods: credit card payment; bank transfer; virtual account transfer; other payment methods designated by the Company.</p>
     <p>⑧ If a Member fails to pay fees due to exceeding the limit of, insufficient balance in, or unilateral cancellation of the selected payment method, the Company may suspend the Paid Plan service or convert the account to the Free Plan on the date the delinquency occurs.</p>
     <p>⑨ If a Member does not have legitimate authorization to use the payment method, or raises an objection to or refuses the payment after it has been made, the Company may suspend the provision of the Service.</p>
@@ -428,7 +431,8 @@ const TermsEn = () => (
         <tr><td className="border border-slate-300 p-2">File Upload</td><td className="border border-slate-300 p-2">Maximum 50 MB per upload; supported formats: PDF, JPG, PNG</td></tr>
         <tr><td className="border border-slate-300 p-2">Simultaneous Access</td><td className="border border-slate-300 p-2">Only one (1) device per account may be logged in simultaneously</td></tr>
         <tr><td className="border border-slate-300 p-2">Free Plan</td><td className="border border-slate-300 p-2">Up to ten (10) Seats per organization (member account); access to the basic features determined by the Company</td></tr>
-        <tr><td className="border border-slate-300 p-2">Paid Plan (Basic)</td><td className="border border-slate-300 p-2">KRW 3,300 per Seat per month (minimum 3 Seats); full access to the basic features provided by the Company without limitations on the number of Seats, capacity, or the like</td></tr>
+        <tr><td className="border border-slate-300 p-2">Paid Plan (Basic)</td><td className="border border-slate-300 p-2">KRW 6,600 per Seat per month (up to 3 Seats; no additional Seats); access to the basic features provided by the Company</td></tr>
+        <tr><td className="border border-slate-300 p-2">Paid Plan (Pro)</td><td className="border border-slate-300 p-2">KRW 15,000 per Seat per month (customizable number of Seats); access to the basic and advanced features provided by the Company</td></tr>
       </tbody>
     </table>
     <p>② If the number of Seats in an organization using the Free Plan exceeds ten (10), the Company may guide the organization to transition to the Paid Plan, and the use of certain features such as adding Seats may be restricted until the transition.</p>
@@ -684,13 +688,14 @@ const TermsJa = () => (
       <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">プラン</th><th className="border border-slate-300 p-2 text-left">利用料金</th><th className="border border-slate-300 p-2 text-left">主な内容</th></tr></thead>
       <tbody>
         <tr><td className="border border-slate-300 p-2">無料プラン</td><td className="border border-slate-300 p-2">無料</td><td className="border border-slate-300 p-2">組織（会員アカウント）当たり最大10名のメンバーまで利用可能</td></tr>
-        <tr><td className="border border-slate-300 p-2">ベーシックプラン</td><td className="border border-slate-300 p-2">メンバー1人当たり月3,300ウォン（最低3人以上の購読）</td><td className="border border-slate-300 p-2">有料決済時、当社が提供する基本機能をすべて利用可能</td></tr>
+        <tr><td className="border border-slate-300 p-2">ベーシックプラン</td><td className="border border-slate-300 p-2">メンバー1人当たり月6,600ウォン（最大3人、人数追加不可）</td><td className="border border-slate-300 p-2">有料決済時、当社が提供する基本機能をすべて利用可能</td></tr>
+        <tr><td className="border border-slate-300 p-2">プロプラン</td><td className="border border-slate-300 p-2">メンバー1人当たり月15,000ウォン（人数指定可能）</td><td className="border border-slate-300 p-2">基本機能に加え、AIチャットボット、NFC等の高度な機能を利用可能</td></tr>
       </tbody>
     </table>
-    <p>③ ベーシックプランは、メンバー1人当たり月3,300ウォン（付加価値税込み）の定期決済型商品であり、最低3人以上から購読することができます。したがって、ベーシックプランの最低月利用料金は、3人基準で月9,900ウォンです。</p>
-    <p>④ 有料プラン（ベーシックプラン）を決済した会員は、当社が提供する基本機能を、メンバー数及び容量等の制限なくすべて利用することができます。ただし、当社が別途定める付加サービス又は追加機能については、別途の料金が課される場合があり、この場合は事前に告知します。</p>
+    <p>③ ベーシックプランは、メンバー1人当たり月6,600ウォン（付加価値税込み）の定期決済型商品であり、最大3人まで購読することができ、購読中のメンバー追加はできません。プロプランは、メンバー1人当たり月15,000ウォン（付加価値税込み）の定期決済型商品であり、会員が必要な人数を自由に指定して購読することができます。</p>
+    <p>④ 有料プラン（ベーシック・プロプラン）を決済した会員は、当社が提供する基本機能を利用することができます。ただし、プランごとの利用範囲（購読人数等）は第12条及び本サービス画面に従い、当社が別途定める付加サービス又は追加機能については、別途の料金が課される場合があり、この場合は事前に告知します。</p>
     <p>⑤ 定期決済は、最初の決済日を基準に毎月同じ日付に会員が選択した決済手段で自動決済され、会員が解約しない限り1か月単位で自動更新されます。毎月の決済日が定期的に到来しない場合（例：31日がない月）は当該月の末日に決済され、決済日が休日又は祝日である場合にも正常に決済が進行します。</p>
-    <p>⑥ 購読期間中にメンバーを追加又は減員する場合、変更されたメンバー数は次回の定期決済日から反映されます。メンバー追加に伴う差額精算方式等の詳細事項は、本サービス画面又は当社が定める運営方針に従います。</p>
+    <p>⑥ 購読期間中にメンバーを追加又は減員する場合、変更されたメンバー数は次回の定期決済日から反映されます。ただし、ベーシックプランでは最大3人を超えてメンバーを追加することはできず、3人を超える人数が必要な場合はプロプランへの転換が必要です。メンバー追加に伴う差額精算方式等の詳細事項は、本サービス画面又は当社が定める運営方針に従います。</p>
     <p>⑦ 会員は、クレジットカード決済、銀行振込、仮想口座振替、その他当社が指定する決済手段を利用して利用料金を納付することができます。</p>
     <p>⑧ 会員が決済時に選択した決済手段の限度超過、残高不足、決済手段の任意解約等により利用料金を滞納する場合、当社は延滞が発生した日に有料プランのサービス利用を中断し、又は無料プランに転換することができます。</p>
     <p>⑨ 会員が決済手段について正当な使用権限を有していない場合、又は決済以後に当該決済手段について異議を申し立て、若しくは決済を拒否する場合、当社は本サービスの提供を中断することができます。</p>
@@ -717,7 +722,8 @@ const TermsJa = () => (
         <tr><td className="border border-slate-300 p-2">ファイルアップロード</td><td className="border border-slate-300 p-2">1回のアップロード時最大50MB、対応形式はPDF、JPG、PNG</td></tr>
         <tr><td className="border border-slate-300 p-2">同時接続</td><td className="border border-slate-300 p-2">1アカウント当たり1台の端末でのみ同時接続可能</td></tr>
         <tr><td className="border border-slate-300 p-2">無料プラン</td><td className="border border-slate-300 p-2">組織（会員アカウント）当たり最大10名のメンバーまで利用可能であり、当社が定める基本機能を利用することができます。</td></tr>
-        <tr><td className="border border-slate-300 p-2">有料プラン（ベーシック）</td><td className="border border-slate-300 p-2">メンバー1人当たり月3,300ウォン（最低3人以上の購読）で、当社が提供する基本機能を、メンバー数及び容量等の制限なくすべて利用することができます。</td></tr>
+        <tr><td className="border border-slate-300 p-2">有料プラン（ベーシック）</td><td className="border border-slate-300 p-2">メンバー1人当たり月6,600ウォン（最大3人、人数追加不可）で、当社が提供する基本機能を利用することができます。</td></tr>
+        <tr><td className="border border-slate-300 p-2">有料プラン（プロ）</td><td className="border border-slate-300 p-2">メンバー1人当たり月15,000ウォン（人数指定可能）で、当社が提供する基本機能及び高度な機能を利用することができます。</td></tr>
       </tbody>
     </table>
     <p>② 無料プランを利用中の組織のメンバー数が10名を超過することになる場合、当社は有料プランへの転換を案内することができ、転換前まではメンバー追加等一部機能の利用が制限される場合があります。</p>

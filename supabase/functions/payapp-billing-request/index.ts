@@ -13,7 +13,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PRICE_PER_MEMBER = 3300;
+const PRICE_PER_MEMBER = 6600; // 베이직: 인당 6,600원 (부가세 포함)
+const MAX_MEMBERS = 3; // 베이직: 최대 3인 (인원 추가 불가)
 const PAYAPP_API_URL = 'https://api.payapp.kr/oapi/apiLoad.html';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -49,10 +50,11 @@ serve(async (req) => {
     const parsedMembers = Number(memberCount);
     const parsedAmount = Number(amount);
 
-    // 금액 위변조 방지
+    // 금액/인원 위변조 방지 (베이직은 최대 3인)
     if (
       !Number.isInteger(parsedMembers) ||
       parsedMembers < 1 ||
+      parsedMembers > MAX_MEMBERS ||
       parsedAmount !== parsedMembers * PRICE_PER_MEMBER
     ) {
       return jsonResponse({ error: 'INVALID_AMOUNT' }, 400);

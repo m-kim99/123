@@ -64,7 +64,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestInnopayPayment, cancelInnopaySubscription } from '@/lib/payments';
+import { requestInnopayPayment, cancelInnopaySubscription, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -161,16 +161,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
-  // 베이직 플랜 결제 (PayApp — 인당 3,300원, 기본 3인 이상)
-  const BASIC_PRICE_PER_MEMBER = 3300;
+  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·최대 3인, 프로: 인당 15,000원·인원수 지정
+  const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
+  const PRO_PRICE_PER_MEMBER = PLAN_PRICING.pro.pricePerMember;
+  const BASIC_MAX_MEMBERS = PLAN_PRICING.basic.maxMembers ?? 3;
   const [basicMembers, setBasicMembers] = useState('3');
+  const [proMembers, setProMembers] = useState('5');
   const [basicAgreed, setBasicAgreed] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const parsedBasicMembers = Math.max(0, parseInt(basicMembers, 10) || 0);
+  const parsedProMembers = Math.max(0, parseInt(proMembers, 10) || 0);
   const [customerPhone, setCustomerPhone] = useState('');
 
-  const handleBasicSubscribe = async () => {
-    if (!user || parsedBasicMembers < 3 || !basicAgreed) return;
+  const handlePlanSubscribe = async (plan: PaidPlanName) => {
+    const memberCount = plan === 'basic' ? parsedBasicMembers : parsedProMembers;
+    const pricePerMember = plan === 'basic' ? BASIC_PRICE_PER_MEMBER : PRO_PRICE_PER_MEMBER;
+    if (!user || !basicAgreed || memberCount < 1) return;
+    if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -178,13 +185,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setIsRequestingPayment(true);
     try {
       await requestInnopayPayment({
+        plan,
         customerKey: user.id,
         customerEmail: user.email,
         customerName: user.name,
         customerPhone,
-        memberCount: parsedBasicMembers,
-        amount: parsedBasicMembers * BASIC_PRICE_PER_MEMBER,
-        goodsName: t('subscription.productName'),
+        memberCount,
+        amount: memberCount * pricePerMember,
+        goodsName: plan === 'basic' ? t('subscription.productNameBasic') : t('subscription.productNamePro'),
       });
     } catch (error) {
       console.error('결제 요청 실패:', error);
@@ -1963,7 +1971,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); } }}>
+      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); setProMembers('5'); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedPlan ? (
             <>
@@ -1983,10 +1991,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-slate-50 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.basic')}</span>
-                        <span className="text-2xl font-bold text-[#2563eb]">₩3,300<span className="text-sm font-normal text-slate-500">{t('subscription.perPersonMonth')}</span></span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩6,600<span className="text-sm font-normal text-slate-500">{t('subscription.perPersonMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
-                        <li className="flex items-center gap-2">✓ {t('subscription.minMembers')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.basicMemberLimit')}</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.documents')} 200</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.departments')} 2</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.storage')} 2GB</li>
@@ -2000,12 +2008,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Input
                         id="basic-members"
                         type="number"
-                        min={3}
+                        min={1}
+                        max={BASIC_MAX_MEMBERS}
                         value={basicMembers}
                         onChange={(e) => setBasicMembers(e.target.value)}
                       />
-                      {parsedBasicMembers > 0 && parsedBasicMembers < 3 && (
-                        <p className="text-xs text-red-500">{t('subscription.minMembers')}</p>
+                      {parsedBasicMembers > BASIC_MAX_MEMBERS && (
+                        <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
                       )}
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
@@ -2047,10 +2056,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold">{t('subscription.pro')}</span>
-                        <span className="text-2xl font-bold text-[#2563eb]">{t('subscription.comingSoon')}</span>
+                        <span className="text-2xl font-bold text-[#2563eb]">₩15,000<span className="text-sm font-normal text-slate-500">{t('subscription.perPersonMonth')}</span></span>
                       </div>
                       <ul className="space-y-2 text-sm text-slate-700">
-                        <li className="flex items-center gap-2">✓ {t('subscription.members')} 10{t('subscription.personUnit')}</li>
+                        <li className="flex items-center gap-2">✓ {t('subscription.customMemberCount')}</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.documents')} 1,000</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.departments')} 10</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.storage')} 10GB</li>
@@ -2059,6 +2068,49 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <li className="flex items-center gap-2">✓ {t('subscription.vectorSearch')}</li>
                         <li className="flex items-center gap-2">✓ {t('subscription.advancedStats')}</li>
                       </ul>
+                    </div>
+                    {/* 주문 정보 — 인원수 입력 + 결제수단 + 월 합계 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="pro-members">{t('subscription.memberCountLabel')}</Label>
+                      <Input
+                        id="pro-members"
+                        type="number"
+                        min={1}
+                        value={proMembers}
+                        onChange={(e) => setProMembers(e.target.value)}
+                      />
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="pro-customer-phone" className="text-sm text-slate-600">
+                          {t('subscription.phoneLabel')}
+                        </Label>
+                        <Input
+                          id="pro-customer-phone"
+                          type="tel"
+                          placeholder="010-1234-5678"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
+                        <span className="text-xl font-bold text-[#2563eb]">
+                          ₩{(parsedProMembers * PRO_PRICE_PER_MEMBER).toLocaleString()}
+                          <span className="text-sm font-normal text-slate-500">{t('subscription.perMonth')}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="pro-agree-terms"
+                        checked={basicAgreed}
+                        onCheckedChange={(checked) => setBasicAgreed(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="pro-agree-terms" className="text-sm text-slate-700 leading-snug cursor-pointer">
+                        {t('subscription.agreeTerms')}
+                      </Label>
                     </div>
                   </div>
                 )}
@@ -2083,7 +2135,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </div>
                 )}
-                {selectedPlan !== 'basic' && (
+                {selectedPlan === 'enterprise' && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
                     🚧 {t('subscription.paymentNotReady')}
                   </div>
@@ -2095,12 +2147,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Button
                     className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
                     disabled={
-                      selectedPlan !== 'basic' ||
-                      parsedBasicMembers < 3 ||
+                      (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
+                      (selectedPlan === 'basic' &&
+                        (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS)) ||
+                      (selectedPlan === 'pro' && parsedProMembers < 1) ||
                       !basicAgreed ||
                       isRequestingPayment
                     }
-                    onClick={handleBasicSubscribe}
+                    onClick={() => handlePlanSubscribe(selectedPlan === 'pro' ? 'pro' : 'basic')}
                   >
                     {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
                   </Button>
@@ -2211,8 +2265,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {[
                           { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free', comingSoon: false },
-                          { name: 'basic', display: t('subscription.basic'), price: '3,300', members: '3', highlight: subscriptionInfo.planName === 'basic', comingSoon: false },
-                          { name: 'pro', display: t('subscription.pro'), price: '', members: '10', highlight: subscriptionInfo.planName === 'pro', comingSoon: true },
+                          { name: 'basic', display: t('subscription.basic'), price: '6,600', members: '3', highlight: subscriptionInfo.planName === 'basic', comingSoon: false },
+                          { name: 'pro', display: t('subscription.pro'), price: '15,000', members: '10', highlight: subscriptionInfo.planName === 'pro', comingSoon: false },
                           { name: 'enterprise', display: t('subscription.enterprise'), price: '', members: '∞', highlight: subscriptionInfo.planName === 'enterprise', comingSoon: true },
                         ].map((plan) => (
                           <div
@@ -2234,11 +2288,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             </p>
                             {!plan.comingSoon && (
                               <p className="text-[11px] text-slate-500">
-                                {plan.name === 'basic' ? t('subscription.perPersonMonth') : t('subscription.perMonth')}
+                                {plan.name === 'free' ? t('subscription.perMonth') : t('subscription.perPersonMonth')}
                               </p>
                             )}
                             <div className="mt-2 pt-2 border-t text-xs text-slate-600">
-                              <p>{plan.name === 'basic' ? t('subscription.minMembers') : `${t('subscription.members')} ${plan.members}${t('subscription.personUnit')}`}</p>
+                              <p>
+                                {plan.name === 'basic'
+                                  ? t('subscription.basicMemberLimit')
+                                  : plan.name === 'pro'
+                                    ? t('subscription.customMemberCount')
+                                    : `${t('subscription.members')} ${plan.members}${t('subscription.personUnit')}`}
+                              </p>
                             </div>
                             {!plan.highlight && plan.name !== 'free' && (
                               <Button

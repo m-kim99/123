@@ -233,6 +233,7 @@ export function InnopayReturnPage() {
         tid,
         paymentToken,
         moid: moidParam || ctx.moid,
+        plan: ctx.plan || 'basic',
         customerKey: ctx.customerKey,
         memberCount: ctx.memberCount,
         amount: ctx.amount,

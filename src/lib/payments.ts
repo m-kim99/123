@@ -121,6 +121,14 @@ export async function requestPayAppBilling(params: PayAppBillingParams): Promise
 const INNOPAY_MID = import.meta.env.VITE_INNOPAY_MID || '';
 const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/innopay.js';
 
+/** 유료 플랜 가격 정책 (부가세 포함) — 서버(innopay-payment-confirm)와 동일하게 유지할 것 */
+export type PaidPlanName = 'basic' | 'pro';
+
+export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; maxMembers: number | null }> = {
+  basic: { pricePerMember: 6600, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  pro: { pricePerMember: 15000, maxMembers: null }, // 프로: 인당 15,000원, 인원수 지정 가능
+};
+
 declare global {
   interface Window {
     innopay?: {
@@ -152,6 +160,7 @@ function loadInnopaySdk(): Promise<void> {
 }
 
 export interface InnopayPaymentParams {
+  plan: PaidPlanName;
   customerKey: string;
   customerEmail?: string;
   customerName: string;
@@ -166,6 +175,7 @@ const INNOPAY_CTX_KEY = 'innopay_payment_ctx';
 
 export interface InnopayPaymentContext {
   moid: string;
+  plan: PaidPlanName;
   customerKey: string;
   memberCount: number;
   amount: number;
@@ -189,6 +199,7 @@ export async function requestInnopayPayment(params: InnopayPaymentParams): Promi
 
   const ctx: InnopayPaymentContext = {
     moid,
+    plan: params.plan,
     customerKey: params.customerKey,
     memberCount: params.memberCount,
     amount: params.amount,
@@ -227,6 +238,7 @@ export interface InnopayConfirmParams {
   tid: string;
   paymentToken: string;
   moid: string;
+  plan: PaidPlanName;
   customerKey: string;
   memberCount: number;
   amount: number;
