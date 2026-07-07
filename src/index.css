@@ -302,7 +302,7 @@ h1 {
 
 /* Sidebar footer: sit directly above the NativeBottomBar */
 .sidebar-footer-safe-area {
-  bottom: var(--native-bottom-bar);
+  margin-bottom: var(--native-bottom-bar);
 }
 
 /* Chatbot FAB: above the NativeBottomBar with a 1rem gap */

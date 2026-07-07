@@ -939,7 +939,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <NFCAutoRedirect />
       
       <aside
-        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0 ${Capacitor.isNativePlatform() ? 'sidebar-safe-area' : ''}`}
       >
@@ -981,7 +981,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 flex-1 min-h-0 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = !item.external && location.pathname === item.href;
@@ -1019,7 +1019,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        <div className={`absolute left-0 right-0 ${Capacitor.isNativePlatform() ? 'sidebar-footer-safe-area' : 'bottom-0'}`}>
+        <div className={`shrink-0 ${Capacitor.isNativePlatform() ? 'sidebar-footer-safe-area' : ''}`}>
           {/* 가로바 + 저작권: 프로필 아래 */}
           <div className="border-t" />
 
