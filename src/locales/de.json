@@ -1014,6 +1014,18 @@
     "commentEditFailedDesc": "Kommentar konnte nicht aktualisiert werden.",
     "commentPlaceholder": "Kommentar schreiben..."
   },
+  "updates": {
+    "title": "Updates",
+    "subtitle": "Neuigkeiten und Updates ansehen",
+    "noUpdates": "Noch keine Updates",
+    "loadFailed": "Laden fehlgeschlagen",
+    "loadFailedDesc": "Updates konnten nicht geladen werden.",
+    "pinned": "Angeheftet",
+    "typeInfo": "Info",
+    "typeWarning": "Warnung",
+    "typeMaintenance": "Wartung",
+    "typeUpdate": "Update"
+  },
   "parentCatList": {
     "title": "Verwaltung übergeordneter Kategorien",
     "subtitle": "Dokumenten-Oberkategorien nach Abteilung verwalten",

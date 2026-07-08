@@ -1017,6 +1017,18 @@
     "commentEditFailedDesc": "댓글을 수정하지 못했습니다.",
     "commentPlaceholder": "댓글을 입력하세요..."
   },
+  "updates": {
+    "title": "업데이트",
+    "subtitle": "새로운 소식과 업데이트를 확인하세요",
+    "noUpdates": "등록된 업데이트가 없습니다",
+    "loadFailed": "로드 실패",
+    "loadFailedDesc": "업데이트를 불러오지 못했습니다.",
+    "pinned": "고정",
+    "typeInfo": "안내",
+    "typeWarning": "주의",
+    "typeMaintenance": "점검",
+    "typeUpdate": "업데이트"
+  },
   "parentCatList": {
     "title": "대분류 관리",
     "subtitle": "부서별 문서 대분류를 관리합니다",

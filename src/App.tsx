@@ -86,6 +86,9 @@ const Trash = lazy(() =>
 const QnAPage = lazy(() =>
   import('./pages/QnAPage').then((m) => ({ default: m.QnAPage })),
 );
+const Updates = lazy(() =>
+  import('./pages/Updates').then((m) => ({ default: m.Updates })),
+);
 
 // Operator pages
 const OperatorLogin = lazy(() =>
@@ -542,6 +545,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/updates"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Updates />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/team"
@@ -652,6 +663,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="team">
                   <QnAPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team/updates"
+              element={
+                <ProtectedRoute requiredRole="team">
+                  <Updates />
                 </ProtectedRoute>
               }
             />

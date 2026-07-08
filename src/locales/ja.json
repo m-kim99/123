@@ -1014,6 +1014,18 @@
     "commentEditFailedDesc": "コメントを修正できませんでした。",
     "commentPlaceholder": "コメントを入力してください..."
   },
+  "updates": {
+    "title": "アップデート",
+    "subtitle": "最新のお知らせとアップデートを確認しましょう",
+    "noUpdates": "登録されたアップデートはありません",
+    "loadFailed": "読み込み失敗",
+    "loadFailedDesc": "アップデートを読み込めませんでした。",
+    "pinned": "固定",
+    "typeInfo": "案内",
+    "typeWarning": "注意",
+    "typeMaintenance": "メンテナンス",
+    "typeUpdate": "アップデート"
+  },
   "parentCatList": {
     "title": "大分類管理",
     "subtitle": "部署別ドキュメント大分類を管理します",

@@ -206,24 +206,25 @@ export async function fetchMyInquiryReplies(inquiryId: string): Promise<InquiryR
 
 /**
  * 활성 시스템 공지 조회
- * @param location 노출 위치 — 'dashboard' | 'login' | 'popup' ('both'는 dashboard/login 양쪽에 노출됨)
+ * @param location 노출 위치 — 'dashboard' | 'login' | 'popup' ('both'는 dashboard/login 양쪽에 노출됨), 'all'이면 위치 무관 전체 조회 (업데이트 페이지용)
  * @param audience 사용자 역할 — null이면 'all' 대상 공지만 (예: 로그인 화면)
  */
 export async function fetchSystemNotices(
-  location: Exclude<NoticeDisplayLocation, 'both'>,
+  location: Exclude<NoticeDisplayLocation, 'both'> | 'all',
   audience: 'admin' | 'team' | null
 ): Promise<SystemNotice[]> {
   try {
-    const locations: string[] =
-      location === 'popup' ? ['popup'] : [location, 'both'];
-
     let query = supabase
       .from('system_notices')
       .select('*')
       .eq('is_active', true)
-      .in('display_location', locations)
       .lte('published_at', new Date().toISOString())
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+
+    if (location !== 'all') {
+      const locations: string[] = location === 'popup' ? ['popup'] : [location, 'both'];
+      query = query.in('display_location', locations);
+    }
 
     if (audience) {
       query = query.in('target_audience', ['all', audience]);

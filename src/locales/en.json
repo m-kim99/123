@@ -1017,6 +1017,18 @@
     "commentEditFailedDesc": "Failed to update the comment.",
     "commentPlaceholder": "Write a comment..."
   },
+  "updates": {
+    "title": "Updates",
+    "subtitle": "Check out the latest news and updates",
+    "noUpdates": "No updates yet",
+    "loadFailed": "Load Failed",
+    "loadFailedDesc": "Failed to load updates.",
+    "pinned": "Pinned",
+    "typeInfo": "Info",
+    "typeWarning": "Warning",
+    "typeMaintenance": "Maintenance",
+    "typeUpdate": "Update"
+  },
   "parentCatList": {
     "title": "Parent Category Management",
     "subtitle": "Manage document parent categories by department",

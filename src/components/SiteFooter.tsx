@@ -37,7 +37,7 @@ export function SiteFooter() {
       links: [
         { label: isKo ? '공지사항' : 'Announcements', to: `${basePath}/announcements` },
         { label: isKo ? '문의 / FAQ' : 'Inquiry / FAQ', to: `${basePath}/qna` },
-        { label: isKo ? '휴지통' : 'Trash', to: `${basePath}/trash` },
+        { label: isKo ? '업데이트' : 'Updates', to: `${basePath}/updates` },
       ],
     },
   ];
