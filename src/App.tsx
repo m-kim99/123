@@ -221,6 +221,26 @@ function RouteAnalytics() {
   return null;
 }
 
+// 페이지 이동 시 스크롤을 최상단으로 리셋 (SPA는 pushState 시 브라우저가
+// 스크롤 위치를 자동으로 초기화하지 않기 때문에 직접 처리해야 함)
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+
+  return null;
+}
+
 function DeletionWarningDialog() {
   const { t } = useTranslation();
   const { pendingDeletion, cancelDeletion, clearPendingDeletion, logout } = useAuthStore();
@@ -392,6 +412,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <ScrollToTop />
         <RouteAnalytics />
         <NativeDeepLinkHandler />
         <div className={Capacitor.isNativePlatform() ? 'pb-14' : ''}>
