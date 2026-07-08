@@ -1254,6 +1254,7 @@ export async function generateResponse(
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
+    const docsSeparator = '\n---DOCS---\n';
 
     while (true) {
       const { done, value } = await reader.read();
@@ -1262,6 +1263,13 @@ export async function generateResponse(
 
       const chunkText = decoder.decode(value, { stream: true });
       if (!chunkText) continue;
+
+      // 구분자가 이미 나온 뒤라면 나머지는 화면에 표시되지 않는 문서 메타데이터(JSON)이므로
+      // 타이핑 딜레이 없이 즉시 누적한다 (카드 링크가 늦게 뜨는 원인 방지)
+      if (fullText.includes(docsSeparator)) {
+        fullText += chunkText;
+        continue;
+      }
 
       // 청크를 다시 문자 배열로 나눈 뒤, 일정 길이(예: 5글자)씩 묶어서 업데이트
       const chars = Array.from(chunkText);
@@ -1273,9 +1281,16 @@ export async function generateResponse(
 
         if (onPartialUpdate) {
           // ---DOCS--- 구분자 전까지만 표시
-          const displayText = fullText.split('\n---DOCS---\n')[0];
+          const displayText = fullText.split(docsSeparator)[0];
           const cleanedText = cleanJsonResponse(displayText);
           onPartialUpdate(cleanedText, []);
+        }
+
+        // 구분자에 도달했다면 이후 문자는 화면에 표시되지 않으므로,
+        // 이번 청크에 남은 부분을 딜레이 없이 바로 합치고 다음 청크로 넘어간다
+        if (fullText.includes(docsSeparator)) {
+          fullText += chars.slice(i + CHUNK_SIZE).join('');
+          break;
         }
 
         // 글자 단위보다 큰 청크 단위로 약간 더 긴 딜레이를 주어 전체 시간을 단축
@@ -1292,7 +1307,6 @@ export async function generateResponse(
     let responseText = fullText;
     let parsedDocs: ChatSearchResult[] = [];
 
-    const docsSeparator = '\n---DOCS---\n';
     const separatorIndex = fullText.indexOf(docsSeparator);
     if (separatorIndex !== -1) {
       responseText = fullText.slice(0, separatorIndex);
