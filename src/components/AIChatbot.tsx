@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // 모델 셀렉터 UI 주석 처리로 미사용 (필요 시 주석 해제)
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { supabase } from '@/lib/supabase';
 import { formatDateTimeSimple } from '@/lib/utils';
@@ -116,9 +116,9 @@ interface AIChatbotProps {
 
 const CHAT_STORAGE_KEY = 'troy_chat_messages';
 const CHAT_OPEN_KEY = 'troy_chat_open';
-const CHAT_MODEL_KEY = 'troy_chat_model';
+// const CHAT_MODEL_KEY = 'troy_chat_model'; // 모델 셀렉터 UI 주석 처리로 미사용 (필요 시 주석 해제)
 
-// OpenAI 모델 목록 (경량 모델 제외)
+// OpenAI 모델 목록 (경량 모델 제외) - 셀렉터는 주석 처리되어 있으며 기본값(GPT-5.5)로 고정 운영
 const AI_MODELS = [
   { id: 'gpt-5.5', label: 'GPT-5.5' },
   { id: 'gpt-5.4', label: 'GPT-5.4' },
@@ -127,10 +127,10 @@ const AI_MODELS = [
 ];
 const DEFAULT_MODEL = AI_MODELS[0].id;
 
-function loadSavedModel(): string {
-  const saved = localStorage.getItem(CHAT_MODEL_KEY);
-  return AI_MODELS.some((m) => m.id === saved) ? (saved as string) : DEFAULT_MODEL;
-}
+// function loadSavedModel(): string {
+//   const saved = localStorage.getItem(CHAT_MODEL_KEY);
+//   return AI_MODELS.some((m) => m.id === saved) ? (saved as string) : DEFAULT_MODEL;
+// }
 
 function getChatStorageKey(userId: string | undefined) {
   return userId ? `${CHAT_STORAGE_KEY}_${userId}` : CHAT_STORAGE_KEY;
@@ -171,14 +171,14 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
   const [isTall, setIsTall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 선택된 OpenAI 모델 (localStorage 영속화, 콜백 closure 대비 ref 병행)
-  const [selectedModel, setSelectedModel] = useState<string>(loadSavedModel);
-  const selectedModelRef = useRef(selectedModel);
-  const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId);
-    selectedModelRef.current = modelId;
-    localStorage.setItem(CHAT_MODEL_KEY, modelId);
-  };
+  // 모델 셀렉터 UI를 주석 처리하고 기본 모델(GPT-5.5)로 고정 (필요 시 아래 주석 해제)
+  const selectedModelRef = useRef(DEFAULT_MODEL);
+  // const [selectedModel, setSelectedModel] = useState<string>(loadSavedModel);
+  // const handleModelChange = (modelId: string) => {
+  //   setSelectedModel(modelId);
+  //   selectedModelRef.current = modelId;
+  //   localStorage.setItem(CHAT_MODEL_KEY, modelId);
+  // };
 
   // 사용자 전환 감지: user.id가 바뀌면 메시지·열림상태 초기화 (방어적 리셋)
   const prevUserIdRef = useRef<string | undefined>(user?.id);
@@ -1387,7 +1387,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 </button>
               )}
             </form>
-            {/* 모델 셀렉터 */}
+            {/* 모델 셀렉터 - 5.5 고정 운영을 위해 주석 처리 (필요 시 주석 해제)
             <div className="px-3 pb-2 flex items-center justify-end gap-2">
               <span className="text-[11px] text-slate-400 dark:text-slate-500">{t('chatbot.modelLabel')}</span>
               <Select value={selectedModel} onValueChange={handleModelChange}>
@@ -1403,6 +1403,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 </SelectContent>
               </Select>
             </div>
+            */}
             {isSpeaking && (
               <div className="text-xs text-green-600 animate-pulse text-center pb-2">{t('chatbot.aiSpeaking')}</div>
             )}
