@@ -192,7 +192,7 @@ export function CompanyManagement() {
                     <div className="text-right shrink-0">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Calendar className="w-3 h-3" />
-                        {new Date(company.createdAt).toLocaleDateString('ko-KR')}
+                        {company.createdAt ? new Date(company.createdAt).toLocaleDateString('ko-KR') : '-'}
                       </div>
                     </div>
                   </div>

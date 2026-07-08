@@ -356,7 +356,7 @@ export function MemberManagement() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Calendar className="w-3 h-3" />
-                          {new Date(user.createdAt).toLocaleDateString('ko-KR')}
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right">
