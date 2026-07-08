@@ -47,7 +47,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { SystemNotice, SystemNoticeType, NoticeTargetAudience, NoticeDisplayLocation } from '@/types/operator';
+import type { SystemNotice, SystemNoticeType, NoticeTargetAudience } from '@/types/operator';
 import {
   V1PageHeader,
   V1Chip,
@@ -73,13 +73,6 @@ const audienceLabels: Record<NoticeTargetAudience, string> = {
   team: '팀원만',
 };
 
-const locationLabels: Record<NoticeDisplayLocation, string> = {
-  dashboard: '대시보드',
-  login: '로그인 페이지',
-  both: '대시보드 + 로그인',
-  popup: '팝업',
-};
-
 export function SystemNotices() {
   const { toast } = useToast();
   const notices = useOperatorStore((s) => s.notices);
@@ -97,10 +90,8 @@ export function SystemNotices() {
     content: '',
     type: 'info' as SystemNoticeType,
     targetAudience: 'all' as NoticeTargetAudience,
-    displayLocation: 'dashboard' as NoticeDisplayLocation,
     isPinned: false,
     isActive: true,
-    expiresAt: '',
   });
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -123,10 +114,8 @@ export function SystemNotices() {
       content: '',
       type: 'info',
       targetAudience: 'all',
-      displayLocation: 'dashboard',
       isPinned: false,
       isActive: true,
-      expiresAt: '',
     });
     setDialogOpen(true);
   };
@@ -138,10 +127,8 @@ export function SystemNotices() {
       content: notice.content,
       type: notice.type,
       targetAudience: notice.targetAudience,
-      displayLocation: notice.displayLocation,
       isPinned: notice.isPinned,
       isActive: notice.isActive,
-      expiresAt: notice.expiresAt ? notice.expiresAt.split('T')[0] : '',
     });
     setDialogOpen(true);
   };
@@ -161,10 +148,8 @@ export function SystemNotices() {
       content: formData.content,
       type: formData.type,
       targetAudience: formData.targetAudience,
-      displayLocation: formData.displayLocation,
       isPinned: formData.isPinned,
       isActive: formData.isActive,
-      expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
     };
 
     let result;
@@ -294,15 +279,7 @@ export function SystemNotices() {
                         <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
                           <span>{audienceLabels[notice.targetAudience]}</span>
                           <span>·</span>
-                          <span>{locationLabels[notice.displayLocation]}</span>
-                          <span>·</span>
                           <span>{new Date(notice.createdAt).toLocaleDateString('ko-KR')}</span>
-                          {notice.expiresAt && (
-                            <>
-                              <span>·</span>
-                              <span>만료: {new Date(notice.expiresAt).toLocaleDateString('ko-KR')}</span>
-                            </>
-                          )}
                         </div>
                       </div>
 
@@ -415,34 +392,6 @@ export function SystemNotices() {
                     <SelectItem value="team">팀원만</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>표시 위치</Label>
-                <Select
-                  value={formData.displayLocation}
-                  onValueChange={(v) => setFormData({ ...formData, displayLocation: v as NoticeDisplayLocation })}
-                >
-                  <SelectTrigger className="rounded-[10px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dashboard">대시보드</SelectItem>
-                    <SelectItem value="login">로그인 페이지</SelectItem>
-                    <SelectItem value="both">대시보드 + 로그인</SelectItem>
-                    <SelectItem value="popup">팝업</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>만료일 (선택)</Label>
-                <Input
-                  type="date"
-                  value={formData.expiresAt}
-                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                  className="rounded-[10px]"
-                />
               </div>
             </div>
             <div className="flex items-center justify-between py-2">
