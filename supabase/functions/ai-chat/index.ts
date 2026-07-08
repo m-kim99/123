@@ -25,6 +25,7 @@ const functionDeclarations = [
   { name: 'get_hierarchy_path', description: '특정 항목의 전체 경로를 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, name: { type: 'string' } }, required: ['entity_type', 'name'] } },
   { name: 'search_by_location', description: '보관위치(storage_location)로 세부카테고리를 검색합니다.', parameters: { type: 'object', properties: { location_keyword: { type: 'string' } }, required: ['location_keyword'] } },
   { name: 'unified_search', description: '부서, 대분류, 세부카테고리, 문서를 동시에 통합 검색합니다. 찾는 대상의 종류가 불분명할 때 사용합니다.', parameters: { type: 'object', properties: { keyword: { type: 'string', description: '핵심 명사 키워드 1~4개를 공백으로 구분. 조사·동사·일반어 제외. 각 키워드는 개별 매칭됨' }, limit: { type: 'number' } }, required: ['keyword'] } },
+  { name: 'get_nfc_status', description: 'NFC 태그 등록 현황을 조회합니다 (등록/미등록 세부카테고리 개수 및 목록).', parameters: { type: 'object', properties: { filter: { type: 'string', enum: ['all', 'registered', 'unregistered'], description: '조회 대상 필터 (기본값: all)' }, limit: { type: 'number' } }, required: [] } },
 ];
 
 async function getDeptIds(supabase: any, companyId: string): Promise<string[]> {
@@ -403,6 +404,25 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       case 'search_by_location': {
         const { data } = await supabase.from('subcategories').select('name, storage_location, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('storage_location', `%${args.location_keyword}%`);
         return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, storage_location: s.storage_location, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0 });
+      }
+      case 'get_nfc_status': {
+        const { filter = 'all', limit = 10 } = args;
+        const { data } = await supabase.from('subcategories').select('id, name, nfc_tag_id, nfc_registered, parent_category_id, parent_category:categories(name), department:departments(name)').in('department_id', deptIds);
+        const rows = data || [];
+        const isRegistered = (s: any) => !!(s.nfc_tag_id || s.nfc_registered);
+        const registered = rows.filter(isRegistered);
+        const unregistered = rows.filter((s: any) => !isRegistered(s));
+        const list = filter === 'registered' ? registered : filter === 'unregistered' ? unregistered : rows;
+        const results = list.slice(0, limit).map((s: any) => ({
+          type: 'subcategory',
+          name: `${isRegistered(s) ? '✅' : '❌'} ${s.name}`,
+          department: s.department?.name,
+          parent_category: s.parent_category?.name,
+          path: `${s.department?.name ?? ''} → ${s.parent_category?.name ?? ''} → ${s.name}`,
+          link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`,
+          nfc_registered: isRegistered(s),
+        }));
+        return JSON.stringify({ registered_count: registered.length, unregistered_count: unregistered.length, total_count: rows.length, results });
       }
       case 'get_department_members': {
         const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();

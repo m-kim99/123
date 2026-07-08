@@ -393,14 +393,79 @@ function isSharedDocumentIntent(text: string): boolean {
   return sharedKeywords.some(keyword => text.toLowerCase().includes(keyword));
 }
 
+// 공유 문서 조회 방향(나에게 공유됨 vs 내가 공유함) 감지
+// 명확한 "~에게 받은/공유받은" 표현이 없으면 기존 동작(shared_by_me)을 그대로 유지한다
+function detectShareDirection(text: string): 'shared_by_me' | 'shared_to_me' {
+  const lower = text.toLowerCase();
+  const toMeKeywords = [
+    '나에게 공유', '나한테 공유', '내게 공유', '공유받은', '공유 받은', '받은 공유', '나에게 공유된', '나한테 공유된',
+    'shared to me', 'shared with me', 'shared to', 'received',
+  ];
+  if (toMeKeywords.some((k) => lower.includes(k))) return 'shared_to_me';
+  return 'shared_by_me';
+}
+
 // NFC 키워드 감지
 function isNfcIntent(text: string): boolean {
   const nfcKeywords = ['NFC', 'nfc', 'Nfc', 'NFC 등록', 'NFC 안 된', '태그 등록', 'NFC 현황'];
   return nfcKeywords.some(keyword => text.includes(keyword));
 }
 
+// 만기 조회 기간(일수) 파싱 — 사용자가 구체적 기간을 언급하지 않으면 기존 기본값(3개월=90일)을 그대로 유지한다
+function parseExpiryDays(text: string): number {
+  const lower = text.toLowerCase();
+
+  const daysMatch = text.match(/(\d+)\s*일/);
+  if (daysMatch) return parseInt(daysMatch[1], 10);
+  const daysEnMatch = text.match(/(\d+)\s*days?/i);
+  if (daysEnMatch) return parseInt(daysEnMatch[1], 10);
+
+  const weeksMatch = text.match(/(\d+)\s*주/);
+  if (weeksMatch) return parseInt(weeksMatch[1], 10) * 7;
+  const weeksEnMatch = text.match(/(\d+)\s*weeks?/i);
+  if (weeksEnMatch) return parseInt(weeksEnMatch[1], 10) * 7;
+
+  const monthsMatch = text.match(/(\d+)\s*(개월|달)/);
+  if (monthsMatch) return parseInt(monthsMatch[1], 10) * 30;
+  const monthsEnMatch = text.match(/(\d+)\s*months?/i);
+  if (monthsEnMatch) return parseInt(monthsEnMatch[1], 10) * 30;
+
+  if (text.includes('오늘')) return 1;
+  if (text.includes('내일')) return 2;
+  if (lower.includes('today')) return 1;
+  if (lower.includes('tomorrow')) return 2;
+
+  if (text.includes('이번주') || text.includes('이번 주') || text.includes('금주')) return 7;
+  if (text.includes('다음주') || text.includes('다음 주')) return 14;
+  if (lower.includes('this week')) return 7;
+  if (lower.includes('next week')) return 14;
+
+  if (text.includes('이번달') || text.includes('이번 달') || text.includes('금월')) return 30;
+  if (text.includes('다음달') || text.includes('다음 달')) return 60;
+  if (lower.includes('this month')) return 30;
+  if (lower.includes('next month')) return 60;
+
+  if (text.includes('올해')) return 365;
+  if (lower.includes('this year')) return 365;
+
+  return 90; // 기존 기본값(3개월) 유지
+}
+
+// 일수를 사람이 읽기 쉬운 기간 표현으로 변환 (기본값 90일 → "3개월"/"3 months"로 기존 문구와 동일하게 유지)
+function formatExpiryPeriodLabel(days: number, isEn: boolean): string {
+  if (days > 0 && days % 30 === 0) {
+    const months = days / 30;
+    return isEn ? `${months} month${months === 1 ? '' : 's'}` : `${months}개월`;
+  }
+  if (days > 0 && days % 7 === 0) {
+    const weeks = days / 7;
+    return isEn ? `${weeks} week${weeks === 1 ? '' : 's'}` : `${weeks}주`;
+  }
+  return isEn ? `${days} day${days === 1 ? '' : 's'}` : `${days}일`;
+}
+
 // 만기 임박 세부카테고리 조회
-async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
+async function getExpiringSubcategories(locale: string = 'ko', days: number = 90): Promise<{ text: string; docs: ChatSearchResult[] }> {
   const isEn = locale?.startsWith('en');
   const { user } = useAuthStore.getState();
   if (!user?.companyId) {
@@ -409,8 +474,9 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
 
   try {
     const now = new Date();
-    const threeMonthsLater = new Date(now);
-    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() + days);
+    const periodLabel = formatExpiryPeriodLabel(days, isEn);
 
     // 부서 목록 조회
     const { data: departments, error: deptError } = await supabase
@@ -443,7 +509,7 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
       .in('parent_category_id', parentCategoryIds)
       .not('expiry_date', 'is', null)
       .gte('expiry_date', now.toISOString())
-      .lte('expiry_date', threeMonthsLater.toISOString())
+      .lte('expiry_date', targetDate.toISOString())
       .order('expiry_date', { ascending: true });
 
     if (subError) {
@@ -452,7 +518,7 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
     }
 
     if (!subcategories?.length) {
-      return { text: isEn ? 'No subcategories expiring within 3 months. ✅' : '3개월 이내 만기 임박한 세부 스토리지가 없습니다. ✅', docs: [] };
+      return { text: isEn ? `No subcategories expiring within ${periodLabel}. ✅` : `${periodLabel} 이내 만기 임박한 세부 스토리지가 없습니다. ✅`, docs: [] };
     }
 
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
@@ -499,7 +565,7 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
       }
     }
     if (notice.length > 0) {
-      lines.push(isEn ? '\n⏰ [Within 3 months]' : '\n⏰ [3개월 이내]');
+      lines.push(isEn ? `\n⏰ [Within ${periodLabel}]` : `\n⏰ [${periodLabel} 이내]`);
       for (const { sub, parentCat, dept } of notice) {
         const dateStr = new Date(sub.expiry_date).toLocaleDateString(dateLocale);
         lines.push(isEn
@@ -530,9 +596,10 @@ async function getExpiringSubcategories(locale: string = 'ko'): Promise<{ text: 
   }
 }
 
-// 공유 문서 조회
-async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
+// 공유 문서 조회 (direction: 'shared_by_me' = 내가 공유함(기존 기본 동작), 'shared_to_me' = 나에게 공유됨)
+async function getSharedDocuments(locale: string = 'ko', direction: 'shared_by_me' | 'shared_to_me' = 'shared_by_me'): Promise<{ text: string; docs: ChatSearchResult[] }> {
   const isEn = locale?.startsWith('en');
+  const isToMe = direction === 'shared_to_me';
   const { user } = useAuthStore.getState();
   if (!user?.id) {
     return { text: isEn ? 'User information not found.' : '사용자 정보를 찾을 수 없습니다.', docs: [] };
@@ -546,6 +613,7 @@ async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string
         document_id,
         shared_at,
         shared_to_user_id,
+        shared_by_user_id,
         documents!inner (
           id,
           title,
@@ -554,7 +622,7 @@ async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string
           subcategory_id
         )
       `)
-      .eq('shared_by_user_id', user.id)
+      .eq(isToMe ? 'shared_to_user_id' : 'shared_by_user_id', user.id)
       .eq('is_active', true)
       .order('shared_at', { ascending: false });
 
@@ -564,29 +632,34 @@ async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string
     }
 
     if (!shares?.length) {
-      return { text: isEn ? 'No shared documents found.' : '공유한 문서가 없습니다.', docs: [] };
+      return { text: isEn
+        ? (isToMe ? 'No documents have been shared with you.' : 'No shared documents found.')
+        : (isToMe ? '나에게 공유된 문서가 없습니다.' : '공유한 문서가 없습니다.'), docs: [] };
     }
 
-    // 수신자 정보 조회
-    const recipientIds = [...new Set(shares.map((s: { shared_to_user_id: string }) => s.shared_to_user_id))];
-    const { data: recipients } = await supabase
+    // 상대방 정보 조회 (나에게 공유된 경우: 공유한 사람 / 내가 공유한 경우: 받은 사람)
+    const counterpartIds = [...new Set(shares.map((s: { shared_to_user_id: string; shared_by_user_id: string }) => isToMe ? s.shared_by_user_id : s.shared_to_user_id))];
+    const { data: counterparts } = await supabase
       .from('users')
       .select('id, name')
-      .in('id', recipientIds);
+      .in('id', counterpartIds);
 
-    const recipientMap = new Map(recipients?.map((r: { id: string; name: string }) => [r.id, r.name]) || []);
+    const counterpartMap = new Map(counterparts?.map((r: { id: string; name: string }) => [r.id, r.name]) || []);
     const dateLocale = isEn ? 'en-US' : 'ko-KR';
     const unknownLabel = isEn ? 'Unknown' : '알 수 없음';
 
-    const lines: string[] = [isEn ? `You have shared ${shares.length} document(s):` : `총 ${shares.length}개의 문서를 공유했습니다:`];
+    const lines: string[] = [isEn
+      ? (isToMe ? `${shares.length} document(s) have been shared with you:` : `You have shared ${shares.length} document(s):`)
+      : (isToMe ? `총 ${shares.length}개의 문서가 나에게 공유되었습니다:` : `총 ${shares.length}개의 문서를 공유했습니다:`)];
 
     for (const share of shares.slice(0, 10)) {
       const doc = share.documents as any;
-      const recipientName = recipientMap.get(share.shared_to_user_id) || unknownLabel;
+      const counterpartId = isToMe ? share.shared_by_user_id : share.shared_to_user_id;
+      const counterpartName = counterpartMap.get(counterpartId) || unknownLabel;
       const sharedDate = new Date(share.shared_at).toLocaleDateString(dateLocale);
       lines.push(isEn
-        ? `\n🔗 ${doc.title} → Shared with ${recipientName} (${sharedDate})`
-        : `\n🔗 ${doc.title} → ${recipientName}님에게 공유 (${sharedDate})`);
+        ? (isToMe ? `\n🔗 ${doc.title} → Shared by ${counterpartName} (${sharedDate})` : `\n🔗 ${doc.title} → Shared with ${counterpartName} (${sharedDate})`)
+        : (isToMe ? `\n🔗 ${doc.title} → ${counterpartName}님이 공유 (${sharedDate})` : `\n🔗 ${doc.title} → ${counterpartName}님에게 공유 (${sharedDate})`));
     }
 
     lines.push(isEn ? '\nClick a card below to navigate to the document.' : '\n아래 카드를 클릭하면 해당 문서로 이동합니다.');
@@ -594,11 +667,14 @@ async function getSharedDocuments(locale: string = 'ko'): Promise<{ text: string
     // 카드용 데이터 생성
     const docs: ChatSearchResult[] = shares.slice(0, 10).map((share: any) => {
       const doc = share.documents as any;
-      const recipientName = recipientMap.get(share.shared_to_user_id) || unknownLabel;
+      const counterpartId = isToMe ? share.shared_by_user_id : share.shared_to_user_id;
+      const counterpartName = counterpartMap.get(counterpartId) || unknownLabel;
       return {
         id: doc.id,
         name: doc.title,
-        categoryName: isEn ? `Shared with ${recipientName}` : `${recipientName}님에게 공유`,
+        categoryName: isEn
+          ? (isToMe ? `Shared by ${counterpartName}` : `Shared with ${counterpartName}`)
+          : (isToMe ? `${counterpartName}님이 공유` : `${counterpartName}님에게 공유`),
         departmentName: '',
         storageLocation: null,
         uploadDate: share.shared_at,
@@ -1056,14 +1132,14 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
 async function generateAsyncFallbackResponse(message: string, locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] } | null> {
   const text = message.trim();
 
-  // 만기 임박 조회
+  // 만기 임박 조회 (사용자가 언급한 기간이 있으면 반영, 없으면 기존 기본값 3개월 유지)
   if (isExpiryIntent(text)) {
-    return await getExpiringSubcategories(locale);
+    return await getExpiringSubcategories(locale, parseExpiryDays(text));
   }
 
-  // 공유 문서 조회
+  // 공유 문서 조회 ("나에게 공유된" 등 명시적 표현이 있으면 반대 방향으로 조회)
   if (isSharedDocumentIntent(text)) {
-    return await getSharedDocuments(locale);
+    return await getSharedDocuments(locale, detectShareDirection(text));
   }
 
   // NFC 등록 현황 조회
