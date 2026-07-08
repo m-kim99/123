@@ -16,7 +16,7 @@ const functionDeclarations = [
   { name: 'get_department_members', description: '특정 부서의 소속 팀원 목록을 조회합니다.', parameters: { type: 'object', properties: { department_name: { type: 'string' } }, required: ['department_name'] } },
   { name: 'get_user_info', description: '특정 사용자의 정보를 조회합니다.', parameters: { type: 'object', properties: { user_name: { type: 'string' } }, required: ['user_name'] } },
   { name: 'get_my_info', description: '현재 로그인한 사용자의 정보를 조회합니다.', parameters: { type: 'object', properties: {}, required: [] } },
-  { name: 'get_expiring_subcategories', description: '만료 임박한 세부카테고리 목록을 조회합니다.', parameters: { type: 'object', properties: { days: { type: 'number' } }, required: [] } },
+  { name: 'get_expiring_subcategories', description: '만료 임박(미래) 또는 이미 만료된(과거) 세부카테고리 목록을 조회합니다. "만료된/이미 만료" 등 과거를 묻는 질문에는 mode=expired, "만기 임박/곧 만료" 등 미래를 묻는 질문에는 mode=upcoming(기본값)을 사용하세요.', parameters: { type: 'object', properties: { days: { type: 'number', description: 'upcoming 모드에서 앞으로 며칠 이내인지 (기본 30)' }, mode: { type: 'string', enum: ['upcoming', 'expired'], description: '기본값 upcoming' } }, required: [] } },
   { name: 'get_shared_documents', description: '내가 공유한 문서 또는 나에게 공유된 문서 목록을 조회합니다.', parameters: { type: 'object', properties: { direction: { type: 'string', enum: ['shared_by_me', 'shared_to_me'] }, limit: { type: 'number' } }, required: ['direction'] } },
   { name: 'get_total_counts', description: '전체 시스템의 항목 개수를 조회합니다.', parameters: { type: 'object', properties: {}, required: [] } },
   { name: 'list_all', description: '특정 타입의 전체 항목 목록을 조회합니다.', parameters: { type: 'object', properties: { entity_type: { type: 'string', enum: ['department', 'parent_category', 'subcategory', 'document'] }, limit: { type: 'number' } }, required: ['entity_type'] } },
@@ -442,9 +442,17 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_expiring_subcategories': {
         const days = args.days || 30;
-        const futureDate = new Date(); futureDate.setDate(futureDate.getDate() + days);
-        const { data } = await supabase.from('subcategories').select('name, expiry_date, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).not('expiry_date', 'is', null).lte('expiry_date', futureDate.toISOString()).gte('expiry_date', new Date().toISOString()).order('expiry_date', { ascending: true });
-        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, expiry_date: s.expiry_date, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0, period: `within ${days} days` });
+        const mode = args.mode === 'expired' ? 'expired' : 'upcoming';
+        const now = new Date();
+        let query = supabase.from('subcategories').select('name, expiry_date, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).not('expiry_date', 'is', null);
+        if (mode === 'expired') {
+          query = query.lt('expiry_date', now.toISOString()).order('expiry_date', { ascending: false });
+        } else {
+          const futureDate = new Date(now); futureDate.setDate(futureDate.getDate() + days);
+          query = query.gte('expiry_date', now.toISOString()).lte('expiry_date', futureDate.toISOString()).order('expiry_date', { ascending: true });
+        }
+        const { data } = await query;
+        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, expiry_date: s.expiry_date, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0, mode, period: mode === 'expired' ? 'already expired (all time)' : `within ${days} days` });
       }
       case 'get_shared_documents': {
         const { direction, limit = 10 } = args;

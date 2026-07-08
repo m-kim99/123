@@ -386,6 +386,20 @@ function isExpiryIntent(text: string): boolean {
   return expiryKeywords.some(keyword => text.toLowerCase().includes(keyword));
 }
 
+// "이미 만료됨(과거)" vs "만료 예정(미래)" 구분. 과거를 가리키는 명확한 표현이 없으면
+// 기존 동작(미래 임박 조회)을 그대로 유지한다.
+function isPastExpiredIntent(text: string): boolean {
+  const lower = text.toLowerCase();
+  const pastKeywords = [
+    '만료된', '만료됨', '만료됐', '만료가 지난', '만료 지난',
+    '만기된', '만기가 지난', '만기 지난',
+    '기한이 지난', '기한 지난', '기한 초과', '기한 넘',
+    '이미 만료', '이미 지난',
+    'already expired', 'has expired', 'past due',
+  ];
+  return pastKeywords.some((k) => lower.includes(k.toLowerCase()));
+}
+
 // 공유 문서 키워드 감지
 function isSharedDocumentIntent(text: string): boolean {
   const sharedKeywords = ['공유', '공유한 문서', '공유된', '공유 목록', '공유문서',
@@ -592,6 +606,100 @@ async function getExpiringSubcategories(locale: string = 'ko', days: number = 90
     return { text: lines.join('\n'), docs };
   } catch (error) {
     console.error('만기 조회 오류:', error);
+    return { text: isEn ? 'An error occurred while retrieving expiry information.' : '만기 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
+  }
+}
+
+// 이미 만료된(과거) 세부카테고리 조회 — getExpiringSubcategories(미래 임박 조회)와 별개
+async function getExpiredSubcategories(locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] }> {
+  const isEn = locale?.startsWith('en');
+  const { user } = useAuthStore.getState();
+  if (!user?.companyId) {
+    return { text: isEn ? 'User information not found.' : '사용자 정보를 찾을 수 없습니다.', docs: [] };
+  }
+
+  try {
+    const now = new Date();
+
+    const { data: departments, error: deptError } = await supabase
+      .from('departments')
+      .select('id, name')
+      .eq('company_id', user.companyId);
+
+    if (deptError || !departments?.length) {
+      return { text: isEn ? 'Unable to retrieve department information.' : '부서 정보를 조회할 수 없습니다.', docs: [] };
+    }
+
+    const departmentIds = departments.map((d: { id: string; name: string }) => d.id);
+
+    const { data: parentCategories, error: catError } = await supabase
+      .from('categories')
+      .select('id, name, department_id')
+      .in('department_id', departmentIds);
+
+    if (catError || !parentCategories?.length) {
+      return { text: isEn ? 'Unable to retrieve category information.' : '카테고리 정보를 조회할 수 없습니다.', docs: [] };
+    }
+
+    const parentCategoryIds = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+
+    const { data: subcategories, error: subError } = await supabase
+      .from('subcategories')
+      .select('id, name, expiry_date, parent_category_id')
+      .in('parent_category_id', parentCategoryIds)
+      .not('expiry_date', 'is', null)
+      .lt('expiry_date', now.toISOString())
+      .order('expiry_date', { ascending: false });
+
+    if (subError) {
+      console.error('만료 조회 오류:', subError);
+      return { text: isEn ? 'An error occurred while retrieving expiry information.' : '만기 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
+    }
+
+    if (!subcategories?.length) {
+      return { text: isEn ? 'No expired subcategories found. ✅' : '이미 만료된 세부 스토리지가 없습니다. ✅', docs: [] };
+    }
+
+    const dateLocale = isEn ? 'en-US' : 'ko-KR';
+    const MAX_SHOW = 10;
+    const lines: string[] = [isEn
+      ? `Found ${subcategories.length} expired subcategory(ies):`
+      : `이미 만료된 세부 스토리지 ${subcategories.length}건을 찾았습니다:`];
+
+    for (const sub of subcategories.slice(0, MAX_SHOW)) {
+      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
+      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const expiryDate = new Date(sub.expiry_date);
+      const daysAgo = Math.max(0, Math.floor((now.getTime() - expiryDate.getTime()) / (24 * 60 * 60 * 1000)));
+      const dateStr = expiryDate.toLocaleDateString(dateLocale);
+      lines.push(isEn
+        ? `\n⛔ ${sub.name}: Expired ${dateStr} (${daysAgo}d ago) (${dept?.name || ''} > ${parentCat?.name || ''})`
+        : `\n⛔ ${sub.name}: ${dateStr} 만료 (${daysAgo}일 경과) (${dept?.name || ''} > ${parentCat?.name || ''})`);
+    }
+
+    lines.push(subcategories.length > MAX_SHOW
+      ? (isEn ? `\n(Showing ${MAX_SHOW} of ${subcategories.length} total)` : `\n(전체 ${subcategories.length}건 중 ${MAX_SHOW}건 표시)`)
+      : (isEn ? `\n(Total: ${subcategories.length} items)` : `\n(총 ${subcategories.length}건)`));
+    lines.push(isEn ? '\nClick a card below to navigate to the category.' : '\n아래 카드를 클릭하면 해당 카테고리로 이동합니다.');
+
+    const docs: ChatSearchResult[] = subcategories.slice(0, MAX_SHOW).map((sub: { id: string; name: string; expiry_date: string; parent_category_id: string }) => {
+      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
+      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      return {
+        id: sub.id,
+        name: sub.name,
+        categoryName: parentCat?.name || '',
+        departmentName: dept?.name || '',
+        storageLocation: null,
+        uploadDate: sub.expiry_date,
+        subcategoryId: sub.id,
+        parentCategoryId: sub.parent_category_id,
+      };
+    });
+
+    return { text: lines.join('\n'), docs };
+  } catch (error) {
+    console.error('만료 조회 오류:', error);
     return { text: isEn ? 'An error occurred while retrieving expiry information.' : '만기 정보를 조회하는 중 오류가 발생했습니다.', docs: [] };
   }
 }
@@ -1132,8 +1240,12 @@ function generateFallbackResponse(message: string, locale: string = 'ko'): strin
 async function generateAsyncFallbackResponse(message: string, locale: string = 'ko'): Promise<{ text: string; docs: ChatSearchResult[] } | null> {
   const text = message.trim();
 
-  // 만기 임박 조회 (사용자가 언급한 기간이 있으면 반영, 없으면 기존 기본값 3개월 유지)
+  // 만기 조회: "만료된"처럼 이미 지난 것을 묻는 경우와 "만기 임박"처럼 앞으로 다가올 것을
+  // 묻는 경우를 구분한다. 과거 표현이 없으면 기존 동작(미래 임박 조회)을 그대로 유지한다.
   if (isExpiryIntent(text)) {
+    if (isPastExpiredIntent(text)) {
+      return await getExpiredSubcategories(locale);
+    }
     return await getExpiringSubcategories(locale, parseExpiryDays(text));
   }
 
