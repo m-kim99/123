@@ -319,3 +319,12 @@ h1 {
 .main-content-safe-area {
   padding-bottom: calc(var(--native-bottom-bar) + 1rem);
 }
+
+/* App root wrapper: reserve space for the fixed NativeBottomBar so the
+   very end of the page (e.g. footer copyright text) isn't hidden behind it.
+   Must use --native-bottom-bar (includes safe-area-inset-bottom) instead of
+   a flat height, since NativeBottomBar itself adds safe-area bottom padding
+   on notch/gesture-nav devices, making its rendered height taller than 3.5rem. */
+.app-content-safe-area {
+  padding-bottom: var(--native-bottom-bar);
+}

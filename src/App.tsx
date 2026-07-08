@@ -418,7 +418,7 @@ function App() {
         <ScrollToTop />
         <RouteAnalytics />
         <NativeDeepLinkHandler />
-        <div className={Capacitor.isNativePlatform() ? 'pb-14' : ''}>
+        <div className={Capacitor.isNativePlatform() ? 'app-content-safe-area' : ''}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<RootRoute />} />
