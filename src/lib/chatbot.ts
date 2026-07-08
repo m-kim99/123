@@ -1131,6 +1131,10 @@ export async function generateResponse(
     return emitFallback();
   }
 
+  // 로컬 즉답 경로(fast reply/만기·공유·NFC/기간검색)는 ko/en 하드코딩 문자열만 보유
+  // ja/de는 로컬 경로를 건너뛰고 서버 LLM(Edge Function)으로 바로 라우팅해 올바른 언어로 응답받는다
+  const useLocalFastPaths = locale === 'ko' || locale?.startsWith('en');
+
   // 빠른 답변이 필요한 질문들 (즉시 fallback 처리 - 단순 includes 체크)
   const t = text.toLowerCase();
   const hasCount = t.includes('수') || t.includes('몇') || t.includes('개') || t.includes('갯수')
@@ -1152,15 +1156,15 @@ export async function generateResponse(
     t.includes('contains') || t.includes('include') || t.includes('find') || t.includes('search for');
   
   // 특정 대상 키워드(문서명 등)가 포함된 질문은 로컬 fast reply 대신 서버 검색으로 라우팅
-  const isFastReply = !needsDbQuery && !hasSpecificSearchTarget(text) && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
+  const isFastReply = useLocalFastPaths && !needsDbQuery && !hasSpecificSearchTarget(text) && (hasNfc || hasStatus || (hasEntity && (hasCount || hasList)));
   
   if (isFastReply) {
     console.log('[Chatbot] Fast reply 사용:', text);
     return emitFallback();
   }
 
-  // 만기, 공유, NFC 조회는 비동기 폴백으로 처리
-  const asyncFallback = await generateAsyncFallbackResponse(text, locale);
+  // 만기, 공유, NFC 조회는 비동기 폴백으로 처리 (ja/de는 서버 LLM으로 라우팅)
+  const asyncFallback = useLocalFastPaths ? await generateAsyncFallbackResponse(text, locale) : null;
   if (asyncFallback) {
     if (onPartialUpdate) {
       onPartialUpdate(asyncFallback.text, asyncFallback.docs);
@@ -1168,8 +1172,8 @@ export async function generateResponse(
     return { text: asyncFallback.text, docs: asyncFallback.docs };
   }
 
-  // 기간 기반 문서 검색은 로컬에서 빠르게 처리
-  if (isDateSearchIntent(text)) {
+  // 기간 기반 문서 검색은 로컬에서 빠르게 처리 (ja/de는 서버 LLM으로 라우팅)
+  if (useLocalFastPaths && isDateSearchIntent(text)) {
     const dateRange = parseDateRange(text);
     if (dateRange) {
       const isEn = locale?.startsWith('en');

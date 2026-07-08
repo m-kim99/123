@@ -186,7 +186,7 @@ async function preSearch(supabase: any, companyId: string, deptIds: string[], to
     results.push({ type: 'parent_category', name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}`, parent_category: c.name });
   }
   for (const s of subs) {
-    results.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정' });
+    results.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || null });
   }
   
   const docsNeedingParent = docs.filter((d: any) => d.subcategory_id && !d.parent_category_id);
@@ -281,7 +281,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_department_stats': {
         const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
-        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.` });
+        if (!dept) return JSON.stringify({ error: `Department '${args.department_name}' not found.` });
         const [userCount, catCount, subCount, docCount] = await Promise.all([
           supabase.from('users').select('id', { count: 'exact', head: true }).eq('department_id', dept.id).eq('company_id', companyId),
           supabase.from('categories').select('id', { count: 'exact', head: true }).eq('department_id', dept.id),
@@ -292,7 +292,7 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_parent_category_stats': {
         const { data: cat } = await supabase.from('categories').select('id, name, department:departments(name)').in('department_id', deptIds).ilike('name', `%${args.category_name}%`).single();
-        if (!cat) return JSON.stringify({ error: `'${args.category_name}' 대분류를 찾을 수 없습니다.` });
+        if (!cat) return JSON.stringify({ error: `Parent category '${args.category_name}' not found.` });
         const [subCount, docCount] = await Promise.all([
           supabase.from('subcategories').select('id', { count: 'exact', head: true }).eq('parent_category_id', cat.id),
           supabase.from('documents').select('id', { count: 'exact', head: true }).eq('parent_category_id', cat.id).is('deleted_at', null),
@@ -301,25 +301,25 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_subcategory_stats': {
         const { data: sub } = await supabase.from('subcategories').select('id, name, storage_location, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('name', `%${args.subcategory_name}%`).single();
-        if (!sub) return JSON.stringify({ error: `'${args.subcategory_name}' 세부카테고리를 찾을 수 없습니다.` });
+        if (!sub) return JSON.stringify({ error: `Subcategory '${args.subcategory_name}' not found.` });
         const { count } = await supabase.from('documents').select('id', { count: 'exact', head: true }).eq('subcategory_id', sub.id).is('deleted_at', null);
-        return JSON.stringify({ subcategory_name: sub.name, parent_category_name: sub.parent_category?.name, department_name: sub.department?.name, storage_location: sub.storage_location || '미지정', document_count: count });
+        return JSON.stringify({ subcategory_name: sub.name, parent_category_name: sub.parent_category?.name, department_name: sub.department?.name, storage_location: sub.storage_location || null, document_count: count });
       }
       case 'list_children': {
         const { parent_type, parent_name, limit = 10 } = args;
         if (parent_type === 'department') {
           const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${parent_name}%`).single();
-          if (!dept) return JSON.stringify({ error: `'${parent_name}' 부서를 찾을 수 없습니다.`, children: [], count: 0 });
+          if (!dept) return JSON.stringify({ error: `Department '${parent_name}' not found.`, children: [], count: 0 });
           const { data } = await supabase.from('categories').select('name').eq('department_id', dept.id).limit(limit);
           return JSON.stringify({ parent: dept.name, children: (data || []).map((c: any) => c.name), count: data?.length || 0 });
         } else if (parent_type === 'parent_category') {
           const { data: cat } = await supabase.from('categories').select('id, name').in('department_id', deptIds).ilike('name', `%${parent_name}%`).single();
-          if (!cat) return JSON.stringify({ error: `'${parent_name}' 대분류를 찾을 수 없습니다.`, children: [], count: 0 });
+          if (!cat) return JSON.stringify({ error: `Parent category '${parent_name}' not found.`, children: [], count: 0 });
           const { data } = await supabase.from('subcategories').select('name').eq('parent_category_id', cat.id).limit(limit);
           return JSON.stringify({ parent: cat.name, children: (data || []).map((s: any) => s.name), count: data?.length || 0 });
         } else {
           const { data: sub } = await supabase.from('subcategories').select('id, name').in('department_id', deptIds).ilike('name', `%${parent_name}%`).single();
-          if (!sub) return JSON.stringify({ error: `'${parent_name}' 세부카테고리를 찾을 수 없습니다.`, children: [], count: 0 });
+          if (!sub) return JSON.stringify({ error: `Subcategory '${parent_name}' not found.`, children: [], count: 0 });
           const { data } = await supabase.from('documents').select('title').eq('subcategory_id', sub.id).is('deleted_at', null).limit(limit);
           return JSON.stringify({ parent: sub.name, children: (data || []).map((d: any) => d.title), count: data?.length || 0 });
         }
@@ -384,20 +384,20 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
         const { entity_type, name: n } = args;
         if (entity_type === 'document') {
           const { data: doc } = await supabase.from('documents').select('title, subcategory:subcategories(name), parent_category:categories(name), department:departments(name)').in('department_id', deptIds).is('deleted_at', null).ilike('title', `%${n}%`).single();
-          if (!doc) return JSON.stringify({ error: `'${n}' 문서를 찾을 수 없습니다.` });
+          if (!doc) return JSON.stringify({ error: `Document '${n}' not found.` });
           return JSON.stringify({ path: `${doc.department?.name} → ${doc.parent_category?.name} → ${doc.subcategory?.name} → ${doc.title}`, department: doc.department?.name, parent_category: doc.parent_category?.name, subcategory: doc.subcategory?.name, document: doc.title });
         } else if (entity_type === 'parent_category') {
           const { data: cat } = await supabase.from('categories').select('id, name, department:departments(id, name)').in('department_id', deptIds).ilike('name', `%${n}%`).limit(1).single();
-          if (!cat) return JSON.stringify({ error: `'${n}' 대분류를 찾을 수 없습니다.` });
+          if (!cat) return JSON.stringify({ error: `Parent category '${n}' not found.` });
           return JSON.stringify({ path: `${cat.department?.name} → ${cat.name}`, department: cat.department?.name, parent_category: cat.name, link: `/admin/department/${cat.department?.id}/category/${cat.id}` });
         } else if (entity_type === 'department') {
           const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${n}%`).single();
-          if (!dept) return JSON.stringify({ error: `'${n}' 부서를 찾을 수 없습니다.` });
+          if (!dept) return JSON.stringify({ error: `Department '${n}' not found.` });
           return JSON.stringify({ path: dept.name, department: dept.name, link: `/admin/department/${dept.id}` });
         } else {
           const { data: sub } = await supabase.from('subcategories').select('name, storage_location, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).ilike('name', `%${n}%`).single();
-          if (!sub) return JSON.stringify({ error: `'${n}' 세부카테고리를 찾을 수 없습니다.` });
-          return JSON.stringify({ path: `${sub.department?.name} → ${sub.parent_category?.name} → ${sub.name}`, department: sub.department?.name, parent_category: sub.parent_category?.name, subcategory: sub.name, storage_location: sub.storage_location || '미지정' });
+          if (!sub) return JSON.stringify({ error: `Subcategory '${n}' not found.` });
+          return JSON.stringify({ path: `${sub.department?.name} → ${sub.parent_category?.name} → ${sub.name}`, department: sub.department?.name, parent_category: sub.parent_category?.name, subcategory: sub.name, storage_location: sub.storage_location || null });
         }
       }
       case 'search_by_location': {
@@ -406,25 +406,25 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
       }
       case 'get_department_members': {
         const { data: dept } = await supabase.from('departments').select('id, name').eq('company_id', companyId).ilike('name', `%${args.department_name}%`).single();
-        if (!dept) return JSON.stringify({ error: `'${args.department_name}' 부서를 찾을 수 없습니다.`, members: [], count: 0 });
+        if (!dept) return JSON.stringify({ error: `Department '${args.department_name}' not found.`, members: [], count: 0 });
         const { data: users } = await supabase.from('users').select('name, email, role').eq('department_id', dept.id).eq('company_id', companyId);
-        if (!users || users.length === 0) return JSON.stringify({ department: dept.name, members: [], count: 0, message: `${dept.name}에 등록된 팀원이 없습니다.` });
+        if (!users || users.length === 0) return JSON.stringify({ department: dept.name, members: [], count: 0, message: `No members registered in '${dept.name}'.` });
         return JSON.stringify({ department: dept.name, members: users.map((u: any) => ({ name: u.name || u.email, email: u.email, role: u.role })), count: users.length });
       }
       case 'get_user_info': {
         const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('company_id', companyId).ilike('name', `%${args.user_name}%`).single();
-        if (!user) return JSON.stringify({ error: `'${args.user_name}' 사용자를 찾을 수 없습니다.` });
-        return JSON.stringify({ name: user.name, email: user.email, role: user.role, department: user.department?.name || '미배정' });
+        if (!user) return JSON.stringify({ error: `User '${args.user_name}' not found.` });
+        return JSON.stringify({ name: user.name, email: user.email, role: user.role, department: user.department?.name || 'Unassigned' });
       }
       case 'get_my_info': {
         const { data: user } = await supabase.from('users').select('name, email, role, department:departments(name)').eq('id', userId).single();
-        return JSON.stringify({ name: user?.name || '알 수 없음', email: user?.email || '알 수 없음', role: user?.role || '알 수 없음', department: user?.department?.name || '미배정' });
+        return JSON.stringify({ name: user?.name || 'Unknown', email: user?.email || 'Unknown', role: user?.role || 'Unknown', department: user?.department?.name || 'Unassigned' });
       }
       case 'get_expiring_subcategories': {
         const days = args.days || 30;
         const futureDate = new Date(); futureDate.setDate(futureDate.getDate() + days);
         const { data } = await supabase.from('subcategories').select('name, expiry_date, parent_category:categories(name), department:departments(name)').in('department_id', deptIds).not('expiry_date', 'is', null).lte('expiry_date', futureDate.toISOString()).gte('expiry_date', new Date().toISOString()).order('expiry_date', { ascending: true });
-        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, expiry_date: s.expiry_date, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0, period: `${days}일 이내` });
+        return JSON.stringify({ subcategories: (data || []).map((s: any) => ({ name: s.name, expiry_date: s.expiry_date, parent_category: s.parent_category?.name, department: s.department?.name })), count: data?.length || 0, period: `within ${days} days` });
       }
       case 'get_shared_documents': {
         const { direction, limit = 10 } = args;
@@ -473,20 +473,20 @@ async function executeFunction(name: string, args: any, supabase: any, companyId
           allResults.push({ type: 'parent_category', name: c.name, department: c.department?.name, path: `${c.department?.name} → ${c.name}`, link: `/admin/department/${c.department_id}/category/${c.id}` });
         }
         for (const s of subs) {
-          allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || '미지정' });
+          allResults.push({ type: 'subcategory', name: s.name, department: s.department?.name, parent_category: s.parent_category?.name, path: `${s.department?.name} → ${s.parent_category?.name} → ${s.name}`, link: `/admin/category/${s.parent_category_id}/subcategory/${s.id}`, storage_location: s.storage_location || null });
         }
         for (const d of docs) {
           const docSub = d.subcategory;
-          allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: docSub?.name || '', path: `${d.department?.name} → ${d.parent_category?.name} → ${docSub?.name || ''} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: docSub?.storage_location || '미지정', uploaded_at: d.uploaded_at });
+          allResults.push({ type: 'document', name: d.title, department: d.department?.name, parent_category: d.parent_category?.name, subcategory: docSub?.name || '', path: `${d.department?.name} → ${d.parent_category?.name} → ${docSub?.name || ''} → ${d.title}`, link: d.subcategory_id ? `/admin/category/${d.parent_category_id}/subcategory/${d.subcategory_id}` : null, storage_location: docSub?.storage_location || null, uploaded_at: d.uploaded_at });
         }
         
         return JSON.stringify({ results: allResults.slice(0, searchLimit), total_count: allResults.length, breakdown: { departments: depts.length, parent_categories: cats.length, subcategories: subs.length, documents: docs.length } });
       }
-      default: return JSON.stringify({ error: `알 수 없는 함수: ${name}` });
+      default: return JSON.stringify({ error: `Unknown function: ${name}` });
     }
   } catch (error) { 
     console.error(`Function ${name} error:`, error); 
-    return JSON.stringify({ error: `함수 실행 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }); 
+    return JSON.stringify({ error: `Function execution error: ${error instanceof Error ? error.message : 'Unknown error'}` });
   }
 }
 
@@ -520,55 +520,39 @@ serve(async (req) => {
     console.log(`PreSearch: message="${message}", tokens=[${searchTokens.join(', ')}], results=${searchContext?.results?.length || 0}, firstResult=${JSON.stringify(searchContext?.results?.[0]?.name || 'none')}`);
     
     // ==========================================
-    // 🌍 LOCALE별 시스템 프롬프트 분리
+    // 🌍 통합 시스템 프롬프트 (응답 언어 = 질문 언어, 애매하면 앱 언어)
     // ==========================================
-    
-    // 프리서치 결과 블록 (언어별)
-    const searchDataBlockKo = searchContext
-      ? `\n## 사전 검색 결과 (키워드: "${searchContext.keyword}")\n아래는 사용자 메시지에서 자동 검색한 결과입니다. 검색/찾기/위치 질문이면 이 데이터로 바로 답변하세요 (함수 호출 불필요).\n${JSON.stringify(searchContext.results, null, 1)}`
-      : '';
-    
-    const searchDataBlockEn = searchContext
+
+    const LOCALE_NAMES: Record<string, string> = {
+      ko: 'Korean (한국어)',
+      en: 'English',
+      ja: 'Japanese (日本語)',
+      de: 'German (Deutsch)',
+    };
+    const langKey = String(locale || 'ko').slice(0, 2).toLowerCase();
+    const appLanguage = LOCALE_NAMES[langKey] || LOCALE_NAMES.ko;
+
+    const searchDataBlock = searchContext
       ? `\n## Pre-search Results (keyword: "${searchContext.keyword}")\nBelow are results automatically retrieved from the user's message. For search/find/location queries, answer directly using this data (no function calls needed).\n${JSON.stringify(searchContext.results, null, 1)}`
       : '';
-    
-    // 한글 시스템 프롬프트
-    const systemInstructionKo = `당신은 문서 관리 시스템(DMS)의 AI 어시스턴트 '트로이'입니다.
 
-## 시스템 구조
-4단 계층: 부서 → 대분류 → 세부카테고리(세부 스토리지) → 문서
+    const systemInstruction = `You are 'Troy' (트로이), an AI assistant for a Document Management System (DMS).
 
-## 필수 규칙
-1. 항상 한국어로 답변하세요. 자연스럽고 친절한 한국어를 사용하세요.
-2. 함수 이름이나 내부 동작을 사용자에게 절대 노출하지 마세요.
-${searchDataBlockKo}
-
-## 답변 기준 (우선순위)
-1. **사전 검색 결과가 있으면**: 반드시 해당 결과를 안내하세요. 사용자가 키워드만 입력해도 검색 의도로 간주합니다. 함수 호출은 불필요합니다.
-2. **검색/찾기 질문인데 사전 검색 결과가 없거나 사용자가 찾는 대상과 다르면**: search_documents 또는 unified_search를 호출하세요. keyword에는 조사·동사·"문서/파일" 같은 일반어를 빼고 핵심 명사만 공백으로 구분해 전달하세요 (예: "작년 거래처 계약서 어딨어?" → "거래처 계약서"). 각 키워드는 개별 매칭되므로 띄어쓰기가 달라도 찾을 수 있습니다. 결과가 없으면 키워드를 줄이거나 바꿔서 최대 1회 재시도하세요.
-3. **통계/개수/순위/사용자 정보/NFC/만료/공유 등**: 적절한 함수를 호출하여 답변.
-4. **인사/감사/일반 대화/사용법 질문**: 직접 답변.
-
-## 답변 형식
-- 문서명과 내용만 간단히 안내
-- **링크(link, path, /admin/...)는 절대 텍스트로 출력하지 마세요** - 카드 UI가 자동으로 처리합니다
-- OCR 본문에서 발견된 경우: 발견된 내용 스니펫만 간단히 인용
-- 친절하고 간결하게`;
-    
-    // 영어 시스템 프롬프트
-    const systemInstructionEn = `You are 'Troy', an AI assistant for a Document Management System (DMS).
+## Language Rule (HIGHEST PRIORITY)
+- ALWAYS respond in the language of the user's LATEST message — even if earlier messages, this prompt, or tool results use a different language.
+- If the message language is ambiguous (e.g., only proper nouns, numbers, or bare keywords), respond in the app language: ${appLanguage}.
+- Keep stored data values (department/category/document names) exactly as-is; translate only the surrounding text and labels.
 
 ## System Structure
 4-tier hierarchy: Department → Parent Category → Subcategory (Detailed Storage) → Document
 
 ## Critical Rules
-1. ALWAYS respond in English. Use natural, clear, and friendly English.
-2. NEVER expose internal function names or implementation details to users.
-${searchDataBlockEn}
+1. NEVER expose internal function names or implementation details to users.
+${searchDataBlock}
 
 ## Response Priority
 1. **If pre-search results exist**: Provide answers directly from these results. User keywords alone indicate search intent. No function calls needed for search/location queries.
-2. **If it is a search/find question but pre-search results are missing or irrelevant**: Call search_documents or unified_search. Pass 1-4 core noun keywords separated by spaces, excluding particles/verbs/generic words like "document/file" (e.g. "where is last year's vendor contract?" → "vendor contract"). Each keyword is matched individually, so spacing differences are tolerated. If no results, retry at most once with fewer or different keywords.
+2. **If it is a search/find question but pre-search results are missing or irrelevant**: Call search_documents or unified_search. Pass 1-4 core noun keywords separated by spaces, excluding particles/verbs/generic words like "document/file" (e.g. "where is last year's vendor contract?" → "vendor contract"). Each keyword is matched individually, so spacing differences are tolerated. Stored data is usually in the app language — if the user's message is in a different language, also try keywords translated into the app language (e.g. "人事部" → "인사부"). If no results, retry at most once with fewer, different, or translated keywords.
 3. **For stats/counts/rankings/user info/NFC/expiry/shared documents**: Call appropriate functions.
 4. **For greetings/thanks/general conversation/usage questions**: Respond directly.
 
@@ -577,9 +561,6 @@ ${searchDataBlockEn}
 - **NEVER output links (link, path, /admin/...) as text** - Card UI handles them automatically
 - If found in OCR text: Quote relevant snippet only
 - Be friendly and concise`;
-    
-    // locale에 따라 시스템 프롬프트 선택
-    const systemInstruction = locale?.startsWith('en') ? systemInstructionEn : systemInstructionKo;
     
     // ==========================================
     // OpenAI API 호출
@@ -725,9 +706,51 @@ ${searchDataBlockEn}
         console.error('Final OpenAI call failed:', e); 
       }
       
-      // OpenAI 실패 시 함수 결과로 직접 응답
+      // OpenAI 실패 시 함수 결과로 직접 응답 (앱 언어 기준 4개 언어 템플릿)
       if (!finalText) {
-        const isEn = locale?.startsWith('en');
+        const FALLBACK_TEXTS: Record<string, any> = {
+          ko: {
+            foundDocs: (n: number) => `**${n}개의 문서**를 찾았습니다:`,
+            pathLabel: '경로', docLabel: '문서',
+            moreDocs: (n: number) => `\n외 ${n}개 문서`,
+            totals: (r: any) => `현재 시스템 현황입니다:\n- 부서: ${r.departments || 0}개\n- 대분류: ${r.parent_categories || 0}개\n- 세부카테고리: ${r.subcategories || 0}개\n- 문서: ${r.documents || 0}개\n- 사용자: ${r.users || 0}명`,
+            totalItems: (n: number) => `총 ${n}개의 항목이 있습니다.`,
+            list: (items: string[]) => `목록: ${items.join(', ')}`,
+            listPartial: (items: string[], more: number) => `목록 (일부): ${items.join(', ')} 외 ${more}개`,
+            totalCount: (n: number) => `총 ${n}개입니다.`,
+          },
+          en: {
+            foundDocs: (n: number) => `Found **${n}** document(s):`,
+            pathLabel: 'Path', docLabel: 'Document',
+            moreDocs: (n: number) => `\nAnd ${n} more document(s)`,
+            totals: (r: any) => `Current system status:\n- Departments: ${r.departments || 0}\n- Parent Categories: ${r.parent_categories || 0}\n- Subcategories: ${r.subcategories || 0}\n- Documents: ${r.documents || 0}\n- Users: ${r.users || 0}`,
+            totalItems: (n: number) => `Total of ${n} item(s).`,
+            list: (items: string[]) => `List: ${items.join(', ')}`,
+            listPartial: (items: string[], more: number) => `List (partial): ${items.join(', ')} and ${more} more`,
+            totalCount: (n: number) => `Total: ${n} item(s).`,
+          },
+          ja: {
+            foundDocs: (n: number) => `**${n}件のドキュメント**が見つかりました:`,
+            pathLabel: 'パス', docLabel: 'ドキュメント',
+            moreDocs: (n: number) => `\n他 ${n}件のドキュメント`,
+            totals: (r: any) => `現在のシステム状況です:\n- 部署: ${r.departments || 0}件\n- 大分類: ${r.parent_categories || 0}件\n- 詳細カテゴリ: ${r.subcategories || 0}件\n- ドキュメント: ${r.documents || 0}件\n- ユーザー: ${r.users || 0}名`,
+            totalItems: (n: number) => `全部で${n}件の項目があります。`,
+            list: (items: string[]) => `一覧: ${items.join(', ')}`,
+            listPartial: (items: string[], more: number) => `一覧 (一部): ${items.join(', ')} 他 ${more}件`,
+            totalCount: (n: number) => `合計 ${n}件です。`,
+          },
+          de: {
+            foundDocs: (n: number) => `**${n}** Dokument(e) gefunden:`,
+            pathLabel: 'Pfad', docLabel: 'Dokument',
+            moreDocs: (n: number) => `\nUnd ${n} weitere(s) Dokument(e)`,
+            totals: (r: any) => `Aktueller Systemstatus:\n- Abteilungen: ${r.departments || 0}\n- Hauptkategorien: ${r.parent_categories || 0}\n- Unterkategorien: ${r.subcategories || 0}\n- Dokumente: ${r.documents || 0}\n- Benutzer: ${r.users || 0}`,
+            totalItems: (n: number) => `Insgesamt ${n} Element(e).`,
+            list: (items: string[]) => `Liste: ${items.join(', ')}`,
+            listPartial: (items: string[], more: number) => `Liste (Auszug): ${items.join(', ')} und ${more} weitere`,
+            totalCount: (n: number) => `Insgesamt: ${n} Element(e).`,
+          },
+        };
+        const fb = FALLBACK_TEXTS[langKey] || FALLBACK_TEXTS.ko;
         const lines: string[] = [];
         for (const fr of functionResults) {
           const fn = fr.functionResponse?.name;
@@ -739,31 +762,27 @@ ${searchDataBlockEn}
             }
           }
           else if (res?.documents?.length > 0) {
-            lines.push(isEn ? `Found **${res.count}** document(s):` : `**${res.count}개의 문서**를 찾았습니다:`);
+            lines.push(fb.foundDocs(res.count));
             for (const d of res.documents.slice(0, 5)) {
-              lines.push(`- **${d.title}**\n  · ${isEn ? 'Path' : '경로'}: ${d.path || `${d.department} → ${d.parent_category} → ${d.subcategory}`}${d.link ? `\n  · ${isEn ? 'Document' : '문서'}: ${d.link}` : ''}`);
+              lines.push(`- **${d.title}**\n  · ${fb.pathLabel}: ${d.path || `${d.department} → ${d.parent_category} → ${d.subcategory}`}${d.link ? `\n  · ${fb.docLabel}: ${d.link}` : ''}`);
             }
-            if (res.count > 5) lines.push(isEn ? `\nAnd ${res.count - 5} more document(s)` : `\n외 ${res.count - 5}개 문서`);
+            if (res.count > 5) lines.push(fb.moreDocs(res.count - 5));
           }
           else if (res?.error) {
             lines.push(res.error);
           }
           else if (res && typeof res === 'object') {
             if (fn === 'get_total_counts') {
-              lines.push(isEn
-                ? `Current system status:\n- Departments: ${res.departments || 0}\n- Parent Categories: ${res.parent_categories || 0}\n- Subcategories: ${res.subcategories || 0}\n- Documents: ${res.documents || 0}\n- Users: ${res.users || 0}`
-                : `현재 시스템 현황입니다:\n- 부서: ${res.departments || 0}개\n- 대분류: ${res.parent_categories || 0}개\n- 세부카테고리: ${res.subcategories || 0}개\n- 문서: ${res.documents || 0}개\n- 사용자: ${res.users || 0}명`);
+              lines.push(fb.totals(res));
             } else if (fn === 'list_all' && res.items) {
-              lines.push(isEn ? `Total of ${res.count || res.items.length} item(s).` : `총 ${res.count || res.items.length}개의 항목이 있습니다.`);
+              lines.push(fb.totalItems(res.count || res.items.length));
               if (res.items.length > 0 && res.items.length <= 10) {
-                lines.push(`${isEn ? 'List' : '목록'}: ${res.items.join(', ')}`);
+                lines.push(fb.list(res.items));
               } else if (res.items.length > 10) {
-                lines.push(isEn
-                  ? `List (partial): ${res.items.slice(0, 10).join(', ')} and ${res.items.length - 10} more`
-                  : `목록 (일부): ${res.items.slice(0, 10).join(', ')} 외 ${res.items.length - 10}개`);
+                lines.push(fb.listPartial(res.items.slice(0, 10), res.items.length - 10));
               }
             } else if (res.count !== undefined) {
-              lines.push(isEn ? `Total: ${res.count} item(s).` : `총 ${res.count}개입니다.`);
+              lines.push(fb.totalCount(res.count));
             }
           }
         }
