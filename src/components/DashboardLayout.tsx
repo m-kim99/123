@@ -939,9 +939,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <NFCAutoRedirect />
       
       <aside
-        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 flex flex-col ${
+        className={`fixed inset-y-0 left-0 z-40 md:z-50 w-64 bg-white dark:bg-[#0f172a] border-r dark:border-white/[0.08] transform transition-transform duration-300 flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isMobileMenuOpen ? 'block' : 'hidden md:block'} md:translate-x-0 ${Capacitor.isNativePlatform() ? 'sidebar-safe-area' : ''}`}
+        } ${isMobileMenuOpen ? 'flex' : 'hidden md:flex'} md:translate-x-0 ${Capacitor.isNativePlatform() ? 'sidebar-safe-area' : ''}`}
       >
         <div className="flex items-center justify-center h-16 px-4 border-b overflow-hidden">
           <button
