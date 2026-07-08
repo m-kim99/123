@@ -1296,6 +1296,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {t('language.japanese')}
                     </span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeLanguage('de')} className="pl-8">
+                    <span className={i18n.language === 'de' ? 'font-semibold text-[#2563eb]' : ''}>
+                      {t('language.german')}
+                    </span>
+                  </DropdownMenuItem>
                 </div>
               )}
               <DropdownMenuItem
@@ -1565,6 +1570,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <DropdownMenuRadioItem value="ko">{t('language.korean')}</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="en">{t('language.english')}</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="ja">{t('language.japanese')}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="de">{t('language.german')}</DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
