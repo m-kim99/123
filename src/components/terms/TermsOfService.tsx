@@ -873,10 +873,302 @@ const TermsJa = () => (
   </>
 );
 
+const TermsDe = () => (
+  <>
+    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Geändert: 01.07.2026 | Inkrafttreten: 01.07.2026</p>
+
+    <h3 className="font-semibold text-slate-900">§ 1 (Zweck)</h3>
+    <p>Diese Nutzungsbedingungen regeln die Rechte, Pflichten und Verantwortlichkeiten zwischen der InfoCreative Co., Ltd. (im Folgenden „Unternehmen") und ihren Mitgliedern sowie die Bedingungen, Verfahren und sonstigen erforderlichen Angelegenheiten im Zusammenhang mit der Nutzung von Tray Storage Connect (im Folgenden „Dienst"), einem vom Unternehmen bereitgestellten Dokumentenmanagement-Dienst.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 2 (Begriffsbestimmungen)</h3>
+    <p>① Die in diesen Nutzungsbedingungen verwendeten Begriffe sind wie folgt definiert:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>„Dienst" bezeichnet die vom Unternehmen bereitgestellte Online-Plattform, mit der Mitglieder ihre Dokumente cloudbasiert speichern und verwalten sowie mithilfe von Künstlicher Intelligenz (KI) durchsuchen, analysieren und auswerten können.</li>
+      <li>„Tray Storage Connect" bezeichnet die vom Unternehmen zur Bereitstellung des Dienstes betriebene Web- und Mobilplattform.</li>
+      <li>„Mitglied" bezeichnet jede Person, die diesen Nutzungsbedingungen zugestimmt und die vom Unternehmen festgelegte Registrierung abgeschlossen hat, um den Dienst zu nutzen.</li>
+      <li>„Administrator" bezeichnet ein Mitglied, dem innerhalb einer Organisation Verwaltungsrechte eingeräumt wurden, einschließlich des Anlegens von Abteilungen, der Verwaltung von Zugriffsrechten und der Einsicht in Gesamtstatistiken der Dokumente.</li>
+      <li>„Teammitglied" bezeichnet ein Mitglied, das Dokumente im Rahmen der vom Administrator eingeräumten Berechtigungen registrieren, einsehen und bearbeiten kann.</li>
+      <li>„Beitrag" bezeichnet sämtliche vom Mitglied in den Dienst hochgeladenen Materialien, einschließlich Dokumentdateien, Fotos und Bilder.</li>
+      <li>„KI-Dienst" bezeichnet Funktionen, die mittels Künstlicher Intelligenz automatisiert dokumentenbezogene Informationen bereitstellen, einschließlich optischer Zeichenerkennung (OCR), Inhaltsanalyse, Suche, Zusammenfassung, Klassifizierung und Frage-Antwort-Funktionen. Hierzu zählen auch KI-Modelle Dritter wie OpenAI GPT und Naver Clova OCR.</li>
+      <li>„KI-OCR" bezeichnet die Technologie der optischen Zeichenerkennung, die Textinformationen aus Bildern oder gescannten Dokumenten automatisch erkennt und extrahiert.</li>
+      <li>„Kostenloser Tarif" bezeichnet einen Tarif, mit dem der Dienst im vom Unternehmen festgelegten Umfang gebührenfrei genutzt werden kann, vorbehaltlich vom Unternehmen festgelegter Einschränkungen wie etwa der Anzahl der Lizenzplätze pro Organisation.</li>
+      <li>„Kostenpflichtiger Tarif" bezeichnet einen Tarif (z. B. den Basic-Tarif), bei dem das Mitglied eine Nutzungsgebühr entrichtet, um die vom Unternehmen bereitgestellten Grundfunktionen zu nutzen.</li>
+      <li>„Lizenzplatz" bezeichnet zusammenfassend die innerhalb einer Organisation (eines Mitgliedskontos) registrierten Administratoren und Teammitglieder, die den Dienst nutzen.</li>
+      <li>„Tray-Storage-Produkt" bezeichnet eine vom Unternehmen verkaufte physische Aufbewahrungsbox für Papierdokumente, die über ein angebrachtes NFC-Tag mit dem Dienst verknüpft werden kann.</li>
+      <li>„NFC-Tag" bezeichnet eine aufklebbare Vorrichtung, die das Tray-Storage-Produkt mittels Nahfeldkommunikation (Near Field Communication) mit dem Dienst verknüpft.</li>
+    </ul>
+    <p>② Begriffe, die in diesen Nutzungsbedingungen nicht definiert sind, werden gemäß den geltenden Gesetzen und der allgemeinen Handelspraxis ausgelegt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 3 (Bekanntgabe und Änderung der Nutzungsbedingungen)</h3>
+    <p>① Das Unternehmen veröffentlicht den Inhalt dieser Nutzungsbedingungen auf der Startseite des Dienstes oder auf der Website des Unternehmens (www.traystorage.net), damit Mitglieder ihn jederzeit einsehen können.</p>
+    <p>② Das Unternehmen kann diese Nutzungsbedingungen ändern, soweit dies nicht gegen geltendes Recht verstößt, einschließlich des Gesetzes zur Regelung von Allgemeinen Geschäftsbedingungen, des Gesetzes zur Förderung der Nutzung von Informations- und Kommunikationsnetzen und zum Schutz von Informationen (im Folgenden „Netzgesetz") sowie des Gesetzes zum Verbraucherschutz im elektronischen Geschäftsverkehr.</p>
+    <p>③ Bei einer Änderung dieser Nutzungsbedingungen gibt das Unternehmen den Inhalt der Änderung sowie das Datum des Inkrafttretens an und veröffentlicht diese Angaben mindestens sieben (7) Tage vor dem Inkrafttreten auf dem Dienst und der Unternehmenswebsite. Betrifft die Änderung wesentliche oder für Mitglieder nachteilige Punkte, erfolgt die Bekanntgabe mindestens dreißig (30) Tage vorher, zusätzlich mit individueller Benachrichtigung an die registrierte E-Mail-Adresse oder Mobilfunknummer des Mitglieds.</p>
+    <p>④ Weist das Unternehmen bei der Bekanntgabe oder Benachrichtigung gemäß Absatz 3 ausdrücklich darauf hin, dass die Nichtäußerung eines Widerspruchs bis zum Inkrafttreten als Zustimmung gilt, und widerspricht das Mitglied nicht ausdrücklich, gilt das Mitglied als mit den geänderten Nutzungsbedingungen einverstanden.</p>
+    <p>⑤ Stimmt ein Mitglied der Anwendung der geänderten Nutzungsbedingungen nicht zu, kann das Unternehmen die geänderten Nutzungsbedingungen nicht anwenden; das Mitglied kann in diesem Fall den Nutzungsvertrag kündigen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 4 (Ergänzende Bestimmungen)</h3>
+    <p>① Für Angelegenheiten, die in diesen Nutzungsbedingungen nicht geregelt sind, sowie für deren Auslegung gelten die einschlägigen Gesetze, einschließlich des Gesetzes zur Regelung von Allgemeinen Geschäftsbedingungen, des Netzgesetzes, des Gesetzes zum Schutz personenbezogener Daten, des Gesetzes zum Verbraucherschutz im elektronischen Geschäftsverkehr, des Grundlagengesetzes für Künstliche Intelligenz, des Grundlagengesetzes für elektronische Dokumente und elektronischen Geschäftsverkehr sowie die allgemeine Handelspraxis.</p>
+    <p>② Das Unternehmen kann bei Bedarf detaillierte Nutzungsrichtlinien (Betriebsrichtlinien) festlegen und diese im Dienst veröffentlichen oder auf andere Weise bekannt geben.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 5 (Mitgliedsregistrierung)</h3>
+    <p>① Interessenten beantragen die Mitgliedschaft, indem sie die vom Unternehmen vorgesehenen Registrierungsangaben ausfüllen und ihre Zustimmung zu diesen Nutzungsbedingungen erklären.</p>
+    <p>② Das Unternehmen registriert Antragsteller als Mitglieder, sofern keiner der folgenden Fälle vorliegt:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Der Antragsteller hat zuvor gemäß diesen Nutzungsbedingungen seine Mitgliedschaft verloren (ausgenommen, wenn seit dem Verlust der Mitgliedschaft zwei (2) Jahre vergangen sind und das Unternehmen einer erneuten Registrierung zugestimmt hat);</li>
+      <li>Die Registrierungsangaben enthalten falsche, unvollständige oder fehlerhafte Angaben;</li>
+      <li>Der Antragsteller beantragt eine erneute Registrierung, bevor seit dem Austritt sieben (7) Tage vergangen sind;</li>
+      <li>Ein Mitglied, dessen Nutzung gesperrt wurde, kündigt einseitig den Nutzungsvertrag und beantragt eine erneute Registrierung;</li>
+      <li>Die Registrierung würde den technischen Betrieb des Unternehmens erheblich beeinträchtigen.</li>
+    </ul>
+    <p>③ Der Mitgliedschaftsvertrag gilt als zustande gekommen, sobald die Annahme des Unternehmens dem Mitglied zugegangen ist.</p>
+    <p>④ Ändern sich die bei der Registrierung angegebenen Daten, hat das Mitglied das Unternehmen umgehend per E-Mail oder auf anderem Weg über die Änderung zu informieren.</p>
+    <p>⑤ Das Unternehmen haftet nicht für Nachteile, die durch die Nichtmitteilung von Änderungen gemäß Absatz 4 entstehen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 6 (Kündigung und Verlust der Mitgliedschaft)</h3>
+    <p>① Ein Mitglied kann jederzeit die Kündigung der Mitgliedschaft beim Unternehmen beantragen; das Unternehmen bearbeitet die Kündigung unverzüglich.</p>
+    <p>② Liegt einer der folgenden Gründe vor, kann das Unternehmen die Mitgliedschaft einschränken oder sperren:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Angabe falscher Informationen bei der Registrierung;</li>
+      <li>Beeinträchtigung der Nutzung des Dienstes durch andere Mitglieder, Missbrauch ihrer Daten oder sonstige Gefährdung der Ordnung des elektronischen Geschäftsverkehrs;</li>
+      <li>Nutzung des Dienstes für Handlungen, die gegen geltendes Recht oder diese Nutzungsbedingungen verstoßen oder gegen die guten Sitten verstoßen.</li>
+    </ul>
+    <p>③ Wiederholt sich dasselbe Verhalten nach einer Einschränkung oder Sperrung zwei (2) oder mehr Mal, oder wird der Grund nicht innerhalb von dreißig (30) Tagen behoben, kann das Unternehmen die Mitgliedschaft entziehen.</p>
+    <p>④ Entzieht das Unternehmen die Mitgliedschaft, wird die Registrierung gelöscht. Das Unternehmen benachrichtigt das Mitglied hierüber und gewährt vor der Löschung eine Frist von mindestens dreißig (30) Tagen zur Stellungnahme.</p>
+    <p>⑤ Bei Kündigung oder Verlust der Mitgliedschaft werden die Beiträge und personenbezogenen Daten des Mitglieds unverzüglich gelöscht. Informationen, deren Aufbewahrung nach geltendem Recht und der Datenschutzerklärung des Unternehmens erforderlich ist, werden für die vorgeschriebene Dauer aufbewahrt und danach gelöscht.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 7 (Umwandlung in ein ruhendes Konto)</h3>
+    <p>① Meldet sich ein Mitglied ein (1) Jahr lang nicht beim Dienst an, wandelt das Unternehmen das Konto in ein ruhendes Konto um und speichert die personenbezogenen Daten getrennt.</p>
+    <p>② Drei (3) Jahre nach der Umwandlung in ein ruhendes Konto werden die personenbezogenen Daten und Beiträge des Mitglieds endgültig gelöscht.</p>
+    <p>③ Das Unternehmen benachrichtigt das Mitglied mindestens dreißig (30) Tage vor der geplanten Umwandlung per E-Mail oder auf anderem Weg.</p>
+    <p>④ Ein Mitglied mit ruhendem Konto kann durch Identitätsprüfung bei der Anmeldung den Ruhezustand aufheben und den Dienst wieder nutzen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 8 (Bereitstellung und Änderung des Dienstes)</h3>
+    <p>① Das Unternehmen stellt Mitgliedern folgende Leistungen bereit:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Cloudbasierte Speicherung und Verwaltung von Dokumentdateien und Bildern;</li>
+      <li>Abteilungsbezogene Dokumentenklassifizierung und -verwaltung;</li>
+      <li>Verknüpfung mit physischen Aufbewahrungsboxen über NFC-Tags;</li>
+      <li>Automatische Texterkennung und -extraktion aus Dokumenten mittels KI-OCR;</li>
+      <li>KI-gestützte Dokumentensuche, -analyse, -zusammenfassung und Frage-Antwort-Funktion;</li>
+      <li>KI-Schnittstelle über Chat und Sprachbefehle;</li>
+      <li>Zusatzfunktionen wie Festlegung der Aufbewahrungsdauer von Dokumenten, statistische Auswertungen und Ankündigungen;</li>
+      <li>Verwaltung von Zugriffsrechten (vier Stufen: kein Zugriff / Betrachter / Bearbeiter / Administrator);</li>
+      <li>Sonstige vom Unternehmen zusätzlich entwickelte oder im Rahmen von Kooperationen bereitgestellte Leistungen.</li>
+    </ul>
+    <p>② Das Unternehmen kann den Dienst ganz oder teilweise ändern, um die Qualität zu verbessern, technische Weiterentwicklungen umzusetzen oder betrieblichen Erfordernissen nachzukommen.</p>
+    <p>③ Bei Änderungen des Inhalts, der Nutzungsmethode oder der Nutzungszeiten des Dienstes gibt das Unternehmen den Grund der Änderung, die Einzelheiten des geänderten Dienstes und das Bereitstellungsdatum mindestens sieben (7) Tage vor der Änderung im Dienst bekannt oder benachrichtigt die Mitglieder.</p>
+    <p>④ Das Unternehmen kann kostenlos bereitgestellte Leistungen ganz oder teilweise ändern, aussetzen oder einstellen, wie es aus geschäftlichen oder betrieblichen Gründen erforderlich ist, ohne dass Mitgliedern hierfür eine Entschädigung zusteht, sofern gesetzlich nichts anderes vorgeschrieben ist.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 9 (Nutzungszeiten und Unterbrechung des Dienstes)</h3>
+    <p>① Der Dienst steht grundsätzlich an 365 Tagen im Jahr, 24 Stunden täglich zur Verfügung, sofern keine betrieblichen oder technischen Gründe des Unternehmens entgegenstehen.</p>
+    <p>② Ungeachtet Absatz 1 kann das Unternehmen den Dienst ganz oder teilweise einschränken oder unterbrechen in folgenden Fällen:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Wartung, Austausch oder Ausfall von informationstechnischen Anlagen oder Unterbrechung der Kommunikation;</li>
+      <li>Unvermeidbare Bauarbeiten an den Anlagen für den Dienst;</li>
+      <li>Stromausfall, Anlagenstörungen oder übermäßiges Datenaufkommen, die die normale Nutzung des Dienstes beeinträchtigen;</li>
+      <li>Umstände wie die Beendigung von Verträgen mit Dienstanbietern, aufgrund derer der Dienst nicht aufrechterhalten werden kann;</li>
+      <li>Höhere Gewalt wie Naturkatastrophen oder nationale Notlagen.</li>
+    </ul>
+    <p>③ Das Unternehmen haftet nicht für Schäden, die Mitgliedern oder Dritten durch eine vorübergehende Unterbrechung des Dienstes gemäß Absatz 2 entstehen, sofern kein Vorsatz oder grobe Fahrlässigkeit des Unternehmens vorliegt.</p>
+    <p>④ Bei einer Unterbrechung des Dienstes gibt das Unternehmen dies mindestens sieben (7) Tage vorher im Dienst bekannt oder benachrichtigt die Mitglieder, außer in den Fällen höherer Gewalt gemäß Absatz 3.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 10 (Tarife und Zahlung)</h3>
+    <p>① Das Unternehmen stellt den Dienst in Form eines kostenlosen Tarifs und kostenpflichtiger Tarife bereit. Der konkrete Nutzungsumfang und die Einschränkungen der jeweiligen Tarife richten sich nach § 12.</p>
+    <p>② Die vom Unternehmen angebotenen Tarife und die zugehörigen Gebühren sind wie folgt. Die angegebenen Gebühren enthalten die Mehrwertsteuer.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Tarif</th><th className="border border-slate-300 p-2 text-left">Gebühr</th><th className="border border-slate-300 p-2 text-left">Wesentliche Merkmale</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Kostenloser Tarif</td><td className="border border-slate-300 p-2">Kostenlos</td><td className="border border-slate-300 p-2">Bis zu zehn (10) Lizenzplätze pro Organisation (Mitgliedskonto)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Basic-Tarif</td><td className="border border-slate-300 p-2">6.600 KRW pro Lizenzplatz und Monat (max. 3 Lizenzplätze, keine Erweiterung möglich)</td><td className="border border-slate-300 p-2">Voller Zugang zu den vom Unternehmen bereitgestellten Grundfunktionen nach Abschluss eines kostenpflichtigen Abonnements</td></tr>
+        <tr><td className="border border-slate-300 p-2">Pro-Tarif</td><td className="border border-slate-300 p-2">15.000 KRW pro Lizenzplatz und Monat (Anzahl frei wählbar)</td><td className="border border-slate-300 p-2">Zugang zu den Grundfunktionen sowie erweiterten Funktionen wie KI-Chatbot und NFC</td></tr>
+      </tbody>
+    </table>
+    <p>③ Der Basic-Tarif ist ein wiederkehrendes Abonnement zu 6.600 KRW pro Lizenzplatz und Monat (inkl. Mehrwertsteuer) für maximal drei (3) Lizenzplätze; eine Erweiterung der Lizenzplätze ist beim Basic-Tarif nicht möglich. Der Pro-Tarif ist ein wiederkehrendes Abonnement zu 15.000 KRW pro Lizenzplatz und Monat (inkl. Mehrwertsteuer), bei dem Mitglieder die Anzahl der Lizenzplätze frei festlegen können.</p>
+    <p>④ Mitglieder, die einen kostenpflichtigen Tarif (Basic oder Pro) abonniert haben, können alle vom Unternehmen bereitgestellten Grundfunktionen nutzen. Der jeweilige Nutzungsumfang (z. B. Anzahl der Lizenzplätze) richtet sich nach § 12 und den Angaben im Dienst; für gesondert vom Unternehmen festgelegte Zusatzleistungen können zusätzliche Gebühren anfallen, worüber im Voraus informiert wird.</p>
+    <p>⑤ Wiederkehrende Zahlungen werden ausgehend vom ersten Zahlungsdatum monatlich am gleichen Kalendertag automatisch über die vom Mitglied gewählte Zahlungsmethode abgebucht und verlängern sich automatisch um jeweils einen Monat, sofern das Mitglied nicht kündigt. Fällt das Zahlungsdatum in einem Monat nicht regelmäßig an (z. B. bei Monaten ohne 31. Tag), erfolgt die Abbuchung am letzten Tag dieses Monats; die Abbuchung erfolgt auch dann regulär, wenn das Zahlungsdatum auf einen Feiertag fällt.</p>
+    <p>⑥ Werden während der Abonnementlaufzeit Lizenzplätze hinzugefügt oder entfernt, wird die geänderte Anzahl ab dem nächsten wiederkehrenden Zahlungstermin berücksichtigt. Beim Basic-Tarif können jedoch nicht mehr als drei (3) Lizenzplätze genutzt werden; wird eine höhere Anzahl benötigt, ist ein Wechsel zum Pro-Tarif erforderlich. Einzelheiten zur Verrechnung von Differenzbeträgen bei hinzugefügten Lizenzplätzen richten sich nach den Angaben im Dienst oder den vom Unternehmen festgelegten Betriebsrichtlinien.</p>
+    <p>⑦ Mitglieder können Gebühren mittels Kreditkartenzahlung, Banküberweisung, virtueller Kontonummer oder sonstiger vom Unternehmen bestimmter Zahlungsmethoden entrichten.</p>
+    <p>⑧ Kommt ein Mitglied aufgrund von Überschreitung des Limits, unzureichendem Kontostand oder einseitiger Kündigung der gewählten Zahlungsmethode mit der Zahlung in Rückstand, kann das Unternehmen den kostenpflichtigen Tarif ab dem Tag des Zahlungsrückstands aussetzen oder das Konto auf den kostenlosen Tarif umstellen.</p>
+    <p>⑨ Verfügt ein Mitglied nicht über die rechtmäßige Berechtigung zur Nutzung der Zahlungsmethode oder erhebt es nach erfolgter Zahlung Einwände oder verweigert die Zahlung, kann das Unternehmen die Bereitstellung des Dienstes aussetzen.</p>
+    <p>⑩ Das Unternehmen kann die Gebühren je nach Art und Dauer des Dienstes ändern; in diesem Fall erfolgen Bekanntgabe und Benachrichtigung gemäß dem Verfahren nach § 3. Bereits vereinbarte Beträge werden durch eine Änderung nicht rückwirkend berührt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 11 (Widerruf und Rückerstattung)</h3>
+    <p>① Ein Mitglied, das einen kostenpflichtigen Tarif neu abonniert hat, kann den Vertrag innerhalb von sieben (7) Tagen nach dem Zahlungsdatum widerrufen, sofern der Dienst nicht genutzt wurde; in diesem Fall erstattet das Unternehmen den vollen Zahlungsbetrag.</p>
+    <p>② Ungeachtet Absatz 1 kann der Widerruf in folgenden Fällen eingeschränkt sein:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Der Dienst wurde aus vom Mitglied zu vertretenden Gründen zerstört oder beschädigt;</li>
+      <li>Der Wert des Dienstes hat sich durch erhebliche Nutzung durch das Mitglied deutlich verringert.</li>
+    </ul>
+    <p>③ Beantragt ein Mitglied, das einen wiederkehrenden kostenpflichtigen Tarif nutzt, die Kündigung und Rückerstattung, nachdem sieben (7) Tage seit dem Zahlungsdatum vergangen sind, erfolgt grundsätzlich keine Rückerstattung für den bereits bezahlten Abrechnungszeitraum (laufenden Monat); das Nutzungsrecht bleibt bis zum Ende dieses Zeitraums bestehen, danach wird die automatische Verlängerung eingestellt.</p>
+    <p>④ Steht einem Mitglied nach den staatlich festgelegten „Richtlinien zum Schutz von Inhaltsnutzern" oder anderen einschlägigen Vorschriften eine Rückerstattung zu, kann das Unternehmen im Rahmen dieser Richtlinien eine Rückerstattungsgebühr erheben.</p>
+    <p>⑤ Rückerstattungen erfolgen grundsätzlich über dieselbe Zahlungsmethode, die das Mitglied verwendet hat. Ist dies nicht möglich, erfolgt die Rückerstattung über eine vom Unternehmen bestimmte alternative Methode.</p>
+    <p>⑥ Die Bearbeitung der Rückerstattung wird innerhalb von sieben (7) Werktagen nach Eingang des Antrags abgeschlossen.</p>
+    <p>⑦ Für die Nutzung des kostenlosen Tarifs besteht kein rückerstattungsfähiger Betrag.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 12 (Nutzungsumfang und Einschränkungen je Tarif)</h3>
+    <p>① Der Nutzungsumfang und die Einschränkungen des kostenlosen und der kostenpflichtigen Tarife sind wie folgt:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Kategorie</th><th className="border border-slate-300 p-2 text-left">Einzelheiten</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Datei-Upload</td><td className="border border-slate-300 p-2">Maximal 50 MB pro Upload; unterstützte Formate: PDF, JPG, PNG</td></tr>
+        <tr><td className="border border-slate-300 p-2">Gleichzeitiger Zugriff</td><td className="border border-slate-300 p-2">Pro Konto kann nur ein (1) Gerät gleichzeitig angemeldet sein</td></tr>
+        <tr><td className="border border-slate-300 p-2">Kostenloser Tarif</td><td className="border border-slate-300 p-2">Bis zu zehn (10) Lizenzplätze pro Organisation (Mitgliedskonto); Zugang zu den vom Unternehmen festgelegten Grundfunktionen</td></tr>
+        <tr><td className="border border-slate-300 p-2">Kostenpflichtiger Tarif (Basic)</td><td className="border border-slate-300 p-2">6.600 KRW pro Lizenzplatz und Monat (max. 3 Lizenzplätze, keine Erweiterung möglich); Zugang zu den vom Unternehmen bereitgestellten Grundfunktionen</td></tr>
+        <tr><td className="border border-slate-300 p-2">Kostenpflichtiger Tarif (Pro)</td><td className="border border-slate-300 p-2">15.000 KRW pro Lizenzplatz und Monat (Anzahl frei wählbar); Zugang zu Grund- und erweiterten Funktionen des Unternehmens</td></tr>
+      </tbody>
+    </table>
+    <p>② Übersteigt die Anzahl der Lizenzplätze einer Organisation im kostenlosen Tarif zehn (10), kann das Unternehmen einen Wechsel zu einem kostenpflichtigen Tarif empfehlen; bis zum Wechsel können bestimmte Funktionen, etwa das Hinzufügen von Lizenzplätzen, eingeschränkt sein.</p>
+    <p>③ Das Unternehmen kann die oben genannten Einschränkungen ändern, soweit dies für den stabilen Betrieb des Dienstes erforderlich ist, und gibt Änderungen gemäß § 3 vorher bekannt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 13 (Verwaltung von Beiträgen)</h3>
+    <p>① Das Urheberrecht an Beiträgen, die ein Mitglied im Dienst veröffentlicht, verbleibt beim jeweiligen Urheber.</p>
+    <p>② Mitglieder dürfen keine Beiträge registrieren, die einer der folgenden Kategorien entsprechen:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Inhalte, die Rechte, Ansehen, Kreditwürdigkeit oder sonstige berechtigte Interessen Dritter verletzen;</li>
+      <li>Inhalte, die im Zusammenhang mit Straftaten stehen;</li>
+      <li>Inhalte, die die geistigen Eigentumsrechte des Unternehmens oder Dritter verletzen;</li>
+      <li>Inhalte, die den Ruf des Unternehmens oder Dritter schädigen oder deren Geschäftstätigkeit stören;</li>
+      <li>Obszöne oder gewalttätige Nachrichten, Bilder, Tonaufnahmen oder sonstige gegen die guten Sitten verstoßende Inhalte;</li>
+      <li>Dokumente mit sensiblen personenbezogenen Daten, u. a.: persönliche Identifikationsnummern wie Personalausweis-, Reisepass- oder Führerscheinnummern; Dokumente zum Nachweis rechtlicher Ansprüche wie Siegelzertifikate oder Grundbuchauszüge; Dokumente zum Nachweis des Personenstands wie Familienstandsbescheinigungen; Dokumente mit Finanzinformationen wie Kontoauszüge oder Kreditkartendaten; Dokumente mit Gesundheitsdaten wie Untersuchungsergebnisse oder Krankenakten; Dokumente mit detaillierten beruflichen Werdegängen wie Lebensläufe.</li>
+    </ul>
+    <p>③ Möchte ein Mitglied Dokumente mit den in Absatz 2 genannten Informationen registrieren, müssen diese Informationen vor der Registrierung entfernt oder unkenntlich gemacht (maskiert) werden.</p>
+    <p>④ Verstößt ein Mitglied gegen Absatz 2, kann das Unternehmen den betreffenden Beitrag ohne vorherige Ankündigung löschen oder dessen Veröffentlichung verweigern sowie die Nutzung des Dienstes einschränken oder den Nutzungsvertrag kündigen.</p>
+    <p>⑤ Entsteht dem Unternehmen oder Dritten durch einen unter Verstoß gegen Absatz 2 veröffentlichten Beitrag ein Schaden, haftet das betreffende Mitglied für diesen Schaden.</p>
+    <p>⑥ Bei Nutzung der NFC-Tag-Verknüpfung empfiehlt das Unternehmen, nur die minimal erforderlichen Informationen zur Identifizierung von Art und grobem Inhalt der in der physischen Aufbewahrungsbox befindlichen Dokumente zu registrieren.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 14 (Bereitstellung von KI-Diensten und Hinweise)</h3>
+    <p>① Das Unternehmen stellt für von Mitgliedern registrierte Beiträge folgende KI-Dienste bereit:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>KI-OCR (optische Zeichenerkennung): automatische Textextraktion aus Bildern oder gescannten Dokumenten;</li>
+      <li>Dokumentensuche und -klassifizierung: automatisierte Klassifizierung und Suche basierend auf einer Analyse des Dokumentinhalts;</li>
+      <li>Frage-Antwort-Funktion: Abruf von Dokumentinformationen per Chat oder Sprachbefehl;</li>
+      <li>Zusammenfassung und Analyse: Zusammenfassung und statistische Auswertung von Dokumentinhalten.</li>
+    </ul>
+    <p>② Das Unternehmen nutzt zur Bereitstellung der KI-Dienste KI-Modelle Dritter, u. a. OpenAI GPT und Naver Clova OCR.</p>
+    <p>③ KI-OCR verarbeitet Beiträge in Echtzeit unmittelbar nach dem Hochladen durch das Mitglied; die Verarbeitungsergebnisse werden auf Cloud-Servern von Supabase (auf AWS-Basis) gespeichert.</p>
+    <p>④ Die vom Unternehmen bereitgestellten KI-Dienste weisen folgende Merkmale und Einschränkungen auf:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>KI-Dienste dienen als unterstützendes Informationsmittel und ersetzen keine fachliche Beurteilung in Bereichen wie Recht, Buchhaltung, Steuern, Medizin oder Personalwesen;</li>
+      <li>Vollständigkeit, Richtigkeit und Aktualität der von der KI bereitgestellten Informationen werden nicht garantiert; Mitglieder müssen bei endgültigen Entscheidungen stets das Originaldokument prüfen;</li>
+      <li>KI-Analyseergebnisse dürfen nur als Referenzmaterial verwendet werden und nicht die alleinige Grundlage wichtiger Entscheidungen bilden.</li>
+    </ul>
+    <p>⑤ Das Unternehmen haftet nicht für Fehler, Ungenauigkeiten oder Schäden, die durch das Vertrauen eines Mitglieds auf Ergebnisse des KI-Dienstes entstehen, sofern kein Vorsatz oder grobe Fahrlässigkeit des Unternehmens vorliegt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 15 (Rechte der Mitglieder bei der KI-Verarbeitung)</h3>
+    <p>① Mitglieder können hinsichtlich der von KI-Diensten bereitgestellten Ergebnisse folgende Rechte ausüben:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Recht auf Erläuterung: das Recht, eine Erläuterung des KI-Verarbeitungsergebnisses zu verlangen;</li>
+      <li>Widerspruchsrecht: das Recht, gegen offensichtlich fehlerhafte oder unangemessene Ergebnisse Widerspruch einzulegen;</li>
+      <li>Recht auf menschliches Eingreifen: das Recht, eine menschliche Überprüfung der automatisierten Verarbeitung zu verlangen.</li>
+    </ul>
+    <p>② Das Unternehmen prüft eingehende Anfragen gemäß Absatz 1 im Rahmen der technischen Möglichkeiten und trifft die erforderlichen Maßnahmen.</p>
+    <p>③ Mitglieder können die Rechte aus Absatz 1 über das Kundencenter (support@traystorage.net, +82-2-333-7334) ausüben.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 16 (Nutzung von Beiträgen für KI-Training)</h3>
+    <p>① Das Unternehmen nutzt Beiträge von Mitgliedern derzeit nicht als Trainingsdaten für allgemeine KI-Modelle.</p>
+    <p>② Zur Verbesserung der Dienstqualität und Weiterentwicklung von Funktionen können Beiträge jedoch zur Erstellung und Analyse anonymisierter statistischer Informationen, aus denen sämtliche personenbezogenen Daten vollständig entfernt wurden, sowie zur technischen Fehlerbehebung genutzt werden.</p>
+    <p>③ Beabsichtigt das Unternehmen künftig, Beiträge von Mitgliedern für das Training von KI-Modellen zu nutzen, wird zuvor die ausdrückliche Zustimmung des Mitglieds eingeholt.</p>
+    <p>④ Mitglieder können der Nutzung ihrer Beiträge für KI-Training jederzeit widersprechen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 17 (Schutz personenbezogener Daten und internationale Übermittlung)</h3>
+    <p>① Das Unternehmen bemüht sich, die personenbezogenen Daten der Mitglieder gemäß den geltenden Gesetzen zu schützen; für Schutz und Nutzung personenbezogener Daten gelten die geltenden Gesetze sowie die Datenschutzerklärung des Unternehmens.</p>
+    <p>② Das Unternehmen speichert Beiträge und personenbezogene Daten von Mitgliedern zur Erbringung des Dienstes auf Cloud-Servern (Supabase, auf AWS-Basis); diese Server können sich im Ausland befinden.</p>
+    <p>③ Angaben zur internationalen Übermittlung personenbezogener Daten: übermittelte Datenkategorien (Mitgliedsdaten, Beiträge, KI-Verarbeitungsergebnisse); Zielland (u. a. USA, Standort der Supabase-Server); Zweck der Übermittlung (Bereitstellung cloudbasierter Dienste und Datenspeicherung); Speicher- und Nutzungsdauer (bis zum Austritt des Mitglieds oder gemäß den einschlägigen Aufbewahrungsfristen).</p>
+    <p>④ Das Unternehmen kann künftig eine Umstellung auf inländische Server prüfen und wird über eine Änderung des Serverstandorts vorab informieren.</p>
+    <p>⑤ Die Datenschutzerklärung des Unternehmens ist im Dienst und auf der Unternehmenswebsite einsehbar.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 18 (Pflichten der Mitglieder)</h3>
+    <p>① Mitglieder dürfen Folgendes nicht tun: falsche Angaben bei Antragstellung oder Änderung machen; die Daten anderer Personen missbrauchen; geistige Eigentumsrechte oder sonstige Rechte des Unternehmens oder Dritter verletzen; den Ruf des Unternehmens oder Dritter schädigen oder deren Geschäftstätigkeit stören; obszöne oder gewalttätige Informationen veröffentlichen; den Dienst ohne Zustimmung des Unternehmens zu gewerblichen Zwecken nutzen; Computerviren oder sonstige Schadprogramme verbreiten; über den Dienst erlangte Informationen ohne vorherige Zustimmung des Unternehmens nutzen oder an Dritte weitergeben; sich mittels automatisierter Mittel unbefugt Zugang zum Dienst verschaffen oder Daten sammeln; die Server des Unternehmens negativ beeinträchtigen oder den Betrieb des Dienstes stören; sonstige Handlungen begehen, die gegen geltendes Recht oder die guten Sitten verstoßen.</p>
+    <p>② Administratoren tragen die Verantwortung für die Einrichtung von Abteilungen, die Vergabe von Zugriffsrechten und die Verwaltung von Teammitgliedern und haften primär für Probleme, die durch fehlerhafte oder unangemessene Rechtevergabe entstehen.</p>
+    <p>③ Mitglieder sind für die Registrierung und Verwaltung von Lizenzplätzen verantwortlich und müssen bei Nutzung eines kostenpflichtigen Tarifs berücksichtigen, dass sich die Gebühr nach der Anzahl der registrierten Lizenzplätze richtet.</p>
+    <p>④ Mitglieder haben die Bestimmungen dieser Nutzungsbedingungen und der geltenden Gesetze einzuhalten.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 19 (Verwaltung von Zugriffsrechten)</h3>
+    <p>① Der Dienst nutzt ein rollenbasiertes Zugriffsrechtesystem, das zwischen Administratoren und Teammitgliedern unterscheidet.</p>
+    <p>② Rechte und Pflichten des Administrators: Anlegen und Löschen von Abteilungen; Erstellen und Verwalten von Dokumenten-Hauptkategorien und Unterkategorien; Festlegen der Abteilungszugriffsrechte je Teammitglied (vier Stufen: kein Zugriff / Betrachter / Bearbeiter / Administrator); Einsicht in Dokumente und Statistiken aller Abteilungen. (Derzeit ist pro Organisation nur ein (1) Administrator zulässig; künftig kann die Zuweisung mehrerer Administratoren ermöglicht werden.)</p>
+    <p>③ Rechte des Teammitglieds: Erstellen von Dokumenten-Hauptkategorien und Unterkategorien innerhalb der eigenen Abteilung; Registrieren, Einsehen und Bearbeiten von Dokumenten der eigenen Abteilung; eingeschränkter Zugriff auf Dokumente anderer Abteilungen, sofern vom Administrator gewährt.</p>
+    <p>④ Verfahren zur Beantragung des Zugriffs auf andere Abteilungen: Das Teammitglied beantragt beim Administrator den Zugriff auf eine andere Abteilung → der Administrator legt die Zugriffsstufe fest → nach Abschluss kann das Teammitglied auf die betreffende Abteilung zugreifen.</p>
+    <p>⑤ Der Administrator hat bei der Vergabe von Rechten den Grundsatz der minimalen Rechtevergabe zu beachten und nur die für die Aufgabenerfüllung erforderlichen Mindestrechte einzuräumen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 20 (Pflichten des Unternehmens)</h3>
+    <p>① Das Unternehmen unterlässt Handlungen, die gegen geltendes Recht oder diese Nutzungsbedingungen verstoßen oder gegen die guten Sitten verstoßen, und bemüht sich, den Dienst fortlaufend und stabil bereitzustellen.</p>
+    <p>② Das Unternehmen unterhält Sicherheitssysteme zum Schutz personenbezogener Daten (einschließlich Kreditinformationen), damit Mitglieder den Dienst sicher nutzen können, und veröffentlicht und beachtet seine Datenschutzerklärung.</p>
+    <p>③ Das Unternehmen bearbeitet begründete Meinungen oder Beschwerden von Mitgliedern im Zusammenhang mit der Nutzung des Dienstes, sofern diese als berechtigt anerkannt werden.</p>
+    <p>④ Das Unternehmen bewahrt Zahlungsinformationen im Zusammenhang mit kostenpflichtigen Transaktionen für die gesetzlich vorgeschriebene Dauer auf.</p>
+    <p>⑤ Das Unternehmen unterhält eine Produkthaftpflichtversicherung, eine Haftpflichtversicherung für den Schutz personenbezogener Daten, eine Betriebshaftpflichtversicherung sowie eine Cyberversicherung, um Risiken im Zusammenhang mit der Bereitstellung des Dienstes abzudecken.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 21 (Urheberrecht und Nutzungsbeschränkungen)</h3>
+    <p>① Das Urheberrecht und sonstige geistige Eigentumsrechte an vom Unternehmen erstellten Werken stehen dem Unternehmen zu.</p>
+    <p>② Mitglieder dürfen Informationen, an denen dem Unternehmen geistige Eigentumsrechte zustehen und die durch die Nutzung des Dienstes erlangt wurden, nicht ohne vorherige Zustimmung des Unternehmens zu gewerblichen Zwecken nutzen oder Dritten zur Nutzung überlassen.</p>
+    <p>③ Das Urheberrecht an Beiträgen, die ein Mitglied im Dienst veröffentlicht, verbleibt beim jeweiligen Urheber.</p>
+    <p>④ Mitglieder dürfen im Dienst veröffentlichte Materialien nicht gewerblich verwerten, einschließlich der Verarbeitung und des Verkaufs über den Dienst erlangter Informationen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 22 (Verkauf von NFC-Produkten und Mängelbehandlung)</h3>
+    <p>① Das Unternehmen vertreibt Tray-Storage-Produkte (einschließlich NFC-Tags) über eigene Verkaufsstellen sowie Online-Marktplätze (Auction, G-Market, 11st, Naver Smart Store, Cafe24-eigener Shop u. a.).</p>
+    <p>② Bei einem Mangel an einem Tray-Storage-Produkt kann das Mitglied innerhalb eines (1) Jahres nach dem Kaufdatum einen kostenlosen Kundendienst beantragen.</p>
+    <p>③ Anfragen zu Produktmängeln können an das Kundencenter (+82-2-333-7334, support@traystorage.net) gerichtet werden.</p>
+    <p>④ Umtausch, Rückgabe und Rückerstattung von Produkten richten sich nach den geltenden Gesetzen, einschließlich des Gesetzes zum Verbraucherschutz im elektronischen Geschäftsverkehr.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 23 (Datenaufbewahrung und Sicherung)</h3>
+    <p>① Das Unternehmen bemüht sich, Beiträge und Nutzungsdaten der Mitglieder sicher aufzubewahren.</p>
+    <p>② Bei Austritt eines Mitglieds werden dessen Beiträge und personenbezogene Daten unverzüglich gelöscht. Folgende Daten werden jedoch für die angegebene Dauer aufbewahrt: Sicherungsdaten (ein Jahr); KI-Verarbeitungsprotokolle (ein Jahr); gesetzlich aufzubewahrende Informationen (für die dort vorgeschriebene Dauer).</p>
+    <p>③ Bei Umwandlung in ein ruhendes Konto werden personenbezogene Daten getrennt aufbewahrt; drei (3) Jahre nach der Umwandlung werden alle Daten endgültig gelöscht.</p>
+    <p>④ Das Unternehmen haftet nicht für Datenverlust durch höhere Gewalt wie Naturkatastrophen, Hackerangriffe oder Systemausfälle, sofern kein Vorsatz oder grobe Fahrlässigkeit des Unternehmens vorliegt.</p>
+    <p>⑤ Mitgliedern wird empfohlen, für wichtige Daten eigene Sicherungskopien zu führen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 24 (Haftungsausschluss)</h3>
+    <p>① Das Unternehmen haftet nicht für Dienstunterbrechungen und daraus resultierende Schäden, die durch Umstände außerhalb seines Einflussbereichs entstehen, einschließlich Naturkatastrophen, Krieg, Einstellung von Diensten durch Telekommunikationsanbieter, Hackerangriffe und DDoS-Angriffe.</p>
+    <p>② Das Unternehmen haftet nicht für Störungen der Dienstnutzung, die auf Gründe zurückzuführen sind, die dem Mitglied zuzurechnen sind.</p>
+    <p>③ Das Unternehmen haftet nicht für entgangene Gewinne, die einem Mitglied durch die Nutzung des Dienstes entstehen.</p>
+    <p>④ Das Unternehmen haftet nicht für die Zuverlässigkeit, Richtigkeit oder sonstige inhaltliche Aspekte von Informationen, Daten oder Angaben, die Mitglieder im Dienst veröffentlichen.</p>
+    <p>⑤ Das Unternehmen haftet nicht für Geschäfte oder sonstige Transaktionen, die Mitglieder untereinander oder mit Dritten über den Dienst abschließen.</p>
+    <p>⑥ Das Unternehmen haftet für die Nutzung kostenlos bereitgestellter Leistungen nicht, sofern gesetzlich nichts anderes vorgeschrieben ist.</p>
+    <p>⑦ Das Unternehmen haftet nicht für Fehler, ungenaue Informationen oder unerwartete Ergebnisse, die sich aus der Natur der KI-Dienste ergeben, sofern kein Vorsatz oder grobe Fahrlässigkeit des Unternehmens vorliegt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 25 (Schadensersatz)</h3>
+    <p>① Verursacht das Unternehmen oder ein Mitglied durch einen Verstoß gegen diese Nutzungsbedingungen der anderen Partei einen Schaden, haftet die verursachende Partei für diesen Schaden. Dies gilt nicht, wenn kein Vorsatz oder Fahrlässigkeit vorliegt.</p>
+    <p>② Entsteht einem Mitglied durch Dienstunterbrechungen, Fehler oder ähnliche Ursachen ein Schaden, gewährt das Unternehmen kostenpflichtigen Mitgliedern eine kostenlose Nutzungszeit von ein (1) bis drei (3) Monaten; kostenlosen Mitgliedern wird keine gesonderte Entschädigung gewährt.</p>
+    <p>③ Die vom Unternehmen gewährte Entschädigung ersetzt keinen Geldschadensersatz; Mitglieder können entsprechend dem Umfang ihres Schadens gesondert Schadensersatz verlangen.</p>
+    <p>④ Verursacht ein Mitglied durch einen Verstoß gegen diese Nutzungsbedingungen einen Schaden beim Unternehmen, haftet das Mitglied dem Unternehmen gegenüber für diesen Schaden.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 26 (Streitbeilegung)</h3>
+    <p>① Das Unternehmen richtet eine Stelle zur Bearbeitung von Schadensersatzforderungen ein, um berechtigte Meinungen oder Beschwerden von Mitgliedern zu berücksichtigen und Schäden zu regulieren.</p>
+    <p>② Das Unternehmen bearbeitet von Mitgliedern eingereichte Beschwerden und Meinungen vorrangig. Ist eine zügige Bearbeitung nicht möglich, teilt das Unternehmen dem Mitglied unverzüglich den Grund und den voraussichtlichen Bearbeitungszeitraum mit.</p>
+    <p>③ Bei einem Streit über den elektronischen Geschäftsverkehr zwischen Unternehmen und Mitglied kann auf Antrag des Mitglieds ein Schlichtungsverfahren bei einer von der Fair Trade Commission oder der zuständigen Provinzregierung beauftragten Streitbeilegungsstelle durchgeführt werden.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 27 (Gerichtsstand und anwendbares Recht)</h3>
+    <p>① Für in diesen Nutzungsbedingungen nicht geregelte Angelegenheiten gelten die einschlägigen Gesetze, einschließlich des Gesetzes zum Verbraucherschutz im elektronischen Geschäftsverkehr, des Gesetzes zur Regelung von Allgemeinen Geschäftsbedingungen, des Netzgesetzes, des Gesetzes zum Schutz personenbezogener Daten und des Grundlagengesetzes für Künstliche Intelligenz sowie die allgemeine Handelspraxis.</p>
+    <p>② Für Rechtsstreitigkeiten aus der Nutzung des Dienstes ist das nach der südkoreanischen Zivilprozessordnung zuständige Gericht maßgeblich.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 28 (Kundencenter)</h3>
+    <p>Mitglieder können sich bei Fragen zur Nutzung des Dienstes an folgendes Kundencenter wenden:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Telefon: +82-2-333-7334</li>
+      <li>E-Mail: support@traystorage.net</li>
+      <li>Öffnungszeiten: werktags 09:00–18:00 Uhr (koreanische Zeit), außer an Wochenenden und Feiertagen</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">Schlussbestimmungen</h3>
+    <p><strong>§ 1 (Inkrafttreten)</strong> Diese Nutzungsbedingungen treten am 1. Juli 2026 in Kraft.</p>
+    <p><strong>§ 2 (Übergangsregelungen)</strong> ① Für Mitglieder, die sich vor Inkrafttreten dieser Nutzungsbedingungen registriert haben, gelten die geänderten Nutzungsbedingungen. ② Mitglieder, die sich während der Beta-Testphase registriert haben, können beim Wechsel zu einem kostenpflichtigen Tarif besondere Vorteile erhalten. ③ Mitglieder, die zum Zeitpunkt des Inkrafttretens dieser Nutzungsbedingungen den Dienst kostenlos nutzen, werden in den kostenlosen Tarif überführt; übersteigt die Anzahl der Lizenzplätze zehn (10), ist innerhalb der vom Unternehmen festgelegten Übergangsfrist ein Wechsel zu einem kostenpflichtigen Tarif erforderlich.</p>
+
+    <h3 className="font-semibold text-slate-900">[Unternehmensangaben]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Firma: InfoCreative Co., Ltd.</li>
+      <li>Vertreter: Jeong Do-cheon</li>
+      <li>Adresse: Räume 708 &amp; 709, Gasan Hanwha Biz Metro 2nd, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Republik Korea</li>
+      <li>Gewerberegisternummer: 841-86-03004</li>
+      <li>Kundencenter: +82-2-333-7334</li>
+      <li>E-Mail: support@traystorage.net</li>
+    </ul>
+  </>
+);
+
 export const TermsOfServiceContent = () => {
   const { i18n } = useTranslation();
   if (i18n.language === 'en') return <TermsEn />;
   if (i18n.language === 'ja') return <TermsJa />;
+  if (i18n.language === 'de') return <TermsDe />;
   return <TermsKo />;
 };
 

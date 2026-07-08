@@ -605,10 +605,208 @@ const PrivacyJa = () => (
   </>
 );
 
+const PrivacyDe = () => (
+  <>
+    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Inkrafttreten: 09.02.2026</p>
+
+    <p>Die InfoCreative Co., Ltd. (im Folgenden „Unternehmen") betreibt diese Datenschutzerklärung gemäß Artikel 30 des koreanischen Gesetzes zum Schutz personenbezogener Daten, um die personenbezogenen Daten der Nutzer von Tray Storage Connect, dem Dienst des Unternehmens, zu schützen und diesbezügliche Anliegen zügig und reibungslos zu bearbeiten.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 1 (Zwecke der Erhebung und Nutzung personenbezogener Daten)</h3>
+    <p>① Das Unternehmen erhebt nur die für die Bereitstellung des Dienstes erforderlichen personenbezogenen Mindestdaten und erhebt personenbezogene Daten mit Einwilligung des Nutzers für die nachfolgend genannten Zwecke. Die erhobenen personenbezogenen Daten werden nicht für andere als die genannten Zwecke verwendet; ändert sich der Nutzungszweck, trifft das Unternehmen erforderliche Maßnahmen wie das Einholen einer gesonderten Einwilligung gemäß Artikel 18 des Gesetzes zum Schutz personenbezogener Daten.</p>
+    <p>② Zur Bereitstellung von KI-OCR und KI-gestützter Dokumentensuche kann das Unternehmen von Mitgliedern registrierte Dokumente, Sprachbefehlsdaten und Nutzungsdatensätze verarbeiten; diese werden ausschließlich im Rahmen der Zwecke der Diensterbringung verwendet. Das Unternehmen nutzt Dokumente von Mitgliedern nicht als allgemeine Trainingsdaten für KI-Modelle; es kann jedoch Nutzungsmuster und Feedback-Daten unter Ausschluss sensibler Informationen innerhalb der Dokumente zur Verbesserung der KI-Modelle und damit der Dienstqualität erheben und nutzen.</p>
+    <p>③ Das Unternehmen erhebt und nutzt personenbezogene Daten für folgende Zwecke:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Zweck</th><th className="border border-slate-300 p-2 text-left">Einzelheiten</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">1. Mitgliedsregistrierung und -verwaltung</td><td className="border border-slate-300 p-2">Identitätsprüfung und Authentifizierung für die Mitgliedschaft; Verhinderung von Mehrfach- und betrügerischer Registrierung; Aufrechterhaltung und Einschränkung der Mitgliedschaft; verschiedene Benachrichtigungen und Ankündigungen; Ausschluss von Personen unter 14 Jahren von der Mitgliedschaft</td></tr>
+        <tr><td className="border border-slate-300 p-2">2. Bereitstellung und Nutzung des Dienstes</td><td className="border border-slate-300 p-2">Registrierung und Verwaltung von Dokumenten; KI-OCR-Verarbeitung; Dokumentensuche und Informationsbereitstellung über KI-Chatbot; Verarbeitung von Sprachbefehlen; NFC-Tag-basierte Dokumentenverwaltung; abteilungsbezogene Verwaltung von Zugriffsrechten; Bereitstellung von Dokumentenstatistiken</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. Zahlung und Abrechnung</td><td className="border border-slate-300 p-2">Zahlungsabwicklung für kostenpflichtige Leistungen; Rechnungsstellung; Verwaltung des Zahlungsverlaufs</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. Bearbeitung von Anliegen</td><td className="border border-slate-300 p-2">Prüfung von Anliegen der Mitglieder; Identitätsprüfung; Benachrichtigung über Bearbeitungsergebnisse und Nachverfolgung</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. Marketing und Werbung</td><td className="border border-slate-300 p-2">Bereitstellung von Informationen zu Aktionen und Werbeangeboten sowie Teilnahmemöglichkeiten (nur mit gesonderter Einwilligung)</td></tr>
+      </tbody>
+    </table>
+    <p>④ Ungeachtet Absatz 1 kann das Unternehmen personenbezogene Daten ohne Einwilligung des Nutzers erheben und nutzen, soweit dies gesetzlich ausdrücklich vorgesehen ist oder personenbezogene Daten im Rahmen der Nutzung des Dienstes unvermeidbar anfallen.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 2 (Erhobene und genutzte Datenkategorien)</h3>
+    <p>① Die vom Unternehmen erhobenen und genutzten personenbezogenen Datenkategorien sind wie folgt:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Erhebungszweck</th><th className="border border-slate-300 p-2 text-left">Einzelheiten</th><th className="border border-slate-300 p-2 text-left">Erhobene Daten</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2" rowSpan={5}>1. Mitgliedsregistrierung und -verwaltung</td><td className="border border-slate-300 p-2">Webregistrierung – Administrator</td><td className="border border-slate-300 p-2">Firmenname, Name, E-Mail, Mobilfunknummer (Identitätsprüfung), Passwort</td></tr>
+        <tr><td className="border border-slate-300 p-2">Webregistrierung – Teammitglied</td><td className="border border-slate-300 p-2">Firmenname, Abteilungsname, Name, E-Mail, Mobilfunknummer (Identitätsprüfung), Passwort</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registrierung über Kakao-Konto</td><td className="border border-slate-300 p-2">Erforderlich: Kakao-Konto (ID), Passwort</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registrierung über Google-Konto</td><td className="border border-slate-300 p-2">Erforderlich: Name, E-Mail-Adresse</td></tr>
+        <tr><td className="border border-slate-300 p-2">Registrierung über Naver-/Apple-Konto</td><td className="border border-slate-300 p-2">Erforderlich: ID, Passwort</td></tr>
+        <tr><td className="border border-slate-300 p-2" rowSpan={2}>2. Diensterbringung</td><td className="border border-slate-300 p-2">Nutzung von KI-Diensten</td><td className="border border-slate-300 p-2">Hochgeladene Dokumente (Bilder, PDF usw.); Sprachbefehlsdaten; Suchverlauf; Gesprächsprotokolle des KI-Chatbots; NFC-Tag-Informationen; Angaben zum Dokumentenspeicherort</td></tr>
+        <tr><td className="border border-slate-300 p-2">Nutzung von Zusatzfunktionen</td><td className="border border-slate-300 p-2">Optional: zusätzliche Angaben bei Nutzung von Zusatzfunktionen</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. Zahlung</td><td className="border border-slate-300 p-2">Zahlung für kostenpflichtige Leistungen</td><td className="border border-slate-300 p-2">Kreditkartendaten (Kartennummer, Ablaufdatum, erste 2 Ziffern der PIN); Bankkontodaten; Zahlungsverlauf</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. Bearbeitung von Anliegen und Beschwerden</td><td className="border border-slate-300 p-2">Einzelanfragen u. Ä.</td><td className="border border-slate-300 p-2">Erforderlich: Name, E-Mail-Adresse, Kontaktdaten, Anfrageinhalt</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. Marketing (mit gesonderter Einwilligung)</td><td className="border border-slate-300 p-2">Aktionen und Werbeangebote</td><td className="border border-slate-300 p-2">E-Mail-Adresse; Mobilfunknummer (bei SMS-Einwilligung)</td></tr>
+        <tr><td className="border border-slate-300 p-2">6. Automatisch erhobene Informationen</td><td className="border border-slate-300 p-2">Automatisch bei Dienstnutzung erzeugt</td><td className="border border-slate-300 p-2">Zugriffsprotokolle, Nutzungsdaten, Geräteinformationen, IP-Adresse, Cookies</td></tr>
+      </tbody>
+    </table>
+    <p>② Das Unternehmen nimmt keine Registrierungen von Personen unter 14 Jahren als Mitglieder an.</p>
+    <p>③ Das Unternehmen speichert Zahlungsinformationen nicht selbst, sondern verarbeitet diese sicher über den Zahlungsdienstleister Innopay Co., Ltd. (Innopay).</p>
+
+    <h3 className="font-semibold text-slate-900">§ 3 (Speicher- und Nutzungsdauer personenbezogener Daten)</h3>
+    <p>① Das Unternehmen verarbeitet personenbezogene Daten innerhalb der bei der Erhebung zugestimmten Speicher- und Nutzungsdauer oder innerhalb der gesetzlich vorgeschriebenen Frist.</p>
+    <p>② Die Speicher- und Nutzungsdauer der vom Unternehmen verarbeiteten personenbezogenen Daten ist wie folgt:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Kategorie</th><th className="border border-slate-300 p-2 text-left">Daten</th><th className="border border-slate-300 p-2 text-left">Dauer</th><th className="border border-slate-300 p-2 text-left">Ausnahmen</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Mitgliedsregistrierung und -verwaltung</td><td className="border border-slate-300 p-2">Bei Registrierung erhobene Angaben</td><td className="border border-slate-300 p-2">Bis zum Austritt oder zur Kündigung der Mitgliedschaft</td><td className="border border-slate-300 p-2">2 Jahre nach Austritt zur Prüfung erneuter Registrierung bzw. zur Betrugsprävention aufbewahrt</td></tr>
+        <tr><td className="border border-slate-300 p-2" rowSpan={3}>Dienstnutzung</td><td className="border border-slate-300 p-2">Hochgeladene Dokumente und zugehörige Daten</td><td className="border border-slate-300 p-2">Bis zum Austritt oder zur Kündigung der Mitgliedschaft</td><td className="border border-slate-300 p-2">—</td></tr>
+        <tr><td className="border border-slate-300 p-2">Sprachbefehlsdaten</td><td className="border border-slate-300 p-2">1 Jahr ab Erhebung</td><td className="border border-slate-300 p-2">Zur Verbesserung der KI-Dienstqualität</td></tr>
+        <tr><td className="border border-slate-300 p-2">Feedback-Daten zur Verbesserung der KI-Modelle</td><td className="border border-slate-300 p-2">1 Jahr ab Erhebung</td><td className="border border-slate-300 p-2">Ohne sensible Informationen; anonymisiert</td></tr>
+        <tr><td className="border border-slate-300 p-2">Zahlungsinformationen</td><td className="border border-slate-300 p-2">Zahlungsbezogene Aufzeichnungen</td><td className="border border-slate-300 p-2">5 Jahre nach Austritt</td><td className="border border-slate-300 p-2">Aufbewahrt gemäß dem Gesetz zum Verbraucherschutz im elektronischen Geschäftsverkehr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Bearbeitung von Anliegen</td><td className="border border-slate-300 p-2">Bei Anliegen erhobene Angaben</td><td className="border border-slate-300 p-2">Bis zur Klärung des Anliegens oder Streits</td><td className="border border-slate-300 p-2">Bearbeitungsunterlagen und Ergebnisse mindestens 3 Jahre aufbewahrt</td></tr>
+        <tr><td className="border border-slate-300 p-2">Informations- und Kommunikationsprotokolle</td><td className="border border-slate-300 p-2">Zugriffs- und Nutzungsprotokolle, Suchverlauf</td><td className="border border-slate-300 p-2">Bis zum Austritt oder zur Kündigung der Mitgliedschaft</td><td className="border border-slate-300 p-2">Mindestens 3 Monate gemäß dem Gesetz zum Schutz von Kommunikationsgeheimnissen aufbewahrt</td></tr>
+      </tbody>
+    </table>
+
+    <h3 className="font-semibold text-slate-900">§ 4 (Weitergabe personenbezogener Daten an Dritte)</h3>
+    <p>① Grundsätzlich gibt das Unternehmen personenbezogene Daten des Nutzers nicht an Dritte weiter. Erfolgt eine Weitergabe, informiert das Unternehmen den Nutzer über den Empfänger, den Nutzungszweck des Empfängers, die weitergegebenen Datenkategorien und die Speicher- und Nutzungsdauer und holt die Einwilligung ein.</p>
+    <p>② Ungeachtet Absatz 1 können personenbezogene Daten ohne Einwilligung des Nutzers in folgenden Fällen an Dritte weitergegeben werden:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Wenn dies gesetzlich ausdrücklich vorgesehen ist;</li>
+      <li>Wenn Behörden, öffentliche Stellen, Ermittlungsbehörden oder Gerichte auf gesetzlicher Grundlage die Herausgabe von Informationen verlangen;</li>
+      <li>Wenn pseudonymisierte Daten zu Zwecken der Statistik, wissenschaftlicher Forschung oder der Archivierung im öffentlichen Interesse bereitgestellt werden;</li>
+      <li>Im Falle von Notfällen wie Katastrophen, Infektionskrankheiten oder Vorfällen mit unmittelbarer Gefahr für Leben, Gesundheit oder erheblichen Vermögensverlust.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">§ 5 (Auftragsverarbeitung personenbezogener Daten)</h3>
+    <p>① Das Unternehmen beauftragt zur reibungslosen Diensterbringung folgende externe Dienstleister mit der Verarbeitung personenbezogener Daten:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Auftragnehmer</th><th className="border border-slate-300 p-2 text-left">Beauftragte Tätigkeit</th><th className="border border-slate-300 p-2 text-left">Speicher- und Nutzungsdauer</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Supabase, Inc.</td><td className="border border-slate-300 p-2">Bereitstellung von Cloud-Servern und Datenspeicherung</td><td className="border border-slate-300 p-2">Bis zur Beendigung des Auftragsverhältnisses oder zum Austritt des Mitglieds</td></tr>
+        <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">KI-gestützte Dokumentenanalyse; KI-Spracherkennung</td><td className="border border-slate-300 p-2">Bis zur Beendigung des Auftragsverhältnisses oder zum Austritt des Mitglieds (Sprachdaten: 1 Jahr ab Erhebung)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Naver Cloud Platform</td><td className="border border-slate-300 p-2">KI-OCR-Dienst</td><td className="border border-slate-300 p-2">Bis zur Beendigung des Auftragsverhältnisses oder zum Austritt des Mitglieds</td></tr>
+        <tr><td className="border border-slate-300 p-2">Kakao Corporation</td><td className="border border-slate-300 p-2">Versand von Benachrichtigungen (KakaoTalk, SMS usw.)</td><td className="border border-slate-300 p-2">Bis zur erfolgten Zustellung der Nachricht</td></tr>
+        <tr><td className="border border-slate-300 p-2">Innopay Co., Ltd. (Innopay)</td><td className="border border-slate-300 p-2">Zahlungsabwicklung und Verarbeitung von Zahlungsdaten</td><td className="border border-slate-300 p-2">Bis zur Beendigung des Auftragsverhältnisses oder gemäß gesetzlicher Aufbewahrungsfrist</td></tr>
+      </tbody>
+    </table>
+    <p>② Bei Abschluss von Auftragsverarbeitungsverträgen legt das Unternehmen gemäß Artikel 26 des Gesetzes zum Schutz personenbezogener Daten im Vertrag das Verbot der Verarbeitung außerhalb des beauftragten Zwecks, technische und organisatorische Schutzmaßnahmen, Einschränkungen der Unterbeauftragung, die Überwachung des Auftragnehmers sowie die Haftung einschließlich Schadensersatz fest.</p>
+    <p>③ Ändern sich der Inhalt der beauftragten Tätigkeiten oder der Auftragnehmer, gibt das Unternehmen dies unverzüglich über diese Datenschutzerklärung bekannt.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 6 (Rechte der Nutzer und deren Ausübung)</h3>
+    <p>① Nutzer können jederzeit folgende Rechte hinsichtlich ihrer vom Unternehmen verarbeiteten personenbezogenen Daten ausüben:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Auskunftsrecht:</strong> Nutzer können gemäß Artikel 35 des Gesetzes zum Schutz personenbezogener Daten Auskunft über ihre beim Unternehmen gespeicherten personenbezogenen Daten verlangen. Die Auskunft kann eingeschränkt werden, soweit dies gesetzlich untersagt ist oder die Interessen Dritter gefährdet würden.</li>
+      <li><strong>Recht auf Berichtigung und Löschung:</strong> Nutzer können gemäß Artikel 36 des Gesetzes zum Schutz personenbezogener Daten die Berichtigung oder Löschung ihrer personenbezogenen Daten verlangen. Eine Löschung kann jedoch nicht verlangt werden, soweit die betreffenden Daten gesetzlich als zu erhebende Daten bestimmt sind.</li>
+      <li><strong>Recht auf Einschränkung der Verarbeitung und Widerruf der Einwilligung:</strong> Nutzer können gemäß Artikel 37 des Gesetzes zum Schutz personenbezogener Daten die Einschränkung der Verarbeitung ihrer personenbezogenen Daten verlangen oder ihre Einwilligung widerrufen.</li>
+    </ul>
+    <p>② Nutzer können die Rechte aus Absatz 1 ausüben, indem sie sich an den Datenschutzbeauftragten wenden (Telefon: +82-2-333-7334) oder eine E-Mail an support@traystorage.net senden; das Unternehmen bearbeitet solche Anfragen unverzüglich.</p>
+    <p>③ Beantragt ein Nutzer die Berichtigung oder Löschung fehlerhafter personenbezogener Daten, nutzt oder gibt das Unternehmen diese Daten nicht weiter, bis die Berichtigung oder Löschung abgeschlossen ist.</p>
+    <p>④ Ein gesetzlicher Vertreter des Nutzers oder eine vom Nutzer bevollmächtigte Person kann diese Rechte im Namen des Nutzers ausüben, sofern eine schriftliche Vollmacht beim Unternehmen eingereicht wird.</p>
+    <p>⑤ <strong>Recht auf Erläuterung von KI-basierten Verarbeitungsergebnissen personenbezogener Daten:</strong> Nutzer können Erläuterungen zu Zweck und Methode der KI-Verarbeitung, den Auswirkungen der KI-Verarbeitungsergebnisse auf den Nutzer sowie den wesentlichen Kriterien der KI-Verarbeitungsergebnisse verlangen. Anfragen können schriftlich, per E-Mail (support@traystorage.net) oder telefonisch beim Datenschutzbeauftragten (+82-2-333-7334) gestellt werden. Das Unternehmen antwortet innerhalb eines (1) Monats nach Eingang der Anfrage.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 7 (Löschung personenbezogener Daten)</h3>
+    <p>① Das Unternehmen löscht personenbezogene Daten unverzüglich, wenn diese nicht mehr benötigt werden, etwa nach Erreichen des Verarbeitungszwecks, Ablauf der Speicherdauer oder Beendigung der Geschäftstätigkeit.</p>
+    <p>② Ungeachtet Absatz 1 werden personenbezogene Daten, deren weitere Aufbewahrung gesetzlich vorgeschrieben ist, getrennt von anderen personenbezogenen Daten gespeichert und verwaltet.</p>
+    <p>③ Ist das Unternehmen gesetzlich verpflichtet, personenbezogene Daten für einen bestimmten Zeitraum aufzubewahren, bewahrt es diese Daten für den entsprechenden Zeitraum sicher auf, bevor sie gelöscht werden.</p>
+    <p>④ Verfahren und Methoden zur Löschung personenbezogener Daten sind wie folgt:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Löschverfahren:</strong> Zu löschende personenbezogene Daten werden ausgewählt und nach Genehmigung durch den Datenschutzbeauftragten gelöscht.</li>
+      <li><strong>Löschmethoden:</strong> Elektronisch gespeicherte personenbezogene Daten werden unwiderruflich gelöscht. Auf Papier festgehaltene personenbezogene Daten werden geschreddert, verbrannt oder die betreffenden Stellen unkenntlich gemacht bzw. gelocht.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">§ 8 (Maßnahmen zur Gewährleistung der Sicherheit personenbezogener Daten)</h3>
+    <p>Das Unternehmen trifft folgende Maßnahmen, um Verlust, Diebstahl, Offenlegung, Fälschung, Veränderung oder Beschädigung personenbezogener Daten der Nutzer zu verhindern:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Organisatorische Maßnahmen:</strong> Aufstellung und Umsetzung eines internen Managementplans zum Schutz personenbezogener Daten, regelmäßige Mitarbeiterschulungen;</li>
+      <li><strong>Technische Maßnahmen:</strong> Zugriffskontrolle und Beschränkung der Zugriffsrechte auf Systeme zur Verarbeitung personenbezogener Daten, Verschlüsselung eindeutiger Identifikationsmerkmale, Installation und regelmäßige Aktualisierung von Sicherheitsprogrammen;</li>
+      <li><strong>Physische Maßnahmen:</strong> Bereitstellung sicherer Lagerräume bzw. Installation von Schließsystemen und Zugangskontrollen zum sicheren Aufbewahren personenbezogener Daten;</li>
+      <li><strong>Angriffsprävention:</strong> Einrichtung von Sicherheitssystemen und Betrieb von Systemen zur Angriffserkennung, um Datenschutzverletzungen durch Hackerangriffe oder Computerviren zu verhindern;</li>
+      <li><strong>Zugriffsverwaltung:</strong> Minimierung der mit personenbezogenen Daten befassten Mitarbeiter und regelmäßige Schulungen; Schließsysteme und Zugriffsbeschränkungen für Dokumente und Speichermedien.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">§ 9 (Einsatz, Betrieb und Ablehnung von Cookies)</h3>
+    <p>① Das Unternehmen verwendet „Cookies", um Nutzungsinformationen zu speichern und wiederholt abzurufen, um Nutzern individuell angepasste Leistungen anzubieten. Cookies sind kleine Datenmengen, die vom Server der Website an den Browser des Nutzers gesendet und auf dessen Computer gespeichert werden können.</p>
+    <p>② Zweck und Einzelheiten der Cookie-Nutzung sind wie folgt:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Zweck der Cookie-Nutzung:</strong> Bereitstellung optimierter und individuell angepasster Informationen durch Analyse von Besuchsverlauf, Nutzungsmustern und weiteren Daten;</li>
+      <li><strong>Methoden zur Ablehnung von Cookies:</strong>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li>Internet Explorer: Extras &gt; Internetoptionen &gt; Datenschutz</li>
+          <li>Google Chrome: Einstellungen &gt; Erweiterte Einstellungen &gt; Datenschutz</li>
+          <li>Microsoft Edge: Einstellungen &gt; Cookies und Websiteberechtigungen</li>
+          <li>Safari: Einstellungen &gt; Datenschutz &gt; Cookies und Websitedaten</li>
+        </ul>
+      </li>
+      <li>Die Ablehnung von Cookies kann die Nutzung individuell angepasster Leistungen erschweren.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">§ 10 (Hinweise zur Nutzung von KI-Diensten und zur Verarbeitung personenbezogener Daten)</h3>
+    <p>① Das Unternehmen setzt Künstliche Intelligenz (KI) zur Verbesserung der Dienstqualität ein und stellt folgende KI-Dienste bereit:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Automatische Textextraktion aus Dokumenten mittels KI-OCR (optische Zeichenerkennung);</li>
+      <li>Dokumentensuche und Informationsbereitstellung über KI-Chatbot;</li>
+      <li>KI-gestützte Dokumentensuche per Sprachbefehl.</li>
+    </ul>
+    <p>② Gemäß dem Grundlagengesetz für Künstliche Intelligenz gibt das Unternehmen bei Nutzung von KI-Diensten folgende Hinweise: Bei der vom Nutzer verwendeten Leistung kommt KI-Technologie zum Einsatz; vom Nutzer registrierte Dokumente und Sprachdaten können im Rahmen der KI-Verarbeitung verarbeitet werden; KI-Verarbeitungsergebnisse werden durch automatisierte Algorithmen erzeugt und können Fehler enthalten.</p>
+    <p>③ Das Unternehmen nutzt von Mitgliedern registrierte Dokumente nicht als allgemeine Trainingsdaten für KI-Modelle. Zur Verbesserung der Dienstqualität kann das Unternehmen jedoch folgende Daten erheben und nutzen: Nutzungsmuster und Feedback-Daten; Nutzungsdatensätze unter Ausschluss sensibler Informationen in Dokumenten (Personalausweisnummern, Bankkontodaten, Gesundheitsdaten usw.). Diese Daten werden vor der Nutzung anonymisiert oder pseudonymisiert und so verarbeitet, dass eine Identifizierung bestimmter Personen ausgeschlossen ist.</p>
+    <p>④ Das Unternehmen plant, im Rahmen künftiger Verbesserungen der KI-Modelle eine Funktion zur automatischen Maskierung sensibler Informationen einzuführen.</p>
+    <p>⑤ Folgende KI-Dienstanbieter werden vom Unternehmen mit der Bereitstellung von KI-Diensten beauftragt: OpenAI, L.L.C. (KI-Dokumentenanalyse, Spracherkennung); Naver Cloud Platform (KI-OCR).</p>
+
+    <h3 className="font-semibold text-slate-900">§ 11 (Betrieb und Verwaltung von Videoüberwachungsanlagen)</h3>
+    <p>① Das Unternehmen installiert und betreibt Videoüberwachungsanlagen (CCTV) zur Bürosicherheit und zur Vermeidung von Unfällen.</p>
+    <p>② Das Unternehmen installiert und betreibt keine Videoüberwachungsanlagen an Orten, an denen ein Risiko der Verletzung der Privatsphäre besteht, wie etwa Toiletten und Umkleideräume, um die personenbezogenen Daten der Nutzer zu schützen.</p>
+    <p>③ Nutzer können die Einsicht in Videomaterial beantragen, schriftlich, telefonisch oder per E-Mail beim Datenschutzbeauftragten.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 12 (Datenschutzbeauftragter)</h3>
+    <p>① Das Unternehmen hat folgenden Datenschutzbeauftragten bestimmt, der die Verarbeitung personenbezogener Daten überwacht und für die Bearbeitung von Beschwerden, die Wiedergutmachung von Schäden und die Ausübung der Rechte der Nutzer verantwortlich ist:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <tbody>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Name</td><td className="border border-slate-300 p-2">Jeong Do-cheon</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Position</td><td className="border border-slate-300 p-2">Geschäftsführer</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">Kontakt</td><td className="border border-slate-300 p-2">+82-2-333-7334 / support@traystorage.net</td></tr>
+      </tbody>
+    </table>
+    <p>② Nutzer können sich mit sämtlichen Anfragen, Beschwerden, Anträgen auf Schadenersatz und sonstigen Angelegenheiten zum Schutz personenbezogener Daten im Zusammenhang mit der Nutzung des Dienstes an den Datenschutzbeauftragten wenden. Das Unternehmen bearbeitet Anfragen von Nutzern unverzüglich.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 13 (Rechtsbehelfe bei Verletzung der Rechte der Nutzer)</h3>
+    <p>① Nutzer können sich bei folgenden Stellen über Verletzungen ihrer personenbezogenen Daten beraten lassen und Wiedergutmachung beantragen:</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Stelle</th><th className="border border-slate-300 p-2 text-left">Kontakt</th><th className="border border-slate-300 p-2 text-left">Website</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Meldezentrale für Verletzungen personenbezogener Daten (betrieben von KISA)</td><td className="border border-slate-300 p-2">(ohne Vorwahl) 118</td><td className="border border-slate-300 p-2">privacy.kisa.or.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Schlichtungsausschuss für Streitigkeiten über personenbezogene Daten</td><td className="border border-slate-300 p-2">(ohne Vorwahl) 1833-6972</td><td className="border border-slate-300 p-2">www.kopico.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Oberste Staatsanwaltschaft, Cyber-Ermittlungsabteilung</td><td className="border border-slate-300 p-2">(ohne Vorwahl) 1301</td><td className="border border-slate-300 p-2">www.spo.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">Nationale Polizeibehörde, Cyber-Meldesystem (ECRM)</td><td className="border border-slate-300 p-2">(ohne Vorwahl) 182</td><td className="border border-slate-300 p-2">ecrm.cyber.go.kr</td></tr>
+      </tbody>
+    </table>
+    <p>② Das Unternehmen bemüht sich um Beratung und Wiedergutmachung bei Verletzungen personenbezogener Daten von Nutzern. Für eine Beratung wenden Sie sich bitte an:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Ansprechpartner: Jeong Do-cheon</li>
+      <li>Telefon: +82-2-333-7334</li>
+      <li>E-Mail: support@traystorage.net</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">§ 14 (Änderung und Inkrafttreten der Datenschutzerklärung)</h3>
+    <p>① Ändert das Unternehmen diese Datenschutzerklärung, veröffentlicht es mindestens sieben (7) Tage vor Inkrafttreten der Änderung einen Vergleich der Inhalte vor und nach der Änderung als Ankündigung auf der Website des Dienstes, damit Nutzer informiert werden. Bei wesentlichen Änderungen, die die Rechte der Nutzer betreffen, erfolgt die Ankündigung mindestens dreißig (30) Tage vorher; bei Bedarf holt das Unternehmen eine erneute Einwilligung der Nutzer ein.</p>
+    <p>② Diese Datenschutzerklärung tritt am 9. Februar 2026 in Kraft.</p>
+
+    <h3 className="font-semibold text-slate-900">Schlussbestimmungen</h3>
+    <p>Diese Datenschutzerklärung gilt ab dem 9. Februar 2026.</p>
+
+    <h3 className="font-semibold text-slate-900">[Unternehmensangaben]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Firma: InfoCreative Co., Ltd.</li>
+      <li>Vertreter: Jeong Do-cheon</li>
+      <li>Adresse: Räume 708 &amp; 709, Gasan Hanwha Biz Metro 2nd, 43-14 Gasan Digital 2-ro, Geumcheon-gu, Seoul, Republik Korea</li>
+      <li>Gewerberegisternummer: 841-86-03004</li>
+      <li>Kundencenter: +82-2-333-7334</li>
+      <li>E-Mail: support@traystorage.net</li>
+    </ul>
+  </>
+);
+
 export const PrivacyPolicyContent = () => {
   const { i18n } = useTranslation();
   if (i18n.language === 'en') return <PrivacyEn />;
   if (i18n.language === 'ja') return <PrivacyJa />;
+  if (i18n.language === 'de') return <PrivacyDe />;
   return <PrivacyKo />;
 };
 
