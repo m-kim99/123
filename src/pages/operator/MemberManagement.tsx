@@ -327,11 +327,13 @@ export function MemberManagement() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 max-w-[180px]">
                         {user.companyName ? (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-foreground">{user.companyName}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <span className="text-foreground truncate" title={user.companyName}>
+                              {user.companyName}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
