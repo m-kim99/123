@@ -288,7 +288,22 @@ const PrivacyEn = () => (
     <p>② When entering into entrustment contracts, the Company specifies in the contract the prohibition of processing personal information beyond the scope of the entrusted task, technical and managerial safeguards, restrictions on sub-entrustment, supervision of the entrusted party, and liability including damages, in accordance with Article 26 of the Personal Information Protection Act.</p>
     <p>③ If the content of the entrusted tasks or the entrusted party changes, the Company shall promptly disclose such changes through this Privacy Policy.</p>
 
-    <h3 className="font-semibold text-slate-900">Article 6 (Rights of Data Subjects and Methods of Exercise)</h3>
+    <h3 className="font-semibold text-slate-900">Article 6 (Cross-Border Transfer of Personal Information)</h3>
+    <p>① The Company transfers Data Subjects' personal information overseas for the purpose of providing the Service.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Item</th><th className="border border-slate-300 p-2 text-left">Details</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Recipient</td><td className="border border-slate-300 p-2">Supabase, Inc.; OpenAI, L.L.C.</td></tr>
+        <tr><td className="border border-slate-300 p-2">Recipient country</td><td className="border border-slate-300 p-2">United States, among other locations where cloud servers are located (specific locations may change)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Date and method of transfer</td><td className="border border-slate-300 p-2">Transmitted over the network at the time the Service is used</td></tr>
+        <tr><td className="border border-slate-300 p-2">Items transferred</td><td className="border border-slate-300 p-2">Member information, uploaded documents, AI processing data</td></tr>
+        <tr><td className="border border-slate-300 p-2">Purpose of transfer</td><td className="border border-slate-300 p-2">Provision of cloud-based service; provision of AI services</td></tr>
+        <tr><td className="border border-slate-300 p-2">Retention and use period</td><td className="border border-slate-300 p-2">Until membership withdrawal or termination of the entrustment agreement</td></tr>
+      </tbody>
+    </table>
+    <p>② Data Subjects may refuse the overseas transfer of their personal information; however, use of the Service may be restricted in the event of such refusal.</p>
+
+    <h3 className="font-semibold text-slate-900">Article 7 (Rights of Data Subjects and Methods of Exercise)</h3>
     <p>① Data Subjects may exercise the following rights at any time with respect to their personal information processed by the Company:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li><strong>Right to access personal information:</strong> Data Subjects may request access to their personal information held by the Company pursuant to Article 35 of the Personal Information Protection Act. Access may be restricted where prohibited by law or where there is a risk of harm to another person's interests.</li>
@@ -298,9 +313,15 @@ const PrivacyEn = () => (
     <p>② Data Subjects may exercise the rights under Paragraph 1 by contacting the Chief Privacy Officer (Phone: +82-2-333-7334) or by sending an email to support@traystorage.net, and the Company shall process such requests without delay.</p>
     <p>③ Where a Data Subject requests correction or deletion of erroneous personal information, the Company shall not use or provide such personal information until the correction or deletion is completed.</p>
     <p>④ A legal representative of the Data Subject, or a person delegated by the Data Subject, may exercise such rights on behalf of the Data Subject by submitting a written power of attorney to the Company.</p>
-    <p>⑤ <strong>Right to request explanation of AI-based personal information processing results:</strong> Data Subjects may request explanations regarding the purpose and method of AI processing, the impact of AI processing results on the Data Subject, and the key criteria underlying the AI processing results. Explanation requests may be made by written correspondence, email (support@traystorage.net), or by contacting the Chief Privacy Officer by phone (+82-2-333-7334). The Company shall respond within one (1) month of receiving the request.</p>
+    <p>⑤ <strong>Rights concerning AI-based processing of personal information:</strong> With respect to results provided by AI services, Data Subjects may exercise the following rights:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Right to request explanation:</strong> the right to request an explanation of the purpose and method of AI processing, the impact of the AI processing results on the Data Subject, and the key criteria underlying the AI processing results;</li>
+      <li><strong>Right to object:</strong> the right to raise an objection to a clear error or an inappropriate AI processing result;</li>
+      <li><strong>Right to request human intervention:</strong> the right to request human review of an automated processing result.</li>
+    </ul>
+    <p>⑥ The rights under Paragraph 5 may be exercised by written correspondence, email (support@traystorage.net), or by contacting the Chief Privacy Officer by phone (+82-2-333-7334). The Company shall review the request within the technically feasible scope, take necessary measures, and respond within one (1) month of receiving the request.</p>
 
-    <h3 className="font-semibold text-slate-900">Article 7 (Destruction of Personal Information)</h3>
+    <h3 className="font-semibold text-slate-900">Article 8 (Destruction of Personal Information)</h3>
     <p>① The Company shall promptly destroy personal information when it is no longer needed, such as upon achievement of the processing purpose, expiration of the retention and use period, or termination of business.</p>
     <p>② Notwithstanding Paragraph 1, where personal information must continue to be retained under applicable laws, such personal information shall be stored and managed separately from other personal information.</p>
     <p>③ Where the Company is required to retain personal information for a certain period under applicable laws, the Company shall securely retain such information for the applicable period before destruction.</p>
@@ -310,7 +331,7 @@ const PrivacyEn = () => (
       <li><strong>Destruction methods:</strong> Personal information recorded and stored in electronic file format is permanently deleted using methods that prevent recovery. Personal information recorded on paper documents is destroyed by shredding, incineration, or masking/perforation of the relevant portions.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">Article 8 (Measures to Ensure the Security of Personal Information)</h3>
+    <h3 className="font-semibold text-slate-900">Article 9 (Measures to Ensure the Security of Personal Information)</h3>
     <p>The Company takes the following measures to prevent loss, theft, leakage, falsification, alteration, or damage to Data Subjects' personal information:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li><strong>Administrative measures:</strong> Establishment and implementation of an internal management plan for personal information protection, regular employee training;</li>
@@ -320,7 +341,7 @@ const PrivacyEn = () => (
       <li><strong>Access management:</strong> Minimization of personnel handling personal information and regular training; installation of locking devices and access restrictions for documents and auxiliary storage media.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">Article 9 (Installation, Operation, and Rejection of Automatic Personal Information Collection Devices)</h3>
+    <h3 className="font-semibold text-slate-900">Article 10 (Installation, Operation, and Rejection of Automatic Personal Information Collection Devices)</h3>
     <p>① The Company uses "cookies" to store and retrieve usage information in order to provide individually customized services to Data Subjects. Cookies are small pieces of information sent by the server operating the website to the Data Subject's computer browser, and may be stored on the hard disk of the Data Subject's computer.</p>
     <p>② The purposes and details of cookie use are as follows:</p>
     <ul className="list-disc pl-5 space-y-1">
@@ -336,7 +357,7 @@ const PrivacyEn = () => (
       <li>Refusing to store cookies may result in difficulties using customized services.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">Article 10 (Notice Regarding AI Service Use and Personal Information Processing)</h3>
+    <h3 className="font-semibold text-slate-900">Article 11 (Notice Regarding AI Service Use and Personal Information Processing)</h3>
     <p>① The Company utilizes artificial intelligence (AI) technology for service quality improvement and provides the following AI services:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li>Automatic document text extraction via AI OCR (Optical Character Recognition);</li>
@@ -347,11 +368,6 @@ const PrivacyEn = () => (
     <p>③ The Company does not use documents registered by Members as general training data for AI models. However, the Company may collect and use the following data for service quality improvement: service usage patterns and feedback data; usage records excluding sensitive information within documents (resident registration numbers, bank account information, medical information, etc.). The above data is anonymized or pseudonymized before use and processed so as to prevent identification of specific individuals.</p>
     <p>④ The Company plans to add a feature for automatic masking of sensitive information in the course of future AI model improvement.</p>
     <p>⑤ The AI service providers to whom the Company entrusts AI service provision are as follows: OpenAI, L.L.C. (AI document analysis service, voice recognition service); Naver Cloud Platform (AI OCR).</p>
-
-    <h3 className="font-semibold text-slate-900">Article 11 (Matters Concerning the Operation and Management of Video Information Processing Devices)</h3>
-    <p>① The Company installs and operates video information processing devices (CCTV) for office security and safety accident prevention.</p>
-    <p>② The Company does not install or operate video information processing devices in places where there is a concern of privacy infringement, such as restrooms and changing rooms, in order to protect the personal information of Data Subjects.</p>
-    <p>③ Data Subjects may request to view video information, and may apply in writing, by phone, or by email to the Chief Privacy Officer.</p>
 
     <h3 className="font-semibold text-slate-900">Article 12 (Chief Privacy Officer)</h3>
     <p>① The Company has designated the following Chief Privacy Officer, who oversees personal information processing operations and is responsible for handling complaints, remedying damages, and facilitating the exercise of rights by Data Subjects:</p>
@@ -689,7 +705,22 @@ const PrivacyDe = () => (
     <p>② Bei Abschluss von Auftragsverarbeitungsverträgen legt das Unternehmen gemäß Artikel 26 des Gesetzes zum Schutz personenbezogener Daten im Vertrag das Verbot der Verarbeitung außerhalb des beauftragten Zwecks, technische und organisatorische Schutzmaßnahmen, Einschränkungen der Unterbeauftragung, die Überwachung des Auftragnehmers sowie die Haftung einschließlich Schadensersatz fest.</p>
     <p>③ Ändern sich der Inhalt der beauftragten Tätigkeiten oder der Auftragnehmer, gibt das Unternehmen dies unverzüglich über diese Datenschutzerklärung bekannt.</p>
 
-    <h3 className="font-semibold text-slate-900">§ 6 (Rechte der Nutzer und deren Ausübung)</h3>
+    <h3 className="font-semibold text-slate-900">§ 6 (Internationale Übermittlung personenbezogener Daten)</h3>
+    <p>① Das Unternehmen übermittelt personenbezogene Daten der Nutzer zur Bereitstellung des Dienstes ins Ausland.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">Kategorie</th><th className="border border-slate-300 p-2 text-left">Einzelheiten</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Empfänger</td><td className="border border-slate-300 p-2">Supabase, Inc.; OpenAI, L.L.C.</td></tr>
+        <tr><td className="border border-slate-300 p-2">Empfängerland</td><td className="border border-slate-300 p-2">USA, u. a. je nach Standort der Cloud-Server (kann sich ändern)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Zeitpunkt und Methode der Übermittlung</td><td className="border border-slate-300 p-2">Übertragung über das Netzwerk bei Nutzung des Dienstes</td></tr>
+        <tr><td className="border border-slate-300 p-2">Übermittelte Datenkategorien</td><td className="border border-slate-300 p-2">Mitgliedsdaten, hochgeladene Dokumente, KI-Verarbeitungsdaten</td></tr>
+        <tr><td className="border border-slate-300 p-2">Übermittlungszweck</td><td className="border border-slate-300 p-2">Bereitstellung des cloudbasierten Dienstes; Bereitstellung der KI-Dienste</td></tr>
+        <tr><td className="border border-slate-300 p-2">Speicher- und Nutzungsdauer</td><td className="border border-slate-300 p-2">Bis zur Kündigung der Mitgliedschaft oder Beendigung des Auftragsverarbeitungsvertrags</td></tr>
+      </tbody>
+    </table>
+    <p>② Nutzer können der Übermittlung ihrer personenbezogenen Daten ins Ausland widersprechen; in diesem Fall kann die Nutzung des Dienstes eingeschränkt sein.</p>
+
+    <h3 className="font-semibold text-slate-900">§ 7 (Rechte der Nutzer und deren Ausübung)</h3>
     <p>① Nutzer können jederzeit folgende Rechte hinsichtlich ihrer vom Unternehmen verarbeiteten personenbezogenen Daten ausüben:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li><strong>Auskunftsrecht:</strong> Nutzer können gemäß Artikel 35 des Gesetzes zum Schutz personenbezogener Daten Auskunft über ihre beim Unternehmen gespeicherten personenbezogenen Daten verlangen. Die Auskunft kann eingeschränkt werden, soweit dies gesetzlich untersagt ist oder die Interessen Dritter gefährdet würden.</li>
@@ -699,9 +730,15 @@ const PrivacyDe = () => (
     <p>② Nutzer können die Rechte aus Absatz 1 ausüben, indem sie sich an den Datenschutzbeauftragten wenden (Telefon: +82-2-333-7334) oder eine E-Mail an support@traystorage.net senden; das Unternehmen bearbeitet solche Anfragen unverzüglich.</p>
     <p>③ Beantragt ein Nutzer die Berichtigung oder Löschung fehlerhafter personenbezogener Daten, nutzt oder gibt das Unternehmen diese Daten nicht weiter, bis die Berichtigung oder Löschung abgeschlossen ist.</p>
     <p>④ Ein gesetzlicher Vertreter des Nutzers oder eine vom Nutzer bevollmächtigte Person kann diese Rechte im Namen des Nutzers ausüben, sofern eine schriftliche Vollmacht beim Unternehmen eingereicht wird.</p>
-    <p>⑤ <strong>Recht auf Erläuterung von KI-basierten Verarbeitungsergebnissen personenbezogener Daten:</strong> Nutzer können Erläuterungen zu Zweck und Methode der KI-Verarbeitung, den Auswirkungen der KI-Verarbeitungsergebnisse auf den Nutzer sowie den wesentlichen Kriterien der KI-Verarbeitungsergebnisse verlangen. Anfragen können schriftlich, per E-Mail (support@traystorage.net) oder telefonisch beim Datenschutzbeauftragten (+82-2-333-7334) gestellt werden. Das Unternehmen antwortet innerhalb eines (1) Monats nach Eingang der Anfrage.</p>
+    <p>⑤ <strong>Rechte im Zusammenhang mit der KI-basierten Verarbeitung personenbezogener Daten:</strong> Nutzer können hinsichtlich der von KI-Diensten bereitgestellten Ergebnisse folgende Rechte ausüben:</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>Recht auf Erläuterung:</strong> das Recht, eine Erläuterung zu Zweck und Methode der KI-Verarbeitung, den Auswirkungen der KI-Verarbeitungsergebnisse auf den Nutzer sowie den wesentlichen Kriterien der KI-Verarbeitungsergebnisse zu verlangen;</li>
+      <li><strong>Widerspruchsrecht:</strong> das Recht, gegen einen offensichtlichen Fehler oder ein unangemessenes KI-Verarbeitungsergebnis Widerspruch einzulegen;</li>
+      <li><strong>Recht auf menschliche Überprüfung:</strong> das Recht, eine menschliche Überprüfung eines automatisiert erzielten Verarbeitungsergebnisses zu verlangen.</li>
+    </ul>
+    <p>⑥ Die Rechte aus Absatz 5 können schriftlich, per E-Mail (support@traystorage.net) oder telefonisch beim Datenschutzbeauftragten (+82-2-333-7334) ausgeübt werden. Das Unternehmen prüft die Anfrage im Rahmen des technisch Machbaren, trifft die erforderlichen Maßnahmen und antwortet innerhalb eines (1) Monats nach Eingang der Anfrage.</p>
 
-    <h3 className="font-semibold text-slate-900">§ 7 (Löschung personenbezogener Daten)</h3>
+    <h3 className="font-semibold text-slate-900">§ 8 (Löschung personenbezogener Daten)</h3>
     <p>① Das Unternehmen löscht personenbezogene Daten unverzüglich, wenn diese nicht mehr benötigt werden, etwa nach Erreichen des Verarbeitungszwecks, Ablauf der Speicherdauer oder Beendigung der Geschäftstätigkeit.</p>
     <p>② Ungeachtet Absatz 1 werden personenbezogene Daten, deren weitere Aufbewahrung gesetzlich vorgeschrieben ist, getrennt von anderen personenbezogenen Daten gespeichert und verwaltet.</p>
     <p>③ Ist das Unternehmen gesetzlich verpflichtet, personenbezogene Daten für einen bestimmten Zeitraum aufzubewahren, bewahrt es diese Daten für den entsprechenden Zeitraum sicher auf, bevor sie gelöscht werden.</p>
@@ -711,7 +748,7 @@ const PrivacyDe = () => (
       <li><strong>Löschmethoden:</strong> Elektronisch gespeicherte personenbezogene Daten werden unwiderruflich gelöscht. Auf Papier festgehaltene personenbezogene Daten werden geschreddert, verbrannt oder die betreffenden Stellen unkenntlich gemacht bzw. gelocht.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">§ 8 (Maßnahmen zur Gewährleistung der Sicherheit personenbezogener Daten)</h3>
+    <h3 className="font-semibold text-slate-900">§ 9 (Maßnahmen zur Gewährleistung der Sicherheit personenbezogener Daten)</h3>
     <p>Das Unternehmen trifft folgende Maßnahmen, um Verlust, Diebstahl, Offenlegung, Fälschung, Veränderung oder Beschädigung personenbezogener Daten der Nutzer zu verhindern:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li><strong>Organisatorische Maßnahmen:</strong> Aufstellung und Umsetzung eines internen Managementplans zum Schutz personenbezogener Daten, regelmäßige Mitarbeiterschulungen;</li>
@@ -721,7 +758,7 @@ const PrivacyDe = () => (
       <li><strong>Zugriffsverwaltung:</strong> Minimierung der mit personenbezogenen Daten befassten Mitarbeiter und regelmäßige Schulungen; Schließsysteme und Zugriffsbeschränkungen für Dokumente und Speichermedien.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">§ 9 (Einsatz, Betrieb und Ablehnung von Cookies)</h3>
+    <h3 className="font-semibold text-slate-900">§ 10 (Einsatz, Betrieb und Ablehnung von Cookies)</h3>
     <p>① Das Unternehmen verwendet „Cookies", um Nutzungsinformationen zu speichern und wiederholt abzurufen, um Nutzern individuell angepasste Leistungen anzubieten. Cookies sind kleine Datenmengen, die vom Server der Website an den Browser des Nutzers gesendet und auf dessen Computer gespeichert werden können.</p>
     <p>② Zweck und Einzelheiten der Cookie-Nutzung sind wie folgt:</p>
     <ul className="list-disc pl-5 space-y-1">
@@ -737,7 +774,7 @@ const PrivacyDe = () => (
       <li>Die Ablehnung von Cookies kann die Nutzung individuell angepasster Leistungen erschweren.</li>
     </ul>
 
-    <h3 className="font-semibold text-slate-900">§ 10 (Hinweise zur Nutzung von KI-Diensten und zur Verarbeitung personenbezogener Daten)</h3>
+    <h3 className="font-semibold text-slate-900">§ 11 (Hinweise zur Nutzung von KI-Diensten und zur Verarbeitung personenbezogener Daten)</h3>
     <p>① Das Unternehmen setzt Künstliche Intelligenz (KI) zur Verbesserung der Dienstqualität ein und stellt folgende KI-Dienste bereit:</p>
     <ul className="list-disc pl-5 space-y-1">
       <li>Automatische Textextraktion aus Dokumenten mittels KI-OCR (optische Zeichenerkennung);</li>
@@ -748,11 +785,6 @@ const PrivacyDe = () => (
     <p>③ Das Unternehmen nutzt von Mitgliedern registrierte Dokumente nicht als allgemeine Trainingsdaten für KI-Modelle. Zur Verbesserung der Dienstqualität kann das Unternehmen jedoch folgende Daten erheben und nutzen: Nutzungsmuster und Feedback-Daten; Nutzungsdatensätze unter Ausschluss sensibler Informationen in Dokumenten (Personalausweisnummern, Bankkontodaten, Gesundheitsdaten usw.). Diese Daten werden vor der Nutzung anonymisiert oder pseudonymisiert und so verarbeitet, dass eine Identifizierung bestimmter Personen ausgeschlossen ist.</p>
     <p>④ Das Unternehmen plant, im Rahmen künftiger Verbesserungen der KI-Modelle eine Funktion zur automatischen Maskierung sensibler Informationen einzuführen.</p>
     <p>⑤ Folgende KI-Dienstanbieter werden vom Unternehmen mit der Bereitstellung von KI-Diensten beauftragt: OpenAI, L.L.C. (KI-Dokumentenanalyse, Spracherkennung); Naver Cloud Platform (KI-OCR).</p>
-
-    <h3 className="font-semibold text-slate-900">§ 11 (Betrieb und Verwaltung von Videoüberwachungsanlagen)</h3>
-    <p>① Das Unternehmen installiert und betreibt Videoüberwachungsanlagen (CCTV) zur Bürosicherheit und zur Vermeidung von Unfällen.</p>
-    <p>② Das Unternehmen installiert und betreibt keine Videoüberwachungsanlagen an Orten, an denen ein Risiko der Verletzung der Privatsphäre besteht, wie etwa Toiletten und Umkleideräume, um die personenbezogenen Daten der Nutzer zu schützen.</p>
-    <p>③ Nutzer können die Einsicht in Videomaterial beantragen, schriftlich, telefonisch oder per E-Mail beim Datenschutzbeauftragten.</p>
 
     <h3 className="font-semibold text-slate-900">§ 12 (Datenschutzbeauftragter)</h3>
     <p>① Das Unternehmen hat folgenden Datenschutzbeauftragten bestimmt, der die Verarbeitung personenbezogener Daten überwacht und für die Bearbeitung von Beschwerden, die Wiedergutmachung von Schäden und die Ausübung der Rechte der Nutzer verantwortlich ist:</p>
