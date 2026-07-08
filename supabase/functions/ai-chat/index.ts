@@ -522,7 +522,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   
   try {
-    const { message, userId, history = [], locale = 'ko', model } = await req.json();
+    const { message, history = [], locale = 'ko', model } = await req.json();
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
@@ -535,6 +535,18 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceRoleKey) throw new Error('Supabase credentials not configured');
     
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // 보안: 클라이언트가 body에 담아 보내는 userId는 조작 가능하므로 신뢰하지 않는다.
+    // 반드시 Authorization 헤더의 JWT를 검증해서 실제 로그인된 사용자 ID만 사용한다.
+    // (이 함수는 service_role 키로 RLS를 우회하므로, 이 검증이 유일한 테넌시 경계다.)
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const { data: authData, error: authError } = token ? await supabase.auth.getUser(token) : { data: null, error: new Error('missing token') };
+    if (authError || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const userId = authData.user.id;
+
     const { data: userData } = await supabase.from('users').select('company_id').eq('id', userId).single();
     if (!userData?.company_id) throw new Error('User company not found');
     const userCompanyId = userData.company_id;
