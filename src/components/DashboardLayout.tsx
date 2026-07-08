@@ -330,6 +330,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     };
   }, [isNotificationOpen]);
 
+  // 모바일 사이드바 열릴 때 배경 스크롤 잠금
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) window.scrollTo(0, -parseInt(scrollY, 10));
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
   // 역할 + 부서명 표시 헬퍼 (useCallback으로 최적화)
   const getRoleDisplay = useCallback(() => {
     const roleText = isAdmin ? t('common.admin') : t('common.team');
@@ -981,7 +1005,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
 
-        <nav className="p-4 space-y-1 flex-1 min-h-0 overflow-y-auto">
+        <nav className="p-4 space-y-1 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = !item.external && location.pathname === item.href;
