@@ -36,10 +36,12 @@ REVOKE ALL ON TABLE public.payapp_pending_rebills FROM anon, authenticated;
 
 -- 오해 소지가 있는 개방형 정책을 service_role 전용으로 재정의(선택적 명확화)
 DROP POLICY IF EXISTS "Service role full access" ON public.phone_verifications;
+DROP POLICY IF EXISTS "phone_verifications_service_only" ON public.phone_verifications;
 CREATE POLICY "phone_verifications_service_only" ON public.phone_verifications
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Service role can manage payapp_pending_rebills" ON public.payapp_pending_rebills;
+DROP POLICY IF EXISTS "payapp_pending_rebills_service_only" ON public.payapp_pending_rebills;
 CREATE POLICY "payapp_pending_rebills_service_only" ON public.payapp_pending_rebills
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
@@ -50,6 +52,7 @@ CREATE POLICY "payapp_pending_rebills_service_only" ON public.payapp_pending_reb
 REVOKE ALL ON TABLE public.notifications FROM anon;
 
 DROP POLICY IF EXISTS "System can insert notifications" ON public.notifications;
+DROP POLICY IF EXISTS "notifications_insert_same_company" ON public.notifications;
 CREATE POLICY "notifications_insert_same_company" ON public.notifications
   FOR INSERT TO authenticated
   WITH CHECK (company_id = public.auth_company_id());
@@ -59,6 +62,7 @@ CREATE POLICY "notifications_insert_same_company" ON public.notifications
 --    (푸시 대상 토큰 조회는 send-push-notification 이 service_role 로 수행)
 -- ------------------------------------------------------------
 DROP POLICY IF EXISTS "device_tokens_select" ON public.user_device_tokens;
+DROP POLICY IF EXISTS "device_tokens_select_own" ON public.user_device_tokens;
 CREATE POLICY "device_tokens_select_own" ON public.user_device_tokens
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id);
@@ -69,6 +73,7 @@ CREATE POLICY "device_tokens_select_own" ON public.user_device_tokens
 --    다른 회사 유저 노출만 차단된다. 운영자(is_operator)는 크로스회사 유지.
 -- ------------------------------------------------------------
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.users;
+DROP POLICY IF EXISTS "users_select_self_or_company" ON public.users;
 CREATE POLICY "users_select_self_or_company" ON public.users
   FOR SELECT TO authenticated
   USING (
