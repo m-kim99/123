@@ -177,11 +177,9 @@ export function V1StatTile({
             </span>
             {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
           </div>
-          {delta && (
-            <span className={cn('inline-block mt-1.5 text-[11px] font-semibold px-1.5 py-0.5 rounded', deltaColor)}>
-              {delta}
-            </span>
-          )}
+          <span className={cn('inline-block mt-1.5 text-[11px] font-semibold px-1.5 py-0.5 rounded', delta ? deltaColor : 'invisible')}>
+            {delta || '–'}
+          </span>
         </div>
         {data && data.length >= 2 && (
           <Sparkline data={data} color={resolvedColor} width={72} height={28} />
