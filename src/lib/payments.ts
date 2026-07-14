@@ -130,19 +130,26 @@ export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; maxMem
   pro: { pricePerMember: 15000, maxMembers: null }, // 프로: 인당 15,000원, 인원수 지정 가능
 };
 
-declare global {
-  interface Window {
-    innopay?: {
-      goPay: (params: Record<string, unknown>) => void;
-    };
-  }
+// [중요] 이노페이 SDK(innopay.js)는 클래식 스크립트에서 `const innopay = {...}` 로
+// 선언된다. 클래식 스크립트 top-level의 const/let 은 '전역 렉시컬 바인딩'이라
+// window 속성으로 노출되지 않는다(window.innopay === undefined). 따라서 반드시
+// window.innopay 가 아닌 전역 식별자 `innopay` 로 접근해야 한다. (공식 예제도 동일)
+interface InnopaySdk {
+  goPay: (params: Record<string, unknown>) => void;
+  closeHandler?: (moid: string) => void;
 }
+declare const innopay: InnopaySdk | undefined;
 
 let innopaySdkPromise: Promise<void> | null = null;
 
+/** 전역 렉시컬 바인딩 innopay 가 사용 가능한지 안전하게 확인 (미로드 시 typeof 로 ReferenceError 방지) */
+function isInnopaySdkReady(): boolean {
+  return typeof innopay !== 'undefined' && !!innopay && typeof innopay.goPay === 'function';
+}
+
 /** 이노페이 결제창 SDK 로드 (1회만) */
 function loadInnopaySdk(): Promise<void> {
-  if (window.innopay) return Promise.resolve();
+  if (isInnopaySdkReady()) return Promise.resolve();
   if (innopaySdkPromise) return innopaySdkPromise;
 
   innopaySdkPromise = new Promise<void>((resolve, reject) => {
@@ -192,7 +199,7 @@ export async function requestInnopayPayment(params: InnopayPaymentParams): Promi
   }
 
   await loadInnopaySdk();
-  if (!window.innopay) {
+  if (!isInnopaySdkReady()) {
     throw new Error('이노페이 SDK를 사용할 수 없습니다.');
   }
 
@@ -207,7 +214,7 @@ export async function requestInnopayPayment(params: InnopayPaymentParams): Promi
   };
   sessionStorage.setItem(INNOPAY_CTX_KEY, JSON.stringify(ctx));
 
-  window.innopay.goPay({
+  innopay!.goPay({
     payMethod: 'CARD',
     mid: INNOPAY_MID,
     moid,

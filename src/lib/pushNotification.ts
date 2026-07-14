@@ -13,6 +13,10 @@ const NOTIF_TITLES: Record<NotificationEventType, string> = {
   subcategory_expiring_soon:     '⏰ 만료 예정',
   subcategory_expiring_very_soon:'⚠️ 만료 임박',
   subcategory_expired:           '❌ 만료',
+  subscription_expiring_soon:      '💳 구독 만료 예정',
+  subscription_expiring_very_soon: '💳 구독 만료 임박',
+  subscription_past_due:           '⛔ 구독 만료',
+  subscription_canceled:           '구독 해지 완료',
 };
 
 export async function requestLocalNotificationPermission(): Promise<boolean> {
