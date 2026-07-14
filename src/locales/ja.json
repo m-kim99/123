@@ -118,7 +118,9 @@
     "creditCard": "クレジットカード",
     "agreeTerms": "購入条件を確認し、定期決済の実行に同意します。",
     "pay": "決済する",
-    "paymentRequestFailed": "決済リクエストに失敗しました。もう一度お試しください。"
+    "paymentRequestFailed": "決済リクエストに失敗しました。もう一度お試しください。",
+    "phoneLabel": "携帯電話番号",
+    "phoneRequired": "決済には携帯電話番号の入力が必要です。"
   },
   "bottomBar": {
     "back": "戻る",

@@ -120,8 +120,8 @@
     "pay": "결제하기",
     "paymentRequestFailed": "결제 요청에 실패했습니다. 다시 시도해주세요.",
     "paymentProvider": "결제사",
-    "phoneLabel": "휴대폰 번호 (PayApp 결제용)",
-    "phoneRequired": "PayApp 결제 시 휴대폰 번호가 필요합니다."
+    "phoneLabel": "휴대폰 번호",
+    "phoneRequired": "결제를 위해 휴대폰 번호를 입력해주세요."
   },
   "bottomBar": {
     "back": "뒤로",

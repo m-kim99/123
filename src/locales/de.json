@@ -118,7 +118,9 @@
     "creditCard": "Kreditkarte",
     "agreeTerms": "Ich bestätige die Kaufbedingungen und stimme wiederkehrenden Zahlungen zu.",
     "pay": "Jetzt bezahlen",
-    "paymentRequestFailed": "Zahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
+    "paymentRequestFailed": "Zahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "phoneLabel": "Handynummer",
+    "phoneRequired": "Für die Zahlung ist eine Handynummer erforderlich."
   },
   "bottomBar": {
     "back": "Zurück",

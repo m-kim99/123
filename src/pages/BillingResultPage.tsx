@@ -25,11 +25,11 @@ export function BillingSuccessPage() {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <XCircle className="h-12 w-12 text-amber-500 mx-auto mb-2" />
-          <CardTitle>토스페이먼츠 승인 대기 중</CardTitle>
+          <CardTitle>사용하지 않는 결제 경로</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-600 text-center">
-            현재 토스페이먼츠 승인 대기 중입니다. PayApp 결제를 이용해주세요.
+            이 결제 경로는 더 이상 사용되지 않습니다. 이노페이 결제를 이용해주세요.
           </p>
           <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>
             {t('billing.backToApp')}
