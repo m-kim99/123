@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Capacitor } from '@capacitor/core';
 import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { NativeDeepLinkHandler } from '@/components/NativeDeepLinkHandler';
+import { SubscriptionGate } from '@/components/SubscriptionGate';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useOperatorStore } from './store/operatorStore';
@@ -126,7 +127,7 @@ function ProtectedRoute({
   children: React.ReactNode;
   requiredRole?: 'admin' | 'team';
 }) {
-  const { isAuthenticated, isLoading, user, needsOnboarding, setRedirectAfterLogin } = useAuthStore();
+  const { isAuthenticated, isLoading, user, needsOnboarding, setRedirectAfterLogin, subscriptionBlocked } = useAuthStore();
   const location = useLocation();
 
   // 세션 확인 중에는 로딩 표시 (새로고침 시 즉시 리다이렉트 방지)
@@ -149,6 +150,11 @@ function ProtectedRoute({
 
   if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to={user?.role === 'admin' ? '/admin' : '/team'} replace />;
+  }
+
+  // 구독(무료체험) 만료 시 결제 게이트로 차단 — 결제 전까지 앱 이용 불가
+  if (subscriptionBlocked) {
+    return <SubscriptionGate />;
   }
 
   return <>{children}</>;

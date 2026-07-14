@@ -120,7 +120,10 @@
     "pay": "Jetzt bezahlen",
     "paymentRequestFailed": "Zahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "phoneLabel": "Handynummer",
-    "phoneRequired": "Für die Zahlung ist eine Handynummer erforderlich."
+    "phoneRequired": "Für die Zahlung ist eine Handynummer erforderlich.",
+    "gateTitle": "Ihre kostenlose Testphase ist abgelaufen",
+    "gateDesc": "Um fortzufahren, ist ein kostenpflichtiger Tarif erforderlich. Nach der Zahlung stehen sofort alle Funktionen wieder zur Verfügung.",
+    "gateTeamDesc": "Die kostenlose Testphase Ihres Unternehmens ist abgelaufen und der Zugriff ist eingeschränkt. Der Dienst wird fortgesetzt, sobald Ihr Administrator die Zahlung abschließt. Bitte wenden Sie sich an Ihren Administrator."
   },
   "bottomBar": {
     "back": "Zurück",

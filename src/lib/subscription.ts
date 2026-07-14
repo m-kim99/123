@@ -86,6 +86,49 @@ export async function getCompanyPlanLimits(companyId: string): Promise<PlanLimit
   }
 }
 
+export interface SubscriptionAccess {
+  allowed: boolean;
+  status: 'active' | 'trialing' | 'expired' | 'none';
+  currentPeriodEnd: string | null;
+}
+
+/**
+ * 서비스 이용 가능 여부 체크 (로그인 게이트용)
+ * - 유효한 구독(active / 기간 내 trialing)이 있어야 이용 가능
+ * - 체험/구독 기간(current_period_end) 경과 시 expired → 차단
+ * - 조회 실패(네트워크 등) 시에는 fail-open (잠금 오탐 방지)
+ */
+export async function checkSubscriptionAccess(companyId: string): Promise<SubscriptionAccess> {
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('status, current_period_end')
+      .eq('company_id', companyId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      return { allowed: false, status: 'none', currentPeriodEnd: null };
+    }
+
+    const end = data.current_period_end as string | null;
+    if (end && new Date(end).getTime() < Date.now()) {
+      return { allowed: false, status: 'expired', currentPeriodEnd: end };
+    }
+
+    return {
+      allowed: true,
+      status: data.status as 'active' | 'trialing',
+      currentPeriodEnd: end,
+    };
+  } catch (err) {
+    console.error('checkSubscriptionAccess error:', err);
+    return { allowed: true, status: 'active', currentPeriodEnd: null };
+  }
+}
+
 /**
  * 문서 업로드 제한 체크
  * - deleted_at IS NULL인 문서만 카운트

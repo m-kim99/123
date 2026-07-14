@@ -1,0 +1,175 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Lock, Crown } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { requestInnopayPayment, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
+import { toast } from '@/hooks/use-toast';
+
+/**
+ * 구독 만료/미결제 차단 화면
+ * - 무료체험 또는 구독이 만료된 회사의 사용자는 이 화면에 갇힘 (앱 이용 불가)
+ * - 관리자: 플랜 선택 + 이노페이 결제 진행 가능
+ * - 팀원: 관리자에게 결제 요청 안내
+ */
+export function SubscriptionGate() {
+  const { t } = useTranslation();
+  const { user, logout } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+
+  const [plan, setPlan] = useState<PaidPlanName>('pro');
+  const [members, setMembers] = useState('3');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [isRequestingPayment, setIsRequestingPayment] = useState(false);
+
+  const pricing = PLAN_PRICING[plan];
+  const parsedMembers = Math.max(0, parseInt(members, 10) || 0);
+  const exceedsPlanLimit = pricing.maxMembers !== null && parsedMembers > pricing.maxMembers;
+
+  const handlePay = async () => {
+    if (!user || parsedMembers < 1 || exceedsPlanLimit || !agreed) return;
+    if (!customerPhone) {
+      toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
+      return;
+    }
+    setIsRequestingPayment(true);
+    try {
+      await requestInnopayPayment({
+        plan,
+        customerKey: user.id,
+        customerEmail: user.email,
+        customerName: user.name,
+        customerPhone,
+        memberCount: parsedMembers,
+        amount: parsedMembers * pricing.pricePerMember,
+        goodsName:
+          plan === 'basic'
+            ? t('subscription.productNameBasic')
+            : t('subscription.productNamePro'),
+      });
+    } catch (error) {
+      console.error('결제 요청 실패:', error);
+      toast({ title: t('subscription.paymentRequestFailed'), variant: 'destructive' });
+      setIsRequestingPayment(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0b1220] p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader className="text-center">
+          <Lock className="h-12 w-12 text-amber-500 mx-auto mb-2" />
+          <CardTitle>{t('subscription.gateTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isAdmin ? (
+            <>
+              <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
+                {t('subscription.gateDesc')}
+              </p>
+              <div className="space-y-2">
+                <Label>{t('subscription.planSelectLabel')}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['basic', 'pro'] as const).map((planName) => (
+                    <button
+                      key={planName}
+                      type="button"
+                      onClick={() => setPlan(planName)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        plan === planName
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/15'
+                          : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-transparent'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm flex items-center gap-1">
+                        {planName === 'pro' && <Crown className="h-3.5 w-3.5 text-yellow-500" />}
+                        {planName === 'basic' ? t('subscription.basic') : t('subscription.pro')}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        ₩{PLAN_PRICING[planName].pricePerMember.toLocaleString()}
+                        {t('subscription.perPersonMonth')}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {planName === 'basic'
+                          ? t('subscription.basicMemberLimit')
+                          : t('subscription.customMemberCount')}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gate-members">{t('subscription.memberCountLabel')}</Label>
+                <Input
+                  id="gate-members"
+                  type="number"
+                  min={1}
+                  max={pricing.maxMembers ?? undefined}
+                  value={members}
+                  onChange={(e) => setMembers(e.target.value)}
+                />
+                {exceedsPlanLimit && (
+                  <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gate-phone">{t('subscription.phoneLabel')}</Label>
+                <Input
+                  id="gate-phone"
+                  type="tel"
+                  placeholder="010-1234-5678"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                />
+              </div>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {t('subscription.monthlyTotal')}
+                </span>
+                <span className="text-xl font-bold text-[#2563eb]">
+                  ₩{(parsedMembers * pricing.pricePerMember).toLocaleString()}
+                  <span className="text-sm font-normal text-slate-500">
+                    {t('subscription.perMonth')}
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="gate-agree-terms"
+                  checked={agreed}
+                  onCheckedChange={(checked) => setAgreed(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label
+                  htmlFor="gate-agree-terms"
+                  className="text-sm text-slate-700 dark:text-slate-300 leading-snug cursor-pointer"
+                >
+                  {t('subscription.agreeTerms')}
+                </Label>
+              </div>
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                disabled={parsedMembers < 1 || exceedsPlanLimit || !agreed || isRequestingPayment}
+                onClick={handlePay}
+              >
+                {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
+              {t('subscription.gateTeamDesc')}
+            </p>
+          )}
+          <Button variant="outline" className="w-full" onClick={() => logout()}>
+            {t('common.logout')}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

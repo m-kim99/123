@@ -121,7 +121,10 @@
     "paymentRequestFailed": "결제 요청에 실패했습니다. 다시 시도해주세요.",
     "paymentProvider": "결제사",
     "phoneLabel": "휴대폰 번호",
-    "phoneRequired": "결제를 위해 휴대폰 번호를 입력해주세요."
+    "phoneRequired": "결제를 위해 휴대폰 번호를 입력해주세요.",
+    "gateTitle": "무료 체험이 종료되었습니다",
+    "gateDesc": "계속 이용하려면 플랜 결제가 필요합니다. 결제 즉시 모든 기능을 다시 이용할 수 있습니다.",
+    "gateTeamDesc": "회사의 무료 체험 기간이 종료되어 서비스 이용이 제한되었습니다. 관리자가 결제하면 다시 이용할 수 있습니다. 관리자에게 문의해주세요."
   },
   "bottomBar": {
     "back": "뒤로",

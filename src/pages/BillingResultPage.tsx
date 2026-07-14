@@ -11,6 +11,7 @@ import {
   clearInnopayPaymentContext,
   type ConfirmBillingResult,
 } from '@/lib/payments';
+import { useAuthStore } from '@/store/authStore';
 
 // ============================================================
 // [토스 주석 처리] 토스페이먼츠 승인 대기 중 — 사용 불가
@@ -240,7 +241,11 @@ export function InnopayReturnPage() {
       });
       setResult(res);
       setStatus(res.success ? 'success' : 'error');
-      if (res.success) clearInnopayPaymentContext();
+      if (res.success) {
+        clearInnopayPaymentContext();
+        // 결제 완료 → 구독 차단(SubscriptionGate) 상태 갱신
+        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
+      }
     })();
   }, [tid, paymentToken, moidParam]);
 

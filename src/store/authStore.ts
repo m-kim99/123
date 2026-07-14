@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { trackEvent } from '@/lib/analytics';
-import { checkMemberLimit } from '@/lib/subscription';
+import { checkMemberLimit, checkSubscriptionAccess } from '@/lib/subscription';
 import { requestPushId } from '@/lib/appBridge';
 import { saveDeviceToken } from '@/lib/deviceTokens';
 
@@ -34,6 +34,9 @@ interface AuthState {
   needsOnboarding: boolean;
   redirectAfterLogin: string | null;
   pendingDeletion: PendingDeletion | null;
+  subscriptionBlocked: boolean;
+  trialEndsAt: string | null;
+  refreshSubscriptionAccess: () => Promise<void>;
   setRedirectAfterLogin: (path: string | null) => void;
   clearPendingDeletion: () => void;
   cancelDeletion: () => Promise<{ success: boolean; error?: string }>;
@@ -106,6 +109,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   needsOnboarding: false,
   redirectAfterLogin: null,
   pendingDeletion: null,
+  subscriptionBlocked: false,
+  trialEndsAt: null,
+
+  // 결제 완료 후 등 구독 상태 재확인 (SubscriptionGate 해제용)
+  refreshSubscriptionAccess: async () => {
+    const { user } = get();
+    if (!user?.companyId) return;
+    const access = await checkSubscriptionAccess(user.companyId);
+    set({ subscriptionBlocked: !access.allowed, trialEndsAt: access.currentPeriodEnd });
+  },
 
   setRedirectAfterLogin: (path) => set({ redirectAfterLogin: path }),
 
@@ -175,6 +188,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const company = (userData as any).companies;
 
+      // 구독(무료체험 포함) 유효성 확인 — 만료 시 결제 게이트 표시
+      let subscriptionBlocked = false;
+      let trialEndsAt: string | null = null;
+      if (userData.company_id) {
+        const access = await checkSubscriptionAccess(userData.company_id);
+        subscriptionBlocked = !access.allowed;
+        trialEndsAt = access.currentPeriodEnd;
+      }
+
       set({
         user: {
           id: userData.id,
@@ -190,6 +212,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
         needsOnboarding: false,
+        subscriptionBlocked,
+        trialEndsAt,
       });
 
       trackEvent('login', {
@@ -438,6 +462,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null,
         needsOnboarding: false,
         redirectAfterLogin: null,
+        subscriptionBlocked: false,
+        trialEndsAt: null,
       });
     }
   },
@@ -551,6 +577,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const company = (userData as any).companies;
         const needsOnboarding = !userData.company_id;
 
+        // 구독(무료체험 포함) 유효성 확인 — 만료 시 결제 게이트 표시
+        let subscriptionBlocked = false;
+        let trialEndsAt: string | null = null;
+        if (userData.company_id) {
+          const access = await checkSubscriptionAccess(userData.company_id);
+          subscriptionBlocked = !access.allowed;
+          trialEndsAt = access.currentPeriodEnd;
+        }
+
         // 탈퇴 신청 여부 확인
         const { data: deletionRequest } = await supabase
           .from('account_deletion_requests')
@@ -587,6 +622,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           needsOnboarding,
           pendingDeletion: pendingDeletionInfo,
+          subscriptionBlocked,
+          trialEndsAt,
         });
 
         // 앱 환경에서 푸시키 저장 (세션 복원 시에도)
