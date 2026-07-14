@@ -119,7 +119,9 @@ export async function requestPayAppBilling(params: PayAppBillingParams): Promise
 // 만료 안내/전환은 innopay-billing-renewal 크론이 담당.
 // ============================================================
 
-const INNOPAY_MID = import.meta.env.VITE_INNOPAY_MID || '';
+// MID는 결제창에 노출되는 공개 값 (비밀키는 엣지함수에만 보관)
+// 환경변수 미설정 시 이노페이 테스트 MID 사용
+const INNOPAY_MID = import.meta.env.VITE_INNOPAY_MID || 'testpay01m';
 const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/v1/innopay.js';
 
 /** 유료 플랜 가격 정책 (부가세 포함) — 서버(innopay-payment-confirm)와 동일하게 유지할 것 */
