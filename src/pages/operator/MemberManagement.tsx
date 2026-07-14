@@ -14,6 +14,7 @@ import {
   Ban,
   Download,
   UserCog,
+  Crown,
 } from 'lucide-react';
 import { OperatorLayout } from '@/components/OperatorLayout';
 import { useOperatorStore } from '@/store/operatorStore';
@@ -58,6 +59,34 @@ const avatarColors = ['bg-blue-500', 'bg-violet-500', 'bg-emerald-500', 'bg-ambe
 function getAvatarColor(id: string) {
   const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return avatarColors[hash % avatarColors.length];
+}
+
+// 회사 구독 표시: 플랜 칩(무료/체험/유료/만료) + 종료일
+function SubscriptionCell({ user }: { user: ManagedUser }) {
+  if (!user.subscriptionStatus) {
+    return <V1Chip variant="neutral">무료</V1Chip>;
+  }
+
+  const planLabel = user.planDisplayName || user.planName || '-';
+  const endsAt = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
+  const isExpired = endsAt ? endsAt.getTime() < Date.now() : false;
+
+  return (
+    <div className="flex flex-col items-start gap-1">
+      {isExpired ? (
+        <V1Chip variant="red">{planLabel} · 만료</V1Chip>
+      ) : user.subscriptionStatus === 'trialing' ? (
+        <V1Chip variant="amber">{planLabel} · 체험</V1Chip>
+      ) : (
+        <V1Chip variant="blue" icon={Crown}>{planLabel}</V1Chip>
+      )}
+      {endsAt && (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          ~ {endsAt.toLocaleDateString('ko-KR')}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export function MemberManagement() {
@@ -284,6 +313,9 @@ export function MemberManagement() {
                     회사
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    구독
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     역할
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -300,13 +332,13 @@ export function MemberManagement() {
               <tbody className="divide-y divide-border/50">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
                       로딩 중...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
                       검색 결과가 없습니다.
                     </td>
                   </tr>
@@ -338,6 +370,9 @@ export function MemberManagement() {
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <SubscriptionCell user={user} />
                       </td>
                       <td className="px-5 py-3">
                         {user.role === 'admin' ? (

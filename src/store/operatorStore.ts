@@ -348,6 +348,29 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         });
       }
 
+      // 회사별 구독(플랜/종료일) 조회 — 무료면 행 없음
+      const companyIds = [...new Set((data || []).map((u: any) => u.company_id).filter(Boolean))];
+      const subscriptionMap: Record<
+        string,
+        { planName: string | null; planDisplayName: string | null; status: 'active' | 'trialing'; endsAt: string | null }
+      > = {};
+      if (companyIds.length > 0) {
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('company_id, status, current_period_end, plans(name, display_name)')
+          .in('company_id', companyIds)
+          .in('status', ['active', 'trialing']);
+
+        subs?.forEach((s: any) => {
+          subscriptionMap[s.company_id] = {
+            planName: s.plans?.name ?? null,
+            planDisplayName: s.plans?.display_name ?? null,
+            status: s.status,
+            endsAt: s.current_period_end ?? null,
+          };
+        });
+      }
+
       const users: ManagedUser[] = (data || []).map((u: any) => ({
         id: u.id,
         name: u.name,
@@ -362,6 +385,10 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         lastLoginAt: u.last_login_at ?? null,
         isSuspended: !!suspensionMap[u.id],
         suspensionExpiresAt: suspensionMap[u.id]?.expiresAt || null,
+        planName: u.company_id ? subscriptionMap[u.company_id]?.planName ?? null : null,
+        planDisplayName: u.company_id ? subscriptionMap[u.company_id]?.planDisplayName ?? null : null,
+        subscriptionStatus: u.company_id ? subscriptionMap[u.company_id]?.status ?? null : null,
+        subscriptionEndsAt: u.company_id ? subscriptionMap[u.company_id]?.endsAt ?? null : null,
       }));
 
       set({ users, usersTotal: count || 0 });

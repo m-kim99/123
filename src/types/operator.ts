@@ -181,4 +181,9 @@ export interface ManagedUser {
   lastLoginAt: string | null;
   isSuspended: boolean;
   suspensionExpiresAt: string | null;
+  // 회사 구독 정보 (유효 구독 없으면 모두 null → 무료)
+  planName: string | null;
+  planDisplayName: string | null;
+  subscriptionStatus: 'active' | 'trialing' | null;
+  subscriptionEndsAt: string | null;
 }
