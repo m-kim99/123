@@ -1,110 +1,87 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ============================================================
-// 이노페이 정기결제 갱신 (cron 호출용)
-// current_period_end가 지난 active 구독을 처리한다.
-// 호출: pg_cron 또는 외부 스케줄러에서 x-cron-key 헤더와 함께 POST
+// 이노페이 구독 만료 관리 (cron 호출용, 매일 1회 권장)
+//
+// 이노페이 계약이 '결제창(1회성 결제)'만 포함하므로 카드 자동 재결제는 불가능.
+// 대신 만료 안내 → 관리자 수동 재결제(결제창) 루프로 구독을 유지한다.
 //
 // 처리 규칙
-//  - canceled_at 있음        → status='canceled' 로 종료 (갱신하지 않음)
-//  - canceled_at 없음 + 빌링키 → 이노페이 자동결제 API로 재결제 후 기간 연장
+//  1) active + 만료 임박(D-7 이내) → 관리자에게 재결제 안내 알림 (기간 내 1회)
+//  2) active + 만료 하루 전(D-1)   → 임박 알림 (1회)
+//  3) active + 기간 만료:
+//     - 해지 예약(canceled_at 있음) → status='canceled' + 종료 알림
+//     - 그 외                       → status='past_due' + 재결제 안내 알림
+//       (past_due부터 클라이언트는 무료 플랜 제한을 적용한다)
+//  4) past_due 지속 → 7일마다 재결제 리마인드 알림
 //
-// [중요] 이노페이 '신용카드 자동결제 API'는 회원 전용(로그인) 문서라 정확한
-//        엔드포인트/파라미터 스펙 미확보. 아래 chargeWithBillingKey()는 스펙 확보
-//        전까지 비활성(미설정 시 past_due 처리)이며, 환경변수 INNOPAY_BILLING_API_URL이
-//        설정되면 동작하도록 구조만 마련해 둔다. 실연동 시 요청 본문/헤더를 실제
-//        스펙에 맞게 수정해야 한다. (레퍼런스: toss-billing-renewal)
+// 재결제는 관리자가 앱(사용자 관리/구독 다이얼로그)에서 결제창으로 진행하며,
+// 성공 시 innopay-payment-confirm이 past_due 구독을 재활성화한다.
+// 호출: pg_cron 등 스케줄러에서 x-cron-key 헤더와 함께 POST (CRON_SECRET 검증)
 // ============================================================
 
-interface ChargeResult {
-  ok: boolean;
-  configured: boolean;
-  paymentKey?: string | null;
-  receiptUrl?: string | null;
-  approvedAt?: string | null;
-  code?: string | null;
-  message?: string | null;
-}
-
-interface DueSubscription {
+interface SubscriptionRow {
   id: string;
   company_id: string;
-  billing_key: string | null;
-  payment_customer_id: string | null;
-  member_count: number | null;
-  monthly_amount: number | null;
-  card_company: string | null;
-  card_number: string | null;
+  status: string;
+  current_period_end: string | null;
   canceled_at: string | null;
 }
 
-/**
- * 빌링키로 이노페이 자동결제(재결제) 요청.
- * 스펙 미확보 상태이므로 INNOPAY_BILLING_API_URL 미설정 시 configured=false 반환.
- */
-async function chargeWithBillingKey(
-  sub: DueSubscription,
-  orderId: string,
-  orderName: string,
-): Promise<ChargeResult> {
-  const INNOPAY_MID = Deno.env.get('INNOPAY_MID');
-  const INNOPAY_MERCHANT_KEY = Deno.env.get('INNOPAY_MERCHANT_KEY');
-  const INNOPAY_BILLING_API_URL = Deno.env.get('INNOPAY_BILLING_API_URL');
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-  // 자동결제 API 스펙/엔드포인트 미설정 → 자동 재결제 보류
-  if (!INNOPAY_BILLING_API_URL || !INNOPAY_MID || !INNOPAY_MERCHANT_KEY) {
-    return {
-      ok: false,
-      configured: false,
-      message: '이노페이 자동결제 API 미연동 (INNOPAY_BILLING_API_URL 등 미설정)',
-    };
+/** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */
+async function alreadyNotified(
+  supabase: SupabaseClient,
+  companyId: string,
+  type: string,
+  windowDays: number,
+): Promise<boolean> {
+  const since = new Date(Date.now() - windowDays * DAY_MS).toISOString();
+  const { data } = await supabase
+    .from('notifications')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('type', type)
+    .gte('created_at', since)
+    .limit(1);
+  return !!data && data.length > 0;
+}
+
+/** 회사 관리자 전원에게 개인 알림(target_user_id) 발송 */
+async function notifyAdmins(
+  supabase: SupabaseClient,
+  companyId: string,
+  type: string,
+  message: string,
+): Promise<number> {
+  const { data: admins } = await supabase
+    .from('users')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('role', 'admin');
+
+  if (!admins || admins.length === 0) return 0;
+
+  const rows = admins.map((a: { id: string }) => ({
+    type,
+    company_id: companyId,
+    target_user_id: a.id,
+    message,
+    created_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase.from('notifications').insert(rows);
+  if (error) {
+    console.error('구독 알림 생성 실패:', companyId, type, error);
+    return 0;
   }
+  return rows.length;
+}
 
-  try {
-    // TODO(이노페이 자동결제 API 스펙 확보 후 수정): 요청 본문/헤더를 실제 스펙에 맞춤.
-    const res = await fetch(INNOPAY_BILLING_API_URL, {
-      method: 'POST',
-      headers: {
-        'Merchant-Key': INNOPAY_MERCHANT_KEY,
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: JSON.stringify({
-        mid: INNOPAY_MID,
-        billingKey: sub.billing_key,
-        moid: orderId,
-        goodsName: orderName,
-        amt: sub.monthly_amount,
-        buyerId: sub.payment_customer_id,
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (res.ok && data?.success) {
-      const d = data.data ?? data;
-      return {
-        ok: true,
-        configured: true,
-        paymentKey: d.tid ?? null,
-        receiptUrl: d.receiptUrl ?? null,
-        approvedAt: d.approvedAt ?? null,
-      };
-    }
-
-    return {
-      ok: false,
-      configured: true,
-      code: data?.resultCode ?? null,
-      message: data?.resultMsg ?? data?.message ?? '이노페이 자동결제 실패',
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      configured: true,
-      message: err instanceof Error ? err.message : '자동결제 호출 오류',
-    };
-  }
+function formatKstDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
 }
 
 serve(async (req) => {
@@ -120,101 +97,114 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // 갱신 대상: 이노페이 active 구독 + 기간 만료
-    const { data: dueSubscriptions, error: queryError } = await supabaseAdmin
+    const now = new Date();
+    const results: Array<{ subscriptionId: string; action: string }> = [];
+    let notified = 0;
+
+    // 대상: 이노페이 구독 중 active(만료 임박/만료) + past_due(리마인드)
+    const { data: subs, error: queryError } = await supabaseAdmin
       .from('subscriptions')
-      .select(
-        'id, company_id, billing_key, payment_customer_id, member_count, monthly_amount, card_company, card_number, canceled_at',
-      )
-      .eq('status', 'active')
+      .select('id, company_id, status, current_period_end, canceled_at')
       .eq('payment_provider', 'innopay')
-      .lte('current_period_end', new Date().toISOString());
+      .in('status', ['active', 'past_due'])
+      .not('current_period_end', 'is', null);
 
     if (queryError) throw queryError;
 
-    const results: Array<{ subscriptionId: string; status: string }> = [];
+    for (const sub of (subs ?? []) as SubscriptionRow[]) {
+      const periodEnd = new Date(sub.current_period_end!);
+      const msLeft = periodEnd.getTime() - now.getTime();
 
-    for (const sub of (dueSubscriptions ?? []) as DueSubscription[]) {
-      // 1) 해지 예약된 구독 → 기간 만료 시 종료
-      if (sub.canceled_at) {
-        await supabaseAdmin
-          .from('subscriptions')
-          .update({ status: 'canceled' })
-          .eq('id', sub.id);
-        results.push({ subscriptionId: sub.id, status: 'canceled' });
+      // 4) past_due 리마인드 (7일마다)
+      if (sub.status === 'past_due') {
+        if (!(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_past_due', 7))) {
+          notified += await notifyAdmins(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_past_due',
+            '⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다. 사용자 관리에서 재결제하면 즉시 복구됩니다.',
+          );
+          results.push({ subscriptionId: sub.id, action: 'past_due_reminder' });
+        }
         continue;
       }
 
-      // 2) 빌링키 없는 구독 → 자동 갱신 불가 (수동 재결제 필요)
-      if (!sub.billing_key) {
-        await supabaseAdmin
-          .from('subscriptions')
-          .update({ status: 'past_due' })
-          .eq('id', sub.id);
-        results.push({ subscriptionId: sub.id, status: 'no_billing_key' });
+      // 3) 기간 만료 처리
+      if (msLeft <= 0) {
+        if (sub.canceled_at) {
+          await supabaseAdmin
+            .from('subscriptions')
+            .update({ status: 'canceled' })
+            .eq('id', sub.id);
+          notified += await notifyAdmins(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_canceled',
+            '구독 해지가 완료되어 이용이 종료되었습니다. 언제든 다시 구독할 수 있습니다.',
+          );
+          results.push({ subscriptionId: sub.id, action: 'canceled' });
+        } else {
+          await supabaseAdmin
+            .from('subscriptions')
+            .update({ status: 'past_due' })
+            .eq('id', sub.id);
+          notified += await notifyAdmins(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_past_due',
+            '⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다. 사용자 관리에서 재결제하면 즉시 복구됩니다.',
+          );
+          results.push({ subscriptionId: sub.id, action: 'expired_to_past_due' });
+        }
         continue;
       }
 
-      // 3) 자동결제 재결제
-      const orderId = `innopay_renew_${crypto.randomUUID().replace(/-/g, '').slice(0, 22)}`;
-      const orderName = `베이직 플랜 (${sub.member_count ?? 0}인) 월 구독 갱신`;
-      const charge = await chargeWithBillingKey(sub, orderId, orderName);
+      // 해지 예약된 구독에는 재결제 안내를 보내지 않음 (만료 시 종료 예정)
+      if (sub.canceled_at) continue;
 
-      if (charge.ok) {
-        const periodStart = new Date();
-        const periodEnd = new Date(periodStart);
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      const daysLeft = Math.ceil(msLeft / DAY_MS);
 
-        await supabaseAdmin
-          .from('subscriptions')
-          .update({
-            current_period_start: periodStart.toISOString(),
-            current_period_end: periodEnd.toISOString(),
-          })
-          .eq('id', sub.id);
+      // 2) D-1 임박 알림
+      if (daysLeft <= 1) {
+        if (
+          !(await alreadyNotified(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_expiring_very_soon',
+            7,
+          ))
+        ) {
+          notified += await notifyAdmins(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_expiring_very_soon',
+            `💳 구독이 내일(${formatKstDate(sub.current_period_end!)}) 만료됩니다. 만료 후에는 무료 플랜 제한이 적용되니 사용자 관리에서 재결제해 주세요.`,
+          );
+          results.push({ subscriptionId: sub.id, action: 'notified_d1' });
+        }
+        continue;
+      }
 
-        await supabaseAdmin.from('payments').insert({
-          company_id: sub.company_id,
-          subscription_id: sub.id,
-          order_id: orderId,
-          payment_key: charge.paymentKey ?? null,
-          amount: sub.monthly_amount,
-          status: 'DONE',
-          method: 'CARD',
-          card_company: sub.card_company,
-          card_number: sub.card_number,
-          receipt_url: charge.receiptUrl ?? null,
-          approved_at: charge.approvedAt ?? new Date().toISOString(),
-        });
-
-        results.push({ subscriptionId: sub.id, status: 'renewed' });
-      } else {
-        // 결제 실패(또는 미연동) → past_due 전환 + 실패 기록
-        await supabaseAdmin
-          .from('subscriptions')
-          .update({ status: 'past_due' })
-          .eq('id', sub.id);
-
-        await supabaseAdmin.from('payments').insert({
-          company_id: sub.company_id,
-          subscription_id: sub.id,
-          order_id: orderId,
-          amount: sub.monthly_amount,
-          status: 'FAILED',
-          failure_code: charge.code ?? null,
-          failure_message: charge.message ?? null,
-        });
-
-        results.push({
-          subscriptionId: sub.id,
-          status: charge.configured ? 'failed' : 'not_configured',
-        });
+      // 1) D-7 안내 알림
+      if (daysLeft <= 7) {
+        if (
+          !(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_expiring_soon', 10))
+        ) {
+          notified += await notifyAdmins(
+            supabaseAdmin,
+            sub.company_id,
+            'subscription_expiring_soon',
+            `💳 구독이 ${daysLeft}일 후(${formatKstDate(sub.current_period_end!)}) 만료됩니다. 이노페이 결제는 자동 갱신되지 않으니 사용자 관리에서 재결제해 주세요.`,
+          );
+          results.push({ subscriptionId: sub.id, action: 'notified_d7' });
+        }
       }
     }
 
-    return new Response(JSON.stringify({ processed: results.length, results }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ processed: results.length, notificationsCreated: notified, results }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
   } catch (error) {
     console.error('innopay-billing-renewal 오류:', error);
     return new Response(JSON.stringify({ error: 'INTERNAL_ERROR' }), { status: 500 });

@@ -16,7 +16,11 @@ export type NotificationEventType =
   | 'parent_category_deleted'
   | 'subcategory_expiring_soon'
   | 'subcategory_expiring_very_soon'
-  | 'subcategory_expired';
+  | 'subcategory_expired'
+  | 'subscription_expiring_soon'
+  | 'subscription_expiring_very_soon'
+  | 'subscription_past_due'
+  | 'subscription_canceled';
 
 export interface NotificationPreferences {
   document_created: boolean;

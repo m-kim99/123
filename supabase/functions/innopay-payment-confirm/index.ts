@@ -47,9 +47,11 @@ interface InnopayApproveResponse {
       fnName?: string;
     };
   };
-  resultCode?: string;
-  resultMsg?: string;
-  message?: string;
+  // 승인 실패 시: { success: false, error: { code, message } } (공식 스펙 7.3)
+  error?: {
+    code?: string;
+    message?: string;
+  };
 }
 
 serve(async (req) => {
@@ -150,12 +152,12 @@ serve(async (req) => {
     const approve = (await approveRes.json()) as InnopayApproveResponse;
 
     if (!approve.success || !approve.data) {
-      console.error('이노페이 승인 실패:', approve);
+      console.error('이노페이 승인 실패:', JSON.stringify(approve));
       return jsonResponse(
         {
           error: 'INNOPAY_APPROVE_FAILED',
-          code: approve.resultCode,
-          message: approve.resultMsg || approve.message || '이노페이 승인 실패',
+          code: approve.error?.code,
+          message: approve.error?.message || '이노페이 승인 실패',
         },
         400,
       );
@@ -205,12 +207,14 @@ serve(async (req) => {
       canceled_at: null,
     };
 
-    // 기존 활성/체험 구독이 있으면 업데이트, 없으면 생성
+    // 기존 활성/체험/만료(past_due) 구독이 있으면 업데이트(재활성화), 없으면 생성
     const { data: existingSub } = await supabaseAdmin
       .from('subscriptions')
       .select('id')
       .eq('company_id', profile.company_id)
-      .in('status', ['active', 'trialing'])
+      .in('status', ['active', 'trialing', 'past_due'])
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     let subscriptionId: string;
@@ -243,8 +247,9 @@ serve(async (req) => {
       card_company: cardCompany,
       card_number: cardNumber,
       receipt_url: approved.receiptUrl || null,
+      // approvedAt은 'yyyy-MM-dd HH:mm:ss' KST 형식이므로 타임존을 명시해 변환
       approved_at: approved.approvedAt
-        ? new Date(approved.approvedAt).toISOString()
+        ? new Date(`${approved.approvedAt.replace(' ', 'T')}+09:00`).toISOString()
         : new Date().toISOString(),
     });
 

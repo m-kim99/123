@@ -113,13 +113,14 @@ export async function requestPayAppBilling(params: PayAppBillingParams): Promise
 }
 
 // ============================================================
-// 이노페이(INNOPAY) V2 결제 연동 (공개 결제창 SDK + 승인 API)
+// 이노페이(INNOPAY) V2 결제 연동 (결제창 SDK + 승인 API)
 // requestInnopayPayment(goPay 결제창) → confirmInnopayPayment(승인 API)
-// 정기결제(자동결제) API는 이노페이 회원 전용 문서라 미적용. 현재는 1회성 결제 구조.
+// 계약 범위가 결제창(1회성)뿐이라 자동갱신 없음 — 월 단위 수동 재결제 구조.
+// 만료 안내/전환은 innopay-billing-renewal 크론이 담당.
 // ============================================================
 
 const INNOPAY_MID = import.meta.env.VITE_INNOPAY_MID || '';
-const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/innopay.js';
+const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/v1/innopay.js';
 
 /** 유료 플랜 가격 정책 (부가세 포함) — 서버(innopay-payment-confirm)와 동일하게 유지할 것 */
 export type PaidPlanName = 'basic' | 'pro';

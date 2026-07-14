@@ -18,6 +18,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+supabase/.temp/
 # .txt 우회 커밋 방지 (시크릿을 .txt로 두는 패턴 차단)
 .env.production.txt
 .env*.txt

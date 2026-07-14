@@ -548,8 +548,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       let targetPath = `${basePath}/documents`;
 
-      // 공유 알림인 경우 공유받은 문서함으로 이동
-      if (notification.type === 'document_shared') {
+      // 구독 알림인 경우 재결제가 가능한 사용자 관리로 이동
+      if (notification.type.startsWith('subscription_')) {
+        targetPath = `${basePath}/users`;
+      } else if (notification.type === 'document_shared') {
+        // 공유 알림인 경우 공유받은 문서함으로 이동
         targetPath = `${basePath}/shared`;
       } else if (notification.parentCategoryId && notification.subcategoryId) {
         targetPath = `${basePath}/parent-category/${notification.parentCategoryId}/subcategory/${notification.subcategoryId}`;
