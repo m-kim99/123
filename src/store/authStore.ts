@@ -301,7 +301,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .from('companies')
           .select('*')
           .eq('code', companyCode)
-          .single();
+          .maybeSingle();
 
         // 2-1. 회사가 이미 존재하는 경우
         if (existingCompany) {
@@ -322,7 +322,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.log('기존 회사로 가입:', company.name);
         }
         // 2-2. 회사가 없는 경우 (PGRST116: no rows returned)
-        else if (checkError && (checkError as any).code === 'PGRST116') {
+        else if (!existingCompany && !checkError) {
           if (role !== 'admin') {
             throw new Error('존재하지 않는 회사 코드입니다. 관리자에게 올바른 회사 코드를 확인하세요.');
           }
@@ -353,37 +353,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name,
+            role,
+            company_id: company?.id || null,
+            company_code: companyCode || null,
+            department_id: departmentId || null,
+          },
+        },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('계정 생성에 실패했습니다');
 
-      // 4. 최초 가입자(새 회사 + 관리자)인 경우에만 기본 부서 생성
-      if (company?.id && isNewCompany && role === 'admin') {
-        console.log('최초 가입자 - 기본 부서 생성 시작...');
-
-        const { data: createdDept, error: deptError } = await supabase
-          .from('departments')
-          .insert({
-            name: '기본 부서',
-            code: `${companyCode}_DEFAULT`,
-            company_id: company.id,
-            description: '회사 가입 시 자동 생성된 기본 부서입니다.',
-          })
-          .select('id')
-          .single();
-
-        if (deptError) {
-          console.error('기본 부서 생성 실패:', deptError);
-        } else {
-          console.log('기본 부서 생성 완료:', (createdDept as any)?.id);
-        }
-      }
-
       // 5. 팀원 가입 시 기본 부서 자동 배치
       let finalDepartmentId = role === 'team' ? departmentId || null : null;
-      
-      if (company?.id && role === 'team' && !finalDepartmentId) {
+
+      if (authData.session && company?.id && role === 'team' && !finalDepartmentId) {
         // 회사에 속한 첫 번째 부서를 기본 부서로 배치
         const { data: defaultDept } = await supabase
           .from('departments')
@@ -391,8 +378,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('company_id', company.id)
           .order('created_at', { ascending: true })
           .limit(1)
-          .single();
-        
+          .maybeSingle();
+
         if (defaultDept) {
           finalDepartmentId = defaultDept.id;
           console.log('팀원 기본 부서 배치:', finalDepartmentId);
@@ -400,19 +387,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       // 6. users 테이블에 추가 (upsert로 중복 방지)
-      const { error: insertError } = await supabase.from('users').upsert(
-        {
-          id: authData.user.id,
-          name,
-          email,
-          role,
-          company_id: company?.id || null,
-          department_id: finalDepartmentId,
-        },
-        { onConflict: 'id' }
-      );
+      if (authData.session) {
+        const { error: insertError } = await supabase.from('users').upsert(
+          {
+            id: authData.user.id,
+            name,
+            email,
+            role,
+            company_id: company?.id || null,
+            department_id: finalDepartmentId,
+          },
+          { onConflict: 'id' }
+        );
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+      }
+
+      // 4. 최초 가입자(새 회사 + 관리자)인 경우에만 기본 부서 생성
+      if (authData.session && company?.id && isNewCompany && role === 'admin') {
+        console.log('최초 가입자 - 기본 부서 생성 시작...');
+
+        const { data: existingDefaultDept, error: defaultDeptError } = await supabase
+          .from('departments')
+          .select('id')
+          .eq('company_id', company.id)
+          .eq('code', 'DEFAULT')
+          .maybeSingle();
+
+        if (defaultDeptError) {
+          console.error('기본 부서 생성 실패:', defaultDeptError);
+        } else if (!existingDefaultDept) {
+          const { data: createdDept, error: deptError } = await supabase
+            .from('departments')
+            .insert({
+              name: '기본 부서',
+              code: 'DEFAULT',
+              company_id: company.id,
+              description: '회사 가입 시 자동 생성된 기본 부서입니다.',
+            })
+            .select('id')
+            .single();
+
+          if (deptError) {
+            console.error('기본 부서 생성 실패:', deptError);
+          } else {
+            console.log('기본 부서 생성 완료:', (createdDept as any)?.id);
+          }
+        }
+      }
 
       set({ isLoading: false });
 
@@ -684,7 +706,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .from('companies')
         .select('*')
         .eq('code', companyCode)
-        .single();
+        .maybeSingle();
 
       let company: any;
       let defaultDepartmentId: string | null = null;
@@ -701,7 +723,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
 
         company = existingCompany;
-      } else if (checkError && (checkError as any).code === 'PGRST116') {
+      } else if (!existingCompany && !checkError) {
         if (role !== 'admin') {
           throw new Error('새 회사 생성은 관리자만 가능합니다.');
         }
@@ -768,7 +790,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             .from('departments')
             .insert({
               name: '기본 부서',
-              code: `${companyCode}_DEFAULT`,
+              code: 'DEFAULT',
               company_id: company.id,
               description: '회사 가입 시 자동 생성된 기본 부서입니다.',
             });

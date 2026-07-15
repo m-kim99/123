@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { OnboardingStructurePage } from './pages/OnboardingStructurePage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AccountDeletionPage } from './pages/AccountDeletionPage';
 import { SignupPage } from './pages/SignupPage';
@@ -429,6 +430,14 @@ function App() {
           <Routes>
             <Route path="/" element={<RootRoute />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route
+              path="/onboarding/structure"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <OnboardingStructurePage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/nfc-redirect" element={<NfcRedirect />} />
             <Route path="/auth/naver/callback" element={<NaverCallback />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

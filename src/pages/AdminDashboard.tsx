@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { V1StatTile, V1CardHeader, v1Card } from '@/components/ui/v1-components';
 import { useSlowRender } from '@/lib/devSlowdown';
+import { companyNeedsScaffold } from '@/lib/scaffoldTemplates';
 
 const card = v1Card;
 
@@ -32,6 +33,24 @@ export function AdminDashboard() {
     fetchRecentVisits(5);
     fetchDepartmentStats();
   }, [fetchFavorites, fetchRecentVisits, fetchDepartmentStats]);
+
+  // 일반(이메일) 가입 관리자의 첫 방문 시: 회사가 비어 있으면 초기 구조 설정 위저드로 안내 (1회만)
+  useEffect(() => {
+    const companyId = user?.companyId;
+    if (!companyId || user?.role !== 'admin') return;
+    const promptKey = `scaffold_prompted_${companyId}`;
+    if (localStorage.getItem(promptKey)) return;
+
+    let cancelled = false;
+    companyNeedsScaffold(companyId).then((needs) => {
+      if (cancelled) return;
+      localStorage.setItem(promptKey, '1');
+      if (needs) navigate('/onboarding/structure');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.companyId, user?.role, navigate]);
 
   const today = new Date();
   const dateStr = today.toLocaleDateString(i18n.language === 'ko' ? 'ko-KR' : 'en-US', {

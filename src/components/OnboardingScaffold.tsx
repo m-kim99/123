@@ -127,7 +127,7 @@ export function OnboardingScaffold({ companyId, onDone }: { companyId: string; o
           .from('departments')
           .select('id')
           .eq('company_id', companyId)
-          .like('code', '%_DEFAULT');
+          .eq('code', 'DEFAULT');
         for (const dd of defaults || []) {
           const [{ count: userCount }, { count: catCount }] = await Promise.all([
             supabase.from('users').select('*', { count: 'exact', head: true }).eq('department_id', dd.id),

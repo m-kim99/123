@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase';
+
 // ============================================================
 // 온보딩 초기 구조 템플릿 (업종별 부서 + 대분류)
 // AI 제안(onboarding-scaffold 엣지함수)의 베이스로도 사용됨.
@@ -104,4 +106,23 @@ const TEMPLATES: Record<IndustryKey, { ko: ScaffoldDept[]; en: ScaffoldDept[] }>
 export function getScaffoldTemplate(industry: IndustryKey, locale: string): ScaffoldDept[] {
   const lang = locale.slice(0, 2) === 'ko' ? 'ko' : 'en';
   return TEMPLATES[industry][lang].map((d) => ({ name: d.name, categories: [...d.categories] }));
+}
+
+/** 대분류가 하나도 없는(사실상 빈) 회사인지 — 초기 구조 위저드 표시 판단용 */
+export async function companyNeedsScaffold(companyId: string): Promise<boolean> {
+  try {
+    const { data: deptRows } = await supabase
+      .from('departments')
+      .select('id')
+      .eq('company_id', companyId);
+    const deptIds = (deptRows || []).map((d: { id: string }) => d.id);
+    if (deptIds.length === 0) return true;
+    const { count } = await supabase
+      .from('categories')
+      .select('*', { count: 'exact', head: true })
+      .in('department_id', deptIds);
+    return (count ?? 0) === 0;
+  } catch {
+    return false;
+  }
 }

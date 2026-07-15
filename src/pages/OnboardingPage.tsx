@@ -18,6 +18,7 @@ import { toast } from '@/hooks/use-toast';
 import { Check } from 'lucide-react';
 import { AuthShell } from '@/components/AuthShell';
 import { OnboardingScaffold } from '@/components/OnboardingScaffold';
+import { companyNeedsScaffold } from '@/lib/scaffoldTemplates';
 
 export function OnboardingPage() {
   const { t } = useTranslation();
@@ -174,27 +175,7 @@ export function OnboardingPage() {
       if (role === 'admin') {
         // 대분류가 하나도 없는(사실상 빈) 회사면 초기 구조 설정 위저드 표시
         const companyId = useAuthStore.getState().user?.companyId;
-        let showWizard = false;
-        if (companyId) {
-          try {
-            const { data: deptRows } = await supabase
-              .from('departments')
-              .select('id')
-              .eq('company_id', companyId);
-            const deptIds = (deptRows || []).map((d: { id: string }) => d.id);
-            let catCount = 0;
-            if (deptIds.length > 0) {
-              const { count } = await supabase
-                .from('categories')
-                .select('*', { count: 'exact', head: true })
-                .in('department_id', deptIds);
-              catCount = count ?? 0;
-            }
-            showWizard = catCount === 0;
-          } catch {
-            showWizard = false;
-          }
-        }
+        const showWizard = companyId ? await companyNeedsScaffold(companyId) : false;
         if (showWizard && companyId) {
           setScaffoldCompanyId(companyId);
         } else {
