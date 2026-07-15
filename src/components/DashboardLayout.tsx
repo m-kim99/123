@@ -198,6 +198,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
     setIsRequestingPayment(true);
+    // 모달이 열려 있으면 body pointer-events:none 때문에 이노페이 결제창이 클릭 불가 — 결제창 호출 전 닫기
+    setSubscriptionDialogOpen(false);
     try {
       await requestInnopayPayment({
         plan,
@@ -215,6 +217,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
       });
+      setSubscriptionDialogOpen(true); // 실패 시 입력 상태 유지한 채 다이얼로그 복원
     } finally {
       setIsRequestingPayment(false);
     }

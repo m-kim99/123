@@ -192,6 +192,20 @@ export interface InnopayPaymentContext {
 }
 
 /**
+ * [중요] Radix Dialog(모달)는 열려 있는 동안 document.body에 pointer-events:none을 건다.
+ * 이노페이 결제창은 React 트리 밖 body 직속 레이어로 붙기 때문에 이 상태에서는
+ * 결제창의 체크박스/버튼이 전부 클릭 불가가 된다. 호출측은 결제창을 열기 전에
+ * 다이얼로그를 닫아야 하며, 닫힘 exit 애니메이션(~200ms) 동안에도 잠금이 유지되므로
+ * 여기서 해제될 때까지 잠시 대기한다. (최대 maxWaitMs 후에는 그냥 진행)
+ */
+async function waitForBodyPointerEvents(maxWaitMs = 1500): Promise<void> {
+  const startedAt = Date.now();
+  while (document.body.style.pointerEvents === 'none' && Date.now() - startedAt < maxWaitMs) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+/**
  * 이노페이 결제창 호출 (goPay)
  * 카드 인증 성공 후 returnUrl로 이동하며, 해당 페이지에서 confirmInnopayPayment로 승인 처리.
  */
@@ -204,6 +218,9 @@ export async function requestInnopayPayment(params: InnopayPaymentParams): Promi
   if (!isInnopaySdkReady()) {
     throw new Error('이노페이 SDK를 사용할 수 없습니다.');
   }
+
+  // 모달 다이얼로그가 걸어둔 body pointer-events 잠금이 풀린 뒤 결제창을 연다
+  await waitForBodyPointerEvents();
 
   // 이노페이 제한: moid 40자 이하 (UUID 풀 + ms 타임스탬프는 54자라 초과됨)
   // 형식: dms_{userId앞8자}_{타임스탬프 base36}_{난수4자} = 26자
