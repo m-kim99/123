@@ -59,7 +59,8 @@
     "korean": "한국어",
     "english": "English",
     "japanese": "日本語",
-    "german": "Deutsch"
+    "german": "Deutsch",
+    "chinese": "中文"
   },
   "theme": {
     "settings": "Display Mode",

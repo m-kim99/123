@@ -834,11 +834,216 @@ const PrivacyDe = () => (
   </>
 );
 
+const PrivacyZh = () => (
+  <>
+    <p className="text-xs text-slate-500">制定：2026年2月9日 施行：2026年2月9日</p>
+
+    <p>InfoCreative股份有限公司（以下简称"公司"）依据《个人信息保护法》、《促进信息通信网络利用及信息保护等相关法律》（以下简称"信息通信网络法"）等相关法令，为保护用户的个人信息并迅速、妥善处理相关投诉，制定并公开以下个人信息处理方针。</p>
+
+    <h3 className="font-semibold text-slate-900">第1条（个人信息的收集项目及收集方法）</h3>
+    <p>① 公司为提供服务，收集以下个人信息。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">区分</th><th className="border border-slate-300 p-2 text-left">收集项目</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">必填项目</td><td className="border border-slate-300 p-2">姓名、电子邮箱地址、密码、手机号码、所属公司名称、部门名称</td></tr>
+        <tr><td className="border border-slate-300 p-2">选填项目</td><td className="border border-slate-300 p-2">个人资料图片</td></tr>
+        <tr><td className="border border-slate-300 p-2">自动收集项目</td><td className="border border-slate-300 p-2">IP地址、设备信息、访问日志、服务使用记录、Cookie</td></tr>
+        <tr><td className="border border-slate-300 p-2">服务使用过程中收集</td><td className="border border-slate-300 p-2">上传的文档文件及图片、AI OCR处理结果、文档检索记录、AI问答记录</td></tr>
+        <tr><td className="border border-slate-300 p-2">付费结算时收集</td><td className="border border-slate-300 p-2">支付信息（支付方式、发卡机构名称、支付审批信息、支付时间等）</td></tr>
+      </tbody>
+    </table>
+    <p>② 个人信息收集方法</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>会员注册时用户直接输入</li>
+      <li>服务使用过程中自动生成、收集</li>
+      <li>客服中心咨询过程中收集</li>
+    </ul>
+    <p>③ 公司不直接存储支付信息，而是通过支付代理机构InnoPay（株式会社InnoPay）安全处理。</p>
+
+    <h3 className="font-semibold text-slate-900">第2条（个人信息的收集及使用目的）</h3>
+    <p>公司将收集的个人信息用于以下目的。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">使用目的</th><th className="border border-slate-300 p-2 text-left">具体内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">会员管理</td><td className="border border-slate-300 p-2">会员注册及身份验证、会员资格维护及管理、防止服务不当使用、传达告知事项</td></tr>
+        <tr><td className="border border-slate-300 p-2">服务提供</td><td className="border border-slate-300 p-2">文档存储及管理、AI OCR处理、提供基于AI的检索・分析・问答功能、提供NFC联动服务</td></tr>
+        <tr><td className="border border-slate-300 p-2">服务改进</td><td className="border border-slate-300 p-2">提升服务质量、开发新功能、统计分析</td></tr>
+        <tr><td className="border border-slate-300 p-2">客户支持</td><td className="border border-slate-300 p-2">处理咨询事项、受理及处理投诉、传达公告事项</td></tr>
+        <tr><td className="border border-slate-300 p-2">营销及广告</td><td className="border border-slate-300 p-2">新服务介绍、提供活动信息（仅限已同意者）</td></tr>
+      </tbody>
+    </table>
+
+    <h3 className="font-semibold text-slate-900">第3条（个人信息的保有及使用期间）</h3>
+    <p>① 公司在个人信息收集及使用目的达成后，将立即销毁相关信息。但依相关法令需要保存的情形，将按下列规定保管。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">保存项目</th><th className="border border-slate-300 p-2 text-left">保存期间</th><th className="border border-slate-300 p-2 text-left">保存依据</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">合同或申购撤回等相关记录</td><td className="border border-slate-300 p-2">5年</td><td className="border border-slate-300 p-2">电子商务法</td></tr>
+        <tr><td className="border border-slate-300 p-2">货款结算及商品等供应相关记录</td><td className="border border-slate-300 p-2">5年</td><td className="border border-slate-300 p-2">电子商务法</td></tr>
+        <tr><td className="border border-slate-300 p-2">消费者投诉或纠纷处理相关记录</td><td className="border border-slate-300 p-2">3年</td><td className="border border-slate-300 p-2">电子商务法</td></tr>
+        <tr><td className="border border-slate-300 p-2">服务使用记录、访问日志</td><td className="border border-slate-300 p-2">3个月</td><td className="border border-slate-300 p-2">通信秘密保护法</td></tr>
+        <tr><td className="border border-slate-300 p-2">备份数据</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部政策</td></tr>
+        <tr><td className="border border-slate-300 p-2">AI处理日志</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部政策</td></tr>
+      </tbody>
+    </table>
+    <p>② 转换为休眠会员时，个人信息将单独分离保管，休眠转换后经过3年将被完全删除。</p>
+
+    <h3 className="font-semibold text-slate-900">第4条（个人信息的第三方提供）</h3>
+    <p>① 公司原则上不向第三方提供用户的个人信息。但以下情形属于例外：</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>用户事先同意的情形</li>
+      <li>依法令规定，或依法令所定程序及方法应侦查机关要求，为侦查目的所需的情形</li>
+    </ul>
+    <p>② 目前公司未向第三方提供用户的个人信息。</p>
+
+    <h3 className="font-semibold text-slate-900">第5条（个人信息处理的委托）</h3>
+    <p>① 公司为提供服务，将个人信息处理业务委托如下。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">受托机构</th><th className="border border-slate-300 p-2 text-left">委托业务内容</th><th className="border border-slate-300 p-2 text-left">保有及使用期间</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Supabase Inc.</td><td className="border border-slate-300 p-2">云服务器托管及数据存储</td><td className="border border-slate-300 p-2">至会员退出为止或委托合同终止时</td></tr>
+        <tr><td className="border border-slate-300 p-2">OpenAI, L.L.C.</td><td className="border border-slate-300 p-2">提供AI服务（GPT）</td><td className="border border-slate-300 p-2">服务使用期间</td></tr>
+        <tr><td className="border border-slate-300 p-2">Naver株式会社</td><td className="border border-slate-300 p-2">提供AI OCR（Clova OCR）服务</td><td className="border border-slate-300 p-2">服务使用期间</td></tr>
+        <tr><td className="border border-slate-300 p-2">株式会社InnoPay（InnoPay）</td><td className="border border-slate-300 p-2">信用卡支付、转账、虚拟账户等支付处理及防止支付盗用</td><td className="border border-slate-300 p-2">依相关法令规定的保存期间或委托合同终止时</td></tr>
+      </tbody>
+    </table>
+    <p>② 公司在签订委托合同时，依《个人信息保护法》在合同书等文件中明确规定禁止在委托业务目的以外处理个人信息、技术性及管理性保护措施、限制再委托、对受托方的管理监督、损害赔偿责任等事项，并监督受托方是否安全处理个人信息。</p>
+
+    <h3 className="font-semibold text-slate-900">第6条（个人信息的国外转移）</h3>
+    <p>① 公司为提供服务，将用户的个人信息转移至国外。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">项目</th><th className="border border-slate-300 p-2 text-left">内容</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">接收方</td><td className="border border-slate-300 p-2">Supabase Inc.、OpenAI, L.L.C.</td></tr>
+        <tr><td className="border border-slate-300 p-2">转移国家</td><td className="border border-slate-300 p-2">美国等云服务器所在地（具体位置可能变更）</td></tr>
+        <tr><td className="border border-slate-300 p-2">转移时间及方法</td><td className="border border-slate-300 p-2">使用服务时通过网络传输</td></tr>
+        <tr><td className="border border-slate-300 p-2">转移的个人信息项目</td><td className="border border-slate-300 p-2">会员信息、上传文档、AI处理数据</td></tr>
+        <tr><td className="border border-slate-300 p-2">转移目的</td><td className="border border-slate-300 p-2">提供云端服务、提供AI服务</td></tr>
+        <tr><td className="border border-slate-300 p-2">保有及使用期间</td><td className="border border-slate-300 p-2">至会员退出为止或委托合同终止时</td></tr>
+      </tbody>
+    </table>
+    <p>② 用户可拒绝个人信息的国外转移，拒绝时服务使用可能受到限制。</p>
+
+    <h3 className="font-semibold text-slate-900">第7条（AI服务中的个人信息处理）</h3>
+    <p>① 公司为提供AI服务，对用户上传的文档提取并分析文字。</p>
+    <p>② AI服务中处理的个人信息项目</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>上传的文档文件及图片</li>
+      <li>AI OCR提取的文本数据</li>
+      <li>AI问答记录</li>
+      <li>文档检索记录</li>
+    </ul>
+    <p>③ AI处理过程</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>用户上传文档后，通过AI OCR（Naver Clova OCR）自动提取文字。</li>
+      <li>提取的文本存储于Supabase服务器。</li>
+      <li>针对用户的提问，通过OpenAI GPT API生成回答。</li>
+    </ul>
+    <p>④ 公司目前不将用户的个人信息用于AI模型训练。未来如欲用于AI训练目的，将取得用户的明确同意。</p>
+
+    <h3 className="font-semibold text-slate-900">第8条（个人信息的销毁）</h3>
+    <p>① 个人信息保有期间已过、处理目的已达成等致使个人信息不再需要时，公司将立即销毁该个人信息。</p>
+    <p>② 销毁程序</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>用户输入的信息在达成目的后，将转移至单独的数据库，依内部方针及其他相关法令规定的期间保存后，或立即销毁。</li>
+      <li>转移至单独数据库的个人信息，除法律规定外，不会用于其他目的。</li>
+    </ul>
+    <p>③ 销毁方法</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>电子文件形式的信息：以无法恢复的方式永久删除</li>
+      <li>纸质记录的个人信息：以碎纸机粉碎或焚烧处理</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第9条（用户的权利・义务及行使方法）</h3>
+    <p>① 用户可随时向公司行使以下各项个人信息保护相关权利。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>个人信息查阅请求权</li>
+      <li>如有错误等情形，请求更正的权利</li>
+      <li>请求删除的权利</li>
+      <li>请求停止处理的权利</li>
+    </ul>
+    <p>② 依第①项行使权利，可通过书面、电子邮件、客服中心向公司提出，公司将立即采取相应措施。</p>
+    <p>③ 依第①项行使权利，亦可通过用户的法定代理人或受委托人等代理人办理。此时须提交依《个人信息处理方法相关公告》附件第11号格式的委托书。</p>
+    <p>④ 个人信息查阅及请求停止处理，可能依《个人信息保护法》第35条第4款、第37条第2款受到限制。</p>
+    <p>⑤ 如其他法令明确规定该个人信息为收集对象，则不得请求更正及删除该个人信息。</p>
+    <p>⑥ 公司在用户依其权利请求查阅、更正・删除、停止处理时，将确认提出请求者是否为本人或正当代理人。</p>
+
+    <h3 className="font-semibold text-slate-900">第10条（用户对AI处理的权利）</h3>
+    <p>① 用户对AI服务提供的结果可行使以下权利：</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>说明请求权：请求说明AI处理结果的权利</li>
+      <li>异议提出权：对明显错误或不当结果提出异议的权利</li>
+      <li>请求人工介入权：请求对自动化处理进行人工审核的权利</li>
+    </ul>
+    <p>② 第①项权利可通过客服中心（support@traystorage.net，02-333-7334）行使。</p>
+    <p>③ 公司将在技术可行范围内审查用户的请求并采取必要措施。</p>
+
+    <h3 className="font-semibold text-slate-900">第11条（个人信息安全性确保措施）</h3>
+    <p>公司为确保个人信息的安全性，采取以下措施。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>管理性措施：</strong>制定并实施内部管理计划，最小化并培训个人信息处理相关人员</li>
+      <li><strong>技术性措施：</strong>限制个人信息处理系统的访问权限，应用加密技术，安装并更新安全程序</li>
+      <li><strong>物理性措施：</strong>对机房、资料保管室等场所实施访问控制</li>
+      <li><strong>数据加密：</strong>密码加密存储，传输数据采用SSL/TLS加密</li>
+      <li><strong>访问权限管理：</strong>最小化可访问个人信息的负责人员，并按等级分配访问权限</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第12条（Cookie的安装、运营及拒绝）</h3>
+    <p>① 公司为向用户提供个性化定制服务，使用存储并随时调用使用信息的"Cookie"。</p>
+    <p>② Cookie的使用目的</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>分析用户的访问频率或访问时间等，收集服务使用相关统计数据</li>
+      <li>掌握用户的兴趣领域并提供个性化定制服务</li>
+      <li>维持登录状态</li>
+    </ul>
+    <p>③ Cookie的安装、运营及拒绝：用户对Cookie的安装拥有选择权。可通过在网页浏览器中设置选项，选择允许所有Cookie、每次存储Cookie时进行确认，或拒绝存储所有Cookie。</p>
+    <p>④ 拒绝存储Cookie时，可能导致使用个性化定制服务出现困难。</p>
+
+    <h3 className="font-semibold text-slate-900">第13条（个人信息保护负责人）</h3>
+    <p>① 公司为统一负责个人信息处理相关业务，并妥善处理用户在个人信息处理方面的投诉及损害救济，指定以下个人信息保护负责人。</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <tbody>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">姓名</td><td className="border border-slate-300 p-2">郑道天</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">职务</td><td className="border border-slate-300 p-2">代表理事</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">联系方式</td><td className="border border-slate-300 p-2">02-333-7334 / support@traystorage.net</td></tr>
+      </tbody>
+    </table>
+    <p>② 用户在使用公司服务过程中产生的所有个人信息保护相关咨询、投诉处理、损害救济等事项，均可向个人信息保护负责人咨询。</p>
+
+    <h3 className="font-semibold text-slate-900">第14条（权益侵害救济方法）</h3>
+    <p>用户为获得因个人信息侵害而应有的救济，可向个人信息纠纷调解委员会、韩国互联网振兴院个人信息侵害举报中心等申请纠纷解决或咨询。</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>个人信息纠纷调解委员会：（无地区码）1833-6972 (www.kopico.go.kr)</li>
+      <li>个人信息侵害举报中心：（无地区码）118 (privacy.kisa.or.kr)</li>
+      <li>大检察厅：（无地区码）1301 (www.spo.go.kr)</li>
+      <li>警察厅：（无地区码）182 (ecrm.cyber.go.kr)</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">第15条（个人信息处理方针的变更）</h3>
+    <p>① 本个人信息处理方针自施行日起适用，如依法令及方针变更内容有新增、删除及更正，将于变更事项施行7日前通过公告事项告知。</p>
+    <p>② 如有对用户不利的重大内容变更，将至少提前30日公告并通过电子邮件等方式单独通知。</p>
+
+    <h3 className="font-semibold text-slate-900">附则</h3>
+    <p><strong>第1条（施行日）</strong> 本个人信息处理方针自2026年2月9日起施行。</p>
+
+    <h3 className="font-semibold text-slate-900">【公司信息】</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>名称：InfoCreative股份有限公司</li>
+      <li>代表人：郑道天</li>
+      <li>地址：韩国首尔特别市衿川区加山数码2路43-14 加山韩华Bizmetro2次708室、709室</li>
+      <li>营业执照注册号：841-86-03004</li>
+      <li>客服中心：02-333-7334</li>
+      <li>电子邮箱：support@traystorage.net</li>
+    </ul>
+  </>
+);
+
 export const PrivacyPolicyContent = () => {
   const { i18n } = useTranslation();
   if (i18n.language === 'en') return <PrivacyEn />;
   if (i18n.language === 'ja') return <PrivacyJa />;
   if (i18n.language === 'de') return <PrivacyDe />;
+  if (i18n.language === 'zh') return <PrivacyZh />;
   return <PrivacyKo />;
 };
 
