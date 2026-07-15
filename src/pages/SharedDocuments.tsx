@@ -336,8 +336,8 @@ export function SharedDocuments() {
         >
           <DialogContent className="max-w-[840px] h-[90vh] flex flex-col overflow-hidden gap-0 p-0 rounded-[16px] dark:bg-[#111827]" hideClose>
             {/* V1 M4 Compact Header */}
-            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
+              <div className="w-9 h-9 rounded-lg hidden sm:flex items-center justify-center shrink-0 bg-[#eff6ff] dark:bg-[rgba(59,130,246,0.16)]">
                 <FileText className="h-4 w-4 text-[#2563eb] dark:text-[#60a5fa]" />
               </div>
               <div className="flex-1 min-w-0">
@@ -352,7 +352,7 @@ export function SharedDocuments() {
                   className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] dark:border-white/[0.08] bg-white dark:bg-[#1e293b] text-[12px] font-medium text-slate-700 dark:text-[#cbd5e1] hover:bg-slate-50 dark:hover:bg-[#334155] flex items-center gap-1.5 shrink-0"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  {t('sharedDocs.download')}
+                  <span className="hidden sm:inline">{t('sharedDocs.download')}</span>
                 </button>
               )}
               {previewDoc && (
@@ -401,7 +401,7 @@ export function SharedDocuments() {
                       <p className="text-[13px] text-slate-500">{t('sharedDocs.loadingDoc')}</p>
                     </div>
                   ) : previewDoc?.type === 'pdf' ? (
-                    <div className="w-full h-full"><PdfViewer url={previewDoc.url} /></div>
+                    <div className="w-full h-full"><PdfViewer url={previewDoc.url} onDownload={() => handleDownload(previewDoc.id)} /></div>
                   ) : previewDoc?.type === 'image' ? (
                     <img
                       src={previewDoc.url}

@@ -100,7 +100,7 @@ export function ReportDialog({
         }
       >
         <Flag className="h-3.5 w-3.5" />
-        {triggerLabel}
+        <span className="hidden sm:inline">{triggerLabel}</span>
       </button>
 
       <Dialog
