@@ -205,7 +205,9 @@ export async function requestInnopayPayment(params: InnopayPaymentParams): Promi
     throw new Error('이노페이 SDK를 사용할 수 없습니다.');
   }
 
-  const moid = `dms_${params.customerKey}_${Date.now()}`;
+  // 이노페이 제한: moid 40자 이하 (UUID 풀 + ms 타임스탬프는 54자라 초과됨)
+  // 형식: dms_{userId앞8자}_{타임스탬프 base36}_{난수4자} = 26자
+  const moid = `dms_${params.customerKey.replace(/-/g, '').slice(0, 8)}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
   const ctx: InnopayPaymentContext = {
     moid,
