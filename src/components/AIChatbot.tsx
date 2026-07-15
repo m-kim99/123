@@ -1000,7 +1000,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
             .from('subscriptions')
             .select('plans(name, feature_ai_chat)')
             .eq('company_id', user.companyId)
-            .eq('status', 'active')
+            .in('status', ['active', 'trialing'])
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();

@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
+import { checkDepartmentLimit } from '@/lib/subscription';
 import { toast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/BackButton';
 import { V1PageHeader, V1Chip, v1Card, V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-components';
@@ -151,6 +152,18 @@ export function DepartmentManagement() {
         toast({
           title: t('departmentMgmt.noCompanyInfo'),
           description: t('departmentMgmt.noCompanyInfoDesc'),
+          variant: 'destructive',
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // 구독 플랜 부서 수 제한 체크
+      const limitCheck = await checkDepartmentLimit(user.companyId);
+      if (!limitCheck.allowed) {
+        toast({
+          title: t('departmentMgmt.limitReached'),
+          description: t('departmentMgmt.limitReachedDesc', { limit: limitCheck.limit }),
           variant: 'destructive',
         });
         setIsSaving(false);

@@ -476,6 +476,8 @@
     "addCompleteDesc": "新しい部署が追加されました。",
     "addFailed": "部署追加失敗",
     "addFailedDesc": "部署の追加中にエラーが発生しました。",
+    "limitReached": "部署数の上限",
+    "limitReachedDesc": "現在のプランの部署上限（{{limit}}個）に達しました。プランをアップグレードしてください。",
     "documents": "ドキュメント",
     "parentCategories": "大分類",
     "teamMembers": "チームメンバー",

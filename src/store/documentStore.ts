@@ -15,7 +15,7 @@ import { createDocumentNotification, createShareNotification, deleteShareNotific
 import { SharedDocument } from '@/types/document';
 import { trackEvent } from '@/lib/analytics';
 import { isImageFile, convertImageToPdf } from '@/lib/imageToPdf';
-import { checkDocumentLimit } from '@/lib/subscription';
+import { checkDocumentLimit, checkStorageLimit } from '@/lib/subscription';
 
 export interface Department {
   id: string;
@@ -1319,6 +1319,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           });
           throw new Error('PLAN_DOCUMENT_LIMIT_REACHED');
         }
+
+        // ★ 구독 플랜 저장 공간 제한 체크
+        const storageCheck = await checkStorageLimit(user.companyId, document.file.size);
+        if (!storageCheck.allowed) {
+          toast({
+            title: '저장 공간 부족',
+            description: `현재 플랜의 저장 공간(${storageCheck.limit}MB)을 초과합니다. 기존 문서를 삭제하거나 플랜을 업그레이드해주세요. (사용 중: ${storageCheck.current}MB)`,
+            variant: 'destructive',
+          });
+          throw new Error('PLAN_STORAGE_LIMIT_REACHED');
+        }
       }
 
       // 이미지 파일이면 자동으로 PDF로 변환
@@ -1351,6 +1362,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           parent_category_id: document.parentCategoryId,
           subcategory_id: document.subcategoryId,
           department_id: document.departmentId,
+          company_id: useAuthStore.getState().user?.companyId ?? null, // 플랜 제한 체크의 기준 (미기록 시 제한 무력화)
           file_path: filePath,
           file_size: document.file.size,
           ocr_text: document.ocrText || null, // OCR 텍스트
@@ -1445,6 +1457,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }
     } catch (err) {
       console.error('Failed to upload document to Supabase:', err);
+
+      // 플랜 제한으로 차단된 경우: 로컬 폴백 추가 없이 중단
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('LIMIT_REACHED')) {
+        // DB 트리거에서 차단된 경우(사전 체크 통과 후)에는 여기서 안내
+        if (errMsg !== 'PLAN_DOCUMENT_LIMIT_REACHED' && errMsg !== 'PLAN_STORAGE_LIMIT_REACHED') {
+          toast({
+            title: '문서 업로드 제한',
+            description: '현재 플랜의 한도에 도달했습니다. 플랜을 업그레이드해주세요.',
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
 
       // Supabase 실패 시 로컬 상태에만 추가 (mock 데이터처럼)
       const newDocument: Document = {

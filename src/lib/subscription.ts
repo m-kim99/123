@@ -278,3 +278,46 @@ export async function checkDepartmentLimit(companyId: string): Promise<UsageChec
     return { allowed: true, current: 0, limit: 3, remaining: 3 };
   }
 }
+
+/**
+ * 저장 공간 제한 체크 (업로드할 파일 크기 포함, 단위: MB)
+ * - 합계 조회 실패 시 fail-open (DB 트리거가 최종 방어)
+ */
+export async function checkStorageLimit(
+  companyId: string,
+  newFileSizeBytes: number,
+): Promise<UsageCheckResult> {
+  try {
+    const limits = await getCompanyPlanLimits(companyId);
+    const maxStorageMb = limits.max_storage_mb;
+
+    if (maxStorageMb === null) {
+      return { allowed: true, current: 0, limit: null, remaining: null };
+    }
+
+    const { data, error } = await supabase
+      .from('documents')
+      .select('file_size.sum()')
+      .eq('company_id', companyId)
+      .is('deleted_at', null)
+      .single();
+
+    if (error) {
+      console.error('Storage usage check failed:', error);
+      return { allowed: true, current: 0, limit: maxStorageMb, remaining: maxStorageMb };
+    }
+
+    const usedBytes = (data as unknown as { sum: number | null })?.sum ?? 0;
+    const usedMb = Math.ceil(usedBytes / (1024 * 1024));
+
+    return {
+      allowed: usedBytes + newFileSizeBytes <= maxStorageMb * 1024 * 1024,
+      current: usedMb,
+      limit: maxStorageMb,
+      remaining: Math.max(0, maxStorageMb - usedMb),
+    };
+  } catch (err) {
+    console.error('checkStorageLimit error:', err);
+    return { allowed: true, current: 0, limit: null, remaining: null };
+  }
+}

@@ -476,6 +476,8 @@
     "addCompleteDesc": "Neue Abteilung wurde hinzugefügt.",
     "addFailed": "Hinzufügen fehlgeschlagen",
     "addFailedDesc": "Beim Hinzufügen der Abteilung ist ein Fehler aufgetreten.",
+    "limitReached": "Abteilungslimit erreicht",
+    "limitReachedDesc": "Das Abteilungslimit Ihres Plans ({{limit}}) ist erreicht. Bitte führen Sie ein Upgrade durch.",
     "documents": "Dokumente",
     "parentCategories": "Kategorien",
     "teamMembers": "Mitglieder",

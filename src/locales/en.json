@@ -477,6 +477,8 @@
     "addCompleteDesc": "New department has been added.",
     "addFailed": "Add Failed",
     "addFailedDesc": "An error occurred while adding department.",
+    "limitReached": "Department Limit Reached",
+    "limitReachedDesc": "Your plan's department limit ({{limit}}) has been reached. Please upgrade your plan.",
     "documents": "Documents",
     "parentCategories": "Categories",
     "teamMembers": "Members",

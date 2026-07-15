@@ -477,6 +477,8 @@
     "addCompleteDesc": "새 부서가 추가되었습니다.",
     "addFailed": "부서 추가 실패",
     "addFailedDesc": "부서를 추가하는 중 오류가 발생했습니다.",
+    "limitReached": "부서 개수 제한",
+    "limitReachedDesc": "현재 플랜의 부서 한도({{limit}}개)에 도달했습니다. 플랜을 업그레이드해주세요.",
     "documents": "문서",
     "parentCategories": "대분류",
     "teamMembers": "팀원",
