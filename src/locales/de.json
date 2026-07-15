@@ -1220,7 +1220,8 @@
     "sharedDocuments": "Geteilte Dokumente",
     "below": "unten",
     "belowDoc": "Dokument unten",
-    "upgradeRequired": "KI-Chatbot ist ab dem Pro-Plan verfügbar. Bitte bitten Sie Ihren Administrator um ein Upgrade. 🔒"
+    "upgradeRequired": "KI-Chatbot ist ab dem Pro-Plan verfügbar. Bitte bitten Sie Ihren Administrator um ein Upgrade. 🔒",
+    "quotaExceeded": "Sie haben alle {{limit}} KI-Anfragen für diesen Monat verbraucht. Ihr Kontingent wird am 1. des nächsten Monats zurückgesetzt. 🔒"
   },
   "months": {
     "1": "Jan",

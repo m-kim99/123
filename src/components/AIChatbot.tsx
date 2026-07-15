@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // 모델 셀렉터 UI 주석 처리로 미사용 (필요 시 주석 해제)
 import { generateResponse, type ChatSearchResult, type ChatHistoryItem } from '@/lib/chatbot';
 import { supabase } from '@/lib/supabase';
+import { checkAiQueryLimit } from '@/lib/subscription';
 import { formatDateTimeSimple } from '@/lib/utils';
 import { isRunningInApp, requestNativeMicrophonePermission, startNativeSTT, submitNativeSTT, stopNativeSTT, stopNativeSTTSilent } from '@/lib/appBridge';
 
@@ -1019,6 +1020,20 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
             setIsTyping(false);
             return;
           }
+
+          // 월간 AI 쿼리 한도 체크 (인당 × 좌석수 — 서버에서도 동일하게 차단)
+          const quota = await checkAiQueryLimit(user.companyId);
+          if (!quota.allowed) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: t('chatbot.quotaExceeded', { limit: quota.limit }), timestamp: new Date() }
+                  : m
+              )
+            );
+            setIsTyping(false);
+            return;
+          }
         }
         // history에는 기존 메시지만 포함하고, 이번에 보낸 메시지는 message 인자로만 한 번 전달
         const history: ChatHistoryItem[] = messages.map((m) => ({
@@ -1371,8 +1386,8 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                   <img src={sendIcon} alt={t('chatbot.send')} className="h-5 w-5 block object-contain pointer-events-none" />
                 </button>
               </div>
-              {/* 음성 대화 버튼 (네이티브 앱에서만 표시) */}
-              {Capacitor.isNativePlatform() && (
+              {/* 음성 대화 버튼 (네이티브 앱에서만 표시) — 음성모드 기능 임시 비활성화 (false && 로 항상 숨김, 필요 시 false 제거) */}
+              {false && Capacitor.isNativePlatform() && (
                 <button
                   type="button"
                   onClick={toggleLiveVoice}

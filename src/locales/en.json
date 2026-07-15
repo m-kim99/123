@@ -1221,7 +1221,8 @@
     "sharedDocuments": "Shared Documents",
     "below": "below",
     "belowDoc": "document below",
-    "upgradeRequired": "AI chatbot is available on Pro plan and above. Please ask your administrator to upgrade. 🔒"
+    "upgradeRequired": "AI chatbot is available on Pro plan and above. Please ask your administrator to upgrade. 🔒",
+    "quotaExceeded": "You've used all {{limit}} AI queries for this month. Your quota resets on the 1st of next month. 🔒"
   },
   "months": {
     "1": "Jan",

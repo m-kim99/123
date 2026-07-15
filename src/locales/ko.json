@@ -1221,7 +1221,8 @@
     "sharedDocuments": "공유 문서함",
     "below": "아래",
     "belowDoc": "아래 문서",
-    "upgradeRequired": "AI 챗봇 기능은 Pro 플랜 이상에서 사용 가능합니다. 관리자에게 플랜 업그레이드를 요청해주세요. 🔒"
+    "upgradeRequired": "AI 챗봇 기능은 Pro 플랜 이상에서 사용 가능합니다. 관리자에게 플랜 업그레이드를 요청해주세요. 🔒",
+    "quotaExceeded": "이번 달 AI 사용 한도({{limit}}회)를 모두 사용했습니다. 다음 달 1일에 초기화됩니다. 🔒"
   },
   "months": {
     "1": "1월",

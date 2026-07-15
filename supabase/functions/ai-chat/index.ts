@@ -550,7 +550,62 @@ serve(async (req) => {
     const { data: userData } = await supabase.from('users').select('company_id').eq('id', userId).single();
     if (!userData?.company_id) throw new Error('User company not found');
     const userCompanyId = userData.company_id;
-    
+
+    // ==========================================
+    // 플랜 체크: AI 사용 가능 여부 + 월간 쿼리 한도 (인당 × 좌석수)
+    // ==========================================
+    const { data: subRow } = await supabase
+      .from('subscriptions')
+      .select('member_count, plan:plans(feature_ai_chat, max_ai_queries_monthly)')
+      .eq('company_id', userCompanyId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    const planRow = subRow?.plan as { feature_ai_chat: boolean | null; max_ai_queries_monthly: number | null } | null;
+    if (!subRow || planRow?.feature_ai_chat === false) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const perSeatQuota = planRow?.max_ai_queries_monthly ?? null;
+    if (perSeatQuota !== null) {
+      // 좌석 수: 결제 인원수(member_count) 우선, 없으면(체험) 실제 멤버 수
+      let seats = (subRow.member_count as number | null) ?? null;
+      if (!seats) {
+        const { count } = await supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', userCompanyId);
+        seats = count ?? 1;
+      }
+      const monthlyLimit = perSeatQuota * Math.max(1, seats);
+
+      const nowDate = new Date();
+      const periodStr = `${nowDate.getUTCFullYear()}-${String(nowDate.getUTCMonth() + 1).padStart(2, '0')}-01`;
+      const { data: usage } = await supabase
+        .from('usage_tracking')
+        .select('ai_queries_used')
+        .eq('company_id', userCompanyId)
+        .eq('period_start', periodStr)
+        .maybeSingle();
+
+      if ((usage?.ai_queries_used ?? 0) >= monthlyLimit) {
+        return new Response(JSON.stringify({ error: 'AI_QUOTA_EXCEEDED', limit: monthlyLimit }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // 사용량 차감 (원자적 upsert — 요청 시점 계량)
+      const { error: usageError } = await supabase.rpc('increment_ai_query_usage', {
+        p_company_id: userCompanyId,
+      });
+      if (usageError) console.error('AI 사용량 기록 실패:', usageError);
+    }
+
+
     // Phase 1: 서버 사이드 프리서치 - LLM 호출 전 토큰 기반 자동 검색
     const deptIds = await getDeptIds(supabase, userCompanyId);
     const searchTokens = tokenizeSearchQuery(message);

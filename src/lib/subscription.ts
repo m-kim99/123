@@ -172,21 +172,38 @@ export async function checkDocumentLimit(companyId: string): Promise<UsageCheckR
 
 /**
  * AI 챗봇 월별 쿼리 제한 체크
+ * - 조직 한도 = 인당(max_ai_queries_monthly) × 좌석수
+ * - 좌석수 = 결제 인원수(member_count) 우선, 없으면(체험) 실제 멤버 수 — 서버(ai-chat)와 동일 로직
  */
 export async function checkAiQueryLimit(companyId: string): Promise<UsageCheckResult> {
   try {
     const limits = await getCompanyPlanLimits(companyId);
-    const maxQueries = limits.max_ai_queries_monthly;
+    const perSeat = limits.max_ai_queries_monthly;
 
-    if (maxQueries === null) {
+    if (perSeat === null) {
       return { allowed: true, current: 0, limit: null, remaining: null };
     }
 
-    // 현재 월의 사용량 조회
-    const periodStart = new Date();
-    periodStart.setDate(1);
-    periodStart.setHours(0, 0, 0, 0);
-    const periodStr = periodStart.toISOString().split('T')[0];
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('member_count')
+      .eq('company_id', companyId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    let seats = (sub?.member_count as number | null) ?? null;
+    if (!seats) {
+      const { count } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId);
+      seats = count ?? 1;
+    }
+    const maxQueries = perSeat * Math.max(1, seats);
+
+    // 현재 월(UTC)의 사용량 조회 — 서버 RPC(increment_ai_query_usage)와 동일 기준
+    const now = new Date();
+    const periodStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
 
     const { data: usage } = await supabase
       .from('usage_tracking')
@@ -204,7 +221,7 @@ export async function checkAiQueryLimit(companyId: string): Promise<UsageCheckRe
       remaining: Math.max(0, maxQueries - currentUsage),
     };
   } catch {
-    return { allowed: true, current: 0, limit: 20, remaining: 20 };
+    return { allowed: true, current: 0, limit: null, remaining: null };
   }
 }
 
