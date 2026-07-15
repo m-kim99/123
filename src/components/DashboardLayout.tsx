@@ -165,6 +165,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
   const PRO_PRICE_PER_MEMBER = PLAN_PRICING.pro.pricePerMember;
   const BASIC_MAX_MEMBERS = PLAN_PRICING.basic.maxMembers ?? 3;
+  const PRO_MIN_MEMBERS = PLAN_PRICING.pro.minMembers;
   const [basicMembers, setBasicMembers] = useState('3');
   const [proMembers, setProMembers] = useState('5');
   const [basicAgreed, setBasicAgreed] = useState(false);
@@ -192,6 +193,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const pricePerMember = plan === 'basic' ? BASIC_PRICE_PER_MEMBER : PRO_PRICE_PER_MEMBER;
     if (!user || !basicAgreed || memberCount < 1) return;
     if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
+    if (plan === 'pro' && memberCount < PRO_MIN_MEMBERS) return;
     if (memberCount < actualMemberCount) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
@@ -2139,7 +2141,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Input
                         id="pro-members"
                         type="number"
-                        min={actualMemberCount || 1}
+                        min={Math.max(PRO_MIN_MEMBERS, actualMemberCount || 1)}
                         value={proMembers}
                         onChange={(e) => setProMembers(e.target.value)}
                       />
@@ -2147,6 +2149,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <p className="text-xs text-red-500">
                           {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
                         </p>
+                      )}
+                      {!proBelowActual && parsedProMembers < PRO_MIN_MEMBERS && (
+                        <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
                       )}
                       <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
                     </div>
@@ -2220,7 +2225,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
                       (selectedPlan === 'basic' &&
                         (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
-                      (selectedPlan === 'pro' && (parsedProMembers < 1 || proBelowActual)) ||
+                      (selectedPlan === 'pro' && (parsedProMembers < PRO_MIN_MEMBERS || proBelowActual)) ||
                       !basicAgreed ||
                       isRequestingPayment
                     }

@@ -127,9 +127,9 @@ const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/v1/innopay.js';
 /** 유료 플랜 가격 정책 (부가세 포함) — 서버(innopay-payment-confirm)와 동일하게 유지할 것 */
 export type PaidPlanName = 'basic' | 'pro';
 
-export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; maxMembers: number | null }> = {
-  basic: { pricePerMember: 6600, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
-  pro: { pricePerMember: 15000, maxMembers: null }, // 프로: 인당 15,000원, 인원수 지정 가능
+export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
+  basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: null }, // 프로: 인당 15,000원, 최소 3인부터 인원수 지정
 };
 
 // [중요] 이노페이 SDK(innopay.js)는 클래식 스크립트에서 `const innopay = {...}` 로

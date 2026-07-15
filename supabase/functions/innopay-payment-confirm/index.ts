@@ -17,9 +17,9 @@ const corsHeaders = {
 };
 
 // 유료 플랜 가격 정책 (부가세 포함) — 클라이언트 src/lib/payments.ts의 PLAN_PRICING과 동일하게 유지할 것
-const PLAN_PRICING: Record<string, { pricePerMember: number; maxMembers: number | null }> = {
-  basic: { pricePerMember: 6600, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
-  pro: { pricePerMember: 15000, maxMembers: null }, // 프로: 인당 15,000원, 인원수 지정 가능
+const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
+  basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: null }, // 프로: 인당 15,000원, 최소 3인부터 인원수 지정
 };
 const INNOPAY_API_URL = 'https://api.innopay.co.kr/v1/transactions/pay';
 
@@ -81,10 +81,10 @@ serve(async (req) => {
     const parsedMembers = Number(memberCount);
     const parsedAmount = Number(amount);
 
-    // 금액/인원 위변조 방지 (베이직은 최대 3인)
+    // 금액/인원 위변조 방지 (베이직은 최대 3인, 프로는 최소 3인)
     if (
       !Number.isInteger(parsedMembers) ||
-      parsedMembers < 1 ||
+      parsedMembers < pricing.minMembers ||
       (pricing.maxMembers !== null && parsedMembers > pricing.maxMembers) ||
       parsedAmount !== parsedMembers * pricing.pricePerMember
     ) {

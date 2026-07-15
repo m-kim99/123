@@ -53,9 +53,10 @@ export function SubscriptionGate() {
   const parsedMembers = Math.max(0, parseInt(members, 10) || 0);
   const exceedsPlanLimit = pricing.maxMembers !== null && parsedMembers > pricing.maxMembers;
   const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
+  const belowPlanMin = parsedMembers < pricing.minMembers;
 
   const handlePay = async () => {
-    if (!user || parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreed) return;
+    if (!user || belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreed) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -144,13 +145,16 @@ export function SubscriptionGate() {
                 <Input
                   id="gate-members"
                   type="number"
-                  min={actualMemberCount || 1}
+                  min={Math.max(pricing.minMembers, actualMemberCount || 1)}
                   max={pricing.maxMembers ?? undefined}
                   value={members}
                   onChange={(e) => setMembers(e.target.value)}
                 />
                 {exceedsPlanLimit && (
                   <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                )}
+                {plan === 'pro' && belowPlanMin && !belowActualMembers && (
+                  <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
                 )}
                 {belowActualMembers && !exceedsPlanLimit && (
                   <p className="text-xs text-red-500">
@@ -196,7 +200,7 @@ export function SubscriptionGate() {
               </div>
               <Button
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                disabled={parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreed || isRequestingPayment}
+                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreed || isRequestingPayment}
                 onClick={handlePay}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}

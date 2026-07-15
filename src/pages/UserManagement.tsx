@@ -70,6 +70,7 @@ export function UserManagement() {
   const upgradePricing = PLAN_PRICING[upgradePlan];
   const exceedsPlanLimit =
     upgradePricing.maxMembers !== null && parsedMembers > upgradePricing.maxMembers;
+  const belowPlanMin = parsedMembers < upgradePricing.minMembers;
   // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상이어야 함
   const actualMemberCount = users.length;
   const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
@@ -83,7 +84,7 @@ export function UserManagement() {
 
   // 이노페이 정기결제 요청
   const handleSubscribe = async () => {
-    if (!authUser || parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreedToTerms) return;
+    if (!authUser || belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -566,13 +567,16 @@ export function UserManagement() {
                 <Input
                   id="additional-members"
                   type="number"
-                  min={actualMemberCount || 1}
+                  min={Math.max(upgradePricing.minMembers, actualMemberCount || 1)}
                   max={upgradePricing.maxMembers ?? undefined}
                   value={additionalMembers}
                   onChange={(e) => setAdditionalMembers(e.target.value)}
                 />
                 {exceedsPlanLimit && (
                   <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                )}
+                {upgradePlan === 'pro' && belowPlanMin && !belowActualMembers && (
+                  <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
                 )}
                 {belowActualMembers && !exceedsPlanLimit && (
                   <p className="text-xs text-red-500">
@@ -639,7 +643,7 @@ export function UserManagement() {
               </Button>
               <Button
                 className="rounded-[10px] h-9"
-                disabled={parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreedToTerms || isRequestingPayment}
+                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || isRequestingPayment}
                 onClick={handleSubscribe}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
