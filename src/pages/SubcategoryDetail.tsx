@@ -1587,7 +1587,7 @@ export function SubcategoryDetail() {
 
                 {/* Viewer area */}
                 <div
-                  className="flex-1 overflow-auto flex items-center justify-center p-8"
+                  className={!previewLoading && previewDoc?.type === 'pdf' ? 'flex-1 overflow-hidden' : 'flex-1 overflow-auto flex items-center justify-center p-8'}
                   onWheel={(e) => {
                     if (previewDoc?.type === 'image' && e.ctrlKey) {
                       e.preventDefault();

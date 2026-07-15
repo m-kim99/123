@@ -150,7 +150,7 @@ export const PdfViewer = React.memo(function PdfViewer({ url, onDownload }: PdfV
   return (
     <div className="flex flex-col h-full">
       {/* 상단 툴바 */}
-      <div className="flex items-center justify-between gap-1 sm:gap-2 border-b bg-slate-50 dark:bg-[#111827] dark:border-white/[0.08] px-2 sm:px-3 py-2 text-xs sm:text-sm overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-x-1 gap-y-1.5 sm:gap-x-2 border-b bg-slate-50 dark:bg-[#111827] dark:border-white/[0.08] px-2 sm:px-3 py-2 text-xs sm:text-sm">
         {/* 왼쪽: 사이드바 토글 + 확대/축소 */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
