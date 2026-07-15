@@ -67,6 +67,14 @@
 				<string>com.infocreative.traystorageconnect</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.trayst.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.trayst.app</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
