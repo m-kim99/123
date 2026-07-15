@@ -127,7 +127,8 @@
     "gateDesc": "Um fortzufahren, ist ein kostenpflichtiger Tarif erforderlich. Nach der Zahlung stehen sofort alle Funktionen wieder zur Verfügung.",
     "gateTeamDesc": "Die kostenlose Testphase Ihres Unternehmens ist abgelaufen und der Zugriff ist eingeschränkt. Der Dienst wird fortgesetzt, sobald Ihr Administrator die Zahlung abschließt. Bitte wenden Sie sich an Ihren Administrator.",
     "trueUpNotice": "Die Abrechnung basiert auf der aktuellen Teamgröße. Änderungen der Mitgliederzahl werden bei der nächsten Abrechnung automatisch berücksichtigt.",
-    "memberCountBelowActual": "Sie können nicht für weniger Mitglieder bezahlen, als Ihr Team derzeit hat ({{count}})."
+    "memberCountBelowActual": "Sie können nicht für weniger Mitglieder bezahlen, als Ihr Team derzeit hat ({{count}}).",
+    "overseasGateNotice": "Internationale Zahlungen werden derzeit noch nicht unterstützt. Bitte kontaktieren Sie uns unter der unten stehenden E-Mail-Adresse – wir verlängern Ihren Nutzungszeitraum."
   },
   "bottomBar": {
     "back": "Zurück",

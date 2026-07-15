@@ -5,22 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Lock, Crown } from 'lucide-react';
+import { Lock, Crown, Mail } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { requestInnopayPayment, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
+const SUPPORT_EMAIL = 'support@traystorage.net';
+
 /**
  * 구독 만료/미결제 차단 화면
  * - 무료체험 또는 구독이 만료된 회사의 사용자는 이 화면에 갇힘 (앱 이용 불가)
- * - 관리자: 플랜 선택 + 이노페이 결제 진행 가능
+ * - 관리자(한국어): 플랜 선택 + 이노페이 결제 진행 가능
+ * - 관리자(비한국어): 해외 결제 미지원 — 문의 안내 (운영자가 수동으로 기간 연장)
  * - 팀원: 관리자에게 결제 요청 안내
  */
 export function SubscriptionGate() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  // 이노페이는 국내(원화) 결제 전용 — 비한국어 로케일에는 결제 대신 문의 안내 표시
+  const isKorean = i18n.language === 'ko';
 
   const [plan, setPlan] = useState<PaidPlanName>('pro');
   const [members, setMembers] = useState('3');
@@ -85,7 +90,20 @@ export function SubscriptionGate() {
           <CardTitle>{t('subscription.gateTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isAdmin ? (
+          {isAdmin && !isKorean ? (
+            <>
+              <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
+                {t('subscription.overseasGateNotice')}
+              </p>
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="flex items-center justify-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-[#2563eb] hover:bg-blue-100 transition-colors dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300"
+              >
+                <Mail className="h-4 w-4" />
+                {SUPPORT_EMAIL}
+              </a>
+            </>
+          ) : isAdmin ? (
             <>
               <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
                 {t('subscription.gateDesc')}
