@@ -9,6 +9,8 @@ import {
   Crown,
   ChevronLeft,
   ChevronRight,
+  Bot,
+  HardDrive,
 } from 'lucide-react';
 import { OperatorLayout } from '@/components/OperatorLayout';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +34,9 @@ interface CompanySubscription {
   status: string;
   currentPeriodEnd: string | null;
   planName: string | null;
+  memberCount: number | null;
+  maxAiPerSeat: number | null;
+  maxStorageMb: number | null;
 }
 
 interface Company {
@@ -43,6 +48,24 @@ interface Company {
   documentCount: number;
   departmentCount: number;
   subscription: CompanySubscription | null;
+  aiUsed: number;
+  aiLimit: number | null;
+  storageUsedBytes: number;
+  storageLimitMb: number | null;
+}
+
+// 사용량 비율에 따른 칩 색상 (80% 이상 주황, 100% 도달 빨강)
+function usageVariant(used: number, limit: number | null): 'neutral' | 'amber' | 'red' {
+  if (limit === null || limit <= 0) return 'neutral';
+  if (used >= limit) return 'red';
+  if (used >= limit * 0.8) return 'amber';
+  return 'neutral';
+}
+
+function formatStorage(usedBytes: number, limitMb: number | null): string {
+  const fmt = (mb: number) => (mb >= 1024 ? `${(mb / 1024).toFixed(1)}GB` : `${Math.ceil(mb)}MB`);
+  const usedMb = usedBytes / (1024 * 1024);
+  return limitMb === null ? fmt(usedMb) : `${fmt(usedMb)}/${fmt(limitMb)}`;
 }
 
 // 구독 상태 칩 (운영자 회원 관리와 동일한 표기: 무료/체험/유료/만료)
@@ -102,15 +125,24 @@ export function CompanyManagement() {
         return;
       }
 
-      const [userCounts, docCounts, deptCounts, subRows] = await Promise.all([
+      // 이번 달(UTC 월초) — 서버 계량 RPC(increment_ai_query_usage)와 동일 기준
+      const now = new Date();
+      const periodStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+
+      const [userCounts, docCounts, deptCounts, subRows, usageRows] = await Promise.all([
         supabase.from('users').select('company_id').in('company_id', companyIds),
-        supabase.from('documents').select('company_id').in('company_id', companyIds).is('deleted_at', null),
+        supabase.from('documents').select('company_id, file_size').in('company_id', companyIds).is('deleted_at', null),
         supabase.from('departments').select('company_id').in('company_id', companyIds),
         supabase
           .from('subscriptions')
-          .select('id, company_id, status, current_period_end, plans(name)')
+          .select('id, company_id, status, current_period_end, member_count, plans(name, max_ai_queries_monthly, max_storage_mb)')
           .in('company_id', companyIds)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('usage_tracking')
+          .select('company_id, ai_queries_used')
+          .in('company_id', companyIds)
+          .eq('period_start', periodStr),
       ]);
 
       const countByCompany = (items: any[]) =>
@@ -123,6 +155,18 @@ export function CompanyManagement() {
       const docMap = countByCompany(docCounts.data || []);
       const deptMap = countByCompany(deptCounts.data || []);
 
+      // 회사별 저장 용량 합계 (bytes)
+      const storageMap = (docCounts.data || []).reduce((acc: Record<string, number>, item: any) => {
+        acc[item.company_id] = (acc[item.company_id] || 0) + (item.file_size || 0);
+        return acc;
+      }, {} as Record<string, number>);
+
+      // 회사별 이번 달 AI 사용량
+      const aiUsedMap = (usageRows.data || []).reduce((acc: Record<string, number>, item: any) => {
+        acc[item.company_id] = item.ai_queries_used || 0;
+        return acc;
+      }, {} as Record<string, number>);
+
       // 회사별 대표 구독 선택: active > trialing > 기타 (같은 우선순위면 최신 행)
       const statusPriority = (s: string) => (s === 'active' ? 0 : s === 'trialing' ? 1 : 2);
       const subMap: Record<string, CompanySubscription> = {};
@@ -132,6 +176,9 @@ export function CompanyManagement() {
           status: row.status,
           currentPeriodEnd: row.current_period_end,
           planName: row.plans?.name ?? null,
+          memberCount: row.member_count ?? null,
+          maxAiPerSeat: row.plans?.max_ai_queries_monthly ?? null,
+          maxStorageMb: row.plans?.max_storage_mb ?? null,
         };
         const existing = subMap[row.company_id];
         if (!existing || statusPriority(candidate.status) < statusPriority(existing.status)) {
@@ -139,16 +186,25 @@ export function CompanyManagement() {
         }
       });
 
-      const companiesWithStats: Company[] = (data || []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        code: c.code,
-        createdAt: c.created_at,
-        memberCount: userMap[c.id] || 0,
-        documentCount: docMap[c.id] || 0,
-        departmentCount: deptMap[c.id] || 0,
-        subscription: subMap[c.id] || null,
-      }));
+      const companiesWithStats: Company[] = (data || []).map((c: any) => {
+        const sub = subMap[c.id] || null;
+        // 좌석수: 결제 인원수 우선, 없으면(체험) 실제 멤버 수 — AI 한도 = 인당 × 좌석수
+        const seats = Math.max(1, sub?.memberCount ?? userMap[c.id] ?? 1);
+        return {
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          createdAt: c.created_at,
+          memberCount: userMap[c.id] || 0,
+          documentCount: docMap[c.id] || 0,
+          departmentCount: deptMap[c.id] || 0,
+          subscription: sub,
+          aiUsed: aiUsedMap[c.id] || 0,
+          aiLimit: sub?.maxAiPerSeat != null ? sub.maxAiPerSeat * seats : null,
+          storageUsedBytes: storageMap[c.id] || 0,
+          storageLimitMb: sub?.maxStorageMb ?? null,
+        };
+      });
 
       setCompanies(companiesWithStats);
       setTotal(count || 0);
@@ -316,6 +372,15 @@ export function CompanyManagement() {
                           </V1Chip>
                           <V1Chip variant="emerald" icon={Building2}>
                             {company.departmentCount}부서
+                          </V1Chip>
+                          <V1Chip variant={usageVariant(company.aiUsed, company.aiLimit)} icon={Bot}>
+                            AI {company.aiUsed}/{company.aiLimit ?? '∞'}
+                          </V1Chip>
+                          <V1Chip
+                            variant={usageVariant(company.storageUsedBytes / (1024 * 1024), company.storageLimitMb)}
+                            icon={HardDrive}
+                          >
+                            {formatStorage(company.storageUsedBytes, company.storageLimitMb)}
                           </V1Chip>
                           <SubscriptionChip subscription={company.subscription} />
                           {company.subscription?.currentPeriodEnd && (
