@@ -87,6 +87,8 @@
     "memberLimitReached": "This company has reached its member limit.",
     "planComparison": "Compare Plans",
     "current": "Current",
+    "trialing": "Trial",
+    "trialEndsAt": "Trial ends on",
     "contact": "Contact Us",
     "contactUs": "Contact",
     "selectPlan": "Select",

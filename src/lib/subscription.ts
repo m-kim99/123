@@ -213,8 +213,19 @@ export async function checkAiQueryLimit(companyId: string): Promise<UsageCheckRe
  */
 export async function checkMemberLimit(companyId: string): Promise<UsageCheckResult> {
   try {
-    const limits = await getCompanyPlanLimits(companyId);
-    const maxMembers = limits.max_members;
+    // 결제 인원수(subscriptions.member_count)가 플랜 기본값보다 우선 — DB 트리거(check_member_limit)와 동일 로직
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('member_count, plan:plans(max_members)')
+      .eq('company_id', companyId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    const planMax =
+      (sub?.plan as unknown as { max_members: number | null } | null)?.max_members ?? null;
+    const maxMembers = sub
+      ? (sub.member_count as number | null) ?? planMax
+      : FREE_PLAN_DEFAULTS.max_members;
 
     if (maxMembers === null) {
       return { allowed: true, current: 0, limit: null, remaining: null };

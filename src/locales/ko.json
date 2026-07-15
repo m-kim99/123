@@ -87,6 +87,8 @@
     "memberLimitReached": "이 회사의 멤버 수 제한에 도달했습니다.",
     "planComparison": "플랜 비교",
     "current": "현재",
+    "trialing": "체험 중",
+    "trialEndsAt": "체험 종료일",
     "contact": "별도 협의",
     "contactUs": "문의하기",
     "selectPlan": "선택하기",

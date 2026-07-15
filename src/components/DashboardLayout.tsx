@@ -387,7 +387,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .from('subscriptions')
         .select('*, plans(*)')
         .eq('company_id', user.companyId)
-        .eq('status', 'active')
+        .in('status', ['active', 'trialing'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -423,6 +423,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       const subRow = sub as unknown as {
         id?: string;
         status?: string;
+        member_count?: number | null;
         billing_cycle?: string;
         payment_provider?: string | null;
         current_period_end?: string | null;
@@ -435,7 +436,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       setSubscriptionInfo({
         planName: plan?.name || 'free',
         displayName: plan?.display_name || t('subscription.free'),
-        maxMembers: plan?.max_members ?? null,
+        maxMembers: subRow?.member_count ?? plan?.max_members ?? null,
         maxDocuments: plan?.max_documents ?? null,
         maxDepartments: plan?.max_departments ?? null,
         maxStorageMb: plan?.max_storage_mb ?? null,
@@ -2247,8 +2248,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span className="text-sm font-medium text-slate-600">{t('subscription.currentPlan')}</span>
                       <span className="px-3 py-1 bg-[#2563eb] text-white text-sm font-semibold rounded-full">
                         {subscriptionInfo.displayName}
+                        {subscriptionInfo.status === 'trialing' && ` (${t('subscription.trialing')})`}
                       </span>
                     </div>
+                    {subscriptionInfo.status === 'trialing' && subscriptionInfo.currentPeriodEnd && (
+                      <p className="mt-2 text-xs text-slate-500 text-right">
+                        {t('subscription.trialEndsAt')}: {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString()}
+                      </p>
+                    )}
                     <div className="mt-3 grid grid-cols-3 gap-3 text-center text-xs">
                       <div>
                         <p className="text-slate-500">{t('subscription.members')}</p>
@@ -2328,9 +2335,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   {isAdmin && (
                     <div className="space-y-3">
                       <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {[
-                          { name: 'free', display: t('subscription.free'), price: '0', members: '10', highlight: subscriptionInfo.planName === 'free', comingSoon: false },
                           { name: 'basic', display: t('subscription.basic'), price: '6,600', members: '3', highlight: subscriptionInfo.planName === 'basic', comingSoon: false },
                           { name: 'pro', display: t('subscription.pro'), price: '15,000', members: '10', highlight: subscriptionInfo.planName === 'pro', comingSoon: false },
                           { name: 'enterprise', display: t('subscription.enterprise'), price: '', members: '∞', highlight: subscriptionInfo.planName === 'enterprise', comingSoon: true },
@@ -2345,7 +2351,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           >
                             {plan.highlight && (
                               <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#2563eb] text-white text-[10px] font-semibold rounded-full">
-                                {t('subscription.current')}
+                                {subscriptionInfo.status === 'trialing'
+                                  ? t('subscription.trialing')
+                                  : t('subscription.current')}
                               </span>
                             )}
                             <p className="font-semibold text-sm mt-1">{plan.display}</p>
@@ -2354,7 +2362,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             </p>
                             {!plan.comingSoon && (
                               <p className="text-[11px] text-slate-500">
-                                {plan.name === 'free' ? t('subscription.perMonth') : t('subscription.perPersonMonth')}
+                                {t('subscription.perPersonMonth')}
                               </p>
                             )}
                             <div className="mt-2 pt-2 border-t text-xs text-slate-600">
@@ -2366,7 +2374,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                     : `${t('subscription.members')} ${plan.members}${t('subscription.personUnit')}`}
                               </p>
                             </div>
-                            {!plan.highlight && plan.name !== 'free' && (
+                            {(!plan.highlight || subscriptionInfo.status === 'trialing') && (
                               <Button
                                 size="sm"
                                 variant={plan.comingSoon ? 'outline' : 'default'}

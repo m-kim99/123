@@ -87,6 +87,8 @@
     "memberLimitReached": "Dieses Unternehmen hat das Mitgliederlimit erreicht.",
     "planComparison": "Pläne vergleichen",
     "current": "Aktuell",
+    "trialing": "Testphase",
+    "trialEndsAt": "Testphase endet am",
     "contact": "Kontakt",
     "contactUs": "Kontaktieren",
     "selectPlan": "Auswählen",

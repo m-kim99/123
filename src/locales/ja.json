@@ -87,6 +87,8 @@
     "memberLimitReached": "この会社のメンバー数上限に達しました。",
     "planComparison": "プラン比較",
     "current": "現在",
+    "trialing": "トライアル中",
+    "trialEndsAt": "トライアル終了日",
     "contact": "別途協議",
     "contactUs": "お問い合わせ",
     "selectPlan": "選択する",
