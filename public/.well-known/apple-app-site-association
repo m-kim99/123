@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["REPLACE_WITH_TEAM_ID.com.infocreative.traystorageconnect"],
+        "appIDs": ["7X7X2AY733.com.infocreative.traystorageconnect"],
         "components": [
           {
             "/": "/nfc-redirect*",
