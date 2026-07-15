@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Check } from 'lucide-react';
 import { AuthShell } from '@/components/AuthShell';
+import { OnboardingScaffold } from '@/components/OnboardingScaffold';
 
 export function OnboardingPage() {
   const { t } = useTranslation();
@@ -36,6 +37,11 @@ export function OnboardingPage() {
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 관리자 온보딩 완료 후 초기 구조 설정 위저드 (값이 있으면 표시 중)
+  const [scaffoldCompanyId, setScaffoldCompanyId] = useState<string | null>(null);
+  // completeOnboarding이 user.companyId를 설정하는 순간 아래 가드가 대시보드로
+  // 보내버리므로, 위저드 표시 판단이 끝날 때까지 리다이렉트를 보류하는 플래그
+  const pendingScaffoldRef = useRef(false);
 
   // 잘못 들어온 경우 보호
   useEffect(() => {
@@ -44,11 +50,11 @@ export function OnboardingPage() {
       return;
     }
 
-    // 이미 회사가 있는 경우 대시보드로 보냄
-    if (user.companyId) {
+    // 이미 회사가 있는 경우 대시보드로 보냄 (초기 구조 위저드 표시/판단 중엔 유지)
+    if (user.companyId && !scaffoldCompanyId && !pendingScaffoldRef.current) {
       navigate(user.role === 'admin' ? '/admin' : '/team');
     }
-  }, [user, navigate]);
+  }, [user, navigate, scaffoldCompanyId]);
 
   // Google 이름/이메일로 기본 이름 채우기
   useEffect(() => {
@@ -150,6 +156,7 @@ export function OnboardingPage() {
     }
 
     setIsSubmitting(true);
+    if (role === 'admin') pendingScaffoldRef.current = true;
     const result = await completeOnboarding(
       name.trim(),
       role,
@@ -165,11 +172,40 @@ export function OnboardingPage() {
         description: t('onboarding.companySaved'),
       });
       if (role === 'admin') {
-        navigate('/admin');
+        // 대분류가 하나도 없는(사실상 빈) 회사면 초기 구조 설정 위저드 표시
+        const companyId = useAuthStore.getState().user?.companyId;
+        let showWizard = false;
+        if (companyId) {
+          try {
+            const { data: deptRows } = await supabase
+              .from('departments')
+              .select('id')
+              .eq('company_id', companyId);
+            const deptIds = (deptRows || []).map((d: { id: string }) => d.id);
+            let catCount = 0;
+            if (deptIds.length > 0) {
+              const { count } = await supabase
+                .from('categories')
+                .select('*', { count: 'exact', head: true })
+                .in('department_id', deptIds);
+              catCount = count ?? 0;
+            }
+            showWizard = catCount === 0;
+          } catch {
+            showWizard = false;
+          }
+        }
+        if (showWizard && companyId) {
+          setScaffoldCompanyId(companyId);
+        } else {
+          pendingScaffoldRef.current = false;
+          navigate('/admin');
+        }
       } else {
         navigate('/team');
       }
     } else {
+      pendingScaffoldRef.current = false;
       toast({
         title: t('onboarding.onboardingFailed'),
         description: result.error || t('common.tryAgain'),
@@ -187,6 +223,18 @@ export function OnboardingPage() {
   const steps = role === 'team'
     ? [t('onboarding.stepAccount'), t('onboarding.stepCompany'), t('onboarding.stepDept')]
     : [t('onboarding.stepAccount'), t('onboarding.stepCompany')];
+
+  // 관리자 온보딩 완료 → 초기 구조 설정 위저드
+  if (scaffoldCompanyId) {
+    return (
+      <AuthShell
+        heroHeadline={t('onboarding.heroHeadline')}
+        heroDescription={t('onboarding.description')}
+      >
+        <OnboardingScaffold companyId={scaffoldCompanyId} onDone={() => navigate('/admin')} />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
