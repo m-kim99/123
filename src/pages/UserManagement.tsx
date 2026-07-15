@@ -70,10 +70,20 @@ export function UserManagement() {
   const upgradePricing = PLAN_PRICING[upgradePlan];
   const exceedsPlanLimit =
     upgradePricing.maxMembers !== null && parsedMembers > upgradePricing.maxMembers;
+  // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상이어야 함
+  const actualMemberCount = users.length;
+  const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
+
+  // 다이얼로그 열때 현재 팀원 수로 인원 기본값 설정
+  useEffect(() => {
+    if (upgradeDialogOpen && actualMemberCount > 0) {
+      setAdditionalMembers(String(actualMemberCount));
+    }
+  }, [upgradeDialogOpen, actualMemberCount]);
 
   // 이노페이 정기결제 요청
   const handleSubscribe = async () => {
-    if (!authUser || parsedMembers < 1 || exceedsPlanLimit || !agreedToTerms) return;
+    if (!authUser || parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreedToTerms) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -553,7 +563,7 @@ export function UserManagement() {
                 <Input
                   id="additional-members"
                   type="number"
-                  min={1}
+                  min={actualMemberCount || 1}
                   max={upgradePricing.maxMembers ?? undefined}
                   value={additionalMembers}
                   onChange={(e) => setAdditionalMembers(e.target.value)}
@@ -561,6 +571,12 @@ export function UserManagement() {
                 {exceedsPlanLimit && (
                   <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
                 )}
+                {belowActualMembers && !exceedsPlanLimit && (
+                  <p className="text-xs text-red-500">
+                    {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
+                  </p>
+                )}
+                <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
               </div>
               <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -620,7 +636,7 @@ export function UserManagement() {
               </Button>
               <Button
                 className="rounded-[10px] h-9"
-                disabled={parsedMembers < 1 || exceedsPlanLimit || !agreedToTerms || isRequestingPayment}
+                disabled={parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreedToTerms || isRequestingPayment}
                 onClick={handleSubscribe}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}

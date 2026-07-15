@@ -27,9 +27,37 @@ interface SubscriptionRow {
   status: string;
   current_period_end: string | null;
   canceled_at: string | null;
+  plans: { name: string } | null;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// 유료 플랜 가격 (부가세 포함) — 클라이언트/innopay-payment-confirm과 동일하게 유지할 것
+const PLAN_PRICING: Record<string, { pricePerMember: number }> = {
+  basic: { pricePerMember: 6600 },
+  pro: { pricePerMember: 15000 },
+};
+
+/**
+ * 정산 원칙(true-up): 현재 실제 인원 기준 재결제 예상 금액 안내 문구 생성
+ * (플랜/인원 조회 실패 시 빈 문자열 반환 — 기본 메시지만 발송)
+ */
+async function renewalQuote(
+  supabase: SupabaseClient,
+  companyId: string,
+  planName: string | null | undefined,
+): Promise<string> {
+  const pricing = planName ? PLAN_PRICING[planName] : undefined;
+  if (!pricing) return '';
+  const { count } = await supabase
+    .from('users')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId);
+  const members = count ?? 0;
+  if (members < 1) return '';
+  const total = members * pricing.pricePerMember;
+  return ` 재결제 예상 금액은 현재 인원 기준 ${members}명 × ${pricing.pricePerMember.toLocaleString('ko-KR')}원 = ${total.toLocaleString('ko-KR')}원입니다.`;
+}
 
 /** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */
 async function alreadyNotified(
@@ -104,7 +132,7 @@ serve(async (req) => {
     // 대상: 이노페이 구독 중 active(만료 임박/만료) + past_due(리마인드)
     const { data: subs, error: queryError } = await supabaseAdmin
       .from('subscriptions')
-      .select('id, company_id, status, current_period_end, canceled_at')
+      .select('id, company_id, status, current_period_end, canceled_at, plans(name)')
       .eq('payment_provider', 'innopay')
       .in('status', ['active', 'past_due'])
       .not('current_period_end', 'is', null);
@@ -118,11 +146,12 @@ serve(async (req) => {
       // 4) past_due 리마인드 (7일마다)
       if (sub.status === 'past_due') {
         if (!(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_past_due', 7))) {
+          const quote = await renewalQuote(supabaseAdmin, sub.company_id, sub.plans?.name);
           notified += await notifyAdmins(
             supabaseAdmin,
             sub.company_id,
             'subscription_past_due',
-            '⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다. 사용자 관리에서 재결제하면 즉시 복구됩니다.',
+            `⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다.${quote} 사용자 관리에서 재결제하면 즉시 복구됩니다.`,
           );
           results.push({ subscriptionId: sub.id, action: 'past_due_reminder' });
         }
@@ -148,11 +177,12 @@ serve(async (req) => {
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('id', sub.id);
+          const quote = await renewalQuote(supabaseAdmin, sub.company_id, sub.plans?.name);
           notified += await notifyAdmins(
             supabaseAdmin,
             sub.company_id,
             'subscription_past_due',
-            '⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다. 사용자 관리에서 재결제하면 즉시 복구됩니다.',
+            `⛔ 구독이 만료되어 무료 플랜 제한이 적용 중입니다.${quote} 사용자 관리에서 재결제하면 즉시 복구됩니다.`,
           );
           results.push({ subscriptionId: sub.id, action: 'expired_to_past_due' });
         }
@@ -174,11 +204,12 @@ serve(async (req) => {
             7,
           ))
         ) {
+          const quote = await renewalQuote(supabaseAdmin, sub.company_id, sub.plans?.name);
           notified += await notifyAdmins(
             supabaseAdmin,
             sub.company_id,
             'subscription_expiring_very_soon',
-            `💳 구독이 내일(${formatKstDate(sub.current_period_end!)}) 만료됩니다. 만료 후에는 무료 플랜 제한이 적용되니 사용자 관리에서 재결제해 주세요.`,
+            `💳 구독이 내일(${formatKstDate(sub.current_period_end!)}) 만료됩니다.${quote} 만료 후에는 무료 플랜 제한이 적용되니 사용자 관리에서 재결제해 주세요.`,
           );
           results.push({ subscriptionId: sub.id, action: 'notified_d1' });
         }
@@ -190,11 +221,12 @@ serve(async (req) => {
         if (
           !(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_expiring_soon', 10))
         ) {
+          const quote = await renewalQuote(supabaseAdmin, sub.company_id, sub.plans?.name);
           notified += await notifyAdmins(
             supabaseAdmin,
             sub.company_id,
             'subscription_expiring_soon',
-            `💳 구독이 ${daysLeft}일 후(${formatKstDate(sub.current_period_end!)}) 만료됩니다. 이노페이 결제는 자동 갱신되지 않으니 사용자 관리에서 재결제해 주세요.`,
+            `💳 구독이 ${daysLeft}일 후(${formatKstDate(sub.current_period_end!)}) 만료됩니다.${quote} 이노페이 결제는 자동 갱신되지 않으니 사용자 관리에서 재결제해 주세요.`,
           );
           results.push({ subscriptionId: sub.id, action: 'notified_d7' });
         }

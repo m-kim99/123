@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Lock, Crown } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { requestInnopayPayment, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 /**
  * 구독 만료/미결제 차단 화면
@@ -26,13 +27,30 @@ export function SubscriptionGate() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
+  const [actualMemberCount, setActualMemberCount] = useState(0);
+
+  // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상 — 실인원 조회 후 기본값 설정
+  useEffect(() => {
+    if (!user?.companyId) return;
+    supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', user.companyId)
+      .then(({ count }) => {
+        if (count && count > 0) {
+          setActualMemberCount(count);
+          setMembers(String(count));
+        }
+      });
+  }, [user?.companyId]);
 
   const pricing = PLAN_PRICING[plan];
   const parsedMembers = Math.max(0, parseInt(members, 10) || 0);
   const exceedsPlanLimit = pricing.maxMembers !== null && parsedMembers > pricing.maxMembers;
+  const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
 
   const handlePay = async () => {
-    if (!user || parsedMembers < 1 || exceedsPlanLimit || !agreed) return;
+    if (!user || parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreed) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -108,7 +126,7 @@ export function SubscriptionGate() {
                 <Input
                   id="gate-members"
                   type="number"
-                  min={1}
+                  min={actualMemberCount || 1}
                   max={pricing.maxMembers ?? undefined}
                   value={members}
                   onChange={(e) => setMembers(e.target.value)}
@@ -116,6 +134,12 @@ export function SubscriptionGate() {
                 {exceedsPlanLimit && (
                   <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
                 )}
+                {belowActualMembers && !exceedsPlanLimit && (
+                  <p className="text-xs text-red-500">
+                    {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
+                  </p>
+                )}
+                <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gate-phone">{t('subscription.phoneLabel')}</Label>
@@ -154,7 +178,7 @@ export function SubscriptionGate() {
               </div>
               <Button
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                disabled={parsedMembers < 1 || exceedsPlanLimit || !agreed || isRequestingPayment}
+                disabled={parsedMembers < 1 || exceedsPlanLimit || belowActualMembers || !agreed || isRequestingPayment}
                 onClick={handlePay}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}

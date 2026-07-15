@@ -173,11 +173,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const parsedProMembers = Math.max(0, parseInt(proMembers, 10) || 0);
   const [customerPhone, setCustomerPhone] = useState('');
 
+  // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상이어야 함.
+  // 인원 변경은 다음 결제(재결제) 시 현재 인원 기준으로 반영된다.
+  const actualMemberCount = subscriptionInfo?.currentMembers ?? 0;
+  const basicBelowActual = actualMemberCount > 0 && parsedBasicMembers < actualMemberCount;
+  const proBelowActual = actualMemberCount > 0 && parsedProMembers < actualMemberCount;
+
+  // 구독 정보 로드 시 현재 팀원 수로 인원 기본값 설정
+  useEffect(() => {
+    if (actualMemberCount > 0) {
+      setBasicMembers(String(actualMemberCount));
+      setProMembers(String(actualMemberCount));
+    }
+  }, [actualMemberCount]);
+
   const handlePlanSubscribe = async (plan: PaidPlanName) => {
     const memberCount = plan === 'basic' ? parsedBasicMembers : parsedProMembers;
     const pricePerMember = plan === 'basic' ? BASIC_PRICE_PER_MEMBER : PRO_PRICE_PER_MEMBER;
     if (!user || !basicAgreed || memberCount < 1) return;
     if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
+    if (memberCount < actualMemberCount) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
@@ -2042,7 +2057,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Input
                         id="basic-members"
                         type="number"
-                        min={1}
+                        min={actualMemberCount || 1}
                         max={BASIC_MAX_MEMBERS}
                         value={basicMembers}
                         onChange={(e) => setBasicMembers(e.target.value)}
@@ -2050,6 +2065,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {parsedBasicMembers > BASIC_MAX_MEMBERS && (
                         <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
                       )}
+                      {actualMemberCount > BASIC_MAX_MEMBERS && (
+                        <p className="text-xs text-red-500">
+                          {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
+                        </p>
+                      )}
+                      {basicBelowActual && actualMemberCount <= BASIC_MAX_MEMBERS && parsedBasicMembers <= BASIC_MAX_MEMBERS && (
+                        <p className="text-xs text-red-500">
+                          {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                       <div className="space-y-2">
@@ -2109,10 +2135,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Input
                         id="pro-members"
                         type="number"
-                        min={1}
+                        min={actualMemberCount || 1}
                         value={proMembers}
                         onChange={(e) => setProMembers(e.target.value)}
                       />
+                      {proBelowActual && (
+                        <p className="text-xs text-red-500">
+                          {t('subscription.memberCountBelowActual', { count: actualMemberCount })}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
                       <div className="space-y-2">
@@ -2183,8 +2215,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     disabled={
                       (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
                       (selectedPlan === 'basic' &&
-                        (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS)) ||
-                      (selectedPlan === 'pro' && parsedProMembers < 1) ||
+                        (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
+                      (selectedPlan === 'pro' && (parsedProMembers < 1 || proBelowActual)) ||
                       !basicAgreed ||
                       isRequestingPayment
                     }

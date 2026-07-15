@@ -132,6 +132,22 @@ serve(async (req) => {
       return jsonResponse({ error: 'FORBIDDEN' }, 403);
     }
 
+    // 정산 원칙(true-up): 결제 인원은 현재 회사 인원 수 이상이어야 함
+    const { count: actualMemberCount } = await supabaseAdmin
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', profile.company_id);
+
+    if ((actualMemberCount ?? 0) > parsedMembers) {
+      return jsonResponse(
+        {
+          error: 'MEMBER_COUNT_BELOW_ACTUAL',
+          message: `결제 인원(${parsedMembers}명)이 현재 팀원 수(${actualMemberCount}명)보다 적습니다.`,
+        },
+        400,
+      );
+    }
+
     // 이노페이 승인 API 호출
     const approveRes = await fetch(INNOPAY_API_URL, {
       method: 'POST',
