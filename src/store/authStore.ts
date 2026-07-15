@@ -321,25 +321,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isNewCompany = false;
           console.log('기존 회사로 가입:', company.name);
         }
-        // 2-2. 회사가 없는 경우 (PGRST116: no rows returned)
+        // 2-2. 회사가 없는 경우: 생성은 auth 트리거에서 수행 (가입 실패 시 고아 회사 방지)
         else if (!existingCompany && !checkError) {
           if (role !== 'admin') {
             throw new Error('존재하지 않는 회사 코드입니다. 관리자에게 올바른 회사 코드를 확인하세요.');
           }
 
-          const { data: newCompany, error: createError } = await supabase
-            .from('companies')
-            .insert({
-              name: companyName,
-              code: companyCode,
-            })
-            .select()
-            .single();
+          if (!companyName?.trim()) {
+            throw new Error('새 회사를 만들려면 회사명이 필요합니다.');
+          }
 
-          if (createError) throw createError;
-          company = newCompany;
           isNewCompany = true;
-          console.log('새 회사 생성 완료:', company.name, company.id);
         }
         // 2-3. 기타 에러
         else if (checkError) {
@@ -350,6 +342,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       // 3. 회원가입 (Supabase Auth)
+      //    프로필·새 회사·기본 부서 생성은 모두 auth 트리거(handle_new_user)가 원자적으로 처리
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -359,6 +352,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             role,
             company_id: company?.id || null,
             company_code: companyCode || null,
+            company_name: isNewCompany ? companyName.trim() : null,
             department_id: departmentId || null,
           },
         },
@@ -367,82 +361,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (authError) throw authError;
       if (!authData.user) throw new Error('계정 생성에 실패했습니다');
 
-      // 5. 팀원 가입 시 기본 부서 자동 배치
-      let finalDepartmentId = role === 'team' ? departmentId || null : null;
-
-      if (authData.session && company?.id && role === 'team' && !finalDepartmentId) {
-        // 회사에 속한 첫 번째 부서를 기본 부서로 배치
-        const { data: defaultDept } = await supabase
-          .from('departments')
-          .select('id')
-          .eq('company_id', company.id)
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-
-        if (defaultDept) {
-          finalDepartmentId = defaultDept.id;
-          console.log('팀원 기본 부서 배치:', finalDepartmentId);
-        }
-      }
-
-      // 6. users 테이블에 추가 (upsert로 중복 방지)
-      if (authData.session) {
-        const { error: insertError } = await supabase.from('users').upsert(
-          {
-            id: authData.user.id,
-            name,
-            email,
-            role,
-            company_id: company?.id || null,
-            department_id: finalDepartmentId,
-          },
-          { onConflict: 'id' }
-        );
-
-        if (insertError) throw insertError;
-      }
-
-      // 4. 최초 가입자(새 회사 + 관리자)인 경우에만 기본 부서 생성
-      if (authData.session && company?.id && isNewCompany && role === 'admin') {
-        console.log('최초 가입자 - 기본 부서 생성 시작...');
-
-        const { data: existingDefaultDept, error: defaultDeptError } = await supabase
-          .from('departments')
-          .select('id')
-          .eq('company_id', company.id)
-          .eq('code', 'DEFAULT')
-          .maybeSingle();
-
-        if (defaultDeptError) {
-          console.error('기본 부서 생성 실패:', defaultDeptError);
-        } else if (!existingDefaultDept) {
-          const { data: createdDept, error: deptError } = await supabase
-            .from('departments')
-            .insert({
-              name: '기본 부서',
-              code: 'DEFAULT',
-              company_id: company.id,
-              description: '회사 가입 시 자동 생성된 기본 부서입니다.',
-            })
-            .select('id')
-            .single();
-
-          if (deptError) {
-            console.error('기본 부서 생성 실패:', deptError);
-          } else {
-            console.log('기본 부서 생성 완료:', (createdDept as any)?.id);
-          }
-        }
-      }
-
       set({ isLoading: false });
 
       trackEvent('sign_up', {
         method: 'password',
         selected_role: role,
         is_new_company: isNewCompany,
-        has_department: !!finalDepartmentId,
+        has_department: role === 'team' && !!departmentId,
       });
 
       return { success: true };
