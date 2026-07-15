@@ -120,14 +120,10 @@ export interface Plan {
   max_ai_queries_monthly: number | null;
   max_nfc_tags: number | null;
   feature_ai_chat: boolean;
-  feature_vector_search: boolean;
   feature_nfc: boolean;
   feature_ocr_advanced: boolean;
   feature_external_share: boolean;
   feature_statistics_advanced: boolean;
-  feature_api_access: boolean;
-  feature_audit_log: boolean;
-  feature_custom_branding: boolean;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -155,9 +151,7 @@ export interface UsageTracking {
   id: string;
   company_id: string;
   period_start: string;
-  documents_uploaded: number;
   ai_queries_used: number;
-  storage_used_mb: number;
   created_at: string;
   updated_at: string;
 }

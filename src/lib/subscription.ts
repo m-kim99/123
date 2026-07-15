@@ -12,7 +12,6 @@ export interface PlanLimits {
   max_ai_queries_monthly: number | null;
   max_nfc_tags: number | null;
   feature_ai_chat: boolean;
-  feature_vector_search: boolean;
   feature_nfc: boolean;
   feature_ocr_advanced: boolean;
   feature_external_share: boolean;
@@ -35,7 +34,6 @@ const FREE_PLAN_DEFAULTS: PlanLimits = {
   max_ai_queries_monthly: 20,
   max_nfc_tags: 0,
   feature_ai_chat: true,
-  feature_vector_search: false,
   feature_nfc: false,
   feature_ocr_advanced: false,
   feature_external_share: false,
@@ -67,7 +65,6 @@ export async function getCompanyPlanLimits(companyId: string): Promise<PlanLimit
           max_ai_queries_monthly,
           max_nfc_tags,
           feature_ai_chat,
-          feature_vector_search,
           feature_nfc,
           feature_ocr_advanced,
           feature_external_share,
