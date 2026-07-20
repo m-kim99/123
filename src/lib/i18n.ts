@@ -9,7 +9,8 @@ import zh from '../locales/zh.json';
 const savedLanguage = localStorage.getItem('app-language') ||
   (navigator.language.startsWith('ko') ? 'ko' : 
    navigator.language.startsWith('ja') ? 'ja' :
-   navigator.language.startsWith('de') ? 'de' : 'en');
+   navigator.language.startsWith('de') ? 'de' :
+   navigator.language.startsWith('zh') ? 'zh' : 'en');
 
 i18n
   .use(initReactI18next)
@@ -19,7 +20,6 @@ i18n
       en: { translation: en },
       ja: { translation: ja },
       de: { translation: de },
-      // zh: 리소스는 등록만 해두고, 사용자 언어 설정(UI)에는 아직 노출하지 않음
       zh: { translation: zh },
     },
     lng: savedLanguage,
