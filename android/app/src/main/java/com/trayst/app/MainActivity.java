@@ -1,9 +1,14 @@
 package com.trayst.app;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.ImageView;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 
@@ -26,6 +31,37 @@ public class MainActivity extends BridgeActivity {
 
         // Cold start: 앱이 NFC 태그로 실행된 경우 initial intent 처리
         handleNfcFromIntent(getIntent());
+
+        // 스플래시 오버레이: Android 12+ 시스템 스플래시는 full-screen 이미지를 지원하지 않으므로 직접 표시
+        showSplashOverlay();
+    }
+
+    private void showSplashOverlay() {
+        final ImageView splashOverlay = new ImageView(this);
+        splashOverlay.setImageResource(R.drawable.splash);
+        splashOverlay.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        splashOverlay.setBackgroundColor(Color.WHITE);
+        splashOverlay.setClickable(true);
+        addContentView(
+            splashOverlay,
+            new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        );
+        new Handler(Looper.getMainLooper())
+            .postDelayed(
+                () ->
+                    splashOverlay
+                        .animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(() -> {
+                            ViewGroup parent = (ViewGroup) splashOverlay.getParent();
+                            if (parent != null) {
+                                parent.removeView(splashOverlay);
+                            }
+                        })
+                        .start(),
+                2000
+            );
     }
 
     @Override
