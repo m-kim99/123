@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 /**
- * FCM HTTP v1 API용 액세스 토큰 생성
+ * FCM HTTP v1 API용 액세스 토큰 생성 (Android)
  * Firebase 서비스 계정 JSON으로 JWT 서명 후 Google OAuth2 토큰 교환
  */
 async function getAccessToken(serviceAccount: {
@@ -25,13 +25,11 @@ async function getAccessToken(serviceAccount: {
     scope: 'https://www.googleapis.com/auth/firebase.messaging',
   };
 
-  // Base64URL 인코딩
   const enc = (obj: unknown) =>
     btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   const unsignedToken = `${enc(header)}.${enc(payload)}`;
 
-  // RSA-SHA256 서명
   const pemKey = serviceAccount.private_key;
   const pemContents = pemKey
     .replace('-----BEGIN PRIVATE KEY-----', '')
@@ -60,7 +58,6 @@ async function getAccessToken(serviceAccount: {
 
   const jwt = `${unsignedToken}.${signatureB64}`;
 
-  // Google OAuth2 토큰 교환
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -73,6 +70,135 @@ async function getAccessToken(serviceAccount: {
 
   const tokenData = await tokenRes.json();
   return tokenData.access_token;
+}
+
+async function sendViaFcm(
+  token: string,
+  title: string,
+  message: string,
+  customUrl: string | undefined,
+  accessToken: string,
+  projectId: string
+): Promise<void> {
+  const fcmPayload = {
+    message: {
+      token,
+      notification: {
+        title,
+        body: message,
+      },
+      android: {
+        priority: 'high' as const,
+        notification: {
+          sound: 'default',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+      },
+      data: customUrl ? { custom_url: customUrl } : undefined,
+    },
+  };
+
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(fcmPayload),
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`FCM 오류 (${token.slice(0, 20)}...): ${errText}`);
+  }
+}
+
+/**
+ * APNs 인증 JWT 생성 (ES256) - Function 인스턴스가 warm한 동안 캐시해 재사용.
+ * APNs 토큰은 최대 1시간 유효하므로 50분마다 새로 발급.
+ */
+let cachedApnsJwt: { token: string; iat: number } | null = null;
+
+async function getApnsJwt(teamId: string, keyId: string, privateKeyPem: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedApnsJwt && now - cachedApnsJwt.iat < 50 * 60) {
+    return cachedApnsJwt.token;
+  }
+
+  const header = { alg: 'ES256', kid: keyId };
+  const payload = { iss: teamId, iat: now };
+
+  const enc = (obj: unknown) =>
+    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  const unsignedToken = `${enc(header)}.${enc(payload)}`;
+
+  const pemContents = privateKeyPem
+    .replace('-----BEGIN PRIVATE KEY-----', '')
+    .replace('-----END PRIVATE KEY-----', '')
+    .replace(/\s/g, '');
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    binaryKey,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+
+  // WebCrypto ECDSA 서명은 JWT(ES256)가 요구하는 IEEE P1363(raw r||s) 포맷을 그대로 반환한다.
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    cryptoKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  const jwt = `${unsignedToken}.${signatureB64}`;
+  cachedApnsJwt = { token: jwt, iat: now };
+  return jwt;
+}
+
+async function sendViaApns(
+  deviceToken: string,
+  title: string,
+  message: string,
+  customUrl: string | undefined,
+  jwt: string,
+  topic: string
+): Promise<void> {
+  const payload = {
+    aps: {
+      alert: { title, body: message },
+      sound: 'default',
+      badge: 1,
+    },
+    custom_url: customUrl,
+  };
+
+  const res = await fetch(`https://api.push.apple.com/3/device/${deviceToken}`, {
+    method: 'POST',
+    headers: {
+      authorization: `bearer ${jwt}`,
+      'apns-topic': topic,
+      'apns-push-type': 'alert',
+      'apns-priority': '10',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`APNs 오류 (${deviceToken.slice(0, 12)}...): ${res.status} ${errText}`);
+  }
 }
 
 serve(async (req) => {
@@ -106,19 +232,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Firebase 서비스 계정 JSON (환경변수에서 읽기)
-    const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
-    const projectId = Deno.env.get('FIREBASE_PROJECT_ID');
-
-    if (!serviceAccountJson || !projectId) {
-      return new Response(JSON.stringify({ error: 'Firebase 설정이 없습니다. FIREBASE_SERVICE_ACCOUNT, FIREBASE_PROJECT_ID를 설정하세요.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const serviceAccount = JSON.parse(serviceAccountJson);
 
     // 보안: 클라이언트가 FCM 토큰을 직접 넘기지 않는다.
     // 대신 발송 대상(회사/부서 또는 유저 ID)만 받고, service_role로 서버에서 토큰을 조회한다.
@@ -195,84 +308,67 @@ serve(async (req) => {
       });
     }
 
-    // 대상 유저들의 기기 토큰 수집 (다중 기기)
+    // 대상 유저들의 기기 토큰 수집 (다중 기기) - platform으로 FCM(Android)/APNs(iOS) 분기
     const { data: tokenRows } = await admin
       .from('user_device_tokens')
-      .select('token')
+      .select('token, platform')
       .in('user_id', recipientIds);
-    const playerIds = (tokenRows ?? [])
+
+    const androidTokens = (tokenRows ?? [])
+      .filter((r: { platform: string | null }) => r.platform !== 'ios')
+      .map((r: { token: string }) => r.token)
+      .filter(Boolean);
+    const iosTokens = (tokenRows ?? [])
+      .filter((r: { platform: string | null }) => r.platform === 'ios')
       .map((r: { token: string }) => r.token)
       .filter(Boolean);
 
-    if (playerIds.length === 0) {
+    if (androidTokens.length === 0 && iosTokens.length === 0) {
       return new Response(JSON.stringify({ success: true, sent: 0, failed: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // FCM 액세스 토큰 발급
-    const accessToken = await getAccessToken(serviceAccount);
+    const sendResults: PromiseSettledResult<void>[] = [];
 
-    // 각 토큰에 대해 FCM 발송 (최대 500개 병렬)
-    const results = await Promise.allSettled(
-      playerIds.map(async (token: string) => {
-        const fcmPayload = {
-          message: {
-            token,
-            notification: {
-              title,
-              body: message,
-            },
-            android: {
-              priority: 'high' as const,
-              notification: {
-                sound: 'default',
-                click_action: 'FLUTTER_NOTIFICATION_CLICK',
-              },
-            },
-            apns: {
-              headers: {
-                'apns-priority': '10',
-              },
-              payload: {
-                aps: {
-                  alert: {
-                    title,
-                    body: message,
-                  },
-                  sound: 'default',
-                  badge: 1,
-                },
-              },
-            },
-            data: customUrl ? { custom_url: customUrl } : undefined,
-          },
-        };
-
-        const res = await fetch(
-          `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(fcmPayload),
-          }
+    // Android: FCM
+    if (androidTokens.length > 0) {
+      const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
+      const projectId = Deno.env.get('FIREBASE_PROJECT_ID');
+      if (!serviceAccountJson || !projectId) {
+        console.error('[PUSH] FCM 설정 없음(FIREBASE_SERVICE_ACCOUNT/FIREBASE_PROJECT_ID) - Android 발송 스킵');
+      } else {
+        const serviceAccount = JSON.parse(serviceAccountJson);
+        const accessToken = await getAccessToken(serviceAccount);
+        const results = await Promise.allSettled(
+          androidTokens.map((token: string) =>
+            sendViaFcm(token, title, message, customUrl, accessToken, projectId)
+          )
         );
+        sendResults.push(...results);
+      }
+    }
 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`FCM 오류 (${token.slice(0, 20)}...): ${errText}`);
-        }
+    // iOS: APNs 직접 발송 (FCM을 거치지 않음 - APNs 원본 토큰이라 FCM에 넣으면 항상 실패함)
+    if (iosTokens.length > 0) {
+      const apnsKey = Deno.env.get('APNS_AUTH_KEY');
+      const apnsKeyId = Deno.env.get('APNS_KEY_ID');
+      const apnsTeamId = Deno.env.get('APNS_TEAM_ID');
+      const apnsTopic = Deno.env.get('APNS_TOPIC');
+      if (!apnsKey || !apnsKeyId || !apnsTeamId || !apnsTopic) {
+        console.error('[PUSH] APNs 설정 없음(APNS_AUTH_KEY/APNS_KEY_ID/APNS_TEAM_ID/APNS_TOPIC) - iOS 발송 스킵');
+      } else {
+        const jwt = await getApnsJwt(apnsTeamId, apnsKeyId, apnsKey);
+        const results = await Promise.allSettled(
+          iosTokens.map((token: string) => sendViaApns(token, title, message, customUrl, jwt, apnsTopic))
+        );
+        sendResults.push(...results);
+      }
+    }
 
-        return res.json();
-      })
-    );
-
-    const successCount = results.filter((r) => r.status === 'fulfilled').length;
-    const failCount = results.filter((r) => r.status === 'rejected').length;
-    const errors = results
+    const successCount = sendResults.filter((r) => r.status === 'fulfilled').length;
+    const failCount = sendResults.filter((r) => r.status === 'rejected').length;
+    const errors = sendResults
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
       .map((r) => r.reason?.message || String(r.reason));
     console.log('[PUSH] 결과:', { successCount, failCount, errors });
