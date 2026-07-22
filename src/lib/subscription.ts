@@ -312,19 +312,16 @@ export async function checkStorageLimit(
       return { allowed: true, current: 0, limit: null, remaining: null };
     }
 
-    const { data, error } = await supabase
-      .from('documents')
-      .select('file_size.sum()')
-      .eq('company_id', companyId)
-      .is('deleted_at', null)
-      .single();
+    const { data, error } = await supabase.rpc('get_company_storage_usage', {
+      p_company_id: companyId,
+    });
 
     if (error) {
       console.error('Storage usage check failed:', error);
       return { allowed: true, current: 0, limit: maxStorageMb, remaining: maxStorageMb };
     }
 
-    const usedBytes = (data as unknown as { sum: number | null })?.sum ?? 0;
+    const usedBytes = data ?? 0;
     const usedMb = Math.ceil(usedBytes / (1024 * 1024));
 
     return {
