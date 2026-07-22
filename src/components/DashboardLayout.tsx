@@ -146,6 +146,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     currentMembers: number;
     currentDocuments: number;
     currentDepartments: number;
+    currentStorageMb: number;
     status: string;
     billingCycle: string;
     subscriptionId: string | null;
@@ -179,6 +180,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const actualMemberCount = subscriptionInfo?.currentMembers ?? 0;
   const basicBelowActual = actualMemberCount > 0 && parsedBasicMembers < actualMemberCount;
   const proBelowActual = actualMemberCount > 0 && parsedProMembers < actualMemberCount;
+
+  // 저장용량 사용률에 따른 진행률 바 색상 (80% 이상 주황, 100% 도달 빨강)
+  const storageUsedMb = subscriptionInfo?.currentStorageMb ?? 0;
+  const storageMaxMb = subscriptionInfo?.maxStorageMb ?? null;
+  const storagePct = storageMaxMb ? Math.min(100, (storageUsedMb / storageMaxMb) * 100) : 0;
+  const storageBarColor = storagePct >= 100 ? 'bg-red-500' : storagePct >= 80 ? 'bg-amber-500' : 'bg-[#2563eb]';
+  const storageTrackColor = storagePct >= 100 ? 'bg-red-100' : storagePct >= 80 ? 'bg-amber-100' : 'bg-blue-100';
 
   // 구독 정보 로드 시 현재 팀원 수로 인원 기본값 설정
   useEffect(() => {
@@ -425,6 +433,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .select('*', { count: 'exact', head: true })
         .eq('company_id', user.companyId);
 
+      const { data: storageUsedBytes } = await supabase.rpc('get_company_storage_usage', {
+        p_company_id: user.companyId,
+      });
+
       const subRow = sub as unknown as {
         id?: string;
         status?: string;
@@ -449,6 +461,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         currentMembers: memberCount ?? 0,
         currentDocuments: docCount ?? 0,
         currentDepartments: deptCount ?? 0,
+        currentStorageMb: Math.ceil((storageUsedBytes ?? 0) / (1024 * 1024)),
         status: subRow?.status || 'free',
         billingCycle: subRow?.billing_cycle || 'monthly',
         subscriptionId: subRow?.id ?? null,
@@ -2269,6 +2282,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <p className="mt-2 text-xs text-slate-500 text-right">
                         {t('subscription.trialEndsAt')}: {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString()}
                       </p>
+                    )}
+                    {storageMaxMb !== null && (
+                      <div className="mt-3">
+                        <div className="flex items-baseline justify-between mb-1.5">
+                          <span className="text-xs font-medium text-slate-500">{t('subscription.storage')}</span>
+                          <span className="text-xs font-semibold text-slate-800 tabular-nums">
+                            {storageUsedMb.toLocaleString()}MB
+                            <span className="font-normal text-slate-500"> / {storageMaxMb.toLocaleString()}MB</span>
+                          </span>
+                        </div>
+                        <div className={`h-2 rounded-full overflow-hidden ${storageTrackColor}`}>
+                          <div
+                            className={`h-full rounded-full transition-all ${storageBarColor}`}
+                            style={{ width: `${storagePct}%` }}
+                          />
+                        </div>
+                      </div>
                     )}
                     <div className="mt-3 grid grid-cols-3 gap-3 text-center text-xs">
                       <div>
