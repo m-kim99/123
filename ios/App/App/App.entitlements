@@ -2,20 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>aps-environment</key>
+	<string>production</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:traystorageconnect.com</string>
+	</array>
 	<key>com.apple.developer.nfc.readersession.formats</key>
 	<array>
 		<string>TAG</string>
+		<string>NDEF</string>
+		<string>PACE</string>
 	</array>
-	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<!-- iOS Background Tag Reading + Universal Links 지원:
-		     NFC 태그의 https://traystorageconnect.com/nfc-redirect?... URL을
-		     iOS가 자동으로 앱으로 열어주기 위해 필요합니다.
-		     Apple Developer 콘솔에서 해당 도메인의 Associated Domains 기능을 활성화하고
-		     traystorageconnect.com/.well-known/apple-app-site-association 파일을 배포해야 합니다. -->
-		<string>applinks:traystorageconnect.com</string>
-	</array>
-	<key>aps-environment</key>
-	<string>production</string>
 </dict>
 </plist>
