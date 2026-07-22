@@ -6,6 +6,8 @@
  *     → exchangeCodeForSession으로 세션 생성 후 루트로 이동.
  *  2) 네이버 OAuth 콜백(App Link): https://traystorageconnect.com/auth/naver/callback?...
  *     → 앱 내 라우터의 NaverCallback 페이지로 이동(세션/state는 WebView에 유지됨).
+ *  3) NFC 태그 리다이렉트(App Link): https://traystorageconnect.com/nfc-redirect?subcategoryId=...
+ *     → 앱 내 라우터의 NfcRedirect 페이지로 이동.
  *
  * 라우터 내부에 렌더링되어야 useNavigate를 사용할 수 있다.
  */
@@ -69,6 +71,12 @@ export function NativeDeepLinkHandler() {
         ) {
           try { await Browser.close(); } catch { /* 무시 */ }
           navigate(`${NAVER_CALLBACK_PATH}${parsed.search}`, { replace: true });
+          return;
+        }
+
+        // 3) NFC 태그 리다이렉트 (App Link)
+        if (parsed.pathname.startsWith('/nfc-redirect')) {
+          navigate(`${parsed.pathname}${parsed.search}`, { replace: true });
           return;
         }
       } catch (e) {
