@@ -20,6 +20,7 @@ import { Browser } from '@capacitor/browser';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { NATIVE_AUTH_SCHEME } from '@/lib/nativeAuth';
+import { getNfcMode } from '@/lib/nfc';
 
 const NAVER_CALLBACK_HOST = 'traystorageconnect.com';
 const NAVER_CALLBACK_PATH = '/auth/naver/callback';
@@ -76,6 +77,13 @@ export function NativeDeepLinkHandler() {
 
         // 3) NFC 태그 리다이렉트 (App Link)
         if (parsed.pathname.startsWith('/nfc-redirect')) {
+          // 쓰기(재등록) 중에는 iOS가 태그의 기존 URL을 백그라운드에서 독립적으로
+          // 인식해 Universal Link를 띄울 수 있음(앱의 쓰기 세션과 무관하게 발생) -
+          // Android(NFCAutoRedirect)와 동일하게 이동 자체를 하지 않고 조용히 무시.
+          if (getNfcMode() === 'writing') {
+            console.log('NFC 쓰기 모드 중 - 자동 리다이렉트 스킵');
+            return;
+          }
           navigate(`${parsed.pathname}${parsed.search}`, { replace: true });
           return;
         }
