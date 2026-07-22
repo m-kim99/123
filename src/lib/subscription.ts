@@ -305,8 +305,17 @@ export async function checkStorageLimit(
   newFileSizeBytes: number,
 ): Promise<UsageCheckResult> {
   try {
-    const limits = await getCompanyPlanLimits(companyId);
-    const maxStorageMb = limits.max_storage_mb;
+    // get_company_storage_limit_mb: pro는 인당 계산(좌석수 × 인당 용량),
+    // free/basic은 정액 - DB 트리거(check_storage_limit)와 동일 로직 공유
+    const { data: maxStorageMb, error: limitError } = await supabase.rpc(
+      'get_company_storage_limit_mb',
+      { p_company_id: companyId },
+    );
+
+    if (limitError) {
+      console.error('Storage limit check failed:', limitError);
+      return { allowed: true, current: 0, limit: null, remaining: null };
+    }
 
     if (maxStorageMb === null) {
       return { allowed: true, current: 0, limit: null, remaining: null };

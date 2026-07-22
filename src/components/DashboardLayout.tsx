@@ -437,6 +437,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         p_company_id: user.companyId,
       });
 
+      // pro는 인당 계산(좌석수 × 인당 용량)이라 plans.max_storage_mb를 그대로 쓰면 안 됨
+      const { data: storageLimitMb } = await supabase.rpc('get_company_storage_limit_mb', {
+        p_company_id: user.companyId,
+      });
+
       const subRow = sub as unknown as {
         id?: string;
         status?: string;
@@ -456,7 +461,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         maxMembers: subRow?.member_count ?? plan?.max_members ?? null,
         maxDocuments: plan?.max_documents ?? null,
         maxDepartments: plan?.max_departments ?? null,
-        maxStorageMb: plan?.max_storage_mb ?? null,
+        maxStorageMb: storageLimitMb ?? plan?.max_storage_mb ?? null,
         maxAiQueries: plan?.max_ai_queries_monthly ?? null,
         currentMembers: memberCount ?? 0,
         currentDocuments: docCount ?? 0,
