@@ -7,6 +7,7 @@
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { saveDeviceToken, removeDeviceToken } from '@/lib/deviceTokens';
+import { NotificationPlugin } from '@/plugins/notification-plugin';
 
 let isInitialized = false;
 let currentToken: string | null = null;
@@ -53,10 +54,18 @@ export async function initFCMPush(): Promise<void> {
       console.error('[FCM] 등록 실패:', error);
     });
 
-    // 푸시 수신 (포그라운드)
-    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    // 푸시 수신 (포그라운드) - FCM은 앱이 포그라운드일 때 시스템 알림을 자동으로 띄우지
+    // 않으므로, 로컬 알림으로 직접 표시해야 한다 (백그라운드/종료 상태는 OS가 자동 표시).
+    await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       console.log('[FCM] 푸시 수신 (포그라운드):', notification);
-      // 포그라운드에서는 로컬 알림으로 표시하거나 인앱 토스트 사용
+      try {
+        await NotificationPlugin.show({
+          title: notification.title || '알림',
+          body: notification.body || '',
+        });
+      } catch (error) {
+        console.error('[FCM] 포그라운드 로컬 알림 표시 실패:', error);
+      }
     });
 
     // 푸시 탭 (백그라운드에서 알림 클릭)
