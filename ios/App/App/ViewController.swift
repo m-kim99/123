@@ -18,11 +18,11 @@ class ViewController: CAPBridgeViewController {
     }
 
     private func showSplashOverlay() {
-        // 원본 스플래시 이미지가 정사각형(2732x2732)이라, 화면 꽉 채우기(scaleAspectFill)를
-        // 쓰면 세로가 긴 화면 비율에 맞춰 확대되면서 좌우가 잘려나가 로고가 과하게
-        // 확대돼 보임 - 잘림 없이 원본 그대로 보이도록 scaleAspectFit 사용.
+        // Splash 이미지는 Android의 drawable-port-xxxhdpi/splash.png(세로 2:3 비율로
+        // 사전 크롭된 버전)를 그대로 가져와 쓰므로, Android MainActivity의 CENTER_CROP과
+        // 동일하게 scaleAspectFill 사용 (두 플랫폼 화면 표시 일관성).
         let splashOverlay = UIImageView(image: UIImage(named: "Splash"))
-        splashOverlay.contentMode = .scaleAspectFit
+        splashOverlay.contentMode = .scaleAspectFill
         splashOverlay.backgroundColor = .white
         splashOverlay.clipsToBounds = true
         splashOverlay.frame = view.bounds
