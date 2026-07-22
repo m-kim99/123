@@ -214,7 +214,10 @@ public class NfcPlugin extends Plugin {
         }
 
         Log.d(TAG, "Firing nfcTagDetected event: " + data.toString());
-        notifyListeners(EVENT_TAG_DETECTED, data);
+        // retainUntilConsumed=true: cold start 시 MainActivity.onCreate()가 WebView 로딩(및 JS 리스너 등록)보다
+        // 먼저 이 이벤트를 발생시킬 수 있음. false(기본값)면 그 시점에 리스너가 없어 이벤트가 유실됨.
+        // true로 큐잉해두면 JS의 addListener 호출 시 Capacitor가 자동으로 재생(replay)해준다.
+        notifyListeners(EVENT_TAG_DETECTED, data, true);
     }
 
     // ─────────────────────────────────────────────
