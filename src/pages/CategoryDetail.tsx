@@ -98,6 +98,8 @@ export function CategoryDetail() {
   const documents = useDocumentStore((state) => state.documents);
   const departments = useDocumentStore((state) => state.departments);
   const subcategories = useDocumentStore((state) => state.subcategories);
+  const storageStatus = useDocumentStore((state) => state.storageStatus);
+  const isStorageFull = storageStatus !== null && !storageStatus.allowed;
   // 함수는 한 번에 가져오기 (참조 안정적)
   const { fetchDocuments, uploadDocument, deleteDocument, shareDocument, unshareDocument } = useDocumentStore();
   const user = useAuthStore((state) => state.user);
@@ -312,6 +314,7 @@ export function CategoryDetail() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileDrop,
+    disabled: isStorageFull,
     ...(Capacitor.isNativePlatform() ? {} : {
       accept: {
         'image/*': ['.jpg', '.jpeg', '.png'],
@@ -1224,15 +1227,24 @@ export function CategoryDetail() {
           <DialogContent variant="v1" className="max-w-[560px]">
             <V1ModalHeader icon={Upload} title={t('subcategoryDetail.uploadDocument')} sub={t('categoryDetail.uploadDialogDesc')} />
             <V1ModalBody>
+              {isStorageFull && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-3">
+                  저장 공간이 가득 찼습니다. 기존 문서를 삭제하거나 플랜을 업그레이드해주세요.
+                </p>
+              )}
               {/* V1 Dropzone */}
               <div
                 {...getRootProps({
-                  className: `border-2 border-dashed rounded-[12px] p-7 text-center cursor-pointer transition-colors ${
-                    isDragActive
-                      ? 'border-[#2563eb] bg-[#eff6ff]'
-                      : uploadFiles.length > 0
-                      ? 'border-emerald-400 bg-emerald-50'
-                      : 'border-[#2563eb] bg-[#eff6ff]'
+                  className: `border-2 border-dashed rounded-[12px] p-7 text-center transition-colors ${
+                    isStorageFull
+                      ? 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60'
+                      : `cursor-pointer ${
+                          isDragActive
+                            ? 'border-[#2563eb] bg-[#eff6ff]'
+                            : uploadFiles.length > 0
+                            ? 'border-emerald-400 bg-emerald-50'
+                            : 'border-[#2563eb] bg-[#eff6ff]'
+                        }`
                   }`,
                 })}
               >

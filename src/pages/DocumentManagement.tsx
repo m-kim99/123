@@ -166,7 +166,9 @@ export function DocumentManagement() {
   const parentCategories = useDocumentStore((state) => state.parentCategories);
   const subcategories = useDocumentStore((state) => state.subcategories);
   const documents = useDocumentStore((state) => state.documents);
-  
+  const storageStatus = useDocumentStore((state) => state.storageStatus);
+  const isStorageFull = storageStatus !== null && !storageStatus.allowed;
+
   // 세부 스토리지 로딩 상태 (페이지 진입 시 전체 데이터 재조회 중)
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(true);
   // 팀원용: 권한 있는 부서 ID 목록
@@ -1630,6 +1632,7 @@ export function DocumentManagement() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileDrop,
+    disabled: isStorageFull,
     ...(Capacitor.isNativePlatform() ? {} : {
       accept: {
         'image/*': ['.jpg', '.jpeg', '.png'],
@@ -3289,13 +3292,18 @@ export function DocumentManagement() {
 
                 <div className="space-y-2">
                   <Label>{t('documentMgmt.fileUpload')}</Label>
+                  {isStorageFull && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                      저장 공간이 가득 찼습니다. 기존 문서를 삭제하거나 플랜을 업그레이드해주세요.
+                    </p>
+                  )}
                   <div
                     {...getRootProps()}
                     className={`border-2 border-dashed rounded-[10px] p-8 text-center transition-colors cursor-pointer ${
                       isDragActive
                         ? 'border-[#2563eb] bg-[#eff6ff]'
                         : 'border-slate-300 hover:border-slate-400'
-                    } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
+                    } ${isUploading || isStorageFull ? 'pointer-events-none opacity-50' : ''}`}
                   >
                     <input {...getInputProps()} id="file-upload" />
                     <div className="flex flex-col items-center">

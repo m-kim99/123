@@ -59,6 +59,8 @@ export function SubcategoryDetail() {
   const parentCategories = useDocumentStore((state) => state.parentCategories);
   const subcategories = useDocumentStore((state) => state.subcategories);
   const documents = useDocumentStore((state) => state.documents);
+  const storageStatus = useDocumentStore((state) => state.storageStatus);
+  const isStorageFull = storageStatus !== null && !storageStatus.allowed;
   // 함수는 한 번에 가져오기 (참조 안정적)
   const {
     fetchSubcategories,
@@ -289,6 +291,7 @@ export function SubcategoryDetail() {
     isDragActive: isNewFileDragActive,
   } = useDropzone({
     onDrop: handleNewFileDrop,
+    disabled: isStorageFull,
     ...(Capacitor.isNativePlatform() ? {} : {
       accept: {
         'image/*': ['.jpg', '.jpeg', '.png'],
@@ -1146,10 +1149,21 @@ export function SubcategoryDetail() {
             {/* 파일 업로드 영역 */}
             <div className="space-y-2">
               <Label className="font-medium">{t('documentMgmt.fileUpload')}</Label>
+              {isStorageFull && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                  저장 공간이 가득 찼습니다. 기존 문서를 삭제하거나 플랜을 업그레이드해주세요.
+                </p>
+              )}
               <div
                 {...getNewFileRootProps()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                  isNewFileDragActive
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isStorageFull
+                    ? 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60'
+                    : 'cursor-pointer'
+                } ${
+                  isStorageFull
+                    ? ''
+                    : isNewFileDragActive
                     ? 'border-blue-500 bg-blue-50'
                     : selectedFile
                     ? 'border-green-500 bg-green-50'

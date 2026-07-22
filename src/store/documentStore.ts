@@ -89,6 +89,8 @@ interface DocumentState {
   /** 동시 fetch 개수 추적 — isLoading은 이 값이 0보다 클 때 true (경쟁 조건 방지) */
   _loadingCount: number;
   error: string | null;
+  storageStatus: { allowed: boolean; usedMb: number; limitMb: number | null } | null;
+  refreshStorageStatus: () => Promise<void>;
   fetchDepartments: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchParentCategories: () => Promise<void>;
@@ -175,6 +177,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   isLoading: false,
   _loadingCount: 0,
   error: null,
+  storageStatus: null,
+
+  refreshStorageStatus: async () => {
+    const { user } = useAuthStore.getState();
+    if (!user?.companyId) {
+      set({ storageStatus: null });
+      return;
+    }
+    const result = await checkStorageLimit(user.companyId, 0);
+    set({
+      storageStatus: { allowed: result.allowed, usedMb: result.current, limitMb: result.limit },
+    });
+  },
 
   fetchDepartments: async () => {
     startLoading(set);
@@ -536,6 +551,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         set({ documents: [] });
         return;
       }
+
+      // 저장용량 상태도 함께 갱신 (업로드 가능 여부 UI 반영용)
+      void get().refreshStorageStatus();
 
       // 현재 회사의 부서 ID 목록 조회
       const { data: deptData, error: deptError } = await supabase
@@ -1443,6 +1461,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             subcategoryId: subcategoryIdFromDb,
             subcategoryName: subcategory?.name ?? null,
           });
+          void get().refreshStorageStatus();
         }
 
         trackEvent('document_upload', {
