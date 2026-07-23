@@ -65,6 +65,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
 import { requestInnopayPayment, cancelInnopaySubscription, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { TrialCountdownBanner } from '@/components/TrialCountdownBanner';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -1678,6 +1679,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         <main className="flex-1 overflow-auto w-full flex flex-col">
+          <TrialCountdownBanner onSubscribeClick={openSubscriptionDialog} />
           <div className={`flex-1 max-w-7xl w-full mx-auto px-4 lg:px-6 py-4 lg:py-6 ${Capacitor.isNativePlatform() ? 'main-content-safe-area' : ''}`}>
             {children}
           </div>

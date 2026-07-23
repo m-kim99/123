@@ -131,7 +131,18 @@
     "trueUpNotice": "Die Abrechnung basiert auf der aktuellen Teamgröße. Änderungen der Mitgliederzahl werden bei der nächsten Abrechnung automatisch berücksichtigt.",
     "memberCountBelowActual": "Sie können nicht für weniger Mitglieder bezahlen, als Ihr Team derzeit hat ({{count}}).",
     "overseasGateNotice": "Internationale Zahlungen werden derzeit noch nicht unterstützt. Bitte kontaktieren Sie uns unter der unten stehenden E-Mail-Adresse – wir verlängern Ihren Nutzungszeitraum.",
-    "nativeGateNotice": "Abonnements können in dieser App nicht erworben werden. Bei Fragen kontaktieren Sie uns bitte unter der unten stehenden E-Mail-Adresse."
+    "nativeGateNotice": "Abonnements können in dieser App nicht erworben werden. Bei Fragen kontaktieren Sie uns bitte unter der unten stehenden E-Mail-Adresse.",
+    "gateEndedOn": "Ihr Nutzungszeitraum ist am {{date}} abgelaufen",
+    "gateDataSafe": "Ihre Daten sind sicher gespeichert und werden nach dem Abonnement sofort wiederhergestellt."
+  },
+  "trialBanner": {
+    "remaining": "Die kostenlose Testphase endet am {{date}} · noch {{days}} Tage",
+    "warn": "Noch {{days}} Tage bis zum Ende der Testphase — danach wird der Zugriff eingeschränkt",
+    "lastDay": "Ihre kostenlose Testphase endet morgen.",
+    "today": "Ihre kostenlose Testphase endet heute.",
+    "memberHint": "Laden Sie benötigte Dateien vorher herunter.",
+    "subscribe": "Abonnieren",
+    "dismiss": "Schließen"
   },
   "bottomBar": {
     "back": "Zurück",

@@ -206,9 +206,14 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // cron(서버 간) 호출: x-cron-key가 CRON_SECRET과 일치하면 사용자 세션 검증 생략
+  // (innopay-billing-renewal이 무료 체험 만료 고지를 회사 단위로 푸시할 때 사용 — companyId 대상만 허용)
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  const isCronCall = !!cronSecret && req.headers.get('x-cron-key') === cronSecret;
+
   // 인증 헤더 확인
   const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
+  if (!authHeader && !isCronCall) {
     return new Response(JSON.stringify({ error: '인증이 필요합니다' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -218,19 +223,23 @@ serve(async (req) => {
   try {
     console.log('[PUSH] Edge Function 호출됨');
 
-    // 사용자 세션 검증
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    // 사용자 세션 검증 (cron 호출은 CRON_SECRET으로 이미 인증됨)
+    let userId: string | null = null;
+    if (!isCronCall) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader! } } }
+      );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: '유효하지 않은 세션입니다' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: '유효하지 않은 세션입니다' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = user.id;
     }
 
     // 보안: 클라이언트가 FCM 토큰을 직접 넘기지 않는다.
@@ -252,32 +261,42 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // 발신자의 회사 확인 (권한 경계)
-    const { data: caller } = await admin
-      .from('users')
-      .select('id, company_id')
-      .eq('id', user.id)
-      .single();
-    if (!caller?.company_id) {
-      return new Response(JSON.stringify({ error: '발신자 회사 정보를 확인할 수 없습니다' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // 발신자의 회사 확인 (권한 경계) — cron 호출은 발신자 개념이 없어 생략
+    let callerCompanyId: string | null = null;
+    if (!isCronCall) {
+      const { data: caller } = await admin
+        .from('users')
+        .select('id, company_id')
+        .eq('id', userId!)
+        .single();
+      if (!caller?.company_id) {
+        return new Response(JSON.stringify({ error: '발신자 회사 정보를 확인할 수 없습니다' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      callerCompanyId = caller.company_id;
     }
 
     // 발송 대상 유저 ID 해석
     let recipientIds: string[] = [];
     if (Array.isArray(target.userIds)) {
-      // 특정 유저 대상: 반드시 같은 회사 유저로 제한
+      // 특정 유저 대상: 반드시 발신자와 같은 회사 유저로 제한 (cron은 companyId 대상만 지원)
+      if (!callerCompanyId) {
+        return new Response(JSON.stringify({ error: 'cron 호출은 companyId 대상만 지원합니다' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const { data: users } = await admin
         .from('users')
         .select('id')
-        .eq('company_id', caller.company_id)
+        .eq('company_id', callerCompanyId)
         .in('id', target.userIds);
       recipientIds = (users ?? []).map((u: { id: string }) => u.id);
     } else if (target.companyId) {
-      // 회사/부서 대상: 발신자 회사와 일치해야 함
-      if (target.companyId !== caller.company_id) {
+      // 회사/부서 대상: 발신자 회사와 일치해야 함 (cron 호출은 예외)
+      if (!isCronCall && target.companyId !== callerCompanyId) {
         return new Response(JSON.stringify({ error: '다른 회사로 푸시를 보낼 수 없습니다' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

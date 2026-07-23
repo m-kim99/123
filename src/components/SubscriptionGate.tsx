@@ -23,7 +23,7 @@ const SUPPORT_EMAIL = 'support@traystorage.net';
  */
 export function SubscriptionGate() {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuthStore();
+  const { user, logout, trialEndsAt } = useAuthStore();
   const isAdmin = user?.role === 'admin';
   // 이노페이는 국내(원화) 결제 전용 — 비한국어 로케일에는 결제 대신 문의 안내 표시
   const isKorean = i18n.language === 'ko';
@@ -92,6 +92,16 @@ export function SubscriptionGate() {
           <CardTitle>{t('subscription.gateTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {trialEndsAt && (
+            <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
+              {t('subscription.gateEndedOn', {
+                date: new Date(trialEndsAt).toLocaleDateString(i18n.language),
+              })}
+            </p>
+          )}
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+            {t('subscription.gateDataSafe')}
+          </p>
           {isAdmin && hidePaymentUi ? (
             <>
               <p className="text-sm text-slate-600 dark:text-slate-300 text-center">

@@ -132,7 +132,18 @@
     "trueUpNotice": "Billing is based on your current team size. Member changes are reflected automatically at the next billing.",
     "memberCountBelowActual": "You cannot pay for fewer members than your current team ({{count}}).",
     "overseasGateNotice": "International payments are not supported yet. Please contact us at the email below and we will extend your access period.",
-    "nativeGateNotice": "Subscriptions cannot be purchased in this app. If you need help, please contact us at the email below."
+    "nativeGateNotice": "Subscriptions cannot be purchased in this app. If you need help, please contact us at the email below.",
+    "gateEndedOn": "Your access period ended on {{date}}",
+    "gateDataSafe": "Your data is safely stored and will be restored immediately when you subscribe."
+  },
+  "trialBanner": {
+    "remaining": "Free trial ends on {{date}} · {{days}} days left",
+    "warn": "{{days}} days until your free trial ends — access will be restricted afterward",
+    "lastDay": "Your free trial ends tomorrow.",
+    "today": "Your free trial ends today.",
+    "memberHint": "Download any files you need beforehand.",
+    "subscribe": "Subscribe",
+    "dismiss": "Dismiss"
   },
   "bottomBar": {
     "back": "Back",
