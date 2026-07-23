@@ -64,7 +64,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestInnopayPayment, cancelInnopaySubscription, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
+import { requestInnopayPayment, cancelInnopaySubscription, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { AIChatbot } from '@/components/AIChatbot';
@@ -1398,10 +1398,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                 </div>
               )}
-              <DropdownMenuItem onClick={openSubscriptionDialog}>
-                <Crown className="h-4 w-4 mr-2" />
-                {t('subscription.title')}
-              </DropdownMenuItem>
+              {!hidePaymentUi && (
+                <DropdownMenuItem onClick={openSubscriptionDialog}>
+                  <Crown className="h-4 w-4 mr-2" />
+                  {t('subscription.title')}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -1658,10 +1660,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
-                  <DropdownMenuItem onClick={openSubscriptionDialog}>
-                    <Crown className="h-4 w-4 mr-2" />
-                    {t('subscription.title')}
-                  </DropdownMenuItem>
+                  {!hidePaymentUi && (
+                    <DropdownMenuItem onClick={openSubscriptionDialog}>
+                      <Crown className="h-4 w-4 mr-2" />
+                      {t('subscription.title')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />

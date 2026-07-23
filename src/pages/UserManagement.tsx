@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { requestInnopayPayment, PLAN_PRICING, type PaidPlanName } from '@/lib/payments';
+import { requestInnopayPayment, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -299,7 +299,7 @@ export function UserManagement() {
                 <span className="text-slate-400">/</span>
                 <span className="text-lg font-semibold text-slate-700">{memberLimit.limit}</span>
               </div>
-              {memberLimit.current >= memberLimit.limit && (
+              {memberLimit.current >= memberLimit.limit && !hidePaymentUi && (
                 <Badge
                   variant="destructive"
                   className="text-xs cursor-pointer hover:opacity-80 transition-opacity"

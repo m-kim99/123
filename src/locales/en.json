@@ -131,7 +131,8 @@
     "gateTeamDesc": "Your company's free trial has ended and access is restricted. Service will resume once your administrator completes payment. Please contact your administrator.",
     "trueUpNotice": "Billing is based on your current team size. Member changes are reflected automatically at the next billing.",
     "memberCountBelowActual": "You cannot pay for fewer members than your current team ({{count}}).",
-    "overseasGateNotice": "International payments are not supported yet. Please contact us at the email below and we will extend your access period."
+    "overseasGateNotice": "International payments are not supported yet. Please contact us at the email below and we will extend your access period.",
+    "nativeGateNotice": "Subscriptions cannot be purchased in this app. If you need help, please contact us at the email below."
   },
   "bottomBar": {
     "back": "Back",

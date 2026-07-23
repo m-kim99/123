@@ -1,5 +1,10 @@
 // import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
+
+// App Store 심사 지침 3.1.1: iOS 앱 안에서는 IAP 외 결제 수단 UI 노출 금지 → 결제/플랜 구매 UI 전체 숨김.
+// 외부 결제 유도 문구/링크도 금지(3.1.3)이므로 대체 문구에는 구매처(웹 등)를 언급하지 말 것.
+export const hidePaymentUi = Capacitor.getPlatform() === 'ios';
 
 // ============================================================
 // 결제 연동 (PayApp 전용 — 토스페이먼츠 승인 대기 중)
