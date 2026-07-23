@@ -166,7 +166,22 @@ export async function writeNFCUrl(
 
   try {
     if (Capacitor.isNativePlatform()) {
-      await NfcPlugin.writeUrl({ url: uploadUrl });
+      // 네이티브 세션이 응답 없이 죽어도 Promise가 영구 pending되지 않도록 안전장치
+      // (iOS 세션 자체 타임아웃 60초보다 길게 잡아 네이티브 오류 메시지가 우선하도록)
+      let writeTimeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          NfcPlugin.writeUrl({ url: uploadUrl }),
+          new Promise<never>((_, timeoutReject) => {
+            writeTimeout = setTimeout(
+              () => timeoutReject(new Error('NFC 쓰기 응답 시간 초과')),
+              70000
+            );
+          }),
+        ]);
+      } finally {
+        clearTimeout(writeTimeout);
+      }
       console.log('NFC URL 쓰기 완료 (네이티브)');
       return true;
     }
@@ -230,12 +245,14 @@ export async function readNFCTag(): Promise<NFCTagData> {
         resolve(tagData);
       });
 
-      const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', () => {
+      const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
         if (resolved) return;
         resolved = true;
         clearTimeout(timeout);
         cleanup(tagHandle, cancelHandle);
-        reject(new Error('NFC 스캔이 취소되었습니다.'));
+        reject(new Error(event.reason === 'userCancelled'
+          ? 'NFC 스캔이 취소되었습니다.'
+          : `NFC 스캔 실패: ${event.reason}`));
       });
 
       try {
@@ -354,13 +371,15 @@ export async function readNFCUid(): Promise<string> {
           resolve(tag.uid);
         });
 
-        const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', () => {
+        const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
           if (resolved) return;
           resolved = true;
           clearTimeout(timeout);
           cleanup(tagHandle, cancelHandle);
           setNfcMode('idle');
-          reject(new Error('NFC 스캔이 취소되었습니다.'));
+          reject(new Error(event.reason === 'userCancelled'
+            ? 'NFC 스캔이 취소되었습니다.'
+            : `NFC 스캔 실패: ${event.reason}`));
         });
 
         try {
@@ -404,6 +423,7 @@ export async function readNFCUid(): Promise<string> {
   } catch (error) {
     console.error('NFC UID 읽기 실패:', error);
     setNfcMode('idle');
-    throw new Error('NFC UID를 읽을 수 없습니다.');
+    // 실제 실패 사유를 유지 - 일반 메시지로 덮으면 근본 원인 진단이 불가능해짐
+    throw error instanceof Error ? error : new Error('NFC UID를 읽을 수 없습니다.');
   }
 }

@@ -12,11 +12,11 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
     private var pendingWriteCall: CAPPluginCall?
 
     @objc func isEnabled(_ call: CAPPluginCall) {
-        call.resolve(["enabled": NFCNDEFReaderSession.readingAvailable])
+        call.resolve(["enabled": NFCTagReaderSession.readingAvailable])
     }
 
     @objc func startScan(_ call: CAPPluginCall) {
-        guard NFCNDEFReaderSession.readingAvailable else {
+        guard NFCTagReaderSession.readingAvailable else {
             call.reject("NFC not available on this device")
             return
         }
@@ -39,7 +39,7 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
         guard let url = call.getString("url"), !url.isEmpty else {
             call.reject("url parameter is required"); return
         }
-        guard NFCNDEFReaderSession.readingAvailable else {
+        guard NFCTagReaderSession.readingAvailable else {
             call.reject("NFC not available"); return
         }
         call.keepAlive = true
@@ -54,7 +54,7 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
         guard let data = call.getString("data"), !data.isEmpty else {
             call.reject("data parameter is required"); return
         }
-        guard NFCNDEFReaderSession.readingAvailable else {
+        guard NFCTagReaderSession.readingAvailable else {
             call.reject("NFC not available"); return
         }
         call.keepAlive = true
@@ -66,14 +66,30 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
     }
 
     private func startSession(alertMessage: String) {
-        tagSession?.invalidate()
-        tagSession = NFCTagReaderSession(
-            pollingOption: [.iso14443, .iso15693, .iso18092],
-            delegate: self,
-            queue: DispatchQueue.global(qos: .userInitiated)
-        )
-        tagSession?.alertMessage = alertMessage
-        tagSession?.begin()
+        // Capacitor 플러그인 메서드는 백그라운드 브리지 큐에서 호출되므로 세션 시작은 main 큐에서
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.tagSession?.invalidate()
+            // .iso18092(FeliCa)는 Info.plist에 felica.systemcodes 키가 없으면
+            // begin() 즉시 SecurityViolation으로 세션이 무효화되어 스캔 시트가 뜨지 않음 - 포함 금지
+            guard let session = NFCTagReaderSession(
+                pollingOption: [.iso14443, .iso15693],
+                delegate: self,
+                queue: DispatchQueue.global(qos: .userInitiated)
+            ) else {
+                if self.isWriting {
+                    self.pendingWriteCall?.reject("NFC 세션을 시작할 수 없습니다.")
+                    self.resetWriteState()
+                } else if self.isScanning {
+                    self.isScanning = false
+                    self.notifyListeners("nfcScanCancelled", data: ["reason": "NFC 세션을 시작할 수 없습니다."])
+                }
+                return
+            }
+            session.alertMessage = alertMessage
+            self.tagSession = session
+            session.begin()
+        }
     }
 
     // MARK: - NFCTagReaderSessionDelegate
