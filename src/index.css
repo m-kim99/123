@@ -33,6 +33,10 @@ html.dark {
   background-color: #0b1220;
 }
 
+html[lang="zh"] {
+  font-family: 'Noto Sans TC', 'Noto Sans', system-ui, -apple-system, sans-serif;
+}
+
 html.dark a {
   color: #3b82f6;
 }
