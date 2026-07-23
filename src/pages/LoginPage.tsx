@@ -762,7 +762,6 @@ export function LoginPage() {
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         <div className="relative z-10 flex items-end gap-2.5">
           <img src={rootLogo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-          <span className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-[6px] tracking-wide -translate-y-[25%]">BETA</span>
         </div>
         <div className="relative z-10">
           <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
@@ -802,7 +801,6 @@ export function LoginPage() {
             {/* 카드 내 로고 */}
             <div className="flex items-center justify-center mb-5">
               <img src={logo} alt={t('login.logoAlt')} className="h-[52px] w-auto object-contain" />
-              <span className="ml-2 self-start mt-[25px] text-[11px] font-bold text-[#2563eb] bg-[#dbeafe] px-1.5 py-0.5 rounded">BETA</span>
             </div>
 
             <Tabs defaultValue="admin" className="w-full">
@@ -929,7 +927,6 @@ export function LoginPage() {
         {/* 모바일 전용 로고 */}
         <div className="md:hidden mb-8 flex items-end gap-2">
           <img src={logo} alt={t('login.logoAlt')} className="h-12 w-auto object-contain" />
-          <span className="text-xs font-bold text-[#2563eb] bg-[#dbeafe] px-2 py-1 rounded -translate-y-[25%]">BETA</span>
         </div>
 
         <div className="w-full max-w-[420px] my-auto py-8">
