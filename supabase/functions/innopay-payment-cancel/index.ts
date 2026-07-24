@@ -190,6 +190,25 @@ serve(async (req) => {
       terminateSubscription = subscriptionAction === 'terminate';
     }
 
+    // ── 낙관적 락: 이노페이 취소 전에 cancel_amount 선점 (동시 부분환불 과다환불 차단) ──
+    // 내가 읽은 cancel_amount 값과 DB가 여전히 같을 때만 선점 성공 → 동시 요청 중 하나만 진행.
+    const claimedTotal = alreadyCanceled + cancelAmt;
+    let claimQ = supabaseAdmin
+      .from('payments')
+      .update({ cancel_amount: claimedTotal })
+      .eq('id', payment.id)
+      .eq('status', 'DONE');
+    claimQ = payment.cancel_amount == null
+      ? claimQ.is('cancel_amount', null)
+      : claimQ.eq('cancel_amount', alreadyCanceled);
+    const { data: claimRows } = await claimQ.select('id');
+    if (!claimRows || claimRows.length === 0) {
+      return jsonResponse(
+        { error: 'CONCURRENT_CANCEL', message: '다른 취소 요청이 처리 중입니다. 잠시 후 다시 시도해 주세요.' },
+        409,
+      );
+    }
+
     // ── 이노페이 취소 API 호출 ──
     // 전체취소: 최초 취소이면서 원금 전액일 때만 0, 그 외 부분취소
     const isFullCancel = alreadyCanceled === 0 && cancelAmt === Number(payment.amount);
@@ -198,33 +217,50 @@ serve(async (req) => {
       `${payment.payment_key}${INNOPAY_MID}${payment.order_id}${cancelAmtStr}${INNOPAY_MERCHANT_KEY}`,
     );
 
-    const cancelRes = await fetch(INNOPAY_CANCEL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({
-        tid: payment.payment_key,
-        mid: INNOPAY_MID,
-        moid: payment.order_id,
-        cancelAmt: cancelAmtStr,
-        cancelMsg,
-        partialCancelCode: isFullCancel ? '0' : '1',
-        refundAcctNum: '',
-        refundBankCode: '',
-        refundAcctName: '',
-        signData,
-      }),
-    });
-
     let cancel: CancelResponse;
     try {
-      cancel = (await cancelRes.json()) as CancelResponse;
-    } catch {
-      cancel = { resultCode: `HTTP_${cancelRes.status}`, resultMsg: '이노페이 응답을 해석할 수 없습니다.' };
+      const cancelRes = await fetch(INNOPAY_CANCEL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          tid: payment.payment_key,
+          mid: INNOPAY_MID,
+          moid: payment.order_id,
+          cancelAmt: cancelAmtStr,
+          cancelMsg,
+          partialCancelCode: isFullCancel ? '0' : '1',
+          refundAcctNum: '',
+          refundBankCode: '',
+          refundAcctName: '',
+          signData,
+        }),
+      });
+      try {
+        cancel = (await cancelRes.json()) as CancelResponse;
+      } catch {
+        cancel = { resultCode: `HTTP_${cancelRes.status}`, resultMsg: '이노페이 응답을 해석할 수 없습니다.' };
+      }
+    } catch (netErr) {
+      // 네트워크 예외 등으로 취소 요청 자체가 실패 → 선점한 cancel_amount 원복 후 종료
+      console.error('이노페이 취소 요청 오류:', netErr);
+      await supabaseAdmin
+        .from('payments')
+        .update({ cancel_amount: payment.cancel_amount ?? null })
+        .eq('id', payment.id);
+      return jsonResponse(
+        { error: 'INNOPAY_CANCEL_FAILED', message: '결제 취소 요청 중 오류가 발생했습니다.' },
+        502,
+      );
     }
 
     // 성공: 2001(전체취소) / 2211(부분취소)
     if (cancel.resultCode !== '2001' && cancel.resultCode !== '2211') {
       console.error('이노페이 취소 실패:', cancel.resultCode, cancel.resultMsg);
+      // 선점한 cancel_amount 원복 (취소 실패 → 재시도 가능하게)
+      await supabaseAdmin
+        .from('payments')
+        .update({ cancel_amount: payment.cancel_amount ?? null })
+        .eq('id', payment.id);
       return jsonResponse(
         {
           error: 'INNOPAY_CANCEL_FAILED',

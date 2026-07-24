@@ -202,7 +202,8 @@ export function PayAppBillingSuccessPage() {
 // ============================================================
 // 이노페이 자동결제 웹링크 결과 페이지
 // 서버(innopay-autopay-return)가 카드등록→1회차결제→구독활성화까지 끝낸 뒤
-// ?status=success|fail|cancel|error 로 리다이렉트해온다. 여기선 결과 표시만.
+// ?status=success|fail|cancel|error|processing 로 리다이렉트해온다. 여기선 결과 표시만.
+// (processing = 다른 요청이 동시에 처리 중 — 중복 청구 방지로 대기 안내)
 // ============================================================
 
 export function InnopayAutopayReturnPage() {
@@ -214,34 +215,43 @@ export function InnopayAutopayReturnPage() {
   const refreshed = useRef(false);
 
   useEffect(() => {
-    if (status === 'success' && !refreshed.current) {
+    if ((status === 'success' || status === 'processing') && !refreshed.current) {
       refreshed.current = true;
       useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
     }
   }, [status]);
 
   const isSuccess = status === 'success';
+  const isProcessing = status === 'processing';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          {isSuccess ? (
+          {isProcessing ? (
+            <Loader2 className="h-12 w-12 text-[#2563eb] mx-auto mb-2 animate-spin" />
+          ) : isSuccess ? (
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
           ) : (
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
           )}
           <CardTitle>
-            {isSuccess ? t('billing.approvedTitle') : t('billing.approvalFailTitle')}
+            {isProcessing
+              ? t('billing.processingTitle')
+              : isSuccess
+                ? t('billing.approvedTitle')
+                : t('billing.approvalFailTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-600 text-center">
-            {isSuccess
-              ? t('billing.approvedDesc')
-              : status === 'cancel'
-                ? t('billing.canceledDesc')
-                : t('billing.approvalFailDesc')}
+            {isProcessing
+              ? t('billing.processingDesc')
+              : isSuccess
+                ? t('billing.approvedDesc')
+                : status === 'cancel'
+                  ? t('billing.canceledDesc')
+                  : t('billing.approvalFailDesc')}
             {code && <span className="block mt-1 text-xs text-slate-400">({code})</span>}
           </p>
           <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>

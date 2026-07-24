@@ -79,23 +79,51 @@ serve(async (req) => {
       .eq('moid', moid)
       .maybeSingle();
 
-    if (!pending || pending.status !== 'pending') {
-      return redirect(origin, 'error');
-    }
+    if (!pending) return redirect(origin, 'error');
 
-    const markFailed = async () =>
-      supabaseAdmin.from('innopay_autopay_pending').update({ status: 'failed' }).eq('moid', moid);
+    // 멱등: 이미 처리된 등록건은 현재 상태로 응답 (Noti/재전송/새로고침 대비)
+    if (pending.status === 'completed') return redirect(origin, 'success', { plan: String(pending.plan_name) });
+    if (pending.status === 'failed') return redirect(origin, 'fail');
+    if (pending.status === 'charging') return redirect(origin, 'processing');
 
-    // 등록 실패/취소
+    const failPending = () =>
+      supabaseAdmin
+        .from('innopay_autopay_pending')
+        .update({ status: 'failed' })
+        .eq('moid', moid)
+        .neq('status', 'completed');
+
+    // 등록 실패/취소로 복귀한 경우
     if (resultCode !== '0000' || !billKey) {
-      await markFailed();
+      await failPending();
       return redirect(origin, 'fail');
     }
 
     // userId 일치 검증 (하이픈 제거 형태)
-    if (postedUserId && postedUserId !== pending.user_id.replace(/-/g, '')) {
-      await markFailed();
+    if (postedUserId && postedUserId !== String(pending.user_id).replace(/-/g, '')) {
+      await failPending();
       return redirect(origin, 'error');
+    }
+
+    // ── 원자적 클레임: pending → charging (동시 2회 POST 이중청구 차단) ──
+    // charge_moid도 여기서 확정 저장 → Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필.
+    const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const { data: claimed } = await supabaseAdmin
+      .from('innopay_autopay_pending')
+      .update({ status: 'charging', charge_moid: payMoid })
+      .eq('moid', moid)
+      .eq('status', 'pending')
+      .select('moid');
+
+    if (!claimed || claimed.length === 0) {
+      // 다른 요청이 이미 선점 — 중복 청구 방지, 현재 상태로 안내
+      const { data: cur } = await supabaseAdmin
+        .from('innopay_autopay_pending')
+        .select('status, plan_name')
+        .eq('moid', moid)
+        .maybeSingle();
+      if (cur?.status === 'completed') return redirect(origin, 'success', { plan: String(cur.plan_name) });
+      return redirect(origin, 'processing');
     }
 
     // 결제자 정보
@@ -109,13 +137,6 @@ serve(async (req) => {
     const innopayUserId = String(pending.user_id).replace(/-/g, '');
 
     // 1회차 결제 승인 — 실청구 성공이 billKey 진위 검증 역할
-    // charge_moid를 미리 저장: Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필할 수 있게 함
-    const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-    await supabaseAdmin
-      .from('innopay_autopay_pending')
-      .update({ charge_moid: payMoid })
-      .eq('moid', moid);
-
     const pay = await callAutopay('payAutoCardBill', {
       mid: INNOPAY_MID,
       moid: payMoid,
@@ -133,7 +154,7 @@ serve(async (req) => {
       try {
         await callAutopay('delAutoCardBill', { mid: INNOPAY_MID, billKey, userId: innopayUserId });
       } catch { /* 무시 */ }
-      await markFailed();
+      await supabaseAdmin.from('innopay_autopay_pending').update({ status: 'failed' }).eq('moid', moid);
       return redirect(origin, 'fail', { code: String(pay.resultCode ?? '') });
     }
 

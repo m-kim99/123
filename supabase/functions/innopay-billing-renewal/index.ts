@@ -267,12 +267,22 @@ async function sendTrialPush(companyId: string, message: string, cronKey: string
  * 빌키 자동결제 청구 — 등록 시 사용한 userId(가입자 UUID에서 하이픈 제거)와 일치해야 함.
  * buyer 정보(name/email)는 결제 고객(payment_customer_id) 기준, 없으면 회사 관리자 아무나.
  */
+/**
+ * 결정적 갱신 moid — 같은 구독·같은 청구주기(current_period_end)면 항상 동일 moid.
+ * 이노페이가 동일 moid 재요청을 중복으로 거부하므로 이중청구를 PG 단에서도 차단한다.
+ */
+function renewalMoid(sub: SubscriptionRow): string {
+  const period = String(sub.current_period_end || '').replace(/[^0-9]/g, '').slice(0, 8); // YYYYMMDD
+  const sid = String(sub.id).replace(/-/g, '').slice(0, 24);
+  return `dmsa${sid}${period}`;
+}
+
 async function chargeBillkey(
   supabase: SupabaseClient,
   mid: string,
   sub: SubscriptionRow,
 ): Promise<{ ok: boolean; tid: string | null; cardCompany: string | null; cardNum: string | null; moid: string; code?: string; msg?: string }> {
-  const moid = makeMoid('dmsa');
+  const moid = renewalMoid(sub);
   const planName = sub.plans?.name || 'basic';
   const amount = sub.monthly_amount;
 
@@ -409,6 +419,30 @@ serve(async (req) => {
             continue;
           }
 
+          // 멱등 가드: 이 청구주기(결정적 moid)가 이미 결제됐으면 재청구 금지 — 기간만 자가복구.
+          // (직전 회차에 청구는 성공했으나 기간갱신이 유실된 경우를 안전하게 복구)
+          const rmoid = renewalMoid(sub);
+          const { data: paidAlready } = await supabaseAdmin
+            .from('payments')
+            .select('id')
+            .eq('order_id', rmoid)
+            .maybeSingle();
+          if (paidAlready) {
+            const healEnd = new Date(periodEnd);
+            healEnd.setMonth(healEnd.getMonth() + 1);
+            await supabaseAdmin
+              .from('subscriptions')
+              .update({
+                current_period_start: periodEnd.toISOString(),
+                current_period_end: healEnd.toISOString(),
+                renewal_attempts: 0,
+                last_renewal_attempt_at: now.toISOString(),
+              })
+              .eq('id', sub.id);
+            results.push({ subscriptionId: sub.id, action: 'already_charged_healed' });
+            continue;
+          }
+
           const attempts = (sub.renewal_attempts ?? 0) + 1;
           const charge = await chargeBillkey(supabaseAdmin, INNOPAY_MID, sub);
 
@@ -418,7 +452,7 @@ serve(async (req) => {
             const newEnd = new Date(periodEnd);
             newEnd.setMonth(newEnd.getMonth() + 1);
 
-            await supabaseAdmin
+            const { error: periodErr } = await supabaseAdmin
               .from('subscriptions')
               .update({
                 current_period_start: newStart.toISOString(),
@@ -427,6 +461,10 @@ serve(async (req) => {
                 last_renewal_attempt_at: now.toISOString(),
               })
               .eq('id', sub.id);
+            if (periodErr) {
+              // 청구 성공했으나 기간갱신 실패 — 다음 회차 멱등 가드가 재청구 없이 자가복구함
+              console.error(`[재청구 위험] 기간갱신 실패 (청구완료 tid:${charge.tid}, moid:${charge.moid}):`, periodErr);
+            }
 
             await supabaseAdmin.from('payments').insert({
               company_id: sub.company_id,
