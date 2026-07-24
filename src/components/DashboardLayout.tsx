@@ -66,7 +66,8 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { requestInnopayPayment, cancelInnopaySubscription, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { registerInnopayBilling, cancelInnopaySubscription, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { InnopayCardFields, emptyCardForm, cardFormToApi } from '@/components/InnopayCardFields';
 import { TrialCountdownBanner } from '@/components/TrialCountdownBanner';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
@@ -178,6 +179,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const parsedBasicMembers = Math.max(0, parseInt(basicMembers, 10) || 0);
   const parsedProMembers = Math.max(0, parseInt(proMembers, 10) || 0);
   const [customerPhone, setCustomerPhone] = useState('');
+  const [cardForm, setCardForm] = useState(emptyCardForm);
 
   // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상이어야 함.
   // 인원 변경은 다음 결제(재결제) 시 현재 인원 기준으로 반영된다.
@@ -211,11 +213,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
+    const card = cardFormToApi(cardForm);
+    if (!card) {
+      toast({ title: t('subscription.cardInfoInvalid'), variant: 'destructive' });
+      return;
+    }
     setIsRequestingPayment(true);
-    // 모달이 열려 있으면 body pointer-events:none 때문에 이노페이 결제창이 클릭 불가 — 결제창 호출 전 닫기
-    setSubscriptionDialogOpen(false);
     try {
-      await requestInnopayPayment({
+      const res = await registerInnopayBilling({
         plan,
         customerKey: user.id,
         customerEmail: user.email,
@@ -224,14 +229,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         memberCount,
         amount: memberCount * pricePerMember,
         goodsName: plan === 'basic' ? t('subscription.productNameBasic') : t('subscription.productNamePro'),
+        card,
       });
+      if (res.success) {
+        toast({ title: t('billing.approvedTitle') });
+        setBasicAgreed(false);
+        setCardForm(emptyCardForm);
+        setSelectedPlan(null);
+        // 구독/제한 상태 갱신 + 다이얼로그를 최신 구독 개요로 전환
+        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
+        openSubscriptionDialog();
+      } else {
+        toast({
+          title: res.message || t('subscription.paymentRequestFailed'),
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('결제 요청 실패:', error);
       toast({
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
       });
-      setSubscriptionDialogOpen(true); // 실패 시 입력 상태 유지한 채 다이얼로그 복원
     } finally {
       setIsRequestingPayment(false);
     }
@@ -2059,7 +2078,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); setProMembers('5'); } }}>
+      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); setProMembers('5'); setCardForm(emptyCardForm); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedPlan ? (
             <>
@@ -2129,6 +2148,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           onChange={(e) => setCustomerPhone(e.target.value)}
                         />
                       </div>
+                      <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="dash-basic" />
                       <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                         <span className="text-xl font-bold text-[#2563eb]">
@@ -2205,6 +2225,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           onChange={(e) => setCustomerPhone(e.target.value)}
                         />
                       </div>
+                      <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="dash-pro" />
                       <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                         <span className="text-xl font-bold text-[#2563eb]">
@@ -2282,6 +2303,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         (selectedPlan === 'pro' &&
                           (parsedProMembers < PRO_MIN_MEMBERS || parsedProMembers > PRO_MAX_MEMBERS || proBelowActual)) ||
                         !basicAgreed ||
+                        !cardFormToApi(cardForm) ||
                         isRequestingPayment
                       }
                       onClick={() => handlePlanSubscribe(selectedPlan === 'pro' ? 'pro' : 'basic')}

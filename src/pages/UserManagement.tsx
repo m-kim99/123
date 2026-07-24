@@ -16,7 +16,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { requestInnopayPayment, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { registerInnopayBilling, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { InnopayCardFields, emptyCardForm, cardFormToApi } from '@/components/InnopayCardFields';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +68,7 @@ export function UserManagement() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
+  const [cardForm, setCardForm] = useState(emptyCardForm);
   const upgradePricing = PLAN_PRICING[upgradePlan];
   const exceedsPlanLimit =
     upgradePricing.maxMembers !== null && parsedMembers > upgradePricing.maxMembers;
@@ -89,11 +91,14 @@ export function UserManagement() {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
+    const card = cardFormToApi(cardForm);
+    if (!card) {
+      toast({ title: t('subscription.cardInfoInvalid'), variant: 'destructive' });
+      return;
+    }
     setIsRequestingPayment(true);
-    // 모달이 열려 있으면 body pointer-events:none 때문에 이노페이 결제창이 클릭 불가 — 결제창 호출 전 닫기
-    setUpgradeDialogOpen(false);
     try {
-      await requestInnopayPayment({
+      const res = await registerInnopayBilling({
         plan: upgradePlan,
         customerKey: authUser.id,
         customerEmail: authUser.email,
@@ -105,14 +110,27 @@ export function UserManagement() {
           upgradePlan === 'basic'
             ? t('subscription.productNameBasic')
             : t('subscription.productNamePro'),
+        card,
       });
+      if (res.success) {
+        toast({ title: t('billing.approvedTitle') });
+        setUpgradeDialogOpen(false);
+        setCardForm(emptyCardForm);
+        // 구독/제한 상태 갱신 (배너·게이트)
+        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
+        fetchUsers();
+      } else {
+        toast({
+          title: res.message || t('subscription.paymentRequestFailed'),
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('결제 요청 실패:', error);
       toast({
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
       });
-      setUpgradeDialogOpen(true); // 실패 시 입력 상태 유지한 채 다이얼로그 복원
     } finally {
       setIsRequestingPayment(false);
     }
@@ -617,6 +635,7 @@ export function UserManagement() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                   />
                 </div>
+                <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="upgrade" />
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                   <span className="text-xl font-bold text-[#2563eb]">
@@ -647,7 +666,7 @@ export function UserManagement() {
               </Button>
               <Button
                 className="rounded-[10px] h-9"
-                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || isRequestingPayment}
+                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || !cardFormToApi(cardForm) || isRequestingPayment}
                 onClick={handleSubscribe}
               >
                 {isRequestingPayment ? t('common.loading') : t('subscription.pay')}

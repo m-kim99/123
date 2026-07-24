@@ -118,10 +118,12 @@ export async function requestPayAppBilling(params: PayAppBillingParams): Promise
 }
 
 // ============================================================
-// 이노페이(INNOPAY) V2 결제 연동 (결제창 SDK + 승인 API)
-// requestInnopayPayment(goPay 결제창) → confirmInnopayPayment(승인 API)
-// 계약 범위가 결제창(1회성)뿐이라 자동갱신 없음 — 월 단위 수동 재결제 구조.
-// 만료 안내/전환은 innopay-billing-renewal 크론이 담당.
+// 이노페이(INNOPAY) 연동
+// [현행] 빌키 자동결제(구독제): registerInnopayBilling — 카드 등록(빌키 발급)
+//        + 1회차 결제 + 구독 활성화를 한 번에 처리. 이후 매월 갱신은
+//        innopay-billing-renewal 크론이 같은 빌키로 자동 청구.
+// [레거시] V2 결제창(단회): requestInnopayPayment → confirmInnopayPayment
+//        — 새 UI에서는 사용하지 않음 (진행 중 결제 복귀 경로 유지용)
 // ============================================================
 
 // MID는 결제창에 노출되는 공개 값 (비밀키는 엣지함수에만 보관)
@@ -306,9 +308,66 @@ export async function confirmInnopayPayment(
 }
 
 // ============================================================
-// 이노페이 정기결제 관리 (해지 / 자동갱신)
-// 자동갱신 결제(빌링)는 이노페이 자동결제 API 스펙 확보 후 연동.
-// 해지는 DB 상태만 변경하므로 현재 적용 가능.
+// 이노페이 빌키 자동결제 (구독제)
+// 카드정보는 엣지함수를 통해 이노페이로만 전달되며 어디에도 저장하지 않는다.
+// 카드 등록 시 PG가 유효성 확인용 10원 승인 후 즉시 자동취소한다(실청구 없음).
+// ============================================================
+
+/** 카드 등록 입력값 (즉시등록 방식) */
+export interface InnopayCardParams {
+  cardNum: string; // 카드번호 (숫자만 15~16자리)
+  cardExpire: string; // 유효기간 YYMM
+  cardPwd: string; // 카드 비밀번호 앞 2자리
+  idNum: string; // 개인: 생년월일 6자리 / 법인: 사업자번호 10자리
+}
+
+export interface RegisterInnopayBillingParams {
+  plan: PaidPlanName;
+  customerKey: string;
+  customerEmail?: string;
+  customerName: string;
+  customerPhone: string;
+  memberCount: number;
+  amount: number;
+  goodsName: string;
+  card: InnopayCardParams;
+}
+
+/**
+ * 이노페이 빌키 등록 + 1회차 결제 + 구독 활성화 (동기 완료 — 리다이렉트 없음)
+ */
+export async function registerInnopayBilling(
+  params: RegisterInnopayBillingParams,
+): Promise<ConfirmBillingResult> {
+  const { card, ...rest } = params;
+  const { data, error } = await supabase.functions.invoke('innopay-billkey-register', {
+    body: {
+      ...rest,
+      cardNum: card.cardNum,
+      cardExpire: card.cardExpire,
+      cardPwd: card.cardPwd,
+      idNum: card.idNum,
+    },
+  });
+
+  if (error) {
+    try {
+      const context = (error as { context?: Response }).context;
+      if (context) {
+        const body = await context.json();
+        return { success: false, ...body };
+      }
+    } catch {
+      // 본문 파싱 실패 시 아래 기본 오류 반환
+    }
+    return { success: false, error: 'REQUEST_FAILED', message: error.message };
+  }
+
+  return data as ConfirmBillingResult;
+}
+
+// ============================================================
+// 이노페이 정기결제 해지 (DB 상태만 변경 — 기간 만료 시 크론이 빌키 삭제)
 // ============================================================
 
 export interface CancelSubscriptionResult {
