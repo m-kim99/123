@@ -922,6 +922,9 @@
     "deleteSubWarning": "This action cannot be undone. All documents ({{count}}) in this storage will also be deleted."
   },
   "subcategoryMgmt": {
+    "statTotal": "Total",
+    "storageStatus": "Storage Status",
+    "allStatus": "All Statuses",
     "title": "Storage Management",
     "subtitle": "Browse and manage storages by department and parent category.",
     "filter": "Filter",

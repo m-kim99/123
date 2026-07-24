@@ -3,42 +3,29 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 serve(async (req) => {
   try {
-    const requestUrl = new URL(req.url);
-    const envProjectUrl = Deno.env.get('PROJECT_URL')?.trim() ?? null;
-    const supabaseUrl = envProjectUrl || `${requestUrl.protocol}//${requestUrl.host}`;
-
-    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '';
-    const match = authHeader.match(/^Bearer\s+(.+)$/i);
-    const envServiceRoleKey = Deno.env.get('SERVICE_ROLE_KEY')?.trim() ?? null;
-
-    const rawKey =
-      envServiceRoleKey ??
-      match?.[1] ??
-      req.headers.get('apikey') ??
-      req.headers.get('x-apikey') ??
-      null;
-    const supabaseServiceRoleKey =
-      typeof rawKey === 'string' ? rawKey.trim().replace(/^"|"$/g, '') : null;
-
-    if (!supabaseServiceRoleKey) {
-      throw new Error('Missing Authorization bearer token (or apikey header)');
+    // cron 비밀키 검증 (innopay-billing-renewal과 동일한 x-cron-key 방식)
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    if (!cronSecret || req.headers.get('x-cron-key') !== cronSecret) {
+      return new Response(JSON.stringify({ error: 'UNAUTHORIZED' }), { status: 401 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      global: { headers: { Authorization: `Bearer ${supabaseServiceRoleKey}` } },
-    });
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
 
     const now = new Date();
     const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    // 1. 7일 이내 만료되는 세부 카테고리 조회
+    // 1. 7일 이내 만료되는 세부 카테고리 조회 (폐기 처리된 것 제외)
     const { data: expiringSoon, error: expiringSoonError } = await supabase
       .from('subcategories')
       .select('id, name, expiry_date, department_id, parent_category_id, company_id')
       .gte('expiry_date', now.toISOString())
       .lte('expiry_date', sevenDaysLater.toISOString())
-      .not('expiry_date', 'is', null);
+      .not('expiry_date', 'is', null)
+      .neq('storage_status', 'disposed');
 
     if (expiringSoonError) {
       console.error('Error fetching expiring soon subcategories:', expiringSoonError);
@@ -47,13 +34,14 @@ serve(async (req) => {
       );
     }
 
-    // 2. 30일 이내 만료되는 세부 카테고리 조회
+    // 2. 30일 이내 만료되는 세부 카테고리 조회 (폐기 처리된 것 제외)
     const { data: expiringLater, error: expiringLaterError } = await supabase
       .from('subcategories')
       .select('id, name, expiry_date, department_id, parent_category_id, company_id')
       .gt('expiry_date', sevenDaysLater.toISOString())
       .lte('expiry_date', thirtyDaysLater.toISOString())
-      .not('expiry_date', 'is', null);
+      .not('expiry_date', 'is', null)
+      .neq('storage_status', 'disposed');
 
     if (expiringLaterError) {
       console.error('Error fetching expiring later subcategories:', expiringLaterError);
@@ -102,7 +90,7 @@ serve(async (req) => {
           department_id: subcat.department_id,
           parent_category_id: subcat.parent_category_id,
           subcategory_id: subcat.id,
-          message: `⚠️ "${subcat.name}" 카테고리 만료 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개 삭제 예정)`,
+          message: `⚠️ "${subcat.name}" 보관함 폐기 예정 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개)`,
           created_at: now.toISOString(),
         });
 
@@ -149,7 +137,7 @@ serve(async (req) => {
           department_id: subcat.department_id,
           parent_category_id: subcat.parent_category_id,
           subcategory_id: subcat.id,
-          message: `⏰ "${subcat.name}" 카테고리 만료 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개)`,
+          message: `⏰ "${subcat.name}" 보관함 폐기 예정 ${daysUntilExpiry}일 전 (문서 ${docCount || 0}개)`,
           created_at: now.toISOString(),
         });
 
@@ -166,7 +154,8 @@ serve(async (req) => {
       .from('subcategories')
       .select('id, name, department_id, parent_category_id, company_id')
       .lt('expiry_date', now.toISOString())
-      .not('expiry_date', 'is', null);
+      .not('expiry_date', 'is', null)
+      .neq('storage_status', 'disposed');
 
     if (expiredError) {
       console.error('Error fetching expired subcategories:', expiredError);
@@ -202,7 +191,7 @@ serve(async (req) => {
             department_id: subcat.department_id,
             parent_category_id: subcat.parent_category_id,
             subcategory_id: subcat.id,
-            message: `🔒 "${subcat.name}" 카테고리가 만료되었습니다 (문서 ${docCount || 0}개 접근 차단)`,
+            message: `🔒 "${subcat.name}" 보관함이 보존연한 경과로 폐기 예정입니다 (문서 ${docCount || 0}개 접근 차단)`,
             created_at: now.toISOString(),
           });
 

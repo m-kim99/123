@@ -33,6 +33,20 @@ export async function generateManagementNumber(
   return `${year}-${deptLabel}-${seq}`;
 }
 
+export type StorageDisplayStatus = 'stored' | 'checkedOut' | 'disposalPending' | 'disposed';
+
+/** 표시용 보관 상태: 폐기됨 > 반출중 > 폐기 예정(보존연한 경과) > 보관중 */
+export function getStorageDisplayStatus(
+  sub: Pick<Subcategory, 'storageStatus' | 'expiryDate'>
+): StorageDisplayStatus {
+  if (sub.storageStatus === 'disposed') return 'disposed';
+  if (sub.storageStatus === 'checked_out') return 'checkedOut';
+  if (sub.expiryDate && new Date(sub.expiryDate).getTime() < Date.now()) {
+    return 'disposalPending';
+  }
+  return 'stored';
+}
+
 export interface Department {
   id: string;
   name: string;

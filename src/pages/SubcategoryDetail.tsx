@@ -11,7 +11,7 @@ import shareIcon from '@/assets/icons/share.svg';
 import previewIcon from '@/assets/icons/preview.svg';
 import changeIcon from '@/assets/icons/change.svg';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { useDocumentStore, generateManagementNumber } from '@/store/documentStore';
+import { useDocumentStore, generateManagementNumber, getStorageDisplayStatus } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
 import { fetchStorageEvents, type StorageEvent, type StorageEventType } from '@/lib/storageEvents';
 import { Button } from '@/components/ui/button';
@@ -220,15 +220,10 @@ export function SubcategoryDetail() {
   );
 
   // 표시용 보관 상태: 폐기됨 > 반출중 > 폐기 예정(보존연한 경과) > 보관중
-  const displayStatus = useMemo<'stored' | 'checkedOut' | 'disposalPending' | 'disposed'>(() => {
-    if (!subcategory) return 'stored';
-    if (subcategory.storageStatus === 'disposed') return 'disposed';
-    if (subcategory.storageStatus === 'checked_out') return 'checkedOut';
-    if (subcategory.expiryDate && new Date(subcategory.expiryDate).getTime() < Date.now()) {
-      return 'disposalPending';
-    }
-    return 'stored';
-  }, [subcategory]);
+  const displayStatus = useMemo(
+    () => (subcategory ? getStorageDisplayStatus(subcategory) : 'stored'),
+    [subcategory]
+  );
 
   // 폐기 예정일 D-day (양수: 남음, 음수: 경과)
   const disposalDday = useMemo(() => {

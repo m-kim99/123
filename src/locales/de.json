@@ -921,6 +921,9 @@
     "deleteSubWarning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Dokumente ({{count}}) in dieser Ablage werden ebenfalls gelöscht."
   },
   "subcategoryMgmt": {
+    "statTotal": "Gesamt",
+    "storageStatus": "Lagerstatus",
+    "allStatus": "Alle Status",
     "title": "Ablageverwaltung",
     "subtitle": "Ablagen nach Abteilung und übergeordneter Kategorie durchsuchen und verwalten.",
     "filter": "Filter",

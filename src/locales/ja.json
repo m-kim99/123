@@ -921,6 +921,9 @@
     "deleteSubWarning": "この操作は元に戻せません。含まれるすべてのドキュメント({{count}}個)も一緒に削除されます。"
   },
   "subcategoryMgmt": {
+    "statTotal": "全体",
+    "storageStatus": "保管状態",
+    "allStatus": "すべての状態",
     "title": "詳細ストレージ管理",
     "subtitle": "部署と大分類別に詳細ストレージを照会・管理します。",
     "filter": "フィルター",

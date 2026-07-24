@@ -922,6 +922,9 @@
     "deleteSubWarning": "该操作无法撤销，包含的所有文档（{{count}} 个）也将同时删除。"
   },
   "subcategoryMgmt": {
+    "statTotal": "全部",
+    "storageStatus": "保管状态",
+    "allStatus": "全部状态",
     "title": "存储单元管理",
     "subtitle": "按部门和大分类查询和管理存储单元。",
     "filter": "筛选",
