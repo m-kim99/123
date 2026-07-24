@@ -199,6 +199,60 @@ export function PayAppBillingSuccessPage() {
 // tid/paymentToken을 받아 승인 API(엣지함수)를 호출하고 구독을 활성화한다.
 // ============================================================
 
+// ============================================================
+// 이노페이 자동결제 웹링크 결과 페이지
+// 서버(innopay-autopay-return)가 카드등록→1회차결제→구독활성화까지 끝낸 뒤
+// ?status=success|fail|cancel|error 로 리다이렉트해온다. 여기선 결과 표시만.
+// ============================================================
+
+export function InnopayAutopayReturnPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const status = searchParams.get('status') || 'error';
+  const code = searchParams.get('code');
+  const refreshed = useRef(false);
+
+  useEffect(() => {
+    if (status === 'success' && !refreshed.current) {
+      refreshed.current = true;
+      useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
+    }
+  }, [status]);
+
+  const isSuccess = status === 'success';
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader className="text-center">
+          {isSuccess ? (
+            <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
+          ) : (
+            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
+          )}
+          <CardTitle>
+            {isSuccess ? t('billing.approvedTitle') : t('billing.approvalFailTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-600 text-center">
+            {isSuccess
+              ? t('billing.approvedDesc')
+              : status === 'cancel'
+                ? t('billing.canceledDesc')
+                : t('billing.approvalFailDesc')}
+            {code && <span className="block mt-1 text-xs text-slate-400">({code})</span>}
+          </p>
+          <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>
+            {t('billing.backToApp')}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function InnopayReturnPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();

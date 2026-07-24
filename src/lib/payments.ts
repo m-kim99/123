@@ -119,9 +119,9 @@ export async function requestPayAppBilling(params: PayAppBillingParams): Promise
 
 // ============================================================
 // 이노페이(INNOPAY) 연동
-// [현행] 빌키 자동결제(구독제): registerInnopayBilling — 카드 등록(빌키 발급)
-//        + 1회차 결제 + 구독 활성화를 한 번에 처리. 이후 매월 갱신은
-//        innopay-billing-renewal 크론이 같은 빌키로 자동 청구.
+// [현행] 자동결제 웹링크(구독제): startInnopayAutopay — 이노페이 호스팅 결제창에서
+//        카드 등록(빌키 발급) → 서버(innopay-autopay-return)가 1회차 결제 + 구독 활성화.
+//        이후 매월 갱신은 innopay-billing-renewal 크론이 같은 빌키로 자동 청구.
 // [레거시] V2 결제창(단회): requestInnopayPayment → confirmInnopayPayment
 //        — 새 UI에서는 사용하지 않음 (진행 중 결제 복귀 경로 유지용)
 // ============================================================
@@ -308,46 +308,30 @@ export async function confirmInnopayPayment(
 }
 
 // ============================================================
-// 이노페이 빌키 자동결제 (구독제)
-// 카드정보는 엣지함수를 통해 이노페이로만 전달되며 어디에도 저장하지 않는다.
-// 카드 등록 시 PG가 유효성 확인용 10원 승인 후 즉시 자동취소한다(실청구 없음).
+// 이노페이 자동결제 웹링크 (구독제)
+// 카드 등록은 이노페이 호스팅 UI(결제창)에서만 이뤄진다 — 앱/서버는 카드번호를 만지지 않는다.
+// 등록(RAUT) → 이노페이 결제창 → billKey 발급 → 서버가 1회차 청구·구독 활성화(innopay-autopay-return).
 // ============================================================
 
-/** 카드 등록 입력값 (즉시등록 방식) */
-export interface InnopayCardParams {
-  cardNum: string; // 카드번호 (숫자만 15~16자리)
-  cardExpire: string; // 유효기간 YYMM
-  cardPwd: string; // 카드 비밀번호 앞 2자리
-  idNum: string; // 개인: 생년월일 6자리 / 법인: 사업자번호 10자리
-}
-
-export interface RegisterInnopayBillingParams {
+export interface StartInnopayAutopayParams {
   plan: PaidPlanName;
   customerKey: string;
   customerEmail?: string;
   customerName: string;
   customerPhone: string;
   memberCount: number;
-  amount: number;
-  goodsName: string;
-  card: InnopayCardParams;
 }
 
 /**
- * 이노페이 빌키 등록 + 1회차 결제 + 구독 활성화 (동기 완료 — 리다이렉트 없음)
+ * 이노페이 자동결제 웹링크(RAUT) 시작.
+ * 성공 시 이노페이 카드등록 결제창으로 이동한다(리다이렉트, 반환 없음).
+ * 실패 시에만 오류 객체를 반환한다.
  */
-export async function registerInnopayBilling(
-  params: RegisterInnopayBillingParams,
-): Promise<ConfirmBillingResult> {
-  const { card, ...rest } = params;
-  const { data, error } = await supabase.functions.invoke('innopay-billkey-register', {
-    body: {
-      ...rest,
-      cardNum: card.cardNum,
-      cardExpire: card.cardExpire,
-      cardPwd: card.cardPwd,
-      idNum: card.idNum,
-    },
+export async function startInnopayAutopay(
+  params: StartInnopayAutopayParams,
+): Promise<{ success: false; error: string; message?: string } | void> {
+  const { data, error } = await supabase.functions.invoke('innopay-autopay-start', {
+    body: { ...params, appOrigin: window.location.origin },
   });
 
   if (error) {
@@ -363,7 +347,11 @@ export async function registerInnopayBilling(
     return { success: false, error: 'REQUEST_FAILED', message: error.message };
   }
 
-  return data as ConfirmBillingResult;
+  const url = (data as { url?: string })?.url;
+  if (!url) return { success: false, error: 'NO_URL' };
+
+  // 이노페이 호스팅 카드등록 결제창으로 이동
+  window.location.href = url;
 }
 
 // ============================================================

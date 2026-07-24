@@ -1014,6 +1014,23 @@ model subscriptions {
   @@schema("public")
 }
 
+/// 이노페이 자동결제 웹링크(RAUT) 등록 대기 컨텍스트 — returnUrl 처리에서 moid로 조회.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model innopay_autopay_pending {
+  moid         String   @id
+  company_id   String   @db.Uuid
+  user_id      String   @db.Uuid
+  plan_name    String
+  member_count Int
+  amount       Int
+  status       String   @default("pending")
+  bill_key     String?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([company_id, created_at(sort: Desc)], map: "idx_innopay_autopay_pending_company")
+  @@schema("public")
+}
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model system_notices {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

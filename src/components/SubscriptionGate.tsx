@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, Crown, Mail } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { registerInnopayBilling, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
-import { InnopayCardFields, emptyCardForm, cardFormToApi } from '@/components/InnopayCardFields';
+import { startInnopayAutopay, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
@@ -32,7 +31,6 @@ export function SubscriptionGate() {
   const [plan, setPlan] = useState<PaidPlanName>('pro');
   const [members, setMembers] = useState('3');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [cardForm, setCardForm] = useState(emptyCardForm);
   const [agreed, setAgreed] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const [actualMemberCount, setActualMemberCount] = useState(0);
@@ -64,41 +62,24 @@ export function SubscriptionGate() {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
-    const card = cardFormToApi(cardForm);
-    if (!card) {
-      toast({ title: t('subscription.cardInfoInvalid'), variant: 'destructive' });
-      return;
-    }
     setIsRequestingPayment(true);
     try {
-      const res = await registerInnopayBilling({
+      // 성공 시 이노페이 카드등록 결제창으로 리다이렉트됨(아래로 복귀 안 함). 실패 시에만 반환.
+      const res = await startInnopayAutopay({
         plan,
         customerKey: user.id,
         customerEmail: user.email,
         customerName: user.name,
         customerPhone,
         memberCount: parsedMembers,
-        amount: parsedMembers * pricing.pricePerMember,
-        goodsName:
-          plan === 'basic'
-            ? t('subscription.productNameBasic')
-            : t('subscription.productNamePro'),
-        card,
       });
-      if (res.success) {
-        toast({ title: t('billing.approvedTitle') });
-        // 구독 활성화 → 차단 상태 갱신 (게이트 해제)
-        await useAuthStore.getState().refreshSubscriptionAccess();
-      } else {
-        toast({
-          title: res.message || t('subscription.paymentRequestFailed'),
-          variant: 'destructive',
-        });
+      if (res && !res.success) {
+        toast({ title: res.message || t('subscription.paymentRequestFailed'), variant: 'destructive' });
+        setIsRequestingPayment(false);
       }
     } catch (error) {
       console.error('결제 요청 실패:', error);
       toast({ title: t('subscription.paymentRequestFailed'), variant: 'destructive' });
-    } finally {
       setIsRequestingPayment(false);
     }
   };
@@ -220,7 +201,6 @@ export function SubscriptionGate() {
                   onChange={(e) => setCustomerPhone(e.target.value)}
                 />
               </div>
-              <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="gate" />
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {t('subscription.monthlyTotal')}
@@ -246,12 +226,13 @@ export function SubscriptionGate() {
                   {t('subscription.agreeTerms')}
                 </Label>
               </div>
+              <p className="text-xs text-slate-500 text-center">{t('subscription.weblinkNotice')}</p>
               <Button
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreed || !cardFormToApi(cardForm) || isRequestingPayment}
+                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreed || !customerPhone || isRequestingPayment}
                 onClick={handlePay}
               >
-                {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
+                {isRequestingPayment ? t('common.loading') : t('subscription.payWeblink')}
               </Button>
             </>
           ) : (

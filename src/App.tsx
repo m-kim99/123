@@ -22,7 +22,7 @@ import { OnboardingStructurePage } from './pages/OnboardingStructurePage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AccountDeletionPage } from './pages/AccountDeletionPage';
 import { SignupPage } from './pages/SignupPage';
-import { BillingSuccessPage, BillingFailPage, PayAppBillingSuccessPage, InnopayReturnPage } from './pages/BillingResultPage';
+import { BillingSuccessPage, BillingFailPage, PayAppBillingSuccessPage, InnopayReturnPage, InnopayAutopayReturnPage } from './pages/BillingResultPage';
 
 const AdminDashboard = lazy(() =>
   import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
@@ -447,6 +447,7 @@ function App() {
             <Route path="/billing/fail" element={<BillingFailPage />} />
             <Route path="/billing/payapp/success" element={<PayAppBillingSuccessPage />} />
             <Route path="/billing/innopay/return" element={<InnopayReturnPage />} />
+            <Route path="/billing/innopay/autopay-return" element={<InnopayAutopayReturnPage />} />
 
             <Route
               path="/admin"

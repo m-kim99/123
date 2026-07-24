@@ -16,8 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { registerInnopayBilling, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
-import { InnopayCardFields, emptyCardForm, cardFormToApi } from '@/components/InnopayCardFields';
+import { startInnopayAutopay, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
 import { Users, Shield, Edit, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +67,6 @@ export function UserManagement() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
-  const [cardForm, setCardForm] = useState(emptyCardForm);
   const upgradePricing = PLAN_PRICING[upgradePlan];
   const exceedsPlanLimit =
     upgradePricing.maxMembers !== null && parsedMembers > upgradePricing.maxMembers;
@@ -91,39 +89,20 @@ export function UserManagement() {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
-    const card = cardFormToApi(cardForm);
-    if (!card) {
-      toast({ title: t('subscription.cardInfoInvalid'), variant: 'destructive' });
-      return;
-    }
     setIsRequestingPayment(true);
     try {
-      const res = await registerInnopayBilling({
+      // 성공 시 이노페이 카드등록 결제창으로 리다이렉트됨(복귀 안 함). 실패 시에만 반환.
+      const res = await startInnopayAutopay({
         plan: upgradePlan,
         customerKey: authUser.id,
         customerEmail: authUser.email,
         customerName: authUser.name,
         customerPhone,
         memberCount: parsedMembers,
-        amount: parsedMembers * upgradePricing.pricePerMember,
-        goodsName:
-          upgradePlan === 'basic'
-            ? t('subscription.productNameBasic')
-            : t('subscription.productNamePro'),
-        card,
       });
-      if (res.success) {
-        toast({ title: t('billing.approvedTitle') });
-        setUpgradeDialogOpen(false);
-        setCardForm(emptyCardForm);
-        // 구독/제한 상태 갱신 (배너·게이트)
-        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
-        fetchUsers();
-      } else {
-        toast({
-          title: res.message || t('subscription.paymentRequestFailed'),
-          variant: 'destructive',
-        });
+      if (res && !res.success) {
+        toast({ title: res.message || t('subscription.paymentRequestFailed'), variant: 'destructive' });
+        setIsRequestingPayment(false);
       }
     } catch (error) {
       console.error('결제 요청 실패:', error);
@@ -131,7 +110,6 @@ export function UserManagement() {
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
       });
-    } finally {
       setIsRequestingPayment(false);
     }
   };
@@ -635,7 +613,6 @@ export function UserManagement() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                   />
                 </div>
-                <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="upgrade" />
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                   <span className="text-xl font-bold text-[#2563eb]">
@@ -655,6 +632,7 @@ export function UserManagement() {
                   {t('subscription.agreeTerms')}
                 </Label>
               </div>
+              <p className="text-xs text-slate-500">{t('subscription.weblinkNotice')}</p>
             </div>
             <DialogFooter>
               <Button
@@ -666,10 +644,10 @@ export function UserManagement() {
               </Button>
               <Button
                 className="rounded-[10px] h-9"
-                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || !cardFormToApi(cardForm) || isRequestingPayment}
+                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || !customerPhone || isRequestingPayment}
                 onClick={handleSubscribe}
               >
-                {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
+                {isRequestingPayment ? t('common.loading') : t('subscription.payWeblink')}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -66,8 +66,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { registerInnopayBilling, cancelInnopaySubscription, requestSelfRefund, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
-import { InnopayCardFields, emptyCardForm, cardFormToApi } from '@/components/InnopayCardFields';
+import { startInnopayAutopay, cancelInnopaySubscription, requestSelfRefund, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { TrialCountdownBanner } from '@/components/TrialCountdownBanner';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
@@ -181,7 +180,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const parsedBasicMembers = Math.max(0, parseInt(basicMembers, 10) || 0);
   const parsedProMembers = Math.max(0, parseInt(proMembers, 10) || 0);
   const [customerPhone, setCustomerPhone] = useState('');
-  const [cardForm, setCardForm] = useState(emptyCardForm);
 
   // 정산 원칙(true-up): 결제 인원은 현재 팀원 수 이상이어야 함.
   // 인원 변경은 다음 결제(재결제) 시 현재 인원 기준으로 반영된다.
@@ -206,7 +204,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handlePlanSubscribe = async (plan: PaidPlanName) => {
     const memberCount = plan === 'basic' ? parsedBasicMembers : parsedProMembers;
-    const pricePerMember = plan === 'basic' ? BASIC_PRICE_PER_MEMBER : PRO_PRICE_PER_MEMBER;
     if (!user || !basicAgreed || memberCount < 1) return;
     if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
     if (plan === 'pro' && (memberCount < PRO_MIN_MEMBERS || memberCount > PRO_MAX_MEMBERS)) return;
@@ -215,37 +212,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
       return;
     }
-    const card = cardFormToApi(cardForm);
-    if (!card) {
-      toast({ title: t('subscription.cardInfoInvalid'), variant: 'destructive' });
-      return;
-    }
     setIsRequestingPayment(true);
     try {
-      const res = await registerInnopayBilling({
+      // 성공 시 이노페이 카드등록 결제창으로 리다이렉트됨(복귀 안 함). 실패 시에만 반환.
+      const res = await startInnopayAutopay({
         plan,
         customerKey: user.id,
         customerEmail: user.email,
         customerName: user.name,
         customerPhone,
         memberCount,
-        amount: memberCount * pricePerMember,
-        goodsName: plan === 'basic' ? t('subscription.productNameBasic') : t('subscription.productNamePro'),
-        card,
       });
-      if (res.success) {
-        toast({ title: t('billing.approvedTitle') });
-        setBasicAgreed(false);
-        setCardForm(emptyCardForm);
-        setSelectedPlan(null);
-        // 구독/제한 상태 갱신 + 다이얼로그를 최신 구독 개요로 전환
-        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
-        openSubscriptionDialog();
-      } else {
-        toast({
-          title: res.message || t('subscription.paymentRequestFailed'),
-          variant: 'destructive',
-        });
+      if (res && !res.success) {
+        toast({ title: res.message || t('subscription.paymentRequestFailed'), variant: 'destructive' });
+        setIsRequestingPayment(false);
       }
     } catch (error) {
       console.error('결제 요청 실패:', error);
@@ -253,7 +233,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         title: t('subscription.paymentRequestFailed'),
         variant: 'destructive',
       });
-    } finally {
       setIsRequestingPayment(false);
     }
   };
@@ -2117,7 +2096,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); setProMembers('5'); setCardForm(emptyCardForm); } }}>
+      <Dialog open={subscriptionDialogOpen} onOpenChange={(open) => { setSubscriptionDialogOpen(open); if (!open) { setSelectedPlan(null); setBasicAgreed(false); setBasicMembers('3'); setProMembers('5'); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedPlan ? (
             <>
@@ -2187,7 +2166,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           onChange={(e) => setCustomerPhone(e.target.value)}
                         />
                       </div>
-                      <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="dash-basic" />
+                      <p className="text-xs text-slate-500">{t('subscription.weblinkNotice')}</p>
                       <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                         <span className="text-xl font-bold text-[#2563eb]">
@@ -2264,7 +2243,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           onChange={(e) => setCustomerPhone(e.target.value)}
                         />
                       </div>
-                      <InnopayCardFields value={cardForm} onChange={setCardForm} idPrefix="dash-pro" />
+                      <p className="text-xs text-slate-500">{t('subscription.weblinkNotice')}</p>
                       <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm font-medium text-slate-700">{t('subscription.monthlyTotal')}</span>
                         <span className="text-xl font-bold text-[#2563eb]">
@@ -2342,12 +2321,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         (selectedPlan === 'pro' &&
                           (parsedProMembers < PRO_MIN_MEMBERS || parsedProMembers > PRO_MAX_MEMBERS || proBelowActual)) ||
                         !basicAgreed ||
-                        !cardFormToApi(cardForm) ||
+                        !customerPhone ||
                         isRequestingPayment
                       }
                       onClick={() => handlePlanSubscribe(selectedPlan === 'pro' ? 'pro' : 'basic')}
                     >
-                      {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
+                      {isRequestingPayment ? t('common.loading') : t('subscription.payWeblink')}
                     </Button>
                   )}
                 </div>
