@@ -609,6 +609,7 @@ model companies {
   permission_requests           permission_requests[]
   reports                       reports[]
   search_history                search_history[]
+  storage_events                storage_events[]
   subcategories                 subcategories[]
   subscriptions                 subscriptions?
   usage_tracking                usage_tracking[]
@@ -634,6 +635,7 @@ model departments {
   companies           companies?            @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   notifications       notifications[]
   permission_requests permission_requests[]
+  storage_events      storage_events[]
   subcategories       subcategories[]
   user_permissions    user_permissions[]
   user_recent_visits  user_recent_visits[]
@@ -937,10 +939,15 @@ model subcategories {
   expiry_date         DateTime?            @db.Timestamptz(6)
   color_label         String?              @db.VarChar(6)
   management_number   String?
+  storage_status      String               @default("stored")
+  checked_out_by      String?
+  checked_out_at      DateTime?            @db.Timestamptz(6)
+  checkout_reason     String?
   documents           documents[]          @ignore
   nfc_mappings        nfc_mappings[]
   nfc_tags            nfc_tags[]
   notifications       notifications[]
+  storage_events      storage_events[]
   companies           companies?           @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   departments         departments          @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   categories          categories           @relation(fields: [parent_category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -955,6 +962,27 @@ model subcategories {
   @@index([management_number], map: "idx_subcategories_management_number")
   @@index([nfc_tag_id], map: "idx_subcategories_nfc_tag_id", where: raw("(nfc_tag_id IS NOT NULL)"))
   @@index([parent_category_id], map: "idx_subcategories_parent_category_id")
+  @@index([storage_status], map: "idx_subcategories_storage_status", where: raw("(storage_status <> 'stored'::text)"))
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model storage_events {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subcategory_id String        @db.Uuid
+  company_id     String        @db.Uuid
+  department_id  String?       @db.Uuid
+  event_type     String
+  actor_id       String?       @db.Uuid
+  actor_name     String?
+  detail         String?
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  companies      companies     @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  departments    departments?  @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subcategories  subcategories @relation(fields: [subcategory_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([subcategory_id, created_at(sort: Desc)], map: "idx_storage_events_subcategory")
   @@schema("public")
 }
 

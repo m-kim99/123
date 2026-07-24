@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity, Share2, Download, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { FileText, Smartphone, Upload, Star, Loader2, CheckCircle2, Edit, QrCode, MapPin, Hash, Clock, Activity, Share2, Download, X, ZoomIn, ZoomOut, RotateCw, PackageOpen, PackageCheck, Trash2, Printer, Wand2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { extractText } from '@/lib/ocr';
 import binIcon from '@/assets/icons/bin.svg';
@@ -11,8 +11,9 @@ import shareIcon from '@/assets/icons/share.svg';
 import previewIcon from '@/assets/icons/preview.svg';
 import changeIcon from '@/assets/icons/change.svg';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { useDocumentStore } from '@/store/documentStore';
+import { useDocumentStore, generateManagementNumber } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
+import { fetchStorageEvents, type StorageEvent, type StorageEventType } from '@/lib/storageEvents';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { v1Card, V1CardHeader, V1PageHeader, V1Chip, V1ModalHeader, V1ModalFooter, V1ModalBody, V1 } from '@/components/ui/v1-components';
@@ -67,6 +68,9 @@ export function SubcategoryDetail() {
     fetchDocuments,
     uploadDocument,
     updateSubcategory,
+    checkoutSubcategory,
+    returnSubcategory,
+    disposeSubcategory,
     deleteDocument,
     shareDocument,
     unshareDocument,
@@ -150,6 +154,20 @@ export function SubcategoryDetail() {
   const [isExtractingOcr, setIsExtractingOcr] = useState(false);
   const [isEditingReplaceOcr, setIsEditingReplaceOcr] = useState(false);
 
+  // 입출고(보관 라이프사이클) 상태
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [checkoutReason, setCheckoutReason] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  const [disposeDialogOpen, setDisposeDialogOpen] = useState(false);
+  const [disposeDetail, setDisposeDetail] = useState('');
+  const [isDisposing, setIsDisposing] = useState(false);
+  const [storageEvents, setStorageEvents] = useState<StorageEvent[]>([]);
+  const [nfcPromptOpen, setNfcPromptOpen] = useState(false);
+  const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // 권한 상태
   const [departmentRole, setDepartmentRole] = useState<Role>('none');
   const isAdmin = user?.role === 'admin';
@@ -201,6 +219,54 @@ export function SubcategoryDetail() {
     [parentCategories, parentCategoryId]
   );
 
+  // 표시용 보관 상태: 폐기됨 > 반출중 > 폐기 예정(보존연한 경과) > 보관중
+  const displayStatus = useMemo<'stored' | 'checkedOut' | 'disposalPending' | 'disposed'>(() => {
+    if (!subcategory) return 'stored';
+    if (subcategory.storageStatus === 'disposed') return 'disposed';
+    if (subcategory.storageStatus === 'checked_out') return 'checkedOut';
+    if (subcategory.expiryDate && new Date(subcategory.expiryDate).getTime() < Date.now()) {
+      return 'disposalPending';
+    }
+    return 'stored';
+  }, [subcategory]);
+
+  // 폐기 예정일 D-day (양수: 남음, 음수: 경과)
+  const disposalDday = useMemo(() => {
+    if (!subcategory?.expiryDate) return null;
+    return Math.ceil(
+      (new Date(subcategory.expiryDate).getTime() - Date.now()) / 86400000
+    );
+  }, [subcategory?.expiryDate]);
+
+  const statusChip = {
+    stored: { variant: 'emerald' as const, label: t('subcategoryDetail.statusStored') },
+    checkedOut: { variant: 'amber' as const, label: t('subcategoryDetail.statusCheckedOut') },
+    disposalPending: { variant: 'red' as const, label: t('subcategoryDetail.statusDisposalPending') },
+    disposed: { variant: 'neutral' as const, label: t('subcategoryDetail.statusDisposed') },
+  }[displayStatus];
+
+  // 입출고 이력 로드
+  const loadStorageEvents = useCallback(async () => {
+    if (!subcategoryId) return;
+    const events = await fetchStorageEvents(subcategoryId);
+    setStorageEvents(events);
+  }, [subcategoryId]);
+
+  useEffect(() => {
+    loadStorageEvents();
+  }, [loadStorageEvents]);
+
+  // NFC 태깅 유입(?nfc=1) 시 상태 기반 컨텍스트 액션 프롬프트
+  useEffect(() => {
+    if (searchParams.get('nfc') !== '1' || !subcategory) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('nfc');
+    setSearchParams(next, { replace: true });
+    if (subcategory.storageStatus !== 'disposed') {
+      setNfcPromptOpen(true);
+    }
+  }, [searchParams, subcategory, setSearchParams]);
+
   const isFav = subcategoryId ? isFavorite(subcategoryId) : false;
 
   useEffect(() => {
@@ -230,6 +296,41 @@ export function SubcategoryDetail() {
     },
     [documents, subcategoryId, docSortOrder]
   );
+
+  // 최근 활동 타임라인: 문서 업로드 + 입출고 이벤트 병합 (시간 역순)
+  const timelineItems = useMemo(() => {
+    const eventLabels: Record<StorageEventType, string> = {
+      registered: t('subcategoryDetail.eventRegistered'),
+      checked_out: t('subcategoryDetail.eventCheckedOut'),
+      returned: t('subcategoryDetail.eventReturned'),
+      disposed: t('subcategoryDetail.eventDisposed'),
+      location_changed: t('subcategoryDetail.eventLocationChanged'),
+    };
+    const eventColors: Record<StorageEventType, string> = {
+      registered: '#10b981',
+      checked_out: '#f59e0b',
+      returned: '#10b981',
+      disposed: '#ef4444',
+      location_changed: '#94a3b8',
+    };
+    const docItems = subcategoryDocuments.map((doc) => ({
+      id: `doc-${doc.id}`,
+      color: '#2563eb',
+      title: doc.name,
+      sub: doc.uploader || null,
+      date: doc.uploadDate,
+    }));
+    const eventItems = storageEvents.map((event) => ({
+      id: `evt-${event.id}`,
+      color: eventColors[event.eventType],
+      title: eventLabels[event.eventType],
+      sub: [event.actorName, event.detail].filter(Boolean).join(' · ') || null,
+      date: event.createdAt,
+    }));
+    return [...docItems, ...eventItems]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 8);
+  }, [subcategoryDocuments, storageEvents, t]);
 
   // 새 문서 업로드용 dropzone
   const handleNewFileDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -425,6 +526,106 @@ export function SubcategoryDetail() {
     a.href = url;
     a.download = `qr-${subcategory?.name || subcategoryId}.png`;
     a.click();
+  };
+
+  // QR 라벨 인쇄 (웹 전용): QR + 이름 + 관리번호 + 보관 위치
+  const handleQrPrint = () => {
+    const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement;
+    if (!canvas || !subcategory) return;
+    const esc = (s: string) =>
+      s.replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)
+      );
+    const dataUrl = canvas.toDataURL('image/png');
+    const win = window.open('', '_blank', 'width=420,height=560');
+    if (!win) return;
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(subcategory.name)}</title>
+<style>body{font-family:-apple-system,'Malgun Gothic',sans-serif;display:flex;justify-content:center;margin:0;padding:24px}
+.label{border:1px solid #e5e7eb;border-radius:12px;padding:24px;text-align:center;width:280px}
+img{width:220px;height:220px}
+.name{font-size:16px;font-weight:700;margin-top:12px;word-break:break-all}
+.num{font-family:ui-monospace,monospace;font-size:13px;color:#334155;margin-top:4px}
+.loc{font-size:12px;color:#64748b;margin-top:2px}</style></head>
+<body><div class="label"><img src="${dataUrl}" alt="QR">
+<div class="name">${esc(subcategory.name)}</div>
+${subcategory.managementNumber ? `<div class="num">${esc(subcategory.managementNumber)}</div>` : ''}
+${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocation)}</div>` : ''}
+</div><script>window.onload=function(){window.print();}</` + `script></body></html>`);
+    win.document.close();
+  };
+
+  // 반출 처리
+  const handleCheckout = async () => {
+    if (!subcategoryId) return;
+    setIsCheckingOut(true);
+    try {
+      const ok = await checkoutSubcategory(subcategoryId, checkoutReason.trim());
+      if (ok) {
+        toast({
+          title: t('subcategoryDetail.checkoutDone'),
+          description: t('subcategoryDetail.checkoutDoneDesc'),
+        });
+        setCheckoutDialogOpen(false);
+        setCheckoutReason('');
+        loadStorageEvents();
+      }
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
+  // 반납 처리
+  const handleReturn = async () => {
+    if (!subcategoryId) return;
+    setIsReturning(true);
+    try {
+      const ok = await returnSubcategory(subcategoryId);
+      if (ok) {
+        toast({
+          title: t('subcategoryDetail.returnDone'),
+          description: t('subcategoryDetail.returnDoneDesc'),
+        });
+        setReturnDialogOpen(false);
+        loadStorageEvents();
+      }
+    } finally {
+      setIsReturning(false);
+    }
+  };
+
+  // 폐기 처리 (기록은 유지, 상태만 폐기됨으로 변경)
+  const handleDispose = async () => {
+    if (!subcategoryId) return;
+    setIsDisposing(true);
+    try {
+      const ok = await disposeSubcategory(subcategoryId, disposeDetail.trim());
+      if (ok) {
+        toast({
+          title: t('subcategoryDetail.disposeDone'),
+          description: t('subcategoryDetail.disposeDoneDesc'),
+        });
+        setDisposeDialogOpen(false);
+        setDisposeDetail('');
+        loadStorageEvents();
+      }
+    } finally {
+      setIsDisposing(false);
+    }
+  };
+
+  // 편집 다이얼로그: 관리번호 자동생성 (연도-부서-순번)
+  const handleGenerateManagementNumber = async () => {
+    if (!subcategory) return;
+    setIsGeneratingNumber(true);
+    try {
+      const deptName = departments.find((d) => d.id === subcategory.departmentId)?.name;
+      const generated = await generateManagementNumber(subcategory.departmentId, deptName);
+      setEditForm((prev) => ({ ...prev, managementNumber: generated }));
+    } catch (err) {
+      console.error('관리번호 자동생성 실패:', err);
+    } finally {
+      setIsGeneratingNumber(false);
+    }
   };
 
   const handleCloseEditDialog = () => {
@@ -1375,30 +1576,30 @@ export function SubcategoryDetail() {
               </div>
             </div>
 
-            {/* Activity Timeline */}
+            {/* Activity Timeline: 문서 업로드 + 입출고 이력 */}
             <div className={v1Card}>
               <V1CardHeader title={t('subcategoryDetail.recentActivity', { defaultValue: '최근 활동' })} icon={Activity} iconColor="#2563eb" />
               <div className="px-5 py-3">
-                {subcategoryDocuments.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-4">{t('subcategoryDetail.noDocuments')}</p>
+                {timelineItems.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">{t('subcategoryDetail.noActivity')}</p>
                 ) : (
                   <div className="flex flex-col">
-                    {subcategoryDocuments.slice(0, 5).map((doc, i) => (
-                      <div key={doc.id} className={`flex gap-3 py-2.5 ${i > 0 ? 'border-t border-slate-50' : ''}`}>
+                    {timelineItems.map((item, i) => (
+                      <div key={item.id} className={`flex gap-3 py-2.5 ${i > 0 ? 'border-t border-slate-50' : ''}`}>
                         <div className="flex flex-col items-center shrink-0 mt-0.5">
-                          <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
-                          {i < Math.min(subcategoryDocuments.length, 5) - 1 && (
+                          <div className="w-2 h-2 rounded-full" style={{ background: item.color }} />
+                          {i < timelineItems.length - 1 && (
                             <div className="w-px flex-1 bg-slate-200 mt-1" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-slate-900 truncate">{doc.name}</p>
+                          <p className="text-xs font-medium text-slate-900 truncate">{item.title}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <Clock className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span className="text-[10px] text-slate-400 font-mono">{formatDateTimeSimple(doc.uploadDate)}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{formatDateTimeSimple(item.date)}</span>
                           </div>
-                          {doc.uploader && (
-                            <span className="text-[10px] text-slate-500 mt-0.5 block">{doc.uploader}</span>
+                          {item.sub && (
+                            <span className="text-[10px] text-slate-500 mt-0.5 block break-all">{item.sub}</span>
                           )}
                         </div>
                       </div>
@@ -1410,8 +1611,46 @@ export function SubcategoryDetail() {
 
             {/* Storage Info */}
             <div className={v1Card}>
-              <V1CardHeader title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })} icon={MapPin} iconColor="#2563eb" />
+              <V1CardHeader
+                title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })}
+                icon={MapPin}
+                iconColor="#2563eb"
+                action={<V1Chip variant={statusChip.variant}>● {statusChip.label}</V1Chip>}
+              />
               <div className="px-5 py-3 flex flex-col gap-2.5">
+                {displayStatus === 'checkedOut' && (
+                  <div className="rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <PackageOpen className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
+                        {[subcategory.checkedOutBy, subcategory.checkedOutAt ? formatDateTimeSimple(subcategory.checkedOutAt) : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </p>
+                    {subcategory.checkoutReason && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5 pl-5 break-all">
+                        {subcategory.checkoutReason}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {displayStatus === 'disposed' && (
+                  <div className="rounded-[10px] bg-slate-50 border border-slate-200 px-3 py-2 dark:bg-white/5 dark:border-white/10">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                      <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                      <span>{t('subcategoryDetail.disposedNotice')}</span>
+                    </p>
+                    {(() => {
+                      const disposedEvent = storageEvents.find((e) => e.eventType === 'disposed');
+                      return disposedEvent?.detail ? (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 pl-5 break-all">
+                          {disposedEvent.detail}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
                 <div className="flex justify-between items-center py-1.5">
                   <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.storageLocation')}</span>
                   <span className="text-xs font-semibold text-slate-900">{subcategory.storageLocation || t('subcategoryDetail.unassigned')}</span>
@@ -1424,6 +1663,75 @@ export function SubcategoryDetail() {
                   <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
                     <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.parentCategoryLabel')}</span>
                     <span className="text-xs font-semibold text-slate-900">{parentCategory.name}</span>
+                  </div>
+                )}
+                {subcategory.defaultExpiryDays != null && (
+                  <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                    <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.retentionPeriod')}</span>
+                    <span className="text-xs font-semibold text-slate-900">
+                      {subcategory.defaultExpiryDays % 365 === 0
+                        ? t('subcategoryDetail.retentionYears', { n: subcategory.defaultExpiryDays / 365 })
+                        : t('subcategoryDetail.retentionDays', { n: subcategory.defaultExpiryDays })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                  <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.disposalDate')}</span>
+                  {subcategory.expiryDate ? (
+                    <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                      {new Date(subcategory.expiryDate).toLocaleDateString()}
+                      {disposalDday != null && displayStatus !== 'disposed' && (
+                        <span
+                          className={`font-mono text-[11px] ${
+                            disposalDday < 0
+                              ? 'text-red-600'
+                              : disposalDday <= 30
+                                ? 'text-amber-600'
+                                : 'text-slate-400'
+                          }`}
+                        >
+                          {disposalDday >= 0 ? `D-${disposalDday}` : `D+${-disposalDday}`}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-900">{t('subcategoryDetail.unassigned')}</span>
+                  )}
+                </div>
+                {displayStatus !== 'disposed' && (
+                  <div className="flex gap-2 pt-2.5 border-t border-slate-100">
+                    {displayStatus === 'checkedOut' ? (
+                      <Button
+                        size="sm"
+                        onClick={() => setReturnDialogOpen(true)}
+                        disabled={!canDo('write')}
+                        className="flex-1 h-8 rounded-[10px] text-xs font-semibold"
+                      >
+                        <PackageCheck className="h-3.5 w-3.5 mr-1" />
+                        {t('subcategoryDetail.returnAction')}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCheckoutDialogOpen(true)}
+                        disabled={!canDo('write')}
+                        className="flex-1 h-8 rounded-[10px] text-xs font-semibold border-[#e5e7eb]"
+                      >
+                        <PackageOpen className="h-3.5 w-3.5 mr-1" />
+                        {t('subcategoryDetail.checkoutAction')}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDisposeDialogOpen(true)}
+                      disabled={!canDo('delete')}
+                      className="flex-1 h-8 rounded-[10px] text-xs font-semibold text-red-500 hover:text-red-600 border-gray-200 hover:border-red-500"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      {t('subcategoryDetail.disposeAction')}
+                    </Button>
                   </div>
                 )}
               </div>
@@ -1461,18 +1769,34 @@ export function SubcategoryDetail() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-[13px] font-medium">{t('documentMgmt.managementNumber')}</Label>
-                  <Input
-                    value={editForm.managementNumber}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({
-                        ...prev,
-                        managementNumber: e.target.value,
-                      }))
-                    }
-                    placeholder={t('documentMgmt.managementNumberPlaceholder')}
-                    maxLength={30}
-                    className="h-[38px] rounded-lg font-mono"
-                  />
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={editForm.managementNumber}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          managementNumber: e.target.value,
+                        }))
+                      }
+                      placeholder={t('documentMgmt.managementNumberPlaceholder')}
+                      maxLength={30}
+                      className="h-[38px] rounded-lg font-mono flex-1 min-w-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateManagementNumber}
+                      disabled={isGeneratingNumber}
+                      title={t('subcategoryDetail.autoGenerate')}
+                      className="h-[38px] w-[38px] p-0 rounded-lg border-[#e5e7eb] shrink-0"
+                    >
+                      {isGeneratingNumber ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -1970,6 +2294,12 @@ export function SubcategoryDetail() {
               <Button variant="outline" onClick={() => setQrDialogOpen(false)} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
                 {t('common.close')}
               </Button>
+              {!Capacitor.isNativePlatform() && (
+                <Button variant="outline" onClick={handleQrPrint} className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]">
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />
+                  {t('subcategoryDetail.qrPrintLabel')}
+                </Button>
+              )}
               <Button onClick={handleQrDownload} className="h-9 rounded-[10px] text-[13px] font-semibold ">
                 {t('subcategoryDetail.qrDownload')}
               </Button>
@@ -2055,6 +2385,230 @@ export function SubcategoryDetail() {
                   </>
                 )}
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 반출 처리 다이얼로그 */}
+        <Dialog
+          open={checkoutDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCheckoutDialogOpen(false);
+              setCheckoutReason('');
+            }
+          }}
+        >
+          <DialogContent variant="v1" className="max-w-[480px]">
+            <V1ModalHeader
+              icon={PackageOpen}
+              title={t('subcategoryDetail.checkoutTitle')}
+              sub={t('subcategoryDetail.checkoutDesc', { name: subcategory.name })}
+            />
+            <V1ModalBody>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.checkoutBy')}</Label>
+                <div className="h-[38px] rounded-lg border border-[#e5e7eb] bg-slate-50 px-3 flex items-center text-[13px] text-slate-700 dark:bg-white/5 dark:border-white/10 dark:text-slate-200">
+                  {user?.name}
+                </div>
+                <p className="text-[11px] text-slate-400">{t('subcategoryDetail.checkoutByAuto')}</p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.checkoutReason')}</Label>
+                <Input
+                  value={checkoutReason}
+                  onChange={(e) => setCheckoutReason(e.target.value)}
+                  placeholder={t('subcategoryDetail.checkoutReasonPlaceholder')}
+                  maxLength={100}
+                  className="h-[38px] rounded-lg"
+                />
+              </div>
+            </V1ModalBody>
+            <V1ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCheckoutDialogOpen(false);
+                  setCheckoutReason('');
+                }}
+                disabled={isCheckingOut}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleCheckout}
+                disabled={isCheckingOut}
+                className="h-9 rounded-[10px] text-[13px] font-semibold"
+              >
+                {isCheckingOut ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('common.processing')}
+                  </>
+                ) : (
+                  <>
+                    <PackageOpen className="h-3.5 w-3.5 mr-1.5" />
+                    {t('subcategoryDetail.checkoutAction')}
+                  </>
+                )}
+              </Button>
+            </V1ModalFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 반납 확인 AlertDialog */}
+        <AlertDialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+          <AlertDialogContent className="max-w-md">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50">
+                <PackageCheck className="h-[18px] w-[18px] text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold tracking-tight">
+                  {t('subcategoryDetail.returnTitle')}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+                  {t('subcategoryDetail.returnDesc', { name: subcategory.name })}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <AlertDialogFooter className="px-6 pb-5">
+              <AlertDialogCancel disabled={isReturning} className="h-9">
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReturn}
+                disabled={isReturning}
+                className="h-9 bg-emerald-600 hover:bg-emerald-700"
+              >
+                {isReturning ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('common.processing')}
+                  </>
+                ) : (
+                  <>
+                    <PackageCheck className="h-3.5 w-3.5 mr-1.5" />
+                    {t('subcategoryDetail.returnAction')}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* 폐기 처리 다이얼로그 */}
+        <Dialog
+          open={disposeDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDisposeDialogOpen(false);
+              setDisposeDetail('');
+            }
+          }}
+        >
+          <DialogContent variant="v1" className="max-w-[480px]">
+            <V1ModalHeader
+              icon={Trash2}
+              title={t('subcategoryDetail.disposeTitle')}
+              sub={t('subcategoryDetail.disposeDesc', { name: subcategory.name })}
+            />
+            <V1ModalBody>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.disposeDetail')}</Label>
+                <Input
+                  value={disposeDetail}
+                  onChange={(e) => setDisposeDetail(e.target.value)}
+                  placeholder={t('subcategoryDetail.disposeDetailPlaceholder')}
+                  maxLength={100}
+                  className="h-[38px] rounded-lg"
+                />
+                <p className="text-[11px] text-slate-400">{t('subcategoryDetail.disposeNotice')}</p>
+              </div>
+            </V1ModalBody>
+            <V1ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDisposeDialogOpen(false);
+                  setDisposeDetail('');
+                }}
+                disabled={isDisposing}
+                className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleDispose}
+                disabled={isDisposing}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
+              >
+                {isDisposing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {t('common.processing')}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    {t('subcategoryDetail.disposeAction')}
+                  </>
+                )}
+              </Button>
+            </V1ModalFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* NFC 태깅 컨텍스트 액션 프롬프트 */}
+        <AlertDialog open={nfcPromptOpen} onOpenChange={setNfcPromptOpen}>
+          <AlertDialogContent className="max-w-md">
+            <div className="flex items-start gap-3 px-6 pt-5 pb-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-blue-50">
+                <Smartphone className="h-[18px] w-[18px] text-[#2563eb]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold tracking-tight">
+                  {t('subcategoryDetail.nfcPromptTitle')}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500 mt-1">
+                  {displayStatus === 'checkedOut'
+                    ? t('subcategoryDetail.nfcPromptReturn', { name: subcategory.name })
+                    : t('subcategoryDetail.nfcPromptCheckout', { name: subcategory.name })}
+                </AlertDialogDescription>
+              </div>
+            </div>
+            <AlertDialogFooter className="px-6 pb-5">
+              <AlertDialogCancel className="h-9">{t('common.close')}</AlertDialogCancel>
+              {canDo('write') && (
+                <AlertDialogAction
+                  onClick={() => {
+                    setNfcPromptOpen(false);
+                    if (displayStatus === 'checkedOut') {
+                      setReturnDialogOpen(true);
+                    } else {
+                      setCheckoutDialogOpen(true);
+                    }
+                  }}
+                  className="h-9"
+                >
+                  {displayStatus === 'checkedOut' ? (
+                    <>
+                      <PackageCheck className="h-3.5 w-3.5 mr-1.5" />
+                      {t('subcategoryDetail.returnAction')}
+                    </>
+                  ) : (
+                    <>
+                      <PackageOpen className="h-3.5 w-3.5 mr-1.5" />
+                      {t('subcategoryDetail.checkoutAction')}
+                    </>
+                  )}
+                </AlertDialogAction>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

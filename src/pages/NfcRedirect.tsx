@@ -98,8 +98,8 @@ export function NfcRedirect() {
           }
         }
 
-        // 세부 스토리지 페이지로 리다이렉트
-        navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`, { replace: true });
+        // 세부 스토리지 페이지로 리다이렉트 (nfc=1: 태깅 유입 표시 → 입출고 컨텍스트 액션)
+        navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}?nfc=1`, { replace: true });
       } catch (error) {
         console.error('NFC Redirect 오류:', error);
         navigate(user ? (user.role === 'admin' ? '/admin' : '/team') : '/');

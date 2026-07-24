@@ -16,6 +16,22 @@ import { SharedDocument } from '@/types/document';
 import { trackEvent } from '@/lib/analytics';
 import { isImageFile, convertImageToPdf } from '@/lib/imageToPdf';
 import { checkDocumentLimit, checkStorageLimit } from '@/lib/subscription';
+import { logStorageEvent } from '@/lib/storageEvents';
+
+/** 관리번호 자동생성: 연도-부서명-순번 (예: 2026-총무-0001) */
+export async function generateManagementNumber(
+  departmentId: string,
+  departmentName: string | undefined
+): Promise<string> {
+  const year = new Date().getFullYear();
+  const deptLabel = (departmentName || 'DEPT').replace(/\s+/g, '');
+  const { count } = await supabase
+    .from('subcategories')
+    .select('id', { count: 'exact', head: true })
+    .eq('department_id', departmentId);
+  const seq = String((count ?? 0) + 1).padStart(4, '0');
+  return `${year}-${deptLabel}-${seq}`;
+}
 
 export interface Department {
   id: string;
@@ -61,6 +77,8 @@ export interface ParentCategory {
   documentCount: number;
 }
 
+export type SubcategoryStorageStatus = 'stored' | 'checked_out' | 'disposed';
+
 export interface Subcategory {
   id: string;
   name: string;
@@ -74,6 +92,10 @@ export interface Subcategory {
   defaultExpiryDays?: number | null;
   expiryDate?: string | null;
   colorLabel?: string | null;
+  storageStatus?: SubcategoryStorageStatus;
+  checkedOutBy?: string | null;
+  checkedOutAt?: string | null;
+  checkoutReason?: string | null;
   documentCount: number;
 }
 
@@ -113,6 +135,9 @@ interface DocumentState {
     subcategory: Omit<Subcategory, 'id' | 'documentCount'>
   ) => Promise<Subcategory | null>;
   updateSubcategory: (id: string, updates: Partial<Subcategory>) => Promise<void>;
+  checkoutSubcategory: (id: string, reason: string) => Promise<boolean>;
+  returnSubcategory: (id: string) => Promise<boolean>;
+  disposeSubcategory: (id: string, detail: string) => Promise<boolean>;
   deleteSubcategory: (id: string) => Promise<void>;
   registerNfcTag: (subcategoryId: string, nfcUid: string) => Promise<void>;
   findSubcategoryByNfcUid: (nfcUid: string) => Promise<Subcategory | null>;
@@ -523,6 +548,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           defaultExpiryDays: (sub as any).default_expiry_days || null,
           expiryDate: (sub as any).expiry_date || null,
           colorLabel: (sub as any).color_label || null,
+          storageStatus: ((sub as any).storage_status as SubcategoryStorageStatus) || 'stored',
+          checkedOutBy: (sub as any).checked_out_by || null,
+          checkedOutAt: (sub as any).checked_out_at || null,
+          checkoutReason: (sub as any).checkout_reason || null,
           documentCount: docCountBySub[sub.id] || 0,
         })
       );
@@ -865,6 +894,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           ? addDays(new Date(), subcategory.defaultExpiryDays).toISOString()
           : null);
 
+      // 관리번호: 비워두면 연도-부서-순번 형식으로 자동 생성
+      let managementNumber = subcategory.managementNumber?.trim() || '';
+      if (!managementNumber) {
+        try {
+          const deptName = get().departments.find(
+            (d) => d.id === subcategory.departmentId
+          )?.name;
+          managementNumber = await generateManagementNumber(
+            subcategory.departmentId,
+            deptName
+          );
+        } catch (genErr) {
+          console.error('Failed to generate management number:', genErr);
+        }
+      }
+
       const { data, error } = await supabase
         .from('subcategories')
         .insert({
@@ -875,6 +920,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           nfc_tag_id: subcategory.nfcUid || null,
           nfc_registered: subcategory.nfcRegistered,
           storage_location: subcategory.storageLocation || null,
+          management_number: managementNumber || null,
           default_expiry_days: subcategory.defaultExpiryDays || null,
           expiry_date: computedExpiryDate,
           color_label: subcategory.colorLabel || null,
@@ -897,15 +943,28 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         nfcUid: data.nfc_tag_id || null,
         nfcRegistered: data.nfc_registered,
         storageLocation: data.storage_location || undefined,
+        managementNumber: data.management_number || undefined,
         defaultExpiryDays: data.default_expiry_days || null,
         expiryDate: data.expiry_date || null,
         colorLabel: data.color_label || null,
+        storageStatus: (data.storage_status as SubcategoryStorageStatus) || 'stored',
+        checkedOutBy: null,
+        checkedOutAt: null,
+        checkoutReason: null,
         documentCount: 0,
       };
 
       set((state) => ({
         subcategories: [...state.subcategories, created],
       }));
+
+      // 입출고 이력: 등록(입고) 이벤트
+      await logStorageEvent({
+        subcategoryId: data.id,
+        departmentId: data.department_id,
+        eventType: 'registered',
+        detail: data.management_number || null,
+      });
 
       const { departments, parentCategories } = get();
       const department = departments.find((d) => d.id === data.department_id);
@@ -944,6 +1003,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         nfcUid: subcategory.nfcUid || null,
         nfcRegistered: subcategory.nfcRegistered,
         storageLocation: subcategory.storageLocation,
+        managementNumber: subcategory.managementNumber || undefined,
+        storageStatus: 'stored',
         defaultExpiryDays: subcategory.defaultExpiryDays ?? null,
         expiryDate:
           subcategory.expiryDate ??
@@ -1003,6 +1064,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (normalizedUpdates.colorLabel !== undefined)
         updateData.color_label = normalizedUpdates.colorLabel;
 
+      const prevSub = get().subcategories.find((sub) => sub.id === id);
+
       const { error } = await supabase
         .from('subcategories')
         .update(updateData)
@@ -1015,6 +1078,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           sub.id === id ? { ...sub, ...normalizedUpdates } : sub
         ),
       }));
+
+      // 입출고 이력: 보관 위치 변경 이벤트
+      if (
+        prevSub &&
+        normalizedUpdates.storageLocation !== undefined &&
+        (prevSub.storageLocation || '') !== (normalizedUpdates.storageLocation || '')
+      ) {
+        await logStorageEvent({
+          subcategoryId: id,
+          departmentId: prevSub.departmentId,
+          eventType: 'location_changed',
+          detail: `${prevSub.storageLocation || '-'} → ${normalizedUpdates.storageLocation || '-'}`,
+        });
+      }
 
     } catch (err) {
       console.error('Failed to update subcategory in Supabase:', err);
@@ -1031,6 +1108,160 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         description: '네트워크 오류로 인해 세부 스토리지를 서버에 반영하지 못했습니다.',
         variant: 'destructive',
       });
+    }
+  },
+
+  checkoutSubcategory: async (id, reason) => {
+    const { user } = useAuthStore.getState();
+    const sub = get().subcategories.find((s) => s.id === id);
+    if (!user || !sub) return false;
+
+    const nowIso = new Date().toISOString();
+    try {
+      const { error } = await supabase
+        .from('subcategories')
+        .update({
+          storage_status: 'checked_out',
+          checked_out_by: user.name,
+          checked_out_at: nowIso,
+          checkout_reason: reason || null,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                storageStatus: 'checked_out' as SubcategoryStorageStatus,
+                checkedOutBy: user.name,
+                checkedOutAt: nowIso,
+                checkoutReason: reason || null,
+              }
+            : s
+        ),
+      }));
+
+      await logStorageEvent({
+        subcategoryId: id,
+        departmentId: sub.departmentId,
+        eventType: 'checked_out',
+        detail: reason || null,
+      });
+
+      return true;
+    } catch (err) {
+      console.error('Failed to checkout subcategory:', err);
+      toast({
+        title: '반출 처리 실패',
+        description: '네트워크 오류로 반출 처리를 서버에 반영하지 못했습니다.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  },
+
+  returnSubcategory: async (id) => {
+    const { user } = useAuthStore.getState();
+    const sub = get().subcategories.find((s) => s.id === id);
+    if (!user || !sub) return false;
+
+    try {
+      const { error } = await supabase
+        .from('subcategories')
+        .update({
+          storage_status: 'stored',
+          checked_out_by: null,
+          checked_out_at: null,
+          checkout_reason: null,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                storageStatus: 'stored' as SubcategoryStorageStatus,
+                checkedOutBy: null,
+                checkedOutAt: null,
+                checkoutReason: null,
+              }
+            : s
+        ),
+      }));
+
+      await logStorageEvent({
+        subcategoryId: id,
+        departmentId: sub.departmentId,
+        eventType: 'returned',
+        detail: sub.checkoutReason || null,
+      });
+
+      return true;
+    } catch (err) {
+      console.error('Failed to return subcategory:', err);
+      toast({
+        title: '반납 처리 실패',
+        description: '네트워크 오류로 반납 처리를 서버에 반영하지 못했습니다.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  },
+
+  disposeSubcategory: async (id, detail) => {
+    const { user } = useAuthStore.getState();
+    const sub = get().subcategories.find((s) => s.id === id);
+    if (!user || !sub) return false;
+
+    try {
+      const { error } = await supabase
+        .from('subcategories')
+        .update({
+          storage_status: 'disposed',
+          checked_out_by: null,
+          checked_out_at: null,
+          checkout_reason: null,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                storageStatus: 'disposed' as SubcategoryStorageStatus,
+                checkedOutBy: null,
+                checkedOutAt: null,
+                checkoutReason: null,
+              }
+            : s
+        ),
+      }));
+
+      await logStorageEvent({
+        subcategoryId: id,
+        departmentId: sub.departmentId,
+        eventType: 'disposed',
+        detail: detail || null,
+      });
+
+      return true;
+    } catch (err) {
+      console.error('Failed to dispose subcategory:', err);
+      toast({
+        title: '폐기 처리 실패',
+        description: '네트워크 오류로 폐기 처리를 서버에 반영하지 못했습니다.',
+        variant: 'destructive',
+      });
+      return false;
     }
   },
 

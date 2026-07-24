@@ -59,7 +59,7 @@ export function NFCAutoRedirect() {
               }
               if (parentCategoryId) {
                 toast({ title: t('nfc.tagRecognized'), description: t('nfc.navigatingToSubcategory') });
-                navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}`);
+                navigate(`${basePath}/parent-category/${parentCategoryId}/subcategory/${subcategoryId}?nfc=1`);
                 return;
               }
             }
@@ -76,7 +76,7 @@ export function NFCAutoRedirect() {
 
         if (!subError && sub) {
           toast({ title: t('nfc.tagRecognized'), description: t('nfc.navigatingToSubcategory') });
-          navigate(`${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}`);
+          navigate(`${basePath}/parent-category/${sub.parent_category_id}/subcategory/${sub.id}?nfc=1`);
           return;
         }
 
