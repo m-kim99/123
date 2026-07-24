@@ -573,7 +573,11 @@ export function UserManagement() {
                   onChange={(e) => setAdditionalMembers(e.target.value)}
                 />
                 {exceedsPlanLimit && (
-                  <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                  <p className="text-xs text-red-500">
+                    {upgradePlan === 'basic'
+                      ? t('subscription.basicMemberLimit')
+                      : t('subscription.proMemberLimit')}
+                  </p>
                 )}
                 {upgradePlan === 'pro' && belowPlanMin && !belowActualMembers && (
                   <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>

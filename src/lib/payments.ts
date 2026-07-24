@@ -134,7 +134,7 @@ export type PaidPlanName = 'basic' | 'pro';
 
 export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
   basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
-  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: null }, // 프로: 인당 15,000원, 최소 3인부터 인원수 지정
+  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 }, // 프로: 인당 15,000원, 3~20인
 };
 
 // [중요] 이노페이 SDK(innopay.js)는 클래식 스크립트에서 `const innopay = {...}` 로

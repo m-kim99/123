@@ -175,7 +175,11 @@ export function SubscriptionGate() {
                   onChange={(e) => setMembers(e.target.value)}
                 />
                 {exceedsPlanLimit && (
-                  <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                  <p className="text-xs text-red-500">
+                    {plan === 'basic'
+                      ? t('subscription.basicMemberLimit')
+                      : t('subscription.proMemberLimit')}
+                  </p>
                 )}
                 {plan === 'pro' && belowPlanMin && !belowActualMembers && (
                   <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>

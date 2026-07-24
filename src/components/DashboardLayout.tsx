@@ -33,6 +33,8 @@ import {
   Clock,
   TrendingUp,
   HelpCircle,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -163,11 +165,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
-  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·최대 3인, 프로: 인당 15,000원·인원수 지정
+  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·최대 3인, 프로: 인당 15,000원·3~20인
   const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
   const PRO_PRICE_PER_MEMBER = PLAN_PRICING.pro.pricePerMember;
   const BASIC_MAX_MEMBERS = PLAN_PRICING.basic.maxMembers ?? 3;
   const PRO_MIN_MEMBERS = PLAN_PRICING.pro.minMembers;
+  const PRO_MAX_MEMBERS = PLAN_PRICING.pro.maxMembers ?? Infinity;
   const [basicMembers, setBasicMembers] = useState('3');
   const [proMembers, setProMembers] = useState('5');
   const [basicAgreed, setBasicAgreed] = useState(false);
@@ -202,7 +205,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const pricePerMember = plan === 'basic' ? BASIC_PRICE_PER_MEMBER : PRO_PRICE_PER_MEMBER;
     if (!user || !basicAgreed || memberCount < 1) return;
     if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
-    if (plan === 'pro' && memberCount < PRO_MIN_MEMBERS) return;
+    if (plan === 'pro' && (memberCount < PRO_MIN_MEMBERS || memberCount > PRO_MAX_MEMBERS)) return;
     if (memberCount < actualMemberCount) return;
     if (!customerPhone) {
       toast({ title: t('subscription.phoneRequired'), variant: 'destructive' });
@@ -2172,6 +2175,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         id="pro-members"
                         type="number"
                         min={Math.max(PRO_MIN_MEMBERS, actualMemberCount || 1)}
+                        max={PLAN_PRICING.pro.maxMembers ?? undefined}
                         value={proMembers}
                         onChange={(e) => setProMembers(e.target.value)}
                       />
@@ -2182,6 +2186,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       )}
                       {!proBelowActual && parsedProMembers < PRO_MIN_MEMBERS && (
                         <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
+                      )}
+                      {!proBelowActual && parsedProMembers > PRO_MAX_MEMBERS && (
+                        <p className="text-xs text-red-500">{t('subscription.proMemberLimit')}</p>
                       )}
                       <p className="text-xs text-slate-500">{t('subscription.trueUpNotice')}</p>
                     </div>
@@ -2241,28 +2248,47 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                 )}
                 {selectedPlan === 'enterprise' && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
-                    🚧 {t('subscription.paymentNotReady')}
+                  <div className="p-4 bg-slate-50 rounded-lg border space-y-2">
+                    <p className="text-sm text-slate-600 text-center">
+                      {t('subscription.enterpriseContactDesc')}
+                    </p>
+                    <a
+                      href={`mailto:support@traystorage.net?subject=${encodeURIComponent(t('subscription.enterpriseInquirySubject'))}`}
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-[#2563eb] hover:bg-blue-100 transition-colors"
+                    >
+                      <Mail className="h-4 w-4" />
+                      support@traystorage.net
+                    </a>
+                    <a
+                      href="tel:02-333-7334"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-[#2563eb] hover:bg-blue-100 transition-colors"
+                    >
+                      <Phone className="h-4 w-4" />
+                      02-333-7334
+                    </a>
                   </div>
                 )}
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => setSelectedPlan(null)}>
                     {t('common.back')}
                   </Button>
-                  <Button
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                    disabled={
-                      (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
-                      (selectedPlan === 'basic' &&
-                        (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
-                      (selectedPlan === 'pro' && (parsedProMembers < PRO_MIN_MEMBERS || proBelowActual)) ||
-                      !basicAgreed ||
-                      isRequestingPayment
-                    }
-                    onClick={() => handlePlanSubscribe(selectedPlan === 'pro' ? 'pro' : 'basic')}
-                  >
-                    {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
-                  </Button>
+                  {selectedPlan !== 'enterprise' && (
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                      disabled={
+                        (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
+                        (selectedPlan === 'basic' &&
+                          (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
+                        (selectedPlan === 'pro' &&
+                          (parsedProMembers < PRO_MIN_MEMBERS || parsedProMembers > PRO_MAX_MEMBERS || proBelowActual)) ||
+                        !basicAgreed ||
+                        isRequestingPayment
+                      }
+                      onClick={() => handlePlanSubscribe(selectedPlan === 'pro' ? 'pro' : 'basic')}
+                    >
+                      {isRequestingPayment ? t('common.loading') : t('subscription.pay')}
+                    </Button>
+                  )}
                 </div>
               </div>
             </>
@@ -2392,9 +2418,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <h4 className="text-sm font-medium text-slate-700">{t('subscription.planComparison')}</h4>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {[
-                          { name: 'basic', display: t('subscription.basic'), price: '6,600', members: '3', highlight: subscriptionInfo.planName === 'basic', comingSoon: false },
-                          { name: 'pro', display: t('subscription.pro'), price: '15,000', members: '10', highlight: subscriptionInfo.planName === 'pro', comingSoon: false },
-                          { name: 'enterprise', display: t('subscription.enterprise'), price: '', members: '∞', highlight: subscriptionInfo.planName === 'enterprise', comingSoon: true },
+                          { name: 'basic', display: t('subscription.basic'), price: '6,600', members: '3', highlight: subscriptionInfo.planName === 'basic', contactOnly: false },
+                          { name: 'pro', display: t('subscription.pro'), price: '15,000', members: '20', highlight: subscriptionInfo.planName === 'pro', contactOnly: false },
+                          { name: 'enterprise', display: t('subscription.enterprise'), price: '', members: '∞', highlight: subscriptionInfo.planName === 'enterprise', contactOnly: true },
                         ].map((plan) => (
                           <div
                             key={plan.name}
@@ -2413,9 +2439,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             )}
                             <p className="font-semibold text-sm mt-1">{plan.display}</p>
                             <p className="text-lg font-bold text-slate-900 mt-1">
-                              {plan.comingSoon ? t('subscription.comingSoon') : `₩${plan.price}`}
+                              {plan.contactOnly ? t('subscription.contact') : `₩${plan.price}`}
                             </p>
-                            {!plan.comingSoon && (
+                            {!plan.contactOnly && (
                               <p className="text-[11px] text-slate-500">
                                 {t('subscription.perPersonMonth')}
                               </p>
@@ -2432,12 +2458,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             {(!plan.highlight || subscriptionInfo.status === 'trialing') && (
                               <Button
                                 size="sm"
-                                variant={plan.comingSoon ? 'outline' : 'default'}
+                                variant={plan.contactOnly ? 'outline' : 'default'}
                                 className="w-full mt-2 text-xs h-7"
-                                disabled={plan.comingSoon}
                                 onClick={() => setSelectedPlan(plan.name)}
                               >
-                                {plan.comingSoon ? t('subscription.comingSoon') : t('subscription.selectPlan')}
+                                {plan.contactOnly ? t('subscription.contactSales') : t('subscription.selectPlan')}
                               </Button>
                             )}
                           </div>
