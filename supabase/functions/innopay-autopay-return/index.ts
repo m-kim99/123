@@ -109,7 +109,13 @@ serve(async (req) => {
     const innopayUserId = String(pending.user_id).replace(/-/g, '');
 
     // 1회차 결제 승인 — 실청구 성공이 billKey 진위 검증 역할
+    // charge_moid를 미리 저장: Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필할 수 있게 함
     const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    await supabaseAdmin
+      .from('innopay_autopay_pending')
+      .update({ charge_moid: payMoid })
+      .eq('moid', moid);
+
     const pay = await callAutopay('payAutoCardBill', {
       mid: INNOPAY_MID,
       moid: payMoid,
