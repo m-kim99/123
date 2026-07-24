@@ -161,7 +161,9 @@ export function SubcategoryDetail() {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [disposeDialogOpen, setDisposeDialogOpen] = useState(false);
-  const [disposeDetail, setDisposeDetail] = useState('');
+  const [disposeApprover, setDisposeApprover] = useState('');
+  const [disposeMethod, setDisposeMethod] = useState('');
+  const [disposeConfirmName, setDisposeConfirmName] = useState('');
   const [isDisposing, setIsDisposing] = useState(false);
   const [storageEvents, setStorageEvents] = useState<StorageEvent[]>([]);
   const [nfcPromptOpen, setNfcPromptOpen] = useState(false);
@@ -224,6 +226,8 @@ export function SubcategoryDetail() {
     () => (subcategory ? getStorageDisplayStatus(subcategory) : 'stored'),
     [subcategory]
   );
+  // 폐기됨: 문서 접근·업로드 영구 차단 (복구 불가)
+  const isDisposed = subcategory?.storageStatus === 'disposed';
 
   // 폐기 예정일 D-day (양수: 남음, 음수: 경과)
   const disposalDday = useMemo(() => {
@@ -387,7 +391,7 @@ export function SubcategoryDetail() {
     isDragActive: isNewFileDragActive,
   } = useDropzone({
     onDrop: handleNewFileDrop,
-    disabled: isStorageFull,
+    disabled: isStorageFull || isDisposed,
     ...(Capacitor.isNativePlatform() ? {} : {
       accept: {
         'image/*': ['.jpg', '.jpeg', '.png'],
@@ -449,6 +453,15 @@ export function SubcategoryDetail() {
 
   const handleUpload = async () => {
     if (!selectedFile || !subcategory || !parentCategoryId) {
+      return;
+    }
+
+    // 폐기된 보관함에는 업로드 불가 (복구 불가 상태)
+    if (isDisposed) {
+      toast({
+        title: t('subcategoryDetail.disposedBoxNotice'),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -588,19 +601,27 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
     }
   };
 
-  // 폐기 처리 (기록은 유지, 상태만 폐기됨으로 변경)
+  // 폐기 처리 (실물 파기에 대응 — 복구 불가, 문서 접근 영구 차단)
+  const resetDisposeForm = () => {
+    setDisposeApprover('');
+    setDisposeMethod('');
+    setDisposeConfirmName('');
+  };
+  // 이름 확인 일치 여부 (실수 방지 게이트)
+  const disposeNameConfirmed =
+    !!subcategory && disposeConfirmName.trim() === subcategory.name.trim();
   const handleDispose = async () => {
-    if (!subcategoryId) return;
+    if (!subcategoryId || !disposeNameConfirmed) return;
     setIsDisposing(true);
     try {
-      const ok = await disposeSubcategory(subcategoryId, disposeDetail.trim());
+      const ok = await disposeSubcategory(subcategoryId, disposeApprover, disposeMethod);
       if (ok) {
         toast({
           title: t('subcategoryDetail.disposeDone'),
           description: t('subcategoryDetail.disposeDoneDesc'),
         });
         setDisposeDialogOpen(false);
-        setDisposeDetail('');
+        resetDisposeForm();
         loadStorageEvents();
       }
     } finally {
@@ -1253,7 +1274,15 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
             }
           />
           <div className="p-4 sm:p-6">
-            {subcategoryDocuments.length === 0 ? (
+            {isDisposed ? (
+              <div className="flex flex-col items-center text-center gap-2 py-12">
+                <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center dark:bg-white/5">
+                  <Trash2 className="h-5 w-5 text-slate-400" />
+                </div>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t('subcategoryDetail.disposedBoxTitle')}</p>
+                <p className="text-xs text-slate-400 max-w-[300px]">{t('subcategoryDetail.disposedBoxNotice')}</p>
+              </div>
+            ) : subcategoryDocuments.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 {t('subcategoryDetail.noDocuments')}
               </div>
@@ -1334,6 +1363,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
           </div>
         </div>
 
+        {!isDisposed && (
         <div className={v1Card}>
           <V1CardHeader
             title={t('subcategoryDetail.uploadDocument')}
@@ -1522,6 +1552,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
             </Button>
           </div>
         </div>
+        )}
           </div>
           {/* ─── End Left Column ─── */}
 
@@ -1636,14 +1667,17 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                       <Trash2 className="h-3.5 w-3.5 shrink-0" />
                       <span>{t('subcategoryDetail.disposedNotice')}</span>
                     </p>
-                    {(() => {
-                      const disposedEvent = storageEvents.find((e) => e.eventType === 'disposed');
-                      return disposedEvent?.detail ? (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 pl-5 break-all">
-                          {disposedEvent.detail}
-                        </p>
-                      ) : null;
-                    })()}
+                    <div className="mt-1 pl-5 flex flex-col gap-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      {subcategory.disposedBy && (
+                        <span>{t('subcategoryDetail.disposedByLabel')}: <span className="font-medium text-slate-600 dark:text-slate-300">{subcategory.disposedBy}</span></span>
+                      )}
+                      {subcategory.disposedMethod && (
+                        <span>{t('subcategoryDetail.disposedMethodLabel')}: <span className="font-medium text-slate-600 dark:text-slate-300">{subcategory.disposedMethod}</span></span>
+                      )}
+                      {subcategory.disposedAt && (
+                        <span>{t('subcategoryDetail.disposedAtLabel')}: {formatDateTimeSimple(subcategory.disposedAt)}</span>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex justify-between items-center py-1.5">
@@ -2495,13 +2529,13 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* 폐기 처리 다이얼로그 */}
+        {/* 폐기 처리 다이얼로그 (복구 불가 — 이름 입력 확인) */}
         <Dialog
           open={disposeDialogOpen}
           onOpenChange={(open) => {
             if (!open) {
               setDisposeDialogOpen(false);
-              setDisposeDetail('');
+              resetDisposeForm();
             }
           }}
         >
@@ -2512,16 +2546,41 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
               sub={t('subcategoryDetail.disposeDesc', { name: subcategory.name })}
             />
             <V1ModalBody>
+              <div className="rounded-[10px] bg-red-50 border border-red-200 px-3 py-2.5 dark:bg-red-500/10 dark:border-red-500/30">
+                <p className="text-xs font-semibold text-red-700 dark:text-red-400 flex items-start gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>{t('subcategoryDetail.disposeIrreversibleWarning')}</span>
+                </p>
+              </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[13px] font-medium">{t('subcategoryDetail.disposeDetail')}</Label>
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.disposeApprover')}</Label>
                 <Input
-                  value={disposeDetail}
-                  onChange={(e) => setDisposeDetail(e.target.value)}
-                  placeholder={t('subcategoryDetail.disposeDetailPlaceholder')}
-                  maxLength={100}
+                  value={disposeApprover}
+                  onChange={(e) => setDisposeApprover(e.target.value)}
+                  placeholder={t('subcategoryDetail.disposeApproverPlaceholder')}
+                  maxLength={50}
                   className="h-[38px] rounded-lg"
                 />
-                <p className="text-[11px] text-slate-400">{t('subcategoryDetail.disposeNotice')}</p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.disposeMethod')}</Label>
+                <Input
+                  value={disposeMethod}
+                  onChange={(e) => setDisposeMethod(e.target.value)}
+                  placeholder={t('subcategoryDetail.disposeMethodPlaceholder')}
+                  maxLength={50}
+                  className="h-[38px] rounded-lg"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[13px] font-medium">{t('subcategoryDetail.disposeConfirmLabel')}</Label>
+                <Input
+                  value={disposeConfirmName}
+                  onChange={(e) => setDisposeConfirmName(e.target.value)}
+                  placeholder={subcategory.name}
+                  className="h-[38px] rounded-lg"
+                />
+                <p className="text-[11px] text-slate-400">{t('subcategoryDetail.disposeConfirmHint', { name: subcategory.name })}</p>
               </div>
             </V1ModalBody>
             <V1ModalFooter>
@@ -2530,7 +2589,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                 variant="outline"
                 onClick={() => {
                   setDisposeDialogOpen(false);
-                  setDisposeDetail('');
+                  resetDisposeForm();
                 }}
                 disabled={isDisposing}
                 className="h-9 rounded-[10px] text-[13px] font-semibold border-[#e5e7eb]"
@@ -2540,8 +2599,8 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
               <Button
                 type="button"
                 onClick={handleDispose}
-                disabled={isDisposing}
-                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#ef4444] hover:bg-[#dc2626] dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
+                disabled={isDisposing || !disposeNameConfirmed}
+                className="h-9 rounded-[10px] text-[13px] font-semibold bg-[#ef4444] hover:bg-[#dc2626] disabled:opacity-40 dark:bg-[#f87171] dark:hover:bg-[#fca5a5] dark:text-slate-900"
               >
                 {isDisposing ? (
                   <>

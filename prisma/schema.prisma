@@ -943,6 +943,9 @@ model subcategories {
   checked_out_by      String?
   checked_out_at      DateTime?            @db.Timestamptz(6)
   checkout_reason     String?
+  disposed_by         String?
+  disposed_method     String?
+  disposed_at         DateTime?            @db.Timestamptz(6)
   documents           documents[]          @ignore
   nfc_mappings        nfc_mappings[]
   nfc_tags            nfc_tags[]

@@ -110,6 +110,9 @@ export interface Subcategory {
   checkedOutBy?: string | null;
   checkedOutAt?: string | null;
   checkoutReason?: string | null;
+  disposedBy?: string | null;
+  disposedMethod?: string | null;
+  disposedAt?: string | null;
   documentCount: number;
 }
 
@@ -151,7 +154,7 @@ interface DocumentState {
   updateSubcategory: (id: string, updates: Partial<Subcategory>) => Promise<void>;
   checkoutSubcategory: (id: string, reason: string) => Promise<boolean>;
   returnSubcategory: (id: string) => Promise<boolean>;
-  disposeSubcategory: (id: string, detail: string) => Promise<boolean>;
+  disposeSubcategory: (id: string, approver: string, method: string) => Promise<boolean>;
   deleteSubcategory: (id: string) => Promise<void>;
   registerNfcTag: (subcategoryId: string, nfcUid: string) => Promise<void>;
   findSubcategoryByNfcUid: (nfcUid: string) => Promise<Subcategory | null>;
@@ -566,6 +569,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           checkedOutBy: (sub as any).checked_out_by || null,
           checkedOutAt: (sub as any).checked_out_at || null,
           checkoutReason: (sub as any).checkout_reason || null,
+          disposedBy: (sub as any).disposed_by || null,
+          disposedMethod: (sub as any).disposed_method || null,
+          disposedAt: (sub as any).disposed_at || null,
           documentCount: docCountBySub[sub.id] || 0,
         })
       );
@@ -965,6 +971,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         checkedOutBy: null,
         checkedOutAt: null,
         checkoutReason: null,
+        disposedBy: null,
+        disposedMethod: null,
+        disposedAt: null,
         documentCount: 0,
       };
 
@@ -1228,16 +1237,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  disposeSubcategory: async (id, detail) => {
+  disposeSubcategory: async (id, approver, method) => {
     const { user } = useAuthStore.getState();
     const sub = get().subcategories.find((s) => s.id === id);
     if (!user || !sub) return false;
+
+    const nowIso = new Date().toISOString();
+    const cleanApprover = approver.trim() || null;
+    const cleanMethod = method.trim() || null;
 
     try {
       const { error } = await supabase
         .from('subcategories')
         .update({
           storage_status: 'disposed',
+          disposed_by: cleanApprover,
+          disposed_method: cleanMethod,
+          disposed_at: nowIso,
           checked_out_by: null,
           checked_out_at: null,
           checkout_reason: null,
@@ -1252,6 +1268,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             ? {
                 ...s,
                 storageStatus: 'disposed' as SubcategoryStorageStatus,
+                disposedBy: cleanApprover,
+                disposedMethod: cleanMethod,
+                disposedAt: nowIso,
                 checkedOutBy: null,
                 checkedOutAt: null,
                 checkoutReason: null,
@@ -1260,11 +1279,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         ),
       }));
 
+      // 이력 detail: "승인자: X · 방식: Y" (비어있는 항목은 생략)
+      const detail =
+        [cleanApprover && `승인자: ${cleanApprover}`, cleanMethod && `방식: ${cleanMethod}`]
+          .filter(Boolean)
+          .join(' · ') || null;
+
       await logStorageEvent({
         subcategoryId: id,
         departmentId: sub.departmentId,
         eventType: 'disposed',
-        detail: detail || null,
+        detail,
       });
 
       return true;
