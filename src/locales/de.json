@@ -1377,6 +1377,12 @@
     "cancelConfirmBtn": "Kündigen",
     "cancelSuccess": "Abonnement gekündigt. Sie können den Dienst bis zum Ende des aktuellen Zeitraums nutzen.",
     "cancelFailed": "Kündigung des Abonnements fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "refundRequest": "Rückerstattung anfordern (Widerruf)",
+    "refundConfirmTitle": "Rückerstattung anfordern?",
+    "refundConfirmDesc": "Innerhalb von 7 Tagen nach der ersten Zahlung ist eine vollständige Rückerstattung möglich. Mit der Rückerstattung endet das Abonnement sofort und der Zugriff wird eingeschränkt.\nIn anderen Fällen wenden Sie sich an support@traystorage.net.",
+    "refundConfirmBtn": "Vollständig erstatten",
+    "refundSuccess": "Die Rückerstattung wurde abgeschlossen.",
+    "refundFailed": "Rückerstattung fehlgeschlagen.",
     "failTitle": "Kartenregistrierung fehlgeschlagen",
     "failDesc": "Kartenregistrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "backToApp": "Zurück zur Teamverwaltung"

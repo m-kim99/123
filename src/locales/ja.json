@@ -1377,6 +1377,12 @@
     "cancelConfirmBtn": "解約する",
     "cancelSuccess": "購読を解約しました。現在の期間まで利用可能です。",
     "cancelFailed": "購読の解約に失敗しました。もう一度お試しください。",
+    "refundRequest": "返金リクエスト (クーリングオフ)",
+    "refundConfirmTitle": "返金をリクエストしますか？",
+    "refundConfirmDesc": "初回決済から7日以内は全額返金が可能です。返金と同時に購読が終了し、サービスの利用が制限されます。\n条件に該当しない場合は support@traystorage.net までお問い合わせください。",
+    "refundConfirmBtn": "全額返金する",
+    "refundSuccess": "返金が完了しました。",
+    "refundFailed": "返金処理に失敗しました。",
     "failTitle": "カード登録失敗",
     "failDesc": "カード登録に失敗しました。もう一度お試しください。",
     "backToApp": "チーム管理に戻る"

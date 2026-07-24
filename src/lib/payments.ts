@@ -407,6 +407,60 @@ export async function cancelInnopaySubscription(
 }
 
 // ============================================================
+// 이노페이 결제 취소(환불) — innopay-payment-cancel 엣지함수
+// ============================================================
+
+export interface RefundResult {
+  success: boolean;
+  canceledAmount?: number;
+  remainAmount?: number;
+  cancelNum?: string | null;
+  subscriptionTerminated?: boolean;
+  error?: string;
+  code?: string;
+  message?: string;
+}
+
+async function invokeRefund(body: Record<string, unknown>): Promise<RefundResult> {
+  const { data, error } = await supabase.functions.invoke('innopay-payment-cancel', { body });
+
+  if (error) {
+    try {
+      const context = (error as { context?: Response }).context;
+      if (context) {
+        const resBody = await context.json();
+        return { success: false, ...resBody };
+      }
+    } catch {
+      // 본문 파싱 실패 시 아래 기본 오류 반환
+    }
+    return { success: false, error: 'REQUEST_FAILED', message: error.message };
+  }
+
+  return data as RefundResult;
+}
+
+/**
+ * 셀프 청약철회 환불 (약관 제11조 ①)
+ * 조건(첫 결제 + 7일 이내)은 서버에서 검증하며, 성공 시 전액 환불 + 구독 즉시 종료.
+ */
+export async function requestSelfRefund(paymentId: string): Promise<RefundResult> {
+  return invokeRefund({ paymentId, mode: 'self' });
+}
+
+/**
+ * 운영자 환불 — 전액/부분 금액·사유 지정, 구독 종료/유지 선택 (운영자 콘솔 전용)
+ */
+export async function requestOperatorRefund(params: {
+  paymentId: string;
+  cancelAmount: number;
+  reason: string;
+  subscriptionAction: 'terminate' | 'keep';
+}): Promise<RefundResult> {
+  return invokeRefund({ ...params, mode: 'operator' });
+}
+
+// ============================================================
 // PayApp 정기결제 (레거시 — 이노페이 전환 전까지 유지)
 // ============================================================
 

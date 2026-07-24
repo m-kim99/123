@@ -1378,6 +1378,12 @@
     "cancelConfirmBtn": "确认解约",
     "cancelSuccess": "订阅已解约，当前周期内仍可使用。",
     "cancelFailed": "解除订阅失败，请重试。",
+    "refundRequest": "申请退款 (撤回订购)",
+    "refundConfirmTitle": "确定申请退款吗？",
+    "refundConfirmDesc": "首次付款后7天内可全额退款。退款后订阅将立即终止，服务使用将受到限制。\n不符合条件的退款请联系 support@traystorage.net。",
+    "refundConfirmBtn": "全额退款",
+    "refundSuccess": "退款已完成。",
+    "refundFailed": "退款处理失败。",
     "failTitle": "卡片注册失败",
     "failDesc": "卡片注册失败，请重试。",
     "backToApp": "返回团队成员管理"

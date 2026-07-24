@@ -11,9 +11,11 @@ import {
   ChevronRight,
   Bot,
   HardDrive,
+  Banknote,
 } from 'lucide-react';
 import { OperatorLayout } from '@/components/OperatorLayout';
 import { supabase } from '@/lib/supabase';
+import { requestOperatorRefund } from '@/lib/payments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -52,6 +54,18 @@ interface Company {
   aiLimit: number | null;
   storageUsedBytes: number;
   storageLimitMb: number | null;
+}
+
+interface PaymentRow {
+  id: string;
+  order_id: string;
+  amount: number;
+  status: string;
+  cancel_amount: number;
+  card_company: string | null;
+  card_number: string | null;
+  approved_at: string | null;
+  created_at: string;
 }
 
 // 사용량 비율에 따른 칩 색상 (80% 이상 주황, 100% 도달 빨강)
@@ -295,6 +309,93 @@ export function CompanyManagement() {
     }
   };
 
+  // ===== 결제 환불 (이노페이 취소 API — 전액/부분, 구독 종료/유지) =====
+  const [refundTarget, setRefundTarget] = useState<Company | null>(null);
+  const [refundPayments, setRefundPayments] = useState<PaymentRow[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [refundAction, setRefundAction] = useState<'terminate' | 'keep'>('keep');
+  const [isRefunding, setIsRefunding] = useState(false);
+
+  const remainingOf = (p: PaymentRow) => p.amount - (p.cancel_amount || 0);
+
+  const openRefundDialog = async (company: Company) => {
+    setRefundTarget(company);
+    setRefundPayments([]);
+    setSelectedPaymentId(null);
+    setRefundAmount('');
+    setRefundReason('');
+    setRefundAction('keep');
+    setIsLoadingPayments(true);
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('id, order_id, amount, status, cancel_amount, card_company, card_number, approved_at, created_at')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      setRefundPayments((data as PaymentRow[]) || []);
+    } catch (error) {
+      console.error('결제 내역 로드 실패:', error);
+    } finally {
+      setIsLoadingPayments(false);
+    }
+  };
+
+  const selectPayment = (p: PaymentRow) => {
+    setSelectedPaymentId(p.id);
+    setRefundAmount(String(remainingOf(p)));
+  };
+
+  const handleRefund = async () => {
+    const payment = refundPayments.find((p) => p.id === selectedPaymentId);
+    if (!refundTarget || !payment || isRefunding) return;
+    const amount = parseInt(refundAmount, 10);
+    const remaining = remainingOf(payment);
+    if (!Number.isInteger(amount) || amount < 1 || amount > remaining) {
+      toast({
+        title: `취소 금액은 1~${remaining.toLocaleString()}원 사이여야 합니다.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsRefunding(true);
+    try {
+      const res = await requestOperatorRefund({
+        paymentId: payment.id,
+        cancelAmount: amount,
+        reason: refundReason || '운영자 환불',
+        subscriptionAction: refundAction,
+      });
+      if (res.success) {
+        toast({
+          title: '환불 완료',
+          description: `₩${amount.toLocaleString()} 환불 처리되었습니다.${res.subscriptionTerminated ? ' 구독이 종료되었습니다.' : ''}`,
+        });
+        setRefundTarget(null);
+        loadCompanies();
+      } else {
+        toast({
+          title: '환불 실패',
+          description: res.message || '잠시 후 다시 시도해주세요.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('환불 실패:', error);
+      toast({
+        title: '환불 실패',
+        description: error?.message || '잠시 후 다시 시도해주세요.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -396,15 +497,26 @@ export function CompanyManagement() {
                         <Calendar className="w-3 h-3" />
                         {company.createdAt ? new Date(company.createdAt).toLocaleDateString('ko-KR') : '-'}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openExtendDialog(company)}
-                        className="rounded-lg text-xs h-7 px-2.5"
-                      >
-                        <CalendarPlus className="w-3.5 h-3.5 mr-1" />
-                        기간 연장
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openExtendDialog(company)}
+                          className="rounded-lg text-xs h-7 px-2.5"
+                        >
+                          <CalendarPlus className="w-3.5 h-3.5 mr-1" />
+                          기간 연장
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openRefundDialog(company)}
+                          className="rounded-lg text-xs h-7 px-2.5"
+                        >
+                          <Banknote className="w-3.5 h-3.5 mr-1" />
+                          환불
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -499,6 +611,137 @@ export function CompanyManagement() {
             </Button>
             <Button onClick={handleExtend} className="rounded-[10px]" disabled={isExtending}>
               {isExtending ? '처리 중...' : '연장하기'}
+            </Button>
+          </V1ModalFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 결제 환불 다이얼로그 */}
+      <Dialog open={refundTarget !== null} onOpenChange={(open) => { if (!open) setRefundTarget(null); }}>
+        <DialogContent className="p-0 gap-0 max-w-lg">
+          <V1ModalHeader
+            icon={Banknote}
+            iconColor={V1.emerald}
+            title="결제 환불"
+            sub={`${refundTarget?.name ?? ''} 회사의 결제 건을 이노페이로 취소(환불)합니다.`}
+          />
+          <V1ModalBody>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>환불할 결제 선택</Label>
+                <div className="max-h-56 overflow-y-auto space-y-2">
+                  {isLoadingPayments ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">로딩 중...</p>
+                  ) : refundPayments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">결제 내역이 없습니다.</p>
+                  ) : (
+                    refundPayments.map((p) => {
+                      const remaining = remainingOf(p);
+                      const cancelable = p.status === 'DONE' && remaining > 0;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={!cancelable}
+                          onClick={() => selectPayment(p)}
+                          className={`w-full p-3 rounded-[10px] border text-left text-sm transition-colors ${
+                            selectedPaymentId === p.id
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/15'
+                              : cancelable
+                                ? 'border-border hover:border-slate-300'
+                                : 'border-border opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">₩{p.amount.toLocaleString()}</span>
+                            <V1Chip
+                              variant={
+                                p.status === 'CANCELED' ? 'red' : p.cancel_amount > 0 ? 'amber' : 'emerald'
+                              }
+                            >
+                              {p.status === 'CANCELED'
+                                ? '취소됨'
+                                : p.cancel_amount > 0
+                                  ? `부분취소 ₩${p.cancel_amount.toLocaleString()}`
+                                  : '결제완료'}
+                            </V1Chip>
+                          </div>
+                          <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                            <span>
+                              {p.card_company || '-'} {p.card_number || ''}
+                            </span>
+                            <span>{new Date(p.approved_at || p.created_at).toLocaleDateString('ko-KR')}</span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+              {selectedPaymentId && (
+                <>
+                  <div className="space-y-2">
+                    <Label>환불 금액 (원)</Label>
+                    <Input
+                      type="number"
+                      value={refundAmount}
+                      onChange={(e) => setRefundAmount(e.target.value)}
+                      className="rounded-[10px]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>환불 사유</Label>
+                    <Input
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      placeholder="운영자 환불"
+                      className="rounded-[10px]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>구독 처리</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        ['keep', '구독 유지 (오결제 환불)'],
+                        ['terminate', '구독 즉시 종료 (청약철회)'],
+                      ] as const).map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setRefundAction(value)}
+                          className={`h-9 rounded-[10px] text-xs font-medium border transition-colors ${
+                            refundAction === value
+                              ? 'border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300'
+                              : 'border-border bg-transparent text-muted-foreground hover:border-slate-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      '구독 즉시 종료'는 이용을 바로 차단하고 등록된 빌키(자동결제 카드)를 삭제합니다.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </V1ModalBody>
+          <V1ModalFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRefundTarget(null)}
+              className="rounded-[10px]"
+              disabled={isRefunding}
+            >
+              닫기
+            </Button>
+            <Button
+              onClick={handleRefund}
+              className="rounded-[10px]"
+              disabled={isRefunding || !selectedPaymentId}
+            >
+              {isRefunding ? '처리 중...' : '환불하기'}
             </Button>
           </V1ModalFooter>
         </DialogContent>

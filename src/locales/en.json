@@ -1378,6 +1378,12 @@
     "cancelConfirmBtn": "Cancel",
     "cancelSuccess": "Subscription canceled. You can use the service until the end of the current period.",
     "cancelFailed": "Failed to cancel the subscription. Please try again.",
+    "refundRequest": "Request a refund (withdrawal)",
+    "refundConfirmTitle": "Request a refund?",
+    "refundConfirmDesc": "A full refund is available within 7 days of your first payment. The subscription ends immediately upon refund and access will be restricted.\nFor other cases, contact support@traystorage.net.",
+    "refundConfirmBtn": "Refund in full",
+    "refundSuccess": "Your refund has been processed.",
+    "refundFailed": "Refund request failed.",
     "failTitle": "Card Registration Failed",
     "failDesc": "Card registration failed. Please try again.",
     "backToApp": "Back to Team Management"
