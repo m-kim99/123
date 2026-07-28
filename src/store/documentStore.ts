@@ -944,6 +944,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           default_expiry_days: subcategory.defaultExpiryDays || null,
           expiry_date: computedExpiryDate,
           color_label: subcategory.colorLabel || null,
+          // 미지정 시 DB 트리거(a_fill_subcategory_company_id)가 부서 기준으로 채운다
+          company_id: useAuthStore.getState().user?.companyId ?? null,
         })
         .select()
         .single();
