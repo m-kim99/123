@@ -849,6 +849,7 @@ model plans {
   feature_ocr_advanced        Boolean?        @default(false)
   feature_external_share      Boolean?        @default(false)
   feature_statistics_advanced Boolean?        @default(false)
+  feature_storage_lifecycle   Boolean         @default(false)
   is_active                   Boolean         @default(true)
   sort_order                  Int             @default(0)
   created_at                  DateTime        @default(now()) @db.Timestamptz(6)

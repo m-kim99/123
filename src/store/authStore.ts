@@ -37,6 +37,8 @@ interface AuthState {
   subscriptionBlocked: boolean;
   trialEndsAt: string | null;
   subscriptionStatus: SubscriptionAccess['status'] | null;
+  /** 입출고(반출·반납·폐기) 사용 가능 여부 — 프로 이상 전용 */
+  canUseStorageLifecycle: boolean;
   refreshSubscriptionAccess: () => Promise<void>;
   setRedirectAfterLogin: (path: string | null) => void;
   clearPendingDeletion: () => void;
@@ -113,6 +115,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   subscriptionBlocked: false,
   trialEndsAt: null,
   subscriptionStatus: null,
+  canUseStorageLifecycle: false,
 
   // 결제 완료 후 등 구독 상태 재확인 (SubscriptionGate 해제용)
   refreshSubscriptionAccess: async () => {
@@ -123,6 +126,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       subscriptionBlocked: !access.allowed,
       trialEndsAt: access.currentPeriodEnd,
       subscriptionStatus: access.status,
+      canUseStorageLifecycle: access.canUseStorageLifecycle,
     });
   },
 
@@ -198,11 +202,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let subscriptionBlocked = false;
       let trialEndsAt: string | null = null;
       let subscriptionStatus: SubscriptionAccess['status'] | null = null;
+      let canUseStorageLifecycle = false;
       if (userData.company_id) {
         const access = await checkSubscriptionAccess(userData.company_id);
         subscriptionBlocked = !access.allowed;
         trialEndsAt = access.currentPeriodEnd;
         subscriptionStatus = access.status;
+        canUseStorageLifecycle = access.canUseStorageLifecycle;
       }
 
       set({
@@ -223,6 +229,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         subscriptionBlocked,
         trialEndsAt,
         subscriptionStatus,
+        canUseStorageLifecycle,
       });
 
       trackEvent('login', {
@@ -421,6 +428,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         subscriptionBlocked: false,
         trialEndsAt: null,
         subscriptionStatus: null,
+        canUseStorageLifecycle: false,
       });
     }
   },
@@ -538,11 +546,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         let subscriptionBlocked = false;
         let trialEndsAt: string | null = null;
         let subscriptionStatus: SubscriptionAccess['status'] | null = null;
+        let canUseStorageLifecycle = false;
         if (userData.company_id) {
           const access = await checkSubscriptionAccess(userData.company_id);
           subscriptionBlocked = !access.allowed;
           trialEndsAt = access.currentPeriodEnd;
           subscriptionStatus = access.status;
+          canUseStorageLifecycle = access.canUseStorageLifecycle;
         }
 
         // 탈퇴 신청 여부 확인
@@ -584,6 +594,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           subscriptionBlocked,
           trialEndsAt,
           subscriptionStatus,
+          canUseStorageLifecycle,
         });
 
         // 앱 환경에서 푸시키 저장 (세션 복원 시에도)

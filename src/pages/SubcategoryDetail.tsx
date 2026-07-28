@@ -54,6 +54,8 @@ export function SubcategoryDetail() {
     subcategoryId: string;
   }>();
   const user = useAuthStore((state) => state.user);
+  // 입출고(반출·반납·폐기)는 프로 이상 전용 — 베이직은 UI 자체를 숨긴다 (DB에서도 차단됨)
+  const canUseStorageLifecycle = useAuthStore((state) => state.canUseStorageLifecycle);
   
   // Selector 최적화: 상태값은 개별 selector로
   const departments = useDocumentStore((state) => state.departments);
@@ -244,12 +246,12 @@ export function SubcategoryDetail() {
     disposed: { variant: 'neutral' as const, label: t('subcategoryDetail.statusDisposed') },
   }[displayStatus];
 
-  // 입출고 이력 로드
+  // 입출고 이력 로드 (프로 이상)
   const loadStorageEvents = useCallback(async () => {
-    if (!subcategoryId) return;
+    if (!subcategoryId || !canUseStorageLifecycle) return;
     const events = await fetchStorageEvents(subcategoryId);
     setStorageEvents(events);
-  }, [subcategoryId]);
+  }, [subcategoryId, canUseStorageLifecycle]);
 
   useEffect(() => {
     loadStorageEvents();
@@ -261,10 +263,10 @@ export function SubcategoryDetail() {
     const next = new URLSearchParams(searchParams);
     next.delete('nfc');
     setSearchParams(next, { replace: true });
-    if (subcategory.storageStatus !== 'disposed') {
+    if (canUseStorageLifecycle && subcategory.storageStatus !== 'disposed') {
       setNfcPromptOpen(true);
     }
-  }, [searchParams, subcategory, setSearchParams]);
+  }, [searchParams, subcategory, setSearchParams, canUseStorageLifecycle]);
 
   const isFav = subcategoryId ? isFavorite(subcategoryId) : false;
 
@@ -319,17 +321,20 @@ export function SubcategoryDetail() {
       sub: doc.uploader || null,
       date: doc.uploadDate,
     }));
-    const eventItems = storageEvents.map((event) => ({
-      id: `evt-${event.id}`,
-      color: eventColors[event.eventType],
-      title: eventLabels[event.eventType],
-      sub: [event.actorName, event.detail].filter(Boolean).join(' · ') || null,
-      date: event.createdAt,
-    }));
+    // 입출고 이력은 프로 이상에서만 타임라인에 병합 (베이직은 문서 업로드 이력만)
+    const eventItems = canUseStorageLifecycle
+      ? storageEvents.map((event) => ({
+          id: `evt-${event.id}`,
+          color: eventColors[event.eventType],
+          title: eventLabels[event.eventType],
+          sub: [event.actorName, event.detail].filter(Boolean).join(' · ') || null,
+          date: event.createdAt,
+        }))
+      : [];
     return [...docItems, ...eventItems]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 8);
-  }, [subcategoryDocuments, storageEvents, t]);
+  }, [subcategoryDocuments, storageEvents, canUseStorageLifecycle, t]);
 
   // 새 문서 업로드용 dropzone
   const handleNewFileDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -1641,10 +1646,14 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                 title={t('subcategoryDetail.storageInfo', { defaultValue: '보관 정보' })}
                 icon={MapPin}
                 iconColor="#2563eb"
-                action={<V1Chip variant={statusChip.variant}>● {statusChip.label}</V1Chip>}
+                action={
+                  canUseStorageLifecycle
+                    ? <V1Chip variant={statusChip.variant}>● {statusChip.label}</V1Chip>
+                    : undefined
+                }
               />
               <div className="px-5 py-3 flex flex-col gap-2.5">
-                {displayStatus === 'checkedOut' && (
+                {canUseStorageLifecycle && displayStatus === 'checkedOut' && (
                   <div className="rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30">
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
                       <PackageOpen className="h-3.5 w-3.5 shrink-0" />
@@ -1661,7 +1670,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                     )}
                   </div>
                 )}
-                {displayStatus === 'disposed' && (
+                {canUseStorageLifecycle && displayStatus === 'disposed' && (
                   <div className="rounded-[10px] bg-slate-50 border border-slate-200 px-3 py-2 dark:bg-white/5 dark:border-white/10">
                     <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                       <Trash2 className="h-3.5 w-3.5 shrink-0" />
@@ -1727,7 +1736,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                     <span className="text-xs font-semibold text-slate-900">{t('subcategoryDetail.unassigned')}</span>
                   )}
                 </div>
-                {displayStatus !== 'disposed' && (
+                {canUseStorageLifecycle && displayStatus !== 'disposed' && (
                   <div className="flex gap-2 pt-2.5 border-t border-slate-100">
                     {displayStatus === 'checkedOut' ? (
                       <Button
@@ -2418,6 +2427,9 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* 입출고 다이얼로그 묶음 — 프로 이상 전용 */}
+        {canUseStorageLifecycle && (
+          <>
         {/* 반출 처리 다이얼로그 */}
         <Dialog
           open={checkoutDialogOpen}
@@ -2666,6 +2678,8 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+          </>
+        )}
 
       </div>
     </DashboardLayout>

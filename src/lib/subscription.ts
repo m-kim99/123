@@ -87,6 +87,8 @@ export interface SubscriptionAccess {
   allowed: boolean;
   status: 'active' | 'trialing' | 'expired' | 'none';
   currentPeriodEnd: string | null;
+  /** 입출고(반출·반납·폐기) 사용 가능 여부 — 프로 이상 전용. 무료체험은 pro라 이용 가능. */
+  canUseStorageLifecycle: boolean;
 }
 
 /**
@@ -94,12 +96,13 @@ export interface SubscriptionAccess {
  * - 유효한 구독(active / 기간 내 trialing)이 있어야 이용 가능
  * - 체험/구독 기간(current_period_end) 경과 시 expired → 차단
  * - 조회 실패(네트워크 등) 시에는 fail-open (잠금 오탐 방지)
+ * - 단 플랜 전용 기능(canUseStorageLifecycle)은 fail-closed — 최종 차단은 DB가 담당
  */
 export async function checkSubscriptionAccess(companyId: string): Promise<SubscriptionAccess> {
   try {
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('status, current_period_end')
+      .select('status, current_period_end, plan:plans (feature_storage_lifecycle)')
       .eq('company_id', companyId)
       .in('status', ['active', 'trialing'])
       .maybeSingle();
@@ -107,22 +110,26 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
     if (error) throw error;
 
     if (!data) {
-      return { allowed: false, status: 'none', currentPeriodEnd: null };
+      return { allowed: false, status: 'none', currentPeriodEnd: null, canUseStorageLifecycle: false };
     }
+
+    const plan = data.plan as unknown as { feature_storage_lifecycle: boolean | null } | null;
+    const canUseStorageLifecycle = plan?.feature_storage_lifecycle === true;
 
     const end = data.current_period_end as string | null;
     if (end && new Date(end).getTime() < Date.now()) {
-      return { allowed: false, status: 'expired', currentPeriodEnd: end };
+      return { allowed: false, status: 'expired', currentPeriodEnd: end, canUseStorageLifecycle: false };
     }
 
     return {
       allowed: true,
       status: data.status as 'active' | 'trialing',
       currentPeriodEnd: end,
+      canUseStorageLifecycle,
     };
   } catch (err) {
     console.error('checkSubscriptionAccess error:', err);
-    return { allowed: true, status: 'active', currentPeriodEnd: null };
+    return { allowed: true, status: 'active', currentPeriodEnd: null, canUseStorageLifecycle: false };
   }
 }
 

@@ -86,6 +86,8 @@ export function SubcategoryManagement() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  // 입출고(반출·반납)는 프로 이상 전용 — 베이직은 UI 자체를 숨긴다 (DB에서도 차단됨)
+  const canUseStorageLifecycle = useAuthStore((state) => state.canUseStorageLifecycle);
   const isAdmin = user?.role === 'admin';
   
   // Selector 최적화: 상태값은 개별 selector로
@@ -277,7 +279,8 @@ export function SubcategoryManagement() {
         ) {
           return false;
         }
-        if (statusFilter && getStorageDisplayStatus(sub) !== statusFilter) {
+        // 상태 필터는 프로 이상에서만 적용 (베이직은 필터 UI 자체가 없음)
+        if (canUseStorageLifecycle && statusFilter && getStorageDisplayStatus(sub) !== statusFilter) {
           return false;
         }
         return true;
@@ -290,7 +293,7 @@ export function SubcategoryManagement() {
       }
       return arr;
     },
-    [subcategories, selectedDepartmentId, selectedParentCategoryId, statusFilter, accessibleDepartmentIds, sortOrder]
+    [subcategories, selectedDepartmentId, selectedParentCategoryId, statusFilter, canUseStorageLifecycle, accessibleDepartmentIds, sortOrder]
   );
 
   // 페이지네이션 계산
@@ -561,7 +564,8 @@ export function SubcategoryManagement() {
           </Button>
         </div>
 
-        {/* 보관 상태 통계 카드 (클릭 시 상태 필터 연동) */}
+        {/* 보관 상태 통계 카드 (클릭 시 상태 필터 연동) — 프로 이상 전용 */}
+        {canUseStorageLifecycle && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card
             className="cursor-pointer transition-shadow hover:shadow-md"
@@ -595,6 +599,7 @@ export function SubcategoryManagement() {
             </Card>
           ))}
         </div>
+        )}
 
         <Card>
           <CardHeader>
@@ -604,7 +609,7 @@ export function SubcategoryManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={cn('grid grid-cols-1 gap-4', canUseStorageLifecycle ? 'md:grid-cols-3' : 'md:grid-cols-2')}>
               <div>
                 <p className="text-xs font-medium text-slate-500 mb-1.5">{t('common.department')}</p>
                 <select
@@ -641,6 +646,7 @@ export function SubcategoryManagement() {
                   ))}
                 </select>
               </div>
+              {canUseStorageLifecycle && (
               <div>
                 <p className="text-xs font-medium text-slate-500 mb-1.5">{t('subcategoryMgmt.storageStatus')}</p>
                 <select
@@ -655,6 +661,7 @@ export function SubcategoryManagement() {
                   <option value="disposed">{t('subcategoryDetail.statusDisposed')}</option>
                 </select>
               </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -736,9 +743,11 @@ export function SubcategoryManagement() {
                                 </Badge>
                               )}
                               <ColorLabelBadge colorLabel={sub.colorLabel} />
-                              <Badge variant="outline" className={STORAGE_BADGE_CLASS[storageStatus]}>
-                                ● {t(STORAGE_LABEL_KEY[storageStatus])}
-                              </Badge>
+                              {canUseStorageLifecycle && (
+                                <Badge variant="outline" className={STORAGE_BADGE_CLASS[storageStatus]}>
+                                  ● {t(STORAGE_LABEL_KEY[storageStatus])}
+                                </Badge>
+                              )}
                             </div>
                             {expiryStatus.label && expiryStatus.status !== 'expired' && storageStatus !== 'disposed' && (
                               <Badge
@@ -818,7 +827,7 @@ export function SubcategoryManagement() {
                             <Edit className="h-3 w-3 mr-1" />
                             {t('common.edit')}
                           </Button>
-                          {storageStatus !== 'disposed' && (
+                          {canUseStorageLifecycle && storageStatus !== 'disposed' && (
                             storageStatus === 'checkedOut' ? (
                               <Button
                                 variant="outline"
