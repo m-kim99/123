@@ -166,6 +166,12 @@ export async function writeNFCUrl(
 
   try {
     if (Capacitor.isNativePlatform()) {
+      if (Capacitor.getPlatform() === 'ios') {
+        // readNFCUid()의 읽기 세션을 invalidate()한 직후 바로 새 NFCTagReaderSession을
+        // begin()하면 iOS가 리더 하드웨어를 아직 정리 중이라 "태그를 가까이 대세요" 시트가
+        // 뜨지 않는 경우가 있음. 쓰기 세션 시작 전 짧게 대기해 회피.
+        await new Promise((r) => setTimeout(r, 600));
+      }
       // 네이티브 세션이 응답 없이 죽어도 Promise가 영구 pending되지 않도록 안전장치
       // (iOS 세션 자체 타임아웃 60초보다 길게 잡아 네이티브 오류 메시지가 우선하도록)
       let writeTimeout: ReturnType<typeof setTimeout> | undefined;
