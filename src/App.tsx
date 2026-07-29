@@ -85,6 +85,9 @@ const TeamAnnouncements = lazy(() =>
 const Trash = lazy(() =>
   import('./pages/Trash').then((m) => ({ default: m.Trash })),
 );
+const AuditLog = lazy(() =>
+  import('./pages/AuditLog').then((m) => ({ default: m.AuditLog })),
+);
 const QnAPage = lazy(() =>
   import('./pages/QnAPage').then((m) => ({ default: m.QnAPage })),
 );
@@ -542,6 +545,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <Trash />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/audit-log"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AuditLog />
                 </ProtectedRoute>
               }
             />

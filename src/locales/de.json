@@ -179,6 +179,7 @@
     "statistics": "Statistiken",
     "announcements": "Ankündigungen",
     "trash": "Papierkorb",
+    "auditLog": "Löschprotokoll",
     "qna": "FAQ",
     "customerService": "Kundenservice"
   },
@@ -823,6 +824,8 @@
     "eventReturned": "Zurückgegeben",
     "eventDisposed": "Entsorgt",
     "eventLocationChanged": "Standort geändert",
+    "eventDeleted": "Gelöscht",
+    "eventDocumentDeleted": "Dokument gelöscht",
     "checkoutTitle": "Entnahme",
     "checkoutDesc": "„{{name}}“ aus dem Lager entnehmen.",
     "checkoutBy": "Entnommen von",
@@ -1363,6 +1366,23 @@
     "emptyTrashTitle": "Papierkorb leeren",
     "emptyTrashDesc": "Sind Sie sicher, dass Sie alle {{count}} Dokumente dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "emptyTrashConfirm": "Alle löschen"
+  },
+  "auditLog": {
+    "title": "Lösch- & Entsorgungsprotokoll",
+    "subtitle": "Lösch- und Entsorgungsverlauf für Ablagen und Dokumente. Nur für Administratoren sichtbar.",
+    "totalCount": "{{count}} insgesamt",
+    "searchPlaceholder": "Ziel/Ausführenden suchen...",
+    "eventType": "Typ",
+    "target": "Ziel",
+    "department": "Abteilung",
+    "actor": "Ausführender",
+    "detail": "Detail",
+    "occurredAt": "Datum",
+    "empty": "Keine Einträge.",
+    "noSearchResults": "Keine Suchergebnisse.",
+    "eventTypeDisposed": "Entsorgt",
+    "eventTypeDeleted": "Ablage gelöscht",
+    "eventTypeDocumentDeleted": "Dokument gelöscht"
   },
   "billing": {
     "successTitle": "Karte registriert",

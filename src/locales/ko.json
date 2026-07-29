@@ -180,6 +180,7 @@
     "statistics": "통계",
     "announcements": "공지사항",
     "trash": "휴지통",
+    "auditLog": "삭제 로그",
     "qna": "FAQ",
     "customerService": "고객센터"
   },
@@ -824,6 +825,8 @@
     "eventReturned": "반납",
     "eventDisposed": "폐기",
     "eventLocationChanged": "위치 변경",
+    "eventDeleted": "삭제",
+    "eventDocumentDeleted": "문서 삭제",
     "checkoutTitle": "반출 처리",
     "checkoutDesc": "'{{name}}' 보관함을 창고에서 꺼냅니다.",
     "checkoutBy": "반출 담당자",
@@ -1364,6 +1367,23 @@
     "emptyTrashTitle": "휴지통 비우기",
     "emptyTrashDesc": "휴지통의 모든 문서({{count}}개)를 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "emptyTrashConfirm": "모두 삭제"
+  },
+  "auditLog": {
+    "title": "삭제·폐기 로그",
+    "subtitle": "세부 스토리지 및 문서의 삭제·폐기 이력입니다. 관리자만 조회할 수 있습니다.",
+    "totalCount": "총 {{count}}건",
+    "searchPlaceholder": "대상/실행자 검색...",
+    "eventType": "구분",
+    "target": "대상",
+    "department": "부서",
+    "actor": "실행자",
+    "detail": "상세",
+    "occurredAt": "일시",
+    "empty": "기록이 없습니다.",
+    "noSearchResults": "검색 결과가 없습니다.",
+    "eventTypeDisposed": "폐기",
+    "eventTypeDeleted": "스토리지 삭제",
+    "eventTypeDocumentDeleted": "문서 삭제"
   },
   "billing": {
     "successTitle": "카드 등록 완료",

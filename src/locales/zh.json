@@ -180,6 +180,7 @@
     "statistics": "统计",
     "announcements": "公告",
     "trash": "回收站",
+    "auditLog": "删除日志",
     "qna": "常见问题",
     "customerService": "客服中心"
   },
@@ -824,6 +825,8 @@
     "eventReturned": "归还",
     "eventDisposed": "销毁",
     "eventLocationChanged": "位置变更",
+    "eventDeleted": "删除",
+    "eventDocumentDeleted": "文档删除",
     "checkoutTitle": "借出处理",
     "checkoutDesc": "将“{{name}}”从仓库取出。",
     "checkoutBy": "借出负责人",
@@ -1364,6 +1367,23 @@
     "emptyTrashTitle": "清空回收站",
     "emptyTrashDesc": "确定要永久删除回收站中的所有文档（{{count}} 个）吗？该操作无法撤销。",
     "emptyTrashConfirm": "全部删除"
+  },
+  "auditLog": {
+    "title": "删除·销毁日志",
+    "subtitle": "存储箱与文档的删除·销毁记录。仅管理员可查看。",
+    "totalCount": "共{{count}}条",
+    "searchPlaceholder": "搜索对象/操作人...",
+    "eventType": "类型",
+    "target": "对象",
+    "department": "部门",
+    "actor": "操作人",
+    "detail": "详情",
+    "occurredAt": "时间",
+    "empty": "暂无记录。",
+    "noSearchResults": "没有搜索结果。",
+    "eventTypeDisposed": "销毁",
+    "eventTypeDeleted": "存储箱删除",
+    "eventTypeDocumentDeleted": "文档删除"
   },
   "billing": {
     "successTitle": "卡片注册完成",

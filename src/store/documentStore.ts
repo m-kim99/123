@@ -1319,6 +1319,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         ? parentCategories.find((p) => p.id === targetSub.parentCategoryId)
         : undefined;
 
+      // 완전삭제 전에 감사 이력부터 기록 (subcategory_id FK가 아직 유효한 시점)
+      if (targetSub) {
+        await logStorageEvent({
+          subcategoryId: id,
+          subcategoryName: targetSub.name,
+          departmentId: targetSub.departmentId,
+          eventType: 'deleted',
+        });
+      }
+
       // 보관함 삭제 시 documents는 CASCADE로 함께 사라지므로, 실제 파일 경로는 미리 조회해둔다.
       const { data: docsToRemove } = await supabase
         .from('documents')
@@ -1903,15 +1913,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   permanentlyDeleteDocument: async (id) => {
     try {
       let filePath: string | null = null;
+      let docTitle: string | null = null;
+      let docDepartmentId: string | null = null;
 
       try {
         const { data: existing } = await supabase
           .from('documents')
-          .select('file_path')
+          .select('file_path, title, department_id')
           .eq('id', id)
           .single();
 
         filePath = existing?.file_path || null;
+        docTitle = existing?.title || null;
+        docDepartmentId = existing?.department_id || null;
       } catch {
       }
 
@@ -1923,6 +1937,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           console.error('Failed to delete file from storage:', storageError);
         }
       }
+
+      // 완전삭제 전에 감사 이력부터 기록 (문서 행이 사라져도 조회 가능하도록)
+      await logStorageEvent({
+        documentTitle: docTitle,
+        departmentId: docDepartmentId,
+        eventType: 'document_deleted',
+      });
 
       // DB에서 영구 삭제
       const { error } = await supabase
@@ -1973,7 +1994,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // 휴지통에 있는 모든 문서의 파일 경로 조회
       const { data: trashedDocs } = await supabase
         .from('documents')
-        .select('id, file_path')
+        .select('id, file_path, title, department_id')
         .in('department_id', deptIds)
         .not('deleted_at', 'is', null);
 
@@ -1982,10 +2003,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         const filePaths = trashedDocs
           .map((doc: any) => doc.file_path)
           .filter((path: string | null) => path);
-        
+
         if (filePaths.length > 0) {
           await r2Storage.remove(filePaths);
         }
+
+        // 완전삭제 전에 문서별 감사 이력부터 기록 (문서 행이 사라져도 조회 가능하도록)
+        await Promise.all(
+          trashedDocs.map((doc: any) =>
+            logStorageEvent({
+              documentTitle: doc.title || null,
+              departmentId: doc.department_id || null,
+              eventType: 'document_deleted',
+            })
+          )
+        );
 
         // DB에서 영구 삭제
         const docIds = trashedDocs.map((doc: any) => doc.id);

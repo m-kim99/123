@@ -179,6 +179,7 @@
     "statistics": "統計",
     "announcements": "お知らせ",
     "trash": "ゴミ箱",
+    "auditLog": "削除ログ",
     "qna": "FAQ",
     "customerService": "カスタマーサービス"
   },
@@ -823,6 +824,8 @@
     "eventReturned": "返却",
     "eventDisposed": "廃棄",
     "eventLocationChanged": "場所変更",
+    "eventDeleted": "削除",
+    "eventDocumentDeleted": "文書削除",
     "checkoutTitle": "持ち出し処理",
     "checkoutDesc": "「{{name}}」を倉庫から持ち出します。",
     "checkoutBy": "持ち出し担当者",
@@ -1363,6 +1366,23 @@
     "emptyTrashTitle": "ゴミ箱を空にする",
     "emptyTrashDesc": "ゴミ箱のすべてのドキュメント({{count}}個)を完全に削除しますか？この操作は元に戻せません。",
     "emptyTrashConfirm": "すべて削除"
+  },
+  "auditLog": {
+    "title": "削除・廃棄ログ",
+    "subtitle": "保管箱と文書の削除・廃棄履歴です。管理者のみ閲覧できます。",
+    "totalCount": "合計{{count}}件",
+    "searchPlaceholder": "対象/実行者を検索...",
+    "eventType": "区分",
+    "target": "対象",
+    "department": "部署",
+    "actor": "実行者",
+    "detail": "詳細",
+    "occurredAt": "日時",
+    "empty": "記録がありません。",
+    "noSearchResults": "検索結果がありません。",
+    "eventTypeDisposed": "廃棄",
+    "eventTypeDeleted": "保管箱削除",
+    "eventTypeDocumentDeleted": "文書削除"
   },
   "billing": {
     "successTitle": "カード登録完了",

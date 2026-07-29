@@ -180,6 +180,7 @@
     "statistics": "Statistics",
     "announcements": "Announcements",
     "trash": "Trash",
+    "auditLog": "Deletion Log",
     "qna": "FAQ",
     "customerService": "Customer Service"
   },
@@ -824,6 +825,8 @@
     "eventReturned": "Returned",
     "eventDisposed": "Disposed",
     "eventLocationChanged": "Location Changed",
+    "eventDeleted": "Deleted",
+    "eventDocumentDeleted": "Document Deleted",
     "checkoutTitle": "Check Out",
     "checkoutDesc": "Take '{{name}}' out of storage.",
     "checkoutBy": "Checked Out By",
@@ -1364,6 +1367,23 @@
     "emptyTrashTitle": "Empty Trash",
     "emptyTrashDesc": "Are you sure you want to permanently delete all {{count}} documents? This action cannot be undone.",
     "emptyTrashConfirm": "Delete All"
+  },
+  "auditLog": {
+    "title": "Deletion & Disposal Log",
+    "subtitle": "Deletion and disposal history for storage boxes and documents. Visible to admins only.",
+    "totalCount": "{{count}} total",
+    "searchPlaceholder": "Search target/actor...",
+    "eventType": "Type",
+    "target": "Target",
+    "department": "Department",
+    "actor": "Actor",
+    "detail": "Detail",
+    "occurredAt": "Date",
+    "empty": "No records.",
+    "noSearchResults": "No search results.",
+    "eventTypeDisposed": "Disposed",
+    "eventTypeDeleted": "Storage deleted",
+    "eventTypeDocumentDeleted": "Document deleted"
   },
   "billing": {
     "successTitle": "Card Registered",

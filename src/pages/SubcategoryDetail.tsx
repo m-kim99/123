@@ -306,6 +306,8 @@ export function SubcategoryDetail() {
       returned: t('subcategoryDetail.eventReturned'),
       disposed: t('subcategoryDetail.eventDisposed'),
       location_changed: t('subcategoryDetail.eventLocationChanged'),
+      deleted: t('subcategoryDetail.eventDeleted'),
+      document_deleted: t('subcategoryDetail.eventDocumentDeleted'),
     };
     const eventColors: Record<StorageEventType, string> = {
       registered: '#10b981',
@@ -313,6 +315,8 @@ export function SubcategoryDetail() {
       returned: '#10b981',
       disposed: '#ef4444',
       location_changed: '#94a3b8',
+      deleted: '#ef4444',
+      document_deleted: '#ef4444',
     };
     const docItems = subcategoryDocuments.map((doc) => ({
       id: `doc-${doc.id}`,
