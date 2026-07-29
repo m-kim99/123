@@ -11,7 +11,8 @@ export type StorageEventType =
 
 export interface StorageEvent {
   id: string;
-  subcategoryId: string;
+  subcategoryId: string | null;
+  subcategoryName: string | null;
   eventType: StorageEventType;
   actorName: string | null;
   detail: string | null;
@@ -21,6 +22,7 @@ export interface StorageEvent {
 /** 이력 적재는 부가 기능 — 실패해도 본 작업을 막지 않는다. */
 export async function logStorageEvent(params: {
   subcategoryId: string;
+  subcategoryName?: string | null;
   departmentId: string | null;
   eventType: StorageEventType;
   detail?: string | null;
@@ -31,6 +33,7 @@ export async function logStorageEvent(params: {
 
     const { error } = await supabase.from('storage_events').insert({
       subcategory_id: params.subcategoryId,
+      subcategory_name: params.subcategoryName || null,
       company_id: user.companyId,
       department_id: params.departmentId,
       event_type: params.eventType,
@@ -60,6 +63,7 @@ export async function fetchStorageEvents(
     return (data || []).map((row) => ({
       id: row.id,
       subcategoryId: row.subcategory_id,
+      subcategoryName: row.subcategory_name || null,
       eventType: row.event_type as StorageEventType,
       actorName: row.actor_name || null,
       detail: row.detail || null,

@@ -1246,55 +1246,37 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const sub = get().subcategories.find((s) => s.id === id);
     if (!user || !sub) return false;
 
-    const nowIso = new Date().toISOString();
     const cleanApprover = approver.trim() || null;
     const cleanMethod = method.trim() || null;
 
     try {
-      const { error } = await supabase
-        .from('subcategories')
-        .update({
-          storage_status: 'disposed',
-          disposed_by: cleanApprover,
-          disposed_method: cleanMethod,
-          disposed_at: nowIso,
-          checked_out_by: null,
-          checked_out_at: null,
-          checkout_reason: null,
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      set((state) => ({
-        subcategories: state.subcategories.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                storageStatus: 'disposed' as SubcategoryStorageStatus,
-                disposedBy: cleanApprover,
-                disposedMethod: cleanMethod,
-                disposedAt: nowIso,
-                checkedOutBy: null,
-                checkedOutAt: null,
-                checkoutReason: null,
-              }
-            : s
-        ),
-      }));
-
       // 이력 detail: "승인자: X · 방식: Y" (비어있는 항목은 생략)
       const detail =
         [cleanApprover && `승인자: ${cleanApprover}`, cleanMethod && `방식: ${cleanMethod}`]
           .filter(Boolean)
           .join(' · ') || null;
 
+      // 완전삭제 전에 감사 이력부터 기록 (subcategory_id FK가 아직 유효한 시점)
+      // — 삭제 후에는 storage_events.subcategory_id가 SET NULL로 보존되어 이력 자체는 남는다.
       await logStorageEvent({
         subcategoryId: id,
+        subcategoryName: sub.name,
         departmentId: sub.departmentId,
         eventType: 'disposed',
         detail,
       });
+
+      const { error } = await supabase
+        .from('subcategories')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        subcategories: state.subcategories.filter((s) => s.id !== id),
+        documents: state.documents.filter((doc) => doc.subcategoryId !== id),
+      }));
 
       return true;
     } catch (err) {

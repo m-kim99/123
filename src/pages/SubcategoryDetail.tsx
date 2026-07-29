@@ -627,7 +627,6 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
         });
         setDisposeDialogOpen(false);
         resetDisposeForm();
-        loadStorageEvents();
       }
     } finally {
       setIsDisposing(false);
