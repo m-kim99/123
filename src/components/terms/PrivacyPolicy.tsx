@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-const PrivacyKo = () => (
+const PrivacyKoCurrent = () => (
   <>
     <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.07.01. 시행 2026.07.01.</p>
 
@@ -191,6 +191,210 @@ const PrivacyKo = () => (
 
     <h3 className="font-semibold text-slate-900">부칙</h3>
     <p>- 이 개인정보 처리방침은 2026년 7월 1일부터 시행합니다.</p>
+
+    <h3 className="font-semibold text-slate-900">[회사 정보]</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>상호: 주식회사 인포크리에이티브</li>
+      <li>대표자: 정도천</li>
+      <li>주소: 서울시 금천구 가산디지털2로 43-14 가산한화비즈메트로2차 708호, 709호</li>
+      <li>사업자등록번호: 841-86-03004</li>
+      <li>고객센터: 02-333-7334</li>
+      <li>이메일: support@traystorage.net</li>
+    </ul>
+  </>
+);
+
+const PrivacyKoRevised = () => (
+  <>
+    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.09.01. 시행 2026.09.01.</p>
+
+    <p>주식회사 인포크리에이티브(이하 "회사")는 「개인정보 보호법」 제30조에 따라 회사가 서비스하는 트레이스토리지 커넥트를 이용하는 사용자(이하 "정보주체")의 개인정보를 보호하고 이와 관련된 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보 처리방침을 운영합니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제1조 (개인정보 수집 및 이용 목적)</h3>
+    <p>① 회사는 서비스 제공을 위한 필요 최소한의 개인정보를 수집하고 있으며, 정보주체의 동의를 받아 다음의 목적으로 개인정보를 수집합니다. 수집한 개인정보는 다음 목적 이외의 용도로 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 정보주체의 별도의 동의를 받는 등 필요한 조치를 할 예정입니다.</p>
+    <p>② 회사는 AI OCR 및 AI 기반 문서 탐색 서비스 제공을 위하여 회원이 등록한 문서, 음성 명령 데이터 및 이용 기록을 처리할 수 있으며, 이는 서비스 제공 목적 범위 내에서만 이용됩니다. 회사는 회원의 문서를 AI 모델의 일반 학습 데이터로 활용하지 않으나, 서비스 품질 개선을 위한 AI 모델 개선 목적으로 문서 내 민감정보를 제외한 이용 패턴, 피드백 데이터를 수집·활용할 수 있습니다.</p>
+    <p>③ 회사는 다음 각 호의 목적을 위하여 개인정보를 수집·이용합니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">목적</th><th className="border border-slate-300 p-2 text-left">세부 내용</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">1. 회원 가입 및 관리</td><td className="border border-slate-300 p-2">회원제 서비스 제공에 따른 본인 식별·인증, 중복 가입 및 부정 가입 방지, 회원 자격 유지·제한, 각종 통지 및 고지, 만 14세 미만 아동 가입 제한</td></tr>
+        <tr><td className="border border-slate-300 p-2">2. 서비스 제공 및 이용</td><td className="border border-slate-300 p-2">문서 등록 및 관리, AI OCR 처리, AI 챗봇을 통한 문서 검색 및 정보 제공, 음성 명령 처리, NFC 태그 기반 문서 관리, 부서별 접근 권한 관리, 문서 통계 제공</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. 요금 결제 및 정산</td><td className="border border-slate-300 p-2">유료 서비스 이용에 따른 요금 결제, 청구서 발행, 결제 내역 관리</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. 고충 처리</td><td className="border border-slate-300 p-2">회원 고충 사항 확인, 본인 확인, 처리 결과 통지 및 연락</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. 마케팅 및 프로모션</td><td className="border border-slate-300 p-2">이벤트, 프로모션 정보 및 참여 기회 제공 (선택 동의 시)</td></tr>
+      </tbody>
+    </table>
+    <p>④ 제1항에도 불구하고 회사는 정보주체의 동의 없이도 다음 각 호와 같은 방법으로 개인정보를 수집할 수 있고 수집 목적 범위에서 이용할 수 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>법률에 특별한 규정이 있는 경우</li>
+      <li>정보주체가 서비스를 이용하는 과정에서 불가피하게 생성되는 개인정보의 경우</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">제2조 (수집 및 이용하는 개인정보 항목)</h3>
+    <p>① 회사가 수집 및 이용하는 개인정보의 항목은 아래와 같습니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">수집 목적</th><th className="border border-slate-300 p-2 text-left">세부 항목 및 수집 항목</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">1. 회원 가입 및 관리</td><td className="border border-slate-300 p-2">웹 회원가입(관리자): 회사명·이름·이메일·휴대폰 번호(본인 인증)·비밀번호 / 웹 회원가입(팀원): 회사명·부서명·이름·이메일·휴대폰 번호·비밀번호 / 카카오 계정: 카카오 계정(아이디)·비밀번호 / 구글 계정: 이름·이메일주소 / 네이버 계정: 아이디·비밀번호 / 애플 계정: 아이디·비밀번호</td></tr>
+        <tr><td className="border border-slate-300 p-2">2. 서비스 제공</td><td className="border border-slate-300 p-2">AI 서비스 이용 시: 업로드한 문서(이미지, PDF 등)·음성 명령 데이터·문서 검색 이력·AI 챗봇 대화 내역·NFC 태그 정보(태그 고유번호, 스캔 시간, 연결된 문서 정보)·문서 보관 위치 정보 / 부가 기능 이용 시: 선택적 추가 입력 항목</td></tr>
+        <tr><td className="border border-slate-300 p-2">3. 요금 결제</td><td className="border border-slate-300 p-2">신용카드 정보(카드번호, 유효기간, 비밀번호 앞 2자리)·계좌 정보(은행명, 계좌번호)·결제 내역</td></tr>
+        <tr><td className="border border-slate-300 p-2">4. 회원 고충 및 불만 처리</td><td className="border border-slate-300 p-2">이름·이메일주소·연락처·1:1문의·고충 및 불만 내용</td></tr>
+        <tr><td className="border border-slate-300 p-2">5. 마케팅 (선택 동의)</td><td className="border border-slate-300 p-2">이메일 주소·휴대폰 번호(SMS 수신 동의 시)</td></tr>
+        <tr><td className="border border-slate-300 p-2">6. 자동 수집 정보 항목</td><td className="border border-slate-300 p-2">접속 로그, 이용 기록, 기기 정보, IP 주소, 쿠키</td></tr>
+      </tbody>
+    </table>
+    <p>② 회사는 만 14세 미만 아동의 회원 가입을 받지 않습니다.</p>
+    <p>③ 회사는 결제 정보(신용카드 정보, 계좌 정보 등)를 직접 저장하지 않으며, 결제대행업체(주식회사 이노페이)를 통해 안전하게 처리합니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제3조 (개인정보 보유 및 이용 기간)</h3>
+    <p>① 회사는 정보주체의 개인정보를 수집할 때 동의 받은 개인정보 보유 및 이용기간 또는 법령에 따른 개인정보 보유 및 이용기간 내에서 개인정보를 처리합니다.</p>
+    <p>② 회사에서 처리하는 개인정보의 보유 및 이용기간은 다음과 같습니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">구분</th><th className="border border-slate-300 p-2 text-left">항목</th><th className="border border-slate-300 p-2 text-left">기간</th><th className="border border-slate-300 p-2 text-left">비고</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">회원 가입 및 관리</td><td className="border border-slate-300 p-2">회원 가입 시 수집한 항목</td><td className="border border-slate-300 p-2">회원 탈퇴 및 말소 시까지</td><td className="border border-slate-300 p-2">재가입 확인·부정 가입 방지를 위해 탈퇴 후 2년 보유</td></tr>
+        <tr><td className="border border-slate-300 p-2">서비스 이용</td><td className="border border-slate-300 p-2">업로드한 문서 및 관련 데이터</td><td className="border border-slate-300 p-2">회원 탈퇴 및 말소 시까지</td><td className="border border-slate-300 p-2">-</td></tr>
+        <tr><td className="border border-slate-300 p-2">서비스 이용</td><td className="border border-slate-300 p-2">음성 명령 데이터 / AI 모델 개선용 피드백 데이터</td><td className="border border-slate-300 p-2">수집 시점부터 1년</td><td className="border border-slate-300 p-2">AI 서비스 품질 개선 목적, 민감정보 제외·익명화 처리</td></tr>
+        <tr><td className="border border-slate-300 p-2">결제 정보</td><td className="border border-slate-300 p-2">결제 관련 기록</td><td className="border border-slate-300 p-2">회원 탈퇴 후 5년</td><td className="border border-slate-300 p-2">전자상거래법 제6조에 따라 보존</td></tr>
+        <tr><td className="border border-slate-300 p-2">고충 처리</td><td className="border border-slate-300 p-2">회원 고충 접수 시 수집한 정보</td><td className="border border-slate-300 p-2">해당 고충 및 분쟁 처리 시까지</td><td className="border border-slate-300 p-2">처리 과정 및 결과 기록은 전자상거래법에 따라 최소 3년 보유</td></tr>
+        <tr><td className="border border-slate-300 p-2">정보통신 기록</td><td className="border border-slate-300 p-2">서비스 방문 및 이용 기록, 검색 기록</td><td className="border border-slate-300 p-2">회원 탈퇴 및 말소 시까지</td><td className="border border-slate-300 p-2">통신비밀보호법 시행령에 따라 최소 3개월 보유, 최종 접속기록은 1년 보유</td></tr>
+      </tbody>
+    </table>
+
+    <h3 className="font-semibold text-slate-900">제4조 (개인정보의 제3자 제공)</h3>
+    <p>① 회사는 원칙적으로 정보주체의 개인정보를 제3자에게 제공하지 않습니다. 회사가 제3자에게 개인정보를 제공할 때는, 개인정보를 받는 자, 받는 자의 개인정보 이용 목적, 제공하는 개인정보 항목 및 개인정보 보유 및 이용 기간, 동의를 거부할 권리 및 동의 거부에 따른 불이익 등을 해당 정보주체에게 알리고 동의를 받겠습니다.</p>
+    <p>② 제1항에도 불구하고 다음 각 호의 경우에는 정보주체의 동의 없이 제3자에게 제공할 수 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>법률에 특별한 규정이 있는 경우</li>
+      <li>법률에 근거하여 정부 및 공공기관, 수사기관, 법원 등에서 정보 제공을 요청하는 경우</li>
+      <li>통계작성, 과학적 연구, 공익적 기록보존 등을 위하여 가명정보를 제공하는 경우</li>
+      <li>재난, 감염병, 급박한 생명 및 신체 위험을 초래하는 사건 및 사고, 급박한 재산 손실 등의 긴급사항이 발생하는 경우</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">제5조 (개인정보 처리 위탁)</h3>
+    <p>① 회사는 원활한 서비스 제공을 위하여 다음과 같이 개인정보 처리 업무를 외부 전문업체에 위탁하여 처리하고 있습니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">수탁업체</th><th className="border border-slate-300 p-2 text-left">위탁 업무 내용</th><th className="border border-slate-300 p-2 text-left">개인정보 보유 및 이용 기간</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">Supabase, Inc.</td><td className="border border-slate-300 p-2">클라우드 서버 제공 및 데이터 저장</td><td className="border border-slate-300 p-2">위탁계약 종료 시 또는 회원 탈퇴 시까지</td></tr>
+        <tr><td className="border border-slate-300 p-2">Google Cloud Platform(구글 클라우드)</td><td className="border border-slate-300 p-2">AI 기반 문서 분석 서비스 제공, AI 음성 인식 서비스 제공</td><td className="border border-slate-300 p-2">위탁계약 종료 시 또는 회원 탈퇴 시까지(음성 데이터는 수집 시점부터 1년)</td></tr>
+        <tr><td className="border border-slate-300 p-2">Naver Cloud Platform(네이버 클라우드)</td><td className="border border-slate-300 p-2">AI OCR 서비스</td><td className="border border-slate-300 p-2">위탁계약 종료 시 또는 회원 탈퇴 시까지</td></tr>
+        <tr><td className="border border-slate-300 p-2">주식회사 카카오</td><td className="border border-slate-300 p-2">알림톡, SMS 등 메시지 발송</td><td className="border border-slate-300 p-2">메시지 발송 완료 시까지</td></tr>
+        <tr><td className="border border-slate-300 p-2">주식회사 이노페이</td><td className="border border-slate-300 p-2">결제 대행 및 결제 정보 처리</td><td className="border border-slate-300 p-2">위탁계약 종료 시 또는 관련 법령에 따른 보존기간까지</td></tr>
+      </tbody>
+    </table>
+    <p>② 회사는 위탁계약 체결 시 「개인정보 보호법」 제26조에 따라 위탁업무 수행목적 외 개인정보 처리금지, 기술적·관리적 보호조치, 재위탁 제한, 수탁자에 대한 관리·감독, 손해배상 등 책임에 관한 사항을 계약서 등 문서에 명시하고, 수탁자가 개인정보를 안전하게 처리하는지를 감독하고 있습니다.</p>
+    <p>③ 위탁업무의 내용이나 수탁자가 변경될 경우에는 지체 없이 본 개인정보 처리방침을 통하여 공개하겠습니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제6조 (정보주체의 권리 및 행사방법)</h3>
+    <p>① 정보주체는 회사가 처리하는 자신의 개인정보에 대하여 언제든지 다음 각 호의 권리를 행사할 수 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>개인정보 열람 요구권:</strong> 정보주체는 개인정보보호법 제35조에 따라 회사가 보유한 개인정보의 열람을 청구할 수 있습니다. 다만, 법률에 따라 열람이 금지·제한되거나 다른 사람의 생명·신체·재산 등을 부당하게 침해할 우려가 있는 경우에는 열람을 제한하거나 거절할 수 있습니다.</li>
+      <li><strong>개인정보 정정·삭제 요구권:</strong> 정보주체는 개인정보보호법 제36조에 따라 자신이 열람한 개인정보의 정정 또는 삭제를 요구할 수 있습니다. 다만 법령에서 해당 개인정보가 수집 대상으로 명시되어 있는 경우에는 삭제를 요구할 수 없습니다.</li>
+      <li><strong>개인정보 처리정지 요구 및 동의철회권:</strong> 정보주체는 개인정보보호법 제37조에 따라 개인정보 처리의 정지를 요구하거나 동의를 철회할 수 있습니다. 다만 법률에 특별한 규정이 있거나, 다른 사람의 생명·신체·재산 등을 부당하게 침해할 우려가 있거나, 정보주체와 약정한 서비스를 제공하지 못하게 되는 경우에는 거절할 수 있습니다.</li>
+    </ul>
+    <p>② 정보주체는 개인정보 보호책임자(연락처: 02-333-7334)에게 연락하는 방법, 전자우편(support@traystorage.net)을 보내는 방법으로 제1항의 권리를 행사할 수 있고, 회사는 이에 대하여 지체 없이 처리합니다.</p>
+    <p>③ 정보주체가 개인정보의 오류 등에 대한 정정 또는 삭제를 요구한 경우, 회사는 정정 또는 삭제를 완료할 때까지 해당 개인정보를 이용하거나 제공하지 않습니다. 만일 잘못된 개인정보를 제3자에게 제공한 경우에는 즉시 통지하여 정정 또는 삭제하도록 합니다.</p>
+    <p>④ 정보주체의 법정대리인이나 정보주체로부터 제1항의 권리를 위임받은 자는 회사에게 위임장 등 권한을 증명하는 서면을 제출하면 정보주체를 대리하여 제1항의 권리를 행사할 수 있습니다.</p>
+    <p>⑤ <strong>AI 기반 개인정보 처리 결과에 대한 설명 요청권:</strong> 정보주체는 「인공지능 기본법」 및 「개인정보 보호법」에 따라 AI 기반으로 처리된 개인정보에 대한 설명을 요청할 수 있습니다. 정보주체는 다음 사항에 대하여 설명을 요청할 수 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AI 처리의 목적 및 방법</li>
+      <li>AI 처리 결과가 정보주체에게 미치는 영향</li>
+      <li>AI 처리 결과의 근거가 된 주요 기준</li>
+    </ul>
+    <p>설명 요청은 서면(우편 또는 팩스), 전자우편(support@traystorage.net), 개인정보 보호책임자에게 유선 연락(02-333-7334) 등의 방법으로 할 수 있으며, 회사는 요청을 받은 날로부터 1개월 이내에 답변합니다. 다만, 본인이 아닌 타인의 정보에 대한 요청이거나, 영업비밀 보호 등 정당한 사유가 있는 경우 설명이 제한될 수 있습니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제7조 (개인정보의 파기)</h3>
+    <p>① 회사는 개인정보 처리목적의 달성, 개인정보 보유 및 이용 기간의 경과, 사업의 종료 등 정보주체의 개인정보가 불필요하게 되었을 때는 지체 없이 해당 개인정보를 파기합니다.</p>
+    <p>② 제1항에도 불구하고 법령에 따라 개인정보를 계속 보존하여야 하는 경우에는 해당 개인정보를 다른 개인정보와 분리하여 저장 및 관리합니다.</p>
+    <p>③ 회사는 전자상거래법, 통신비밀보호법 등 관련 법령에 따라 일정기간 개인정보를 보관해야 할 경우, 해당 기간 동안 개인정보를 안전하게 보관한 후 파기합니다.</p>
+    <p>④ 개인정보의 파기 절차 및 방법은 다음과 같습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>파기 절차:</strong> 파기 사유가 발생한 개인정보를 선정하고 개인정보 보호책임자의 승인을 받아 개인정보를 파기합니다.</li>
+      <li><strong>파기 방법:</strong> 전자적 파일 형태로 기록·저장된 개인정보는 복원이 불가능한 방법으로 영구 삭제하고, 종이 문서나 그 밖의 기록매체에 기록된 개인정보는 파쇄 또는 소각하거나 해당 부분을 마스킹·천공합니다.</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">제8조 (개인정보의 안전성 확보조치)</h3>
+    <p>회사는 정보주체의 개인정보가 분실·도난·유출·위조·변조·훼손되지 않도록 다음과 같은 조치를 하고 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>개인정보 보호를 위한 내부 관리계획의 수립·시행, 정기적 직원 교육 등</li>
+      <li>개인정보처리시스템에 대한 접근 통제 및 접근 권한 제한 조치, 고유식별정보 등의 암호화, 보안프로그램의 설치 및 주기적 갱신</li>
+      <li>개인정보의 안전한 보관을 위한 보관시설의 마련 또는 잠금 장치의 설치 및 접근 통제</li>
+      <li>해킹이나 컴퓨터 바이러스 등에 의한 개인정보 침해 방지를 위한 보안시스템 구축 및 침입차단시스템 운영</li>
+      <li>개인정보 취급 직원의 최소화 및 정기적 교육 실시</li>
+      <li>개인정보가 포함된 서류, 보조저장매체 등의 잠금장치 설치 및 접근 제한</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">제9조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)</h3>
+    <p>① 회사는 정보주체에게 개별적인 맞춤서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다. '쿠키(cookie)'는 웹사이트를 운영하는 데 이용되는 서버가 정보주체의 컴퓨터 브라우저에게 보내는 소량의 정보이며 정보주체의 PC 컴퓨터 내 하드디스크에 저장되기도 합니다.</p>
+    <p>② 쿠키의 사용목적 및 설치에 관한 사항은 아래와 같습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li><strong>쿠키의 사용목적:</strong> 정보주체의 방문기록 및 이용형태 등을 파악하여 정보주체에게 최적화된 맞춤 정보 제공 목적</li>
+      <li><strong>쿠키 설정 거부 방법:</strong> Internet Explorer(도구 &gt; 인터넷 옵션 &gt; 개인정보), Google Chrome(설정 &gt; 고급 설정 &gt; 개인정보), Microsoft Edge(설정 &gt; 쿠키 및 사이트 권한), Safari(환경설정 &gt; 개인정보 &gt; 쿠키 및 웹사이트 데이터)에서 쿠키를 허용하거나 거부할 수 있습니다.</li>
+    </ul>
+    <p>쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제10조 (AI 서비스 이용 및 개인정보 처리에 관한 고지)</h3>
+    <p>① 회사는 서비스 품질 향상을 위해 인공지능(AI) 기술을 활용하고 있으며, 다음과 같은 AI 서비스를 제공합니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>AI OCR(광학문자인식)을 통한 문서 텍스트 자동 추출</li>
+      <li>AI 챗봇을 통한 문서 검색 및 정보 제공</li>
+      <li>음성 명령을 통한 AI 기반 문서 검색</li>
+    </ul>
+    <p>② 회사는 「인공지능 기본법」에 따라 AI 서비스 이용 시 다음 사항을 고지합니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>정보주체가 이용하는 서비스에 AI 기술이 적용되고 있음</li>
+      <li>AI 처리 과정에서 정보주체가 등록한 문서 및 음성 데이터가 처리될 수 있음</li>
+      <li>AI 처리 결과는 자동화된 알고리즘에 의해 생성되며, 오류가 있을 수 있음</li>
+    </ul>
+    <p>③ 회사는 회원이 등록한 문서를 AI 모델의 일반 학습 데이터로 활용하지 않습니다. 다만, 서비스 품질 개선을 위해 다음과 같은 데이터를 수집·활용할 수 있습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>서비스 이용 패턴 및 피드백 데이터</li>
+      <li>문서 내 민감정보(주민등록번호, 계좌정보, 의료정보 등)를 제외한 이용 기록</li>
+      <li>위 데이터는 익명화 또는 가명화 처리하여 활용하며, 특정 개인을 식별할 수 없도록 처리합니다.</li>
+    </ul>
+    <p>④ 회사는 향후 AI 모델 개선 과정에서 민감정보를 자동으로 마스킹 처리하는 기능을 추가할 예정입니다.</p>
+    <p>⑤ AI 서비스 제공을 위해 회사가 위탁하는 AI 서비스 제공업체는 다음과 같습니다.</p>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Google Cloud Platform: AI 문서 분석 서비스, 음성 인식 서비스</li>
+      <li>Naver Cloud Platform: AI OCR</li>
+    </ul>
+
+    <h3 className="font-semibold text-slate-900">제11조 (영상정보처리기기 운영·관리에 관한 사항)</h3>
+    <p>① 회사는 사무실 보안 및 안전사고 예방을 위하여 영상정보처리기기(CCTV)를 설치·운영하고 있습니다.</p>
+    <p>② 회사는 정보주체의 개인정보를 보호하기 위하여 화장실, 탈의실 등 사생활 침해 우려가 있는 장소에는 영상정보처리기기를 설치·운영하지 않습니다.</p>
+    <p>③ 정보주체는 영상정보 열람을 요구할 수 있으며, 개인정보 보호책임자에게 서면, 전화, 이메일 등으로 신청할 수 있습니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제12조 (개인정보 보호책임자)</h3>
+    <p>① 회사는 개인정보 처리에 관한 업무를 총괄하여 책임지고, 개인정보 처리와 관련된 정보주체의 불만처리 및 피해구제와 권리행사를 위하여 다음과 같이 개인정보 보호책임자를 지정하여 운영하고 있습니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <tbody>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">성명</td><td className="border border-slate-300 p-2">정도천</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">직책</td><td className="border border-slate-300 p-2">대표이사</td></tr>
+        <tr><td className="border border-slate-300 p-2 bg-slate-100 font-medium">연락처</td><td className="border border-slate-300 p-2">02-333-7334 / support@traystorage.net</td></tr>
+      </tbody>
+    </table>
+    <p>② 정보주체는 회사의 서비스를 이용하면서 발생한 모든 개인정보 보호 관련 문의, 불만처리, 피해구제 등에 관한 사항을 개인정보 보호책임자에게 문의할 수 있습니다. 회사는 정보주체의 문의에 대해 지체 없이 답변 및 처리해드릴 것입니다.</p>
+
+    <h3 className="font-semibold text-slate-900">제13조 (정보주체의 권익침해에 대한 구제방법)</h3>
+    <p>① 정보주체는 아래의 기관에 개인정보 침해에 대한 피해구제, 상담 등을 문의할 수 있습니다. 아래의 기관은 회사와는 별개의 기관으로서, 회사의 자체적인 개인정보 불만처리, 피해구제 결과에 만족하지 못하거나 보다 자세한 도움이 필요하면 문의하시기 바랍니다.</p>
+    <table className="w-full border-collapse border border-slate-300 my-2 text-sm">
+      <thead><tr className="bg-slate-100"><th className="border border-slate-300 p-2 text-left">문의 기관</th><th className="border border-slate-300 p-2 text-left">주소</th><th className="border border-slate-300 p-2 text-left">연락처</th><th className="border border-slate-300 p-2 text-left">인터넷 홈페이지</th></tr></thead>
+      <tbody>
+        <tr><td className="border border-slate-300 p-2">개인정보침해 신고센터(한국인터넷진흥원 운영)</td><td className="border border-slate-300 p-2">전남 나주시 진흥길 9(빛가람동)</td><td className="border border-slate-300 p-2">(국번없이) 118</td><td className="border border-slate-300 p-2">privacy.kisa.or.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">개인정보 분쟁조정위원회</td><td className="border border-slate-300 p-2">서울특별시 종로구 세종대로 209 정부서울청사 12층</td><td className="border border-slate-300 p-2">(국번없이) 1833-6972</td><td className="border border-slate-300 p-2">www.kopico.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">대검찰청 사이버수사과</td><td className="border border-slate-300 p-2">-</td><td className="border border-slate-300 p-2">(국번없이) 1301</td><td className="border border-slate-300 p-2">www.spo.go.kr</td></tr>
+        <tr><td className="border border-slate-300 p-2">경찰청 사이버범죄 신고시스템(ECRM)</td><td className="border border-slate-300 p-2">-</td><td className="border border-slate-300 p-2">(국번없이) 182</td><td className="border border-slate-300 p-2">ecrm.cyber.go.kr</td></tr>
+      </tbody>
+    </table>
+    <p>② 회사는 정보주체의 개인정보침해로 인한 상담 및 피해구제를 위해 노력하고 있으며, 상담이 필요한 경우 아래의 연락처로 연락해 주시기 바랍니다. (담당자: 정도천, 연락처: 02-333-7334, 이메일: support@traystorage.net)</p>
+
+    <h3 className="font-semibold text-slate-900">제14조 (개인정보 처리방침의 변경 및 시행)</h3>
+    <p>① 회사가 본 개인정보 처리방침을 변경하는 경우에는, 변경 내용 시행 7일 전부터 정보주체가 알 수 있도록 변경 전·후의 내용을 비교하여 서비스 웹사이트 공지사항을 통해 공지합니다. 다만, 정보주체 권리의 중요한 변경이 있을 경우에는 최소 30일 전에 공지하고, 필요 시 정보주체의 동의를 다시 받습니다.</p>
+    <p>② 본 개인정보 처리방침은 2026년 9월 1일부터 시행합니다.</p>
+
+    <h3 className="font-semibold text-slate-900">부칙</h3>
+    <p>- 본 개인정보 처리방침은 2026년 9월 1일부터 적용됩니다.</p>
 
     <h3 className="font-semibold text-slate-900">[회사 정보]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -1038,13 +1242,15 @@ const PrivacyZh = () => (
   </>
 );
 
+const PRIVACY_KO_REVISION_EFFECTIVE_AT = new Date('2026-09-01T00:00:00+09:00');
+
 export const PrivacyPolicyContent = () => {
   const { i18n } = useTranslation();
   if (i18n.language === 'en') return <PrivacyEn />;
   if (i18n.language === 'ja') return <PrivacyJa />;
   if (i18n.language === 'de') return <PrivacyDe />;
   if (i18n.language === 'zh') return <PrivacyZh />;
-  return <PrivacyKo />;
+  return new Date() >= PRIVACY_KO_REVISION_EFFECTIVE_AT ? <PrivacyKoRevised /> : <PrivacyKoCurrent />;
 };
 
 export default PrivacyPolicyContent;
