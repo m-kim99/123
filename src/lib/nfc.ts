@@ -162,7 +162,7 @@ export async function writeNFCUrl(
   }
 
   const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
-  console.log('NFC URL 쓰기 시작:', uploadUrl);
+  console.log('NFC URL 쓰기 시작:', uploadUrl, '| platform:', Capacitor.getPlatform(), '| isNative:', Capacitor.isNativePlatform());
 
   try {
     if (Capacitor.isNativePlatform()) {
@@ -344,12 +344,14 @@ function parseTagPayload(payload: string | undefined, recordType: string | undef
  */
 export async function readNFCUid(): Promise<string> {
   setNfcMode('writing');
+  console.log('NFC UID 읽기 시작 | platform:', Capacitor.getPlatform(), '| isNative:', Capacitor.isNativePlatform(), '| supported:', isNFCSupported());
   try {
     if (!isNFCSupported()) {
       throw new Error('NFC가 지원되지 않습니다.');
     }
 
     if (Capacitor.isNativePlatform()) {
+      console.log('NFC startScan() 호출 직전');
       return await new Promise(async (resolve, reject) => {
         let resolved = false;
 
@@ -390,7 +392,9 @@ export async function readNFCUid(): Promise<string> {
 
         try {
           await NfcPlugin.startScan();
+          console.log('NFC startScan() 응답 받음 (네이티브 세션 시작 요청 완료) - 이제 태그 감지 대기 중');
         } catch (e) {
+          console.error('NFC startScan() 실패:', e);
           if (!resolved) {
             resolved = true;
             clearTimeout(timeout);

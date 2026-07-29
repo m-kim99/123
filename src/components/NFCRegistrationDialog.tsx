@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -34,7 +34,38 @@ export function NFCRegistrationDialog({
   const { t } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const { registerNfcTag, findSubcategoryByNfcUid, clearNfcByUid } = useDocumentStore();
+
+  // TEMP DEBUG: 원격 기기라 Xcode/Safari 콘솔 연결이 안 되는 상황을 위해
+  // 다이얼로그가 열려있는 동안 console.log/error를 가로채 화면에 직접 표시.
+  // 원인 확인되면 제거할 것.
+  const isOpenRef = useRef(open);
+  isOpenRef.current = open;
+  useEffect(() => {
+    const originalLog = console.log;
+    const originalError = console.error;
+    const push = (prefix: string, args: unknown[]) => {
+      const line = `${prefix} ${args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}`;
+      setDebugLogs((prev) => [...prev.slice(-49), line]);
+    };
+    console.log = (...args: unknown[]) => {
+      if (isOpenRef.current) push('•', args);
+      originalLog(...args);
+    };
+    console.error = (...args: unknown[]) => {
+      if (isOpenRef.current) push('✗', args);
+      originalError(...args);
+    };
+    return () => {
+      console.log = originalLog;
+      console.error = originalError;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (open) setDebugLogs([]);
+  }, [open]);
 
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -138,6 +169,15 @@ export function NFCRegistrationDialog({
 
         {error && (
           <p className="px-[22px] -mt-2 text-[12px] text-red-500">{error}</p>
+        )}
+
+        {/* TEMP DEBUG: 원인 확인되면 이 블록 제거 */}
+        {debugLogs.length > 0 && (
+          <div className="mx-[22px] -mt-1 mb-1 max-h-[140px] overflow-y-auto rounded-md bg-slate-900 p-2">
+            {debugLogs.map((line, i) => (
+              <p key={i} className="text-[9.5px] leading-tight font-mono text-lime-400 break-all whitespace-pre-wrap">{line}</p>
+            ))}
+          </div>
         )}
 
         <V1ModalFooter>
