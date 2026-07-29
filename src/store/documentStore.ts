@@ -1319,6 +1319,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         ? parentCategories.find((p) => p.id === targetSub.parentCategoryId)
         : undefined;
 
+      // 보관함 삭제 시 documents는 CASCADE로 함께 사라지므로, 실제 파일 경로는 미리 조회해둔다.
+      const { data: docsToRemove } = await supabase
+        .from('documents')
+        .select('file_path')
+        .eq('subcategory_id', id);
+
+      const filePaths = (docsToRemove || [])
+        .map((doc: any) => doc.file_path)
+        .filter((path: string | null): path is string => !!path);
+
+      if (filePaths.length > 0) {
+        const { error: storageError } = await r2Storage.remove(filePaths);
+        if (storageError) {
+          console.error('Failed to delete files from storage during subcategory delete:', storageError);
+        }
+      }
+
       const { error } = await supabase
         .from('subcategories')
         .delete()
