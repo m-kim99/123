@@ -45,8 +45,24 @@ export function NFCRegistrationDialog({
   useEffect(() => {
     const originalLog = console.log;
     const originalError = console.error;
+    const formatArg = (a: unknown): string => {
+      if (typeof a === 'string') return a;
+      if (a instanceof Error) return `${a.name}: ${a.message}`;
+      // Capacitor 브릿지 에러는 Error가 아닌 { message, code } 형태의 평범한 객체로 올 수 있음
+      if (a && typeof a === 'object' && 'message' in a) {
+        const code = 'code' in a ? ` (code: ${(a as { code: unknown }).code})` : '';
+        return `${(a as { message: unknown }).message}${code}`;
+      }
+      try {
+        const json = JSON.stringify(a);
+        // Error 등 열거 불가능한 속성만 가진 객체는 JSON.stringify가 "{}"를 반환함
+        return json && json !== '{}' ? json : String(a);
+      } catch {
+        return String(a);
+      }
+    };
     const push = (prefix: string, args: unknown[]) => {
-      const line = `${prefix} ${args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}`;
+      const line = `${prefix} ${args.map(formatArg).join(' ')}`;
       setDebugLogs((prev) => [...prev.slice(-49), line]);
     };
     console.log = (...args: unknown[]) => {
