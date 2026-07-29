@@ -7,6 +7,7 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.nfc.tech.NdefFormatable;
 import android.os.Build;
 import android.util.Log;
 
@@ -242,7 +243,18 @@ public class NfcPlugin extends Plugin {
 
             Ndef ndef = Ndef.get(tag);
             if (ndef == null) {
-                if (pendingWriteCall != null) pendingWriteCall.reject("Tag does not support NDEF format");
+                NdefFormatable formatable = NdefFormatable.get(tag);
+                if (formatable == null) {
+                    if (pendingWriteCall != null) pendingWriteCall.reject("Tag does not support NDEF format");
+                    resetWriteState();
+                    return;
+                }
+                formatable.connect();
+                formatable.format(message);
+                formatable.close();
+
+                Log.d(TAG, "NFC format+write successful");
+                if (pendingWriteCall != null) pendingWriteCall.resolve();
                 resetWriteState();
                 return;
             }
