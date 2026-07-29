@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 const PrivacyKo = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. 시행 2026.02.09.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.07.01. 시행 2026.07.01.</p>
 
     <p>주식회사 인포크리에이티브(이하 "회사")는 「개인정보 보호법」, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」(이하 "정보통신망법") 등 관련 법령에 따라 이용자의 개인정보를 보호하고, 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 다음과 같이 개인정보 처리방침을 수립·공개합니다.</p>
 
@@ -190,7 +190,7 @@ const PrivacyKo = () => (
     <p>② 이용자에게 불리한 중요한 내용의 변경이 있는 경우에는 최소 30일 전에 공지하고 전자우편 등으로 개별 통지합니다.</p>
 
     <h3 className="font-semibold text-slate-900">부칙</h3>
-    <p><strong>제1조 (시행일)</strong> 이 개인정보 처리방침은 2026년 2월 9일부터 시행합니다.</p>
+    <p>- 이 개인정보 처리방침은 2026년 7월 1일부터 시행합니다.</p>
 
     <h3 className="font-semibold text-slate-900">[회사 정보]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -206,7 +206,7 @@ const PrivacyKo = () => (
 
 const PrivacyEn = () => (
   <>
-    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Effective: February 9, 2026</p>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Revised: July 1, 2026 | Effective: July 1, 2026</p>
 
     <p>InfoCreative Co., Ltd. (hereinafter "Company") operates this Privacy Policy in accordance with Article 30 of the Personal Information Protection Act to protect the personal information of users (hereinafter "Data Subjects") who use Tray Storage Connect, the Company's service, and to promptly and smoothly address related grievances.</p>
 
@@ -400,10 +400,10 @@ const PrivacyEn = () => (
 
     <h3 className="font-semibold text-slate-900">Article 14 (Amendments to and Enforcement of the Privacy Policy)</h3>
     <p>① When the Company amends this Privacy Policy, it shall post a comparison of the contents before and after the amendment through a notice on the Service website at least seven (7) days prior to the effective date of the amendment so that Data Subjects may be informed. However, in the event of material changes affecting the rights of Data Subjects, notice shall be posted at least thirty (30) days in advance, and the Company shall obtain renewed consent from Data Subjects if necessary.</p>
-    <p>② This Privacy Policy shall take effect on February 9, 2026.</p>
+    <p>② This Privacy Policy shall take effect on July 1, 2026.</p>
 
     <h3 className="font-semibold text-slate-900">Supplementary Provisions</h3>
-    <p>This Privacy Policy shall apply from February 9, 2026.</p>
+    <p>- This Privacy Policy shall apply from July 1, 2026.</p>
 
     <h3 className="font-semibold text-slate-900">[Company Information]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -419,7 +419,7 @@ const PrivacyEn = () => (
 
 const PrivacyJa = () => (
   <>
-    <p className="text-xs text-slate-500">制定 2026.02.09. 施行 2026.02.09.</p>
+    <p className="text-xs text-slate-500">制定 2026.02.09. / 改定 2026.07.01. 施行 2026.07.01.</p>
 
     <p>株式会社インフォクリエイティブ（以下「当社」）は、「個人情報保護法」、「情報通信網利用促進及び情報保護等に関する法律」（以下「情報通信網法」）等の関連法令に従って利用者の個人情報を保護し、これに関する苦情を迅速かつ円滑に処理できるよう、次のとおり個人情報処理方針を策定・公開します。</p>
 
@@ -607,7 +607,7 @@ const PrivacyJa = () => (
     <p>② 利用者に不利な重要な内容の変更がある場合には、最低30日前に告知し、電子メール等で個別に通知します。</p>
 
     <h3 className="font-semibold text-slate-900">附則</h3>
-    <p><strong>第1条 (施行日)</strong> この個人情報処理方針は2026年2月9日から施行します。</p>
+    <p>- この個人情報処理方針は2026年7月1日から施行します。</p>
 
     <h3 className="font-semibold text-slate-900">[会社情報]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -623,7 +623,7 @@ const PrivacyJa = () => (
 
 const PrivacyDe = () => (
   <>
-    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Inkrafttreten: 09.02.2026</p>
+    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Geändert: 01.07.2026 | Inkrafttreten: 01.07.2026</p>
 
     <p>Die InfoCreative Co., Ltd. (im Folgenden „Unternehmen") betreibt diese Datenschutzerklärung gemäß Artikel 30 des koreanischen Gesetzes zum Schutz personenbezogener Daten, um die personenbezogenen Daten der Nutzer von Tray Storage Connect, dem Dienst des Unternehmens, zu schützen und diesbezügliche Anliegen zügig und reibungslos zu bearbeiten.</p>
 
@@ -817,10 +817,10 @@ const PrivacyDe = () => (
 
     <h3 className="font-semibold text-slate-900">§ 14 (Änderung und Inkrafttreten der Datenschutzerklärung)</h3>
     <p>① Ändert das Unternehmen diese Datenschutzerklärung, veröffentlicht es mindestens sieben (7) Tage vor Inkrafttreten der Änderung einen Vergleich der Inhalte vor und nach der Änderung als Ankündigung auf der Website des Dienstes, damit Nutzer informiert werden. Bei wesentlichen Änderungen, die die Rechte der Nutzer betreffen, erfolgt die Ankündigung mindestens dreißig (30) Tage vorher; bei Bedarf holt das Unternehmen eine erneute Einwilligung der Nutzer ein.</p>
-    <p>② Diese Datenschutzerklärung tritt am 9. Februar 2026 in Kraft.</p>
+    <p>② Diese Datenschutzerklärung tritt am 1. Juli 2026 in Kraft.</p>
 
     <h3 className="font-semibold text-slate-900">Schlussbestimmungen</h3>
-    <p>Diese Datenschutzerklärung gilt ab dem 9. Februar 2026.</p>
+    <p>- Diese Datenschutzerklärung gilt ab dem 1. Juli 2026.</p>
 
     <h3 className="font-semibold text-slate-900">[Unternehmensangaben]</h3>
     <ul className="list-disc pl-5 space-y-1">
@@ -836,7 +836,7 @@ const PrivacyDe = () => (
 
 const PrivacyZh = () => (
   <>
-    <p className="text-xs text-slate-500">制定：2026年2月9日 施行：2026年2月9日</p>
+    <p className="text-xs text-slate-500">制定：2026年2月9日 / 修订：2026年7月1日 / 施行：2026年7月1日</p>
 
     <p>InfoCreative股份有限公司（以下简称"公司"）依据《个人信息保护法》、《促进信息通信网络利用及信息保护等相关法律》（以下简称"信息通信网络法"）等相关法令，为保护用户的个人信息并迅速、妥善处理相关投诉，制定并公开以下个人信息处理方针。</p>
 
@@ -1024,7 +1024,7 @@ const PrivacyZh = () => (
     <p>② 如有对用户不利的重大内容变更，将至少提前30日公告并通过电子邮件等方式单独通知。</p>
 
     <h3 className="font-semibold text-slate-900">附则</h3>
-    <p><strong>第1条（施行日）</strong> 本个人信息处理方针自2026年2月9日起施行。</p>
+    <p>- 本个人信息处理方针自2026年7月1日起施行。</p>
 
     <h3 className="font-semibold text-slate-900">【公司信息】</h3>
     <ul className="list-disc pl-5 space-y-1">
