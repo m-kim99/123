@@ -201,6 +201,18 @@ async function sendViaApns(
   }
 }
 
+/** 크론 키 비교 — 조기 반환으로 정답 길이/접두사가 새지 않도록 상수시간 비교 */
+function safeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const enc = new TextEncoder();
+  const x = enc.encode(a);
+  const y = enc.encode(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
+  return diff === 0;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -209,7 +221,7 @@ serve(async (req) => {
   // cron(서버 간) 호출: x-cron-key가 CRON_SECRET과 일치하면 사용자 세션 검증 생략
   // (innopay-billing-renewal이 무료 체험 만료 고지를 회사 단위로 푸시할 때 사용 — companyId 대상만 허용)
   const cronSecret = Deno.env.get('CRON_SECRET');
-  const isCronCall = !!cronSecret && req.headers.get('x-cron-key') === cronSecret;
+  const isCronCall = safeEqual(req.headers.get('x-cron-key'), cronSecret);
 
   // 인증 헤더 확인
   const authHeader = req.headers.get('Authorization');

@@ -339,11 +339,23 @@ async function chargeBillkey(
   };
 }
 
+/** 크론 키 비교 — 조기 반환으로 정답 길이/접두사가 새지 않도록 상수시간 비교 */
+function safeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const enc = new TextEncoder();
+  const x = enc.encode(a);
+  const y = enc.encode(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
+  return diff === 0;
+}
+
 serve(async (req) => {
   try {
     // cron 비밀키 검증
     const cronSecret = Deno.env.get('CRON_SECRET');
-    if (!cronSecret || req.headers.get('x-cron-key') !== cronSecret) {
+    if (!safeEqual(req.headers.get('x-cron-key'), cronSecret)) {
       return new Response(JSON.stringify({ error: 'UNAUTHORIZED' }), { status: 401 });
     }
 

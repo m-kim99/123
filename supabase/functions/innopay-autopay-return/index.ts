@@ -43,8 +43,22 @@ async function callAutopay(path: string, body: Record<string, string>): Promise<
   }
 }
 
+// 리다이렉트 허용 오리진 화이트리스트 — 임의 도메인으로 튕기는 오픈 리다이렉트(피싱) 차단.
+// 앱(Capacitor)도 프로덕션 URL을 로드하므로 동일 오리진을 쓴다.
+const DEFAULT_ORIGIN = 'https://traystorageconnect.com';
+const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
+  /^https:\/\/(www\.)?traystorageconnect\.com$/i,
+  /^https:\/\/[a-z0-9-]+(--[a-z0-9-]+)?\.netlify\.app$/i,
+  /^http:\/\/localhost(:\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/i,
+];
+
+function resolveAllowedOrigin(origin: string): string {
+  return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin)) ? origin : DEFAULT_ORIGIN;
+}
+
 function redirect(origin: string, status: string, extra: Record<string, string> = {}): Response {
-  const safeOrigin = /^https?:\/\/[^/]+$/.test(origin) ? origin : '';
+  const safeOrigin = resolveAllowedOrigin(origin);
   const q = new URLSearchParams({ status, ...extra });
   const location = `${safeOrigin}/billing/innopay/autopay-return?${q.toString()}`;
   return new Response(null, { status: 302, headers: { Location: location } });

@@ -18,7 +18,7 @@ const corsHeaders = {
 
 const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
   basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 },
-  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: null },
+  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 }, // 프로: 인당 15,000원, 3~20인 (클라 PLAN_PRICING과 동일하게 유지)
 };
 
 const INNOPAY_AUTOPAY_BASE = 'https://api.innopay.co.kr/api';
@@ -28,6 +28,19 @@ function jsonResponse(body: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+// 결과 페이지 리다이렉트 허용 오리진 — innopay-autopay-return 과 동일하게 유지할 것.
+const DEFAULT_ORIGIN = 'https://traystorageconnect.com';
+const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
+  /^https:\/\/(www\.)?traystorageconnect\.com$/i,
+  /^https:\/\/[a-z0-9-]+(--[a-z0-9-]+)?\.netlify\.app$/i,
+  /^http:\/\/localhost(:\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/i,
+];
+
+function resolveAllowedOrigin(origin: string): string {
+  return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin)) ? origin : DEFAULT_ORIGIN;
 }
 
 /** 이노페이 moid — 영숫자(AN) 40자 이하 */
@@ -148,9 +161,11 @@ serve(async (req) => {
     const buyerEmail = customerEmail || profile.email || '';
 
     // returnUrl: 이노페이가 등록 결과(billKey)를 POST 할 우리 엣지함수. origin 은 결과 페이지 리다이렉트에 사용.
+    // 허용 목록에 없는 오리진은 프로덕션 도메인으로 대체 — 오픈 리다이렉트(피싱) 차단.
+    const safeAppOrigin = resolveAllowedOrigin(String(appOrigin));
     const returnUrl =
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/innopay-autopay-return` +
-      `?origin=${encodeURIComponent(appOrigin)}`;
+      `?origin=${encodeURIComponent(safeAppOrigin)}`;
 
     const params = new URLSearchParams({
       mid: INNOPAY_MID,

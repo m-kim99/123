@@ -186,14 +186,44 @@ serve(async (req) => {
 
     if (status === '85') {
       // ── 취소 통보: payments 반영(외부 상점관리 취소 동기화) ──
+      // 이 엔드포인트는 공개(--no-verify-jwt)이고 이노페이 통보에 서명이 없으므로,
+      // 거래번호(tid)와 주문번호(moid)가 '동시에' 일치하는 우리 결제건만 반영한다.
+      // (둘 중 하나만 아는 위조 요청으로 임의 결제를 취소 처리하지 못하게 함)
       const cancelTid = f.cancelPgTid || pgTid;
-      if (cancelTid) {
-        await supabaseAdmin
-          .from('payments')
-          .update({ status: 'CANCELED' })
-          .eq('payment_key', cancelTid);
+      if (!cancelTid || !moid) {
+        console.warn('innopay-noti: 취소 통보에 tid/moid 누락 — 무시', { cancelTid, moid });
+        return OK();
       }
-      console.log('innopay-noti: 취소 통보 반영', { cancelTid, moid });
+
+      const { data: pay } = await supabaseAdmin
+        .from('payments')
+        .select('id, amount, cancel_amount, status')
+        .eq('payment_key', cancelTid)
+        .eq('order_id', moid)
+        .maybeSingle();
+
+      if (!pay) {
+        console.warn('innopay-noti: 일치하는 결제 없음 — 무시', { cancelTid, moid });
+        return OK();
+      }
+      if (pay.status === 'CANCELED') return OK(); // 멱등 (재전송 대비)
+
+      const paidAmount = Number(pay.amount);
+      const reported = Number(f.cancelApprovalAmt || f.cancelAmt || approvalAmt);
+      const thisCancel = Number.isFinite(reported) && reported > 0 ? reported : paidAmount;
+      const totalCanceled = Math.min(paidAmount, Number(pay.cancel_amount ?? 0) + thisCancel);
+
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          status: totalCanceled >= paidAmount ? 'CANCELED' : 'DONE',
+          cancel_amount: totalCanceled,
+          cancel_reason: f.cancelMsg || '이노페이 취소 통보',
+          canceled_at: new Date().toISOString(),
+        })
+        .eq('id', pay.id);
+
+      console.log('innopay-noti: 취소 통보 반영', { cancelTid, moid, totalCanceled });
       return OK();
     }
 
