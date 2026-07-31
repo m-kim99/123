@@ -6,27 +6,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, R2_BUCKET, R2_ENDPOINT, r2Credentials } from './r2Config';
 
-// Supabase 설정
-const SUPABASE_URL = 'https://kqurgsqmrmtpglrbzpoc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxdXJnc3Ftcm10cGdscmJ6cG9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMzgwMDgsImV4cCI6MjA4ODYxNDAwOH0.sfcu2_uER_BltY3aPlBxVrAvXOqDwXeruTvWghDlpgs';
 const SUPABASE_BUCKET = '123';
-
-// R2 설정
-const R2_ACCOUNT_ID = '63ed20c8f590ebedc35d9d726404f3a0';
-const R2_ACCESS_KEY = 'f70c70782e8dad739dd67966d8eee617';
-const R2_SECRET_KEY = 'b235af651385d5d83e42a18818202fc11336f95305cdb50f0afffc87c6307611';
-const R2_BUCKET = 'traystorage';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const r2Client = new S3Client({
   region: 'auto',
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY,
-    secretAccessKey: R2_SECRET_KEY,
-  },
+  endpoint: R2_ENDPOINT,
+  credentials: r2Credentials,
 });
 
 async function checkExistsInR2(key: string): Promise<boolean> {

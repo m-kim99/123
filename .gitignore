@@ -55,3 +55,6 @@ android/app/google-services.json
 ios/App/App/GoogleService-Info.plist
 **/firebase-service-account*.json
 .vercel
+
+# Android 릴리스 서명키 (키스토어 + 평문 비밀번호 — NEVER commit)
+sign/
