@@ -122,12 +122,21 @@ serve(async (req) => {
     // ── 원자적 클레임: pending → charging (동시 2회 POST 이중청구 차단) ──
     // charge_moid도 여기서 확정 저장 → Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필.
     const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-    const { data: claimed } = await supabaseAdmin
+    const { data: claimed, error: claimError } = await supabaseAdmin
       .from('innopay_autopay_pending')
       .update({ status: 'charging', charge_moid: payMoid })
       .eq('moid', moid)
       .eq('status', 'pending')
       .select('moid');
+
+    // 클레임 실패(DB 오류·제약 위반)는 '다른 요청이 선점함'과 반드시 구분한다.
+    // 구분하지 않아 클레임이 매번 실패하는데도 processing 으로 안내되고 1회차 청구가
+    // 통째로 건너뛰어진 장애가 있었다 (2026-08-04, status='charging' 미허용).
+    if (claimError) {
+      console.error('클레임 UPDATE 실패 — 1회차 청구 중단:', claimError);
+      await failPending();
+      return redirect(origin, 'error');
+    }
 
     if (!claimed || claimed.length === 0) {
       // 다른 요청이 이미 선점 — 중복 청구 방지, 현재 상태로 안내
