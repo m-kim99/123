@@ -11,6 +11,10 @@ import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
 
+// TEMP DEBUG: 원인 확인되면 이 플래그와 관련 코드 전체 제거할 것.
+// 우선 사용자 화면에는 보이지 않도록 false로 비활성화.
+const SHOW_NFC_DEBUG_LOGS = false;
+
 interface NFCRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -188,7 +192,7 @@ export function NFCRegistrationDialog({
         )}
 
         {/* TEMP DEBUG: 원인 확인되면 이 블록 제거 */}
-        {debugLogs.length > 0 && (
+        {SHOW_NFC_DEBUG_LOGS && debugLogs.length > 0 && (
           <div className="mx-[22px] -mt-1 mb-1 max-h-[140px] overflow-y-auto rounded-md bg-slate-900 p-2">
             {debugLogs.map((line, i) => (
               <p key={i} className="text-[9.5px] leading-tight font-mono text-lime-400 break-all whitespace-pre-wrap">{line}</p>
