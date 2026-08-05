@@ -78,9 +78,9 @@ export function UserManagement() {
   // 다이얼로그 열때 현재 팀원 수로 인원 기본값 설정
   useEffect(() => {
     if (upgradeDialogOpen && actualMemberCount > 0) {
-      setAdditionalMembers(String(actualMemberCount));
+      setAdditionalMembers(String(Math.max(actualMemberCount, upgradePricing.minMembers)));
     }
-  }, [upgradeDialogOpen, actualMemberCount]);
+  }, [upgradeDialogOpen, actualMemberCount, upgradePricing.minMembers]);
 
   // 이노페이 정기결제 요청
   const handleSubscribe = async () => {
@@ -575,8 +575,12 @@ export function UserManagement() {
                       : t('subscription.proMemberLimit')}
                   </p>
                 )}
-                {upgradePlan === 'pro' && belowPlanMin && !belowActualMembers && (
-                  <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
+                {belowPlanMin && !belowActualMembers && (
+                  <p className="text-xs text-red-500">
+                    {upgradePlan === 'pro'
+                      ? t('subscription.proMemberMin')
+                      : t('subscription.basicMemberMin')}
+                  </p>
                 )}
                 {belowActualMembers && !exceedsPlanLimit && (
                   <p className="text-xs text-red-500">

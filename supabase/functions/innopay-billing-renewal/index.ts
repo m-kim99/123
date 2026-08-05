@@ -37,9 +37,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_RENEWAL_ATTEMPTS = 3; // 자동결제 실패 허용 횟수 (일 1회 시도)
 
 // 유료 플랜 가격 (부가세 포함) — 클라이언트/innopay-billkey-register와 동일하게 유지할 것
-const PLAN_PRICING: Record<string, { pricePerMember: number }> = {
-  basic: { pricePerMember: 6600 },
-  pro: { pricePerMember: 15000 },
+// minMembers: 최소 결제 인원 — 실인원이 이보다 적어도 이 인원 기준으로 청구된다.
+const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number }> = {
+  basic: { pricePerMember: 6600, minMembers: 3 },
+  pro: { pricePerMember: 15000, minMembers: 3 },
 };
 
 const PLAN_GOODS_NAME: Record<string, string> = {
@@ -94,8 +95,14 @@ async function renewalQuote(
     .eq('company_id', companyId);
   const members = count ?? 0;
   if (members < 1) return '';
-  const total = members * pricing.pricePerMember;
-  return ` 재결제 예상 금액은 현재 인원 기준 ${members}명 × ${pricing.pricePerMember.toLocaleString('ko-KR')}원 = ${total.toLocaleString('ko-KR')}원입니다.`;
+  // 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로 청구된다 (베이직·프로 모두 3인)
+  const billable = Math.max(members, pricing.minMembers);
+  const total = billable * pricing.pricePerMember;
+  const basis =
+    billable > members
+      ? `현재 인원 ${members}명 → 최소 결제 인원 ${billable}명`
+      : `현재 인원 ${members}명`;
+  return ` 재결제 예상 금액은 ${basis} 기준 ${pricing.pricePerMember.toLocaleString('ko-KR')}원 × ${billable}명 = ${total.toLocaleString('ko-KR')}원입니다.`;
 }
 
 /** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */
