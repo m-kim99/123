@@ -45,7 +45,7 @@ export function AuthShell({ heroHeadline, heroBrand, heroDescription, children }
             )}
           </h1>
           {heroDescription && (
-            <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm flex flex-col gap-2">
+            <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-lg flex flex-col gap-2">
               {heroDescription.split('\n\n').map((block: string, i: number) => (
                 <p key={i} className="whitespace-pre-line m-0">{block}</p>
               ))}

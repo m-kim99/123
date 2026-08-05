@@ -769,7 +769,7 @@ export function LoginPage() {
             <span className="block font-normal whitespace-pre-line">{t('login.heroHeadline')}</span>
             <span className="block">{t('login.heroBrand')}</span>
           </h1>
-          <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm flex flex-col gap-2">
+          <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-lg flex flex-col gap-2">
             {t('login.heroDescription').split('\n\n').map((block: string, i: number) => (
               <p key={i} className="whitespace-pre-line m-0">{block}</p>
             ))}
