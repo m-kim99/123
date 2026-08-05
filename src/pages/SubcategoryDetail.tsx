@@ -236,14 +236,6 @@ export function SubcategoryDetail() {
   // 폐기됨: 문서 접근·업로드 영구 차단 (복구 불가)
   const isDisposed = subcategory?.storageStatus === 'disposed';
 
-  // 폐기 예정일 D-day (양수: 남음, 음수: 경과)
-  const disposalDday = useMemo(() => {
-    if (!subcategory?.expiryDate) return null;
-    return Math.ceil(
-      (new Date(subcategory.expiryDate).getTime() - Date.now()) / 86400000
-    );
-  }, [subcategory?.expiryDate]);
-
   const statusChip = {
     stored: { variant: 'emerald' as const, label: t('subcategoryDetail.statusStored') },
     checkedOut: { variant: 'amber' as const, label: t('subcategoryDetail.statusCheckedOut') },
@@ -1400,7 +1392,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
                   <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.managementNumber')}</span>
-                  <span className="text-xs font-semibold text-slate-900 font-mono">{subcategory.managementNumber || t('subcategoryDetail.unassigned')}</span>
+                  <span className="text-xs font-semibold text-slate-900">{subcategory.managementNumber || t('subcategoryDetail.unassigned')}</span>
                 </div>
                 {parentCategory && (
                   <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
@@ -1421,21 +1413,8 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                 <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
                   <span className="text-[12.5px] text-slate-500">{t('subcategoryDetail.disposalDate')}</span>
                   {subcategory.expiryDate ? (
-                    <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-900">
                       {new Date(subcategory.expiryDate).toLocaleDateString()}
-                      {disposalDday != null && displayStatus !== 'disposed' && (
-                        <span
-                          className={`font-mono text-[11px] ${
-                            disposalDday < 0
-                              ? 'text-red-600'
-                              : disposalDday <= 30
-                                ? 'text-amber-600'
-                                : 'text-slate-400'
-                          }`}
-                        >
-                          {disposalDday >= 0 ? `D-${disposalDday}` : `D+${-disposalDday}`}
-                        </span>
-                      )}
                     </span>
                   ) : (
                     <span className="text-xs font-semibold text-slate-900">{t('subcategoryDetail.unassigned')}</span>
