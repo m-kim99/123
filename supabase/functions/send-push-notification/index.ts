@@ -219,7 +219,8 @@ serve(async (req) => {
   }
 
   // cron(서버 간) 호출: x-cron-key가 CRON_SECRET과 일치하면 사용자 세션 검증 생략
-  // (innopay-billing-renewal이 무료 체험 만료 고지를 회사 단위로 푸시할 때 사용 — companyId 대상만 허용)
+  // (innopay-billing-renewal이 체험 만료·자동결제 고지를 푸시할 때 사용 — companyId 대상만 허용.
+  //  자동결제 고지처럼 관리자만 받아야 하는 건 target.adminOnly=true 를 함께 보낸다)
   const cronSecret = Deno.env.get('CRON_SECRET');
   const isCronCall = safeEqual(req.headers.get('x-cron-key'), cronSecret);
 
@@ -319,8 +320,11 @@ serve(async (req) => {
         .select('id, role, department_id')
         .eq('company_id', target.companyId);
       const deptId = target.departmentId ?? null;
+      // adminOnly: 결제 금액 등 관리자만 알아야 할 고지에 사용 (팀원 제외)
+      const adminOnly = target.adminOnly === true;
       recipientIds = (users ?? [])
         .filter((u: { role: string; department_id: string | null }) => {
+          if (adminOnly) return u.role === 'admin';
           if (u.role === 'admin') return true; // 관리자: 부서 무관 전체 수신
           if (!deptId) return true; // 부서 미지정 알림: 전체 수신
           return u.department_id === deptId; // 팀원: 같은 부서만

@@ -8,7 +8,8 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 //  1) active + 만료 도래 → 빌키(payAutoCardBill)로 자동 청구
 //     - 성공: 기간 1개월 연장 + payments 기록 + 결제 완료 알림
 //     - 실패: 재시도 카운트 증가(일 1회), 3회 실패 시 status='past_due' + 재등록 안내
-//  2) active + D-7 → "7일 후 자동결제 예정" 사전 고지 (전자상거래법 정기결제 사전고지)
+//  2) active + D-7/D-1 → 자동결제 사전 고지 (전자상거래법 정기결제 사전고지)
+//     인앱 알림 + 관리자 푸시 + 관리자 메일 — 앱에 들어오지 않아도 결제 예정을 알 수 있게
 //  3) 해지 예약(canceled_at) + 만료 → 빌키 삭제(delAutoCardBill) + status='canceled'
 //
 // [레거시 단회 구독] auto_renew=false (결제창 단회 결제 — 빌키 없음)
@@ -279,25 +280,82 @@ async function notifyCompanyUsers(
 
 const SITE_URL = 'https://traystorageconnect.com';
 
-/** 체험 만료 안내 메일 본문 — 관리자에게만 웹 구독 링크 포함 (앱 외부 채널이라 앱스토어 3.1.1 무관) */
-function trialEmailHtml(message: string, isAdmin: boolean): string {
-  const cta = isAdmin
-    ? `<div style="text-align:center;margin:28px 0;"><a href="${SITE_URL}" style="display:inline-block;padding:13px 30px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:500;">웹에서 구독하기</a></div>`
-    : '';
+/** 안내 메일 공용 틀 — 본문(HTML)만 갈아끼운다 */
+function emailShell(bodyHtml: string): string {
   return `
 <div style="max-width:600px;margin:40px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
   <div style="background:#2563eb;padding:26px;text-align:center;">
     <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:500;">TrayStorage</h1>
   </div>
   <div style="padding:32px 28px;color:#1f2937;font-size:15px;line-height:1.7;">
-    <p style="margin:0;">${message}</p>
-    ${cta}
-    <p style="font-size:13px;color:#6b7280;margin:16px 0 0;">데이터는 종료 후에도 안전하게 보관되며, 구독 시 즉시 복구됩니다.</p>
+    ${bodyHtml}
   </div>
   <div style="padding:18px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;">
     <p style="margin:0;font-size:12px;color:#6b7280;">이 이메일은 TrayStorage에서 자동 발송되었습니다.</p>
   </div>
 </div>`;
+}
+
+/** 체험 만료 안내 메일 본문 — 관리자에게만 웹 구독 링크 포함 (앱 외부 채널이라 앱스토어 3.1.1 무관) */
+function trialEmailHtml(message: string, isAdmin: boolean): string {
+  const cta = isAdmin
+    ? `<div style="text-align:center;margin:28px 0;"><a href="${SITE_URL}" style="display:inline-block;padding:13px 30px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:500;">웹에서 구독하기</a></div>`
+    : '';
+  return emailShell(
+    `<p style="margin:0;">${message}</p>
+    ${cta}
+    <p style="font-size:13px;color:#6b7280;margin:16px 0 0;">데이터는 종료 후에도 안전하게 보관되며, 구독 시 즉시 복구됩니다.</p>`,
+  );
+}
+
+/**
+ * 자동결제 사전고지 메일 — 관리자 전용.
+ * 이미 구독 중인 사람에게 보내는 고지이므로 구독 유도 CTA 는 넣지 않는다.
+ */
+function billingNoticeEmailHtml(message: string): string {
+  // 해지 경로를 웹으로 안내한다 — iOS 앱은 결제/구독 UI가 숨겨져(App Store 3.1.1)
+  // 앱 안에서 해지할 수 없다. 메일은 앱 외부 채널이라 웹 링크를 넣어도 무관하다.
+  return emailShell(
+    `<p style="margin:0;">${message}</p>
+    <div style="text-align:center;margin:28px 0;"><a href="${SITE_URL}" style="display:inline-block;padding:13px 30px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:500;">구독 관리 열기</a></div>
+    <p style="font-size:13px;color:#6b7280;margin:16px 0 0;">결제를 원하지 않으시면 결제일 전에 해지해 주세요. 해지해도 이미 결제된 기간이 끝날 때까지는 그대로 이용하실 수 있습니다.</p>`,
+  );
+}
+
+/** 자동결제 사전고지 메일 발송 — 회사 관리자에게만 */
+async function sendBillingNoticeEmails(
+  supabase: SupabaseClient,
+  companyId: string,
+  subject: string,
+  message: string,
+): Promise<void> {
+  const resendKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendKey) return;
+
+  const { data: admins } = await supabase
+    .from('users')
+    .select('email')
+    .eq('company_id', companyId)
+    .eq('role', 'admin');
+
+  const targets = (admins ?? []).filter((u: { email: string | null }) => !!u.email);
+
+  await Promise.allSettled(
+    targets.map((u: { email: string }) =>
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'TrayStorage <noreply@traystorageconnect.com>',
+          to: u.email,
+          subject,
+          html: billingNoticeEmailHtml(message),
+        }),
+      }).then(async (res) => {
+        if (!res.ok) console.error('자동결제 고지 메일 실패:', u.email, await res.text());
+      }),
+    ),
+  );
 }
 
 /** 체험 만료 안내 메일 발송 — 관리자는 항상, 팀원은 includeMembers=true일 때만 */
@@ -340,8 +398,16 @@ async function sendTrialEmails(
   );
 }
 
-/** 회사 전 구성원에게 FCM/APNs 푸시 (send-push-notification의 cron 인증 경로 사용) */
-async function sendTrialPush(companyId: string, message: string, cronKey: string): Promise<void> {
+/**
+ * 회사 대상 FCM/APNs 푸시 (send-push-notification의 cron 인증 경로 사용).
+ * adminOnly=true 면 관리자만 수신 — 결제 금액 고지는 팀원에게 보내지 않는다.
+ */
+async function sendCompanyPush(
+  companyId: string,
+  message: string,
+  cronKey: string,
+  adminOnly = false,
+): Promise<void> {
   try {
     const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`, {
       method: 'POST',
@@ -350,11 +416,11 @@ async function sendTrialPush(companyId: string, message: string, cronKey: string
         'x-cron-key': cronKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ target: { companyId }, title: 'TrayStorage', message }),
+      body: JSON.stringify({ target: { companyId, adminOnly }, title: 'TrayStorage', message }),
     });
-    if (!res.ok) console.error('체험 만료 푸시 실패:', companyId, await res.text());
+    if (!res.ok) console.error('푸시 발송 실패:', companyId, await res.text());
   } catch (err) {
-    console.error('체험 만료 푸시 오류:', companyId, err);
+    console.error('푸시 발송 오류:', companyId, err);
   }
 }
 
@@ -700,25 +766,48 @@ serve(async (req) => {
         // 해지 예약된 구독에는 사전 고지를 보내지 않음 (만료 시 종료 예정)
         if (sub.canceled_at) continue;
 
-        // D-7 사전 고지 (정기결제 사전 통지) — 예약 결제(체험 종료 후 첫 결제)도 동일하게 고지
+        // ── 자동결제 사전 고지 (전자상거래법 정기결제 사전 통지) ──
+        // D-7 과 D-1 두 번 보낸다. 한 달 동안 앱에 들어오지 않는 사용자도 알 수 있도록
+        // 인앱 알림에 그치지 않고 관리자에게 푸시·메일까지 함께 발송한다
+        // (인앱 알림만으로는 고지했다고 보기 어렵고, 실제로 해지를 놓치는 원인이었다).
+        // 해지 위치는 문구에 넣지 않는다 — iOS 앱은 결제/구독 UI가 숨겨져(App Store 3.1.1)
+        // 앱에서 해지할 수 없다. 웹 경로 안내는 앱 외부 채널인 메일에서만 한다.
         const daysLeft = Math.ceil(msLeft / DAY_MS);
-        if (daysLeft <= 7 && billingTarget(sub).amount) {
+        const noticeStage =
+          daysLeft <= 1
+            ? { type: 'subscription_autorenew_tomorrow', windowDays: 3, action: 'autorenew_notice_d1' }
+            : daysLeft <= 7
+              ? { type: 'subscription_autorenew_upcoming', windowDays: 10, action: 'autorenew_notice_d7' }
+              : null;
+
+        if (noticeStage && billingTarget(sub).amount) {
           if (
-            !(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_autorenew_upcoming', 10))
+            !(await alreadyNotified(supabaseAdmin, sub.company_id, noticeStage.type, noticeStage.windowDays))
           ) {
             // true-up: 고지 금액과 실제 청구 금액이 어긋나지 않도록 이 시점에도 미리 반영
             await trueUpSubscriptionAmount(supabaseAdmin, sub);
             const upcomingAmount = Number(billingTarget(sub).amount).toLocaleString('ko-KR');
             const upcomingDate = formatKstDate(sub.current_period_end!);
-            notified += await notifyAdmins(
-              supabaseAdmin,
-              sub.company_id,
-              'subscription_autorenew_upcoming',
-              sub.status === 'trialing'
-                ? `💳 무료 체험이 ${upcomingDate}에 종료되며, 같은 날 등록된 카드로 첫 결제 ₩${upcomingAmount}이 진행됩니다. 그 전에 해지하면 결제되지 않습니다.`
-                : `💳 ${upcomingDate}에 등록된 카드로 ₩${upcomingAmount}이 자동결제될 예정입니다.`,
-            );
-            results.push({ subscriptionId: sub.id, action: 'autorenew_notice_d7' });
+            const isTomorrow = noticeStage.action === 'autorenew_notice_d1';
+            const isTrialConversion = sub.status === 'trialing';
+
+            const message = isTrialConversion
+              ? isTomorrow
+                ? `⏰ 무료 체험이 내일(${upcomingDate}) 종료되며, 같은 날 등록된 카드로 첫 결제 ₩${upcomingAmount}이 진행됩니다. 결제를 원하지 않으시면 오늘 중 해지해 주세요.`
+                : `💳 무료 체험이 ${upcomingDate}에 종료되며, 같은 날 등록된 카드로 첫 결제 ₩${upcomingAmount}이 진행됩니다. 그 전에 해지하면 결제되지 않습니다.`
+              : isTomorrow
+                ? `⏰ 내일(${upcomingDate}) 등록된 카드로 ₩${upcomingAmount}이 자동결제됩니다. 결제를 원하지 않으시면 오늘 중 해지해 주세요.`
+                : `💳 ${upcomingDate}에 등록된 카드로 ₩${upcomingAmount}이 자동결제될 예정입니다.`;
+
+            const emailSubject = isTomorrow
+              ? `[TrayStorage] 내일 ₩${upcomingAmount} 자동결제 예정`
+              : `[TrayStorage] ${upcomingDate} ₩${upcomingAmount} 자동결제 예정 안내`;
+
+            notified += await notifyAdmins(supabaseAdmin, sub.company_id, noticeStage.type, message);
+            // 푸시·메일은 관리자에게만 (결제 금액은 팀원이 알 필요 없다)
+            await sendCompanyPush(sub.company_id, message, cronSecret, true);
+            await sendBillingNoticeEmails(supabaseAdmin, sub.company_id, emailSubject, message);
+            results.push({ subscriptionId: sub.id, action: noticeStage.action });
           }
         }
         continue;
@@ -872,7 +961,7 @@ serve(async (req) => {
       if (await alreadyNotified(supabaseAdmin, sub.company_id, type, windowDays)) continue;
 
       notified += await notifyCompanyUsers(supabaseAdmin, sub.company_id, type, adminMsg, memberMsg);
-      await sendTrialPush(sub.company_id, pushMsg, cronSecret);
+      await sendCompanyPush(sub.company_id, pushMsg, cronSecret);
       await sendTrialEmails(supabaseAdmin, sub.company_id, emailSubject, adminMsg, memberMsg, emailMembers);
       results.push({ subscriptionId: sub.id, action: type });
     }
