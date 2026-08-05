@@ -1364,6 +1364,8 @@
   "auditLog": {
     "title": "削除・廃棄ログ",
     "subtitle": "保管箱と文書の削除・廃棄履歴です。管理者のみ閲覧できます。",
+    "historyDialogDesc": "削除された詳細ストレージに残っている搬出・返却などの全履歴です。",
+    "historyEmpty": "このストレージに残っている入出庫履歴はありません。",
     "totalCount": "合計{{count}}件",
     "searchPlaceholder": "対象/実行者を検索...",
     "eventType": "区分",

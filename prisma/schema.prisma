@@ -985,11 +985,15 @@ model storage_events {
   created_at       DateTime       @default(now()) @db.Timestamptz(6)
   subcategory_name String?
   document_title   String?
+  /// 세부 스토리지 원본 id 복제(FK 아님) — 스토리지 삭제로 subcategory_id 가 NULL 이 돼도
+  /// 이 값으로 보존된 반출입 이력을 묶어 조회한다
+  subcategory_ref  String?        @db.Uuid
   companies        companies      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   departments      departments?   @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   subcategories    subcategories? @relation(fields: [subcategory_id], references: [id], onUpdate: NoAction)
 
   @@index([subcategory_id, created_at(sort: Desc)], map: "idx_storage_events_subcategory")
+  @@index([subcategory_ref, created_at(sort: Desc)], map: "idx_storage_events_subcategory_ref")
   @@schema("public")
 }
 

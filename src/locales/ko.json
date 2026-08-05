@@ -1364,6 +1364,8 @@
   "auditLog": {
     "title": "삭제·폐기 로그",
     "subtitle": "세부 스토리지 및 문서의 삭제·폐기 이력입니다. 관리자만 조회할 수 있습니다.",
+    "historyDialogDesc": "삭제된 세부 스토리지에 남아 있는 반출·반납 등 전체 이력입니다.",
+    "historyEmpty": "이 스토리지에는 남아 있는 반출입 이력이 없습니다.",
     "totalCount": "총 {{count}}건",
     "searchPlaceholder": "대상/실행자 검색...",
     "eventType": "구분",

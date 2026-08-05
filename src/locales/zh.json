@@ -1364,6 +1364,8 @@
   "auditLog": {
     "title": "删除·销毁日志",
     "subtitle": "存储箱与文档的删除·销毁记录。仅管理员可查看。",
+    "historyDialogDesc": "已删除的详细存储中保留的出库·归还等全部记录。",
+    "historyEmpty": "该存储没有保留的出入库记录。",
     "totalCount": "共{{count}}条",
     "searchPlaceholder": "搜索对象/操作人...",
     "eventType": "类型",

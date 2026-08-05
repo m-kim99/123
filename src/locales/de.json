@@ -1364,6 +1364,8 @@
   "auditLog": {
     "title": "Lösch- & Entsorgungsprotokoll",
     "subtitle": "Lösch- und Entsorgungsverlauf für Ablagen und Dokumente. Nur für Administratoren sichtbar.",
+    "historyDialogDesc": "Vollständig erhaltener Verlauf – Entnahmen, Rückgaben und mehr – für diesen gelöschten Speicher.",
+    "historyEmpty": "Für dieses Element ist kein Speicherverlauf vorhanden.",
     "totalCount": "{{count}} insgesamt",
     "searchPlaceholder": "Ziel/Ausführenden suchen...",
     "eventType": "Typ",

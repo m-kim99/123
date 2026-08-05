@@ -48,15 +48,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "account_deletion_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       announcement_comments: {
         Row: {
@@ -159,6 +151,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_secrets: {
+        Row: {
+          created_at: string
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -1241,6 +1251,7 @@ export type Database = {
           id: string
           subcategory_id: string | null
           subcategory_name: string | null
+          subcategory_ref: string | null
         }
         Insert: {
           actor_id?: string | null
@@ -1254,6 +1265,7 @@ export type Database = {
           id?: string
           subcategory_id?: string | null
           subcategory_name?: string | null
+          subcategory_ref?: string | null
         }
         Update: {
           actor_id?: string | null
@@ -1267,6 +1279,7 @@ export type Database = {
           id?: string
           subcategory_id?: string | null
           subcategory_name?: string | null
+          subcategory_ref?: string | null
         }
         Relationships: [
           {
@@ -1407,6 +1420,9 @@ export type Database = {
           payment_subscription_id: string | null
           plan_id: string
           renewal_attempts: number
+          scheduled_member_count: number | null
+          scheduled_monthly_amount: number | null
+          scheduled_plan_name: string | null
           status: string
           trial_ends_at: string | null
           updated_at: string
@@ -1431,6 +1447,9 @@ export type Database = {
           payment_subscription_id?: string | null
           plan_id: string
           renewal_attempts?: number
+          scheduled_member_count?: number | null
+          scheduled_monthly_amount?: number | null
+          scheduled_plan_name?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -1455,6 +1474,9 @@ export type Database = {
           payment_subscription_id?: string | null
           plan_id?: string
           renewal_attempts?: number
+          scheduled_member_count?: number | null
+          scheduled_monthly_amount?: number | null
+          scheduled_plan_name?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -1531,6 +1553,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trial_grant_ledger: {
+        Row: {
+          company_code: string | null
+          company_id: string | null
+          email_domain: string | null
+          email_hash: string | null
+          granted_at: string
+          id: string
+          phone_hash: string | null
+          phone_verified: boolean
+          prior_email_grants: number
+          prior_phone_grants: number
+        }
+        Insert: {
+          company_code?: string | null
+          company_id?: string | null
+          email_domain?: string | null
+          email_hash?: string | null
+          granted_at?: string
+          id?: string
+          phone_hash?: string | null
+          phone_verified?: boolean
+          prior_email_grants?: number
+          prior_phone_grants?: number
+        }
+        Update: {
+          company_code?: string | null
+          company_id?: string | null
+          email_domain?: string | null
+          email_hash?: string | null
+          granted_at?: string
+          id?: string
+          phone_hash?: string | null
+          phone_verified?: boolean
+          prior_email_grants?: number
+          prior_phone_grants?: number
+        }
+        Relationships: []
       }
       usage_tracking: {
         Row: {
@@ -2033,6 +2094,7 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: number
       }
+      hash_identifier: { Args: { p_value: string }; Returns: string }
       increment_ai_query_usage: {
         Args: { p_company_id: string }
         Returns: number

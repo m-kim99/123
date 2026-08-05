@@ -1364,6 +1364,8 @@
   "auditLog": {
     "title": "Deletion & Disposal Log",
     "subtitle": "Deletion and disposal history for storage boxes and documents. Visible to admins only.",
+    "historyDialogDesc": "Full preserved history — check-outs, returns and more — for this deleted storage.",
+    "historyEmpty": "No storage history remains for this item.",
     "totalCount": "{{count}} total",
     "searchPlaceholder": "Search target/actor...",
     "eventType": "Type",
