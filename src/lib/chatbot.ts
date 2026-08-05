@@ -502,7 +502,7 @@ async function getExpiringSubcategories(locale: string = 'ko', days: number = 90
       return { text: isEn ? 'Unable to retrieve department information.' : '부서 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const departmentIds = departments.map((d: { id: string; name: string }) => d.id);
+    const departmentIds = departments.map((d) => d.id);
 
     // 대분류 조회
     const { data: parentCategories, error: catError } = await supabase
@@ -514,7 +514,7 @@ async function getExpiringSubcategories(locale: string = 'ko', days: number = 90
       return { text: isEn ? 'Unable to retrieve category information.' : '카테고리 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const parentCategoryIds = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+    const parentCategoryIds = parentCategories.map((c) => c.id);
 
     // 만기 임박 세부카테고리 조회
     const { data: subcategories, error: subError } = await supabase
@@ -545,8 +545,8 @@ async function getExpiringSubcategories(locale: string = 'ko', days: number = 90
     for (const sub of subcategories) {
       const expiryDate = new Date(sub.expiry_date);
       const diff = expiryDate.getTime() - now.getTime();
-      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
-      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const parentCat = parentCategories.find((c) => c.id === sub.parent_category_id);
+      const dept = departments.find((d) => d.id === parentCat?.department_id);
 
       if (diff <= oneWeek) {
         urgent.push({ sub, parentCat, dept });
@@ -630,7 +630,7 @@ async function getExpiredSubcategories(locale: string = 'ko'): Promise<{ text: s
       return { text: isEn ? 'Unable to retrieve department information.' : '부서 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const departmentIds = departments.map((d: { id: string; name: string }) => d.id);
+    const departmentIds = departments.map((d) => d.id);
 
     const { data: parentCategories, error: catError } = await supabase
       .from('categories')
@@ -641,7 +641,7 @@ async function getExpiredSubcategories(locale: string = 'ko'): Promise<{ text: s
       return { text: isEn ? 'Unable to retrieve category information.' : '카테고리 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const parentCategoryIds = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+    const parentCategoryIds = parentCategories.map((c) => c.id);
 
     const { data: subcategories, error: subError } = await supabase
       .from('subcategories')
@@ -667,8 +667,8 @@ async function getExpiredSubcategories(locale: string = 'ko'): Promise<{ text: s
       : `이미 만료된 세부 스토리지 ${subcategories.length}건을 찾았습니다:`];
 
     for (const sub of subcategories.slice(0, MAX_SHOW)) {
-      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
-      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const parentCat = parentCategories.find((c) => c.id === sub.parent_category_id);
+      const dept = departments.find((d) => d.id === parentCat?.department_id);
       const expiryDate = new Date(sub.expiry_date);
       const daysAgo = Math.max(0, Math.floor((now.getTime() - expiryDate.getTime()) / (24 * 60 * 60 * 1000)));
       const dateStr = expiryDate.toLocaleDateString(dateLocale);
@@ -682,9 +682,9 @@ async function getExpiredSubcategories(locale: string = 'ko'): Promise<{ text: s
       : (isEn ? `\n(Total: ${subcategories.length} items)` : `\n(총 ${subcategories.length}건)`));
     lines.push(isEn ? '\nClick a card below to navigate to the category.' : '\n아래 카드를 클릭하면 해당 카테고리로 이동합니다.');
 
-    const docs: ChatSearchResult[] = subcategories.slice(0, MAX_SHOW).map((sub: { id: string; name: string; expiry_date: string; parent_category_id: string }) => {
-      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
-      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+    const docs: ChatSearchResult[] = subcategories.slice(0, MAX_SHOW).map((sub) => {
+      const parentCat = parentCategories.find((c) => c.id === sub.parent_category_id);
+      const dept = departments.find((d) => d.id === parentCat?.department_id);
       return {
         id: sub.id,
         name: sub.name,
@@ -746,13 +746,13 @@ async function getSharedDocuments(locale: string = 'ko', direction: 'shared_by_m
     }
 
     // 상대방 정보 조회 (나에게 공유된 경우: 공유한 사람 / 내가 공유한 경우: 받은 사람)
-    const counterpartIds = [...new Set(shares.map((s: { shared_to_user_id: string; shared_by_user_id: string }) => isToMe ? s.shared_by_user_id : s.shared_to_user_id))];
+    const counterpartIds = [...new Set(shares.map((s) => isToMe ? s.shared_by_user_id : s.shared_to_user_id))];
     const { data: counterparts } = await supabase
       .from('users')
       .select('id, name')
       .in('id', counterpartIds);
 
-    const counterpartMap = new Map(counterparts?.map((r: { id: string; name: string }) => [r.id, r.name]) || []);
+    const counterpartMap = new Map(counterparts?.map((r) => [r.id, r.name]) || []);
     const dateLocale = isEn ? 'en-US' : 'ko-KR';
     const unknownLabel = isEn ? 'Unknown' : '알 수 없음';
 
@@ -763,8 +763,11 @@ async function getSharedDocuments(locale: string = 'ko', direction: 'shared_by_m
     for (const share of shares.slice(0, 10)) {
       const doc = share.documents as any;
       const counterpartId = isToMe ? share.shared_by_user_id : share.shared_to_user_id;
-      const counterpartName = counterpartMap.get(counterpartId) || unknownLabel;
-      const sharedDate = new Date(share.shared_at).toLocaleDateString(dateLocale);
+      const counterpartName = (counterpartId && counterpartMap.get(counterpartId)) || unknownLabel;
+      // shared_at 은 DB 상 nullable — 값이 없으면 날짜 칸을 비운다
+      const sharedDate = share.shared_at
+        ? new Date(share.shared_at).toLocaleDateString(dateLocale)
+        : '-';
       lines.push(isEn
         ? (isToMe ? `\n🔗 ${doc.title} → Shared by ${counterpartName} (${sharedDate})` : `\n🔗 ${doc.title} → Shared with ${counterpartName} (${sharedDate})`)
         : (isToMe ? `\n🔗 ${doc.title} → ${counterpartName}님이 공유 (${sharedDate})` : `\n🔗 ${doc.title} → ${counterpartName}님에게 공유 (${sharedDate})`));
@@ -817,7 +820,7 @@ async function getNfcStatus(locale: string = 'ko'): Promise<{ text: string; docs
       return { text: isEn ? 'Unable to retrieve department information.' : '부서 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const departmentIds2 = departments.map((d: { id: string; name: string }) => d.id);
+    const departmentIds2 = departments.map((d) => d.id);
 
     // 대분류 조회
     const { data: parentCategories, error: catError } = await supabase
@@ -829,7 +832,7 @@ async function getNfcStatus(locale: string = 'ko'): Promise<{ text: string; docs
       return { text: isEn ? 'Unable to retrieve category information.' : '카테고리 정보를 조회할 수 없습니다.', docs: [] };
     }
 
-    const parentCategoryIds2 = parentCategories.map((c: { id: string; name: string; department_id: string }) => c.id);
+    const parentCategoryIds2 = parentCategories.map((c) => c.id);
 
     // 세부카테고리 조회
     const { data: subcategories, error: subError } = await supabase
@@ -846,8 +849,8 @@ async function getNfcStatus(locale: string = 'ko'): Promise<{ text: string; docs
       return { text: isEn ? 'No subcategories found.' : '세부 스토리지가 없습니다.', docs: [] };
     }
 
-    const registered = subcategories.filter((s: { nfc_tag_id: string | null; nfc_registered: boolean }) => s.nfc_tag_id || s.nfc_registered);
-    const unregistered = subcategories.filter((s: { nfc_tag_id: string | null; nfc_registered: boolean }) => !s.nfc_tag_id && !s.nfc_registered);
+    const registered = subcategories.filter((s) => s.nfc_tag_id || s.nfc_registered);
+    const unregistered = subcategories.filter((s) => !s.nfc_tag_id && !s.nfc_registered);
 
     const lines: string[] = [isEn ? 'NFC Registration Status:' : 'NFC 등록 현황:'];
     lines.push(isEn ? `\n✅ NFC Registered: ${registered.length}` : `\n✅ NFC 등록됨: ${registered.length}개`);
@@ -857,8 +860,8 @@ async function getNfcStatus(locale: string = 'ko'): Promise<{ text: string; docs
     // 카드용 데이터 생성 (미등록 우선 표시)
     const allSubs = [...unregistered.slice(0, 5), ...registered.slice(0, 5)];
     const docs: ChatSearchResult[] = allSubs.map((sub: any) => {
-      const parentCat = parentCategories.find((c: { id: string; name: string; department_id: string }) => c.id === sub.parent_category_id);
-      const dept = departments.find((d: { id: string; name: string }) => d.id === parentCat?.department_id);
+      const parentCat = parentCategories.find((c) => c.id === sub.parent_category_id);
+      const dept = departments.find((d) => d.id === parentCat?.department_id);
       const isRegistered = sub.nfc_tag_id || sub.nfc_registered;
       return {
         id: sub.id,

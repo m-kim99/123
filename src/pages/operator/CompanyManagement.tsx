@@ -258,13 +258,11 @@ export function CompanyManagement() {
       if (sub) {
         // 유료(active)는 상태 유지하고 기간만 연장, 그 외(만료 체험/past_due 등)는 체험으로 재활성화
         const nextStatus = sub.status === 'active' ? 'active' : 'trialing';
-        const updatePayload: Record<string, string> = {
+        const updatePayload = {
           status: nextStatus,
           current_period_end: newEnd.toISOString(),
+          ...(nextStatus === 'trialing' ? { trial_ends_at: newEnd.toISOString() } : {}),
         };
-        if (nextStatus === 'trialing') {
-          updatePayload.trial_ends_at = newEnd.toISOString();
-        }
         const { error } = await supabase.from('subscriptions').update(updatePayload).eq('id', sub.id);
         if (error) throw error;
       } else {

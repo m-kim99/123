@@ -140,12 +140,14 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
           id: operatorData.id,
           name: operatorData.name,
           email: operatorData.email,
-          permissions: operatorData.permissions,
-          isSuper: operatorData.is_super,
-          isActive: operatorData.is_active,
+          // operators 의 permissions(jsonb) / is_super / is_active / created_at 등은 DB 상 nullable.
+          // 권한은 비어 있으면 아무 것도 허용하지 않는 빈 객체로, 플래그는 false 로 좁힌다(fail-closed).
+          permissions: (operatorData.permissions ?? {}) as unknown as OperatorPermissions,
+          isSuper: operatorData.is_super ?? false,
+          isActive: operatorData.is_active ?? false,
           lastLoginAt: operatorData.last_login_at,
-          createdAt: operatorData.created_at,
-          updatedAt: operatorData.updated_at,
+          createdAt: operatorData.created_at ?? '',
+          updatedAt: operatorData.updated_at ?? '',
         },
         isOperator: true,
         isLoading: false,
@@ -203,12 +205,12 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
           id: operatorData.id,
           name: operatorData.name,
           email: operatorData.email,
-          permissions: operatorData.permissions,
-          isSuper: operatorData.is_super,
-          isActive: operatorData.is_active,
+          permissions: (operatorData.permissions ?? {}) as unknown as OperatorPermissions,
+          isSuper: operatorData.is_super ?? false,
+          isActive: operatorData.is_active ?? false,
           lastLoginAt: new Date().toISOString(),
-          createdAt: operatorData.created_at,
-          updatedAt: operatorData.updated_at,
+          createdAt: operatorData.created_at ?? '',
+          updatedAt: operatorData.updated_at ?? '',
         },
         isOperator: true,
         isLoading: false,
@@ -608,12 +610,14 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
       const { data, error } = await supabase.rpc('operator_resolve_report', {
         p_report_id: reportId,
         p_action: action,
-        p_note: note ?? null,
+        p_note: note ?? undefined,
       });
 
       if (error) throw error;
-      if (data && data.success === false) {
-        return { success: false, error: data.error ?? '신고 처리에 실패했습니다.' };
+      // RPC 반환 타입은 Json 이라 형태를 좁혀서 읽는다
+      const result = data as { success?: boolean; error?: string } | null;
+      if (result && result.success === false) {
+        return { success: false, error: result.error ?? '신고 처리에 실패했습니다.' };
       }
 
       // 활동 로그
@@ -671,6 +675,12 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
     const { operator } = get();
     if (!operator) return { success: false, error: '운영자 권한이 필요합니다.' };
 
+    // notice 는 Partial 이라 제목/내용이 비어 올 수 있는데 DB 에서는 필수 컬럼이다.
+    // 그대로 보내면 not-null 위반으로 실패하므로 앞단에서 막는다.
+    if (!notice.title || !notice.content) {
+      return { success: false, error: '제목과 내용을 입력해주세요.' };
+    }
+
     try {
       const { error } = await supabase.from('system_notices').insert({
         title: notice.title,
@@ -678,8 +688,8 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         type: notice.type || 'info',
         is_active: notice.isActive ?? true,
         is_pinned: notice.isPinned ?? false,
-        target_audience: notice.targetAudience || 'all',
-        display_location: notice.displayLocation || 'dashboard',
+        target_audience: notice.targetAudience ?? 'all',
+        display_location: notice.displayLocation ?? 'dashboard',
         created_by: operator.id,
         published_at: notice.publishedAt || new Date().toISOString(),
         expires_at: notice.expiresAt || null,
@@ -919,7 +929,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
     try {
       const { error } = await supabase
         .from('operators')
-        .update({ permissions, updated_at: new Date().toISOString() })
+        .update({ permissions: permissions as unknown as Record<string, never>, updated_at: new Date().toISOString() })
         .eq('id', operatorId);
 
       if (error) throw error;
@@ -930,7 +940,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
         action: 'update_operator',
         target_type: 'operator',
         target_id: operatorId,
-        details: { permissions },
+        details: { permissions } as unknown as Record<string, never>,
       });
 
       await get().fetchOperators();

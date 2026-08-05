@@ -108,16 +108,16 @@ export async function submitInquiry(
 
     const { data, error } = await supabase
       .from('inquiries')
+      // inquiries 테이블에는 name/phone/attachments 컬럼이 없다(라이브 스키마로 확인).
+      // 넣으면 PostgREST 가 PGRST204 로 거부하므로 실제 컬럼만 보낸다.
+      // params.phone/attachments 를 저장하려면 마이그레이션이 선행되어야 한다.
       .insert({
         user_id: user.id,
         company_id: userData?.company_id ?? null,
-        name: userData?.name ?? user.email?.split('@')[0] ?? 'User',
         email: userData?.email ?? user.email ?? '',
-        phone: params.phone ?? null,
         subject: params.subject,
         content: params.content,
         category: params.category ?? 'general',
-        attachments: params.attachments ?? null,
       })
       .select('id')
       .single();

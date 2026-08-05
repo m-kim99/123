@@ -1887,6 +1887,8 @@ export type Database = {
         Row: {
           expires_at: string | null
           id: string
+          internal_note: string | null
+          lift_reason: string | null
           lifted_at: string | null
           lifted_by: string | null
           reason: string
@@ -1897,6 +1899,8 @@ export type Database = {
         Insert: {
           expires_at?: string | null
           id?: string
+          internal_note?: string | null
+          lift_reason?: string | null
           lifted_at?: string | null
           lifted_by?: string | null
           reason: string
@@ -1907,6 +1911,8 @@ export type Database = {
         Update: {
           expires_at?: string | null
           id?: string
+          internal_note?: string | null
+          lift_reason?: string | null
           lifted_at?: string | null
           lifted_by?: string | null
           reason?: string

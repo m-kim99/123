@@ -62,12 +62,23 @@ export async function signIn(
       };
     }
 
+    // role 이 비어 있으면 권한을 판정할 수 없다 — 조회 실패와 동일하게 fail-closed.
+    // (users.role 은 DB 상 nullable 이라 행이 있어도 role 이 없을 수 있다)
+    if (!userData.role) {
+      console.error('사용자 role 이 비어 있어 권한을 판정할 수 없습니다.');
+      await supabase.auth.signOut();
+      return {
+        user: null,
+        error: '사용자 권한 정보가 없습니다. 관리자에게 문의해주세요.',
+      };
+    }
+
     // 사용자 정보 반환
     return {
       user: {
         id: userData.id,
-        email: userData.email,
-        name: userData.name,
+        email: userData.email ?? '',
+        name: userData.name ?? '',
         role: userData.role,
         department_id: userData.department_id,
       },
@@ -128,11 +139,17 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null;
     }
 
+    // role 이 비어 있으면 권한 판정 불가 — 조회 실패와 동일하게 fail-closed
+    if (!userData.role) {
+      console.error('사용자 role 이 비어 있어 권한을 판정할 수 없습니다.');
+      return null;
+    }
+
     // 사용자 정보 반환
     return {
       id: userData.id,
-      email: userData.email,
-      name: userData.name,
+      email: userData.email ?? '',
+      name: userData.name ?? '',
       role: userData.role,
       department_id: userData.department_id,
     };

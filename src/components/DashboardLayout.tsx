@@ -543,6 +543,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
 
+    if (!user?.id) {
+      setSearchSuggestions({ recent: [], popular: [], related: [] });
+      return;
+    }
+
     setIsLoadingSuggestions(true);
 
     try {
@@ -552,7 +557,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       const { data: recentData } = await supabase
         .from('search_history')
         .select('query')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .order('searched_at', { ascending: false })
         .limit(5);
 
@@ -677,6 +682,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleSearch = useCallback(async () => {
     const query = searchQuery.trim();
     if (!query) return;
+    if (!user?.id) return;
 
     const targetPath = isAdmin ? '/admin/documents' : '/team/documents';
 
@@ -690,7 +696,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       const { data: existing } = await supabase
         .from('search_history')
         .select('id, search_count')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .eq('query', query)
         .single();
 
@@ -1003,9 +1009,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         .neq('role', 'none');
 
       if (permData) {
-        const deptIds = permData
-          .filter((p) => p.department_id !== user.departmentId)
-          .map((p) => p.department_id);
+        // user_permissions.department_id 는 DB 상 nullable — null 행은 부서를 특정할 수 없어 제외
+        const scopedPerms = permData.filter(
+          (p): p is typeof p & { department_id: string } =>
+            !!p.department_id && p.department_id !== user.departmentId,
+        );
+        const deptIds = scopedPerms.map((p) => p.department_id);
 
         if (deptIds.length > 0) {
           const { data: depts } = await supabase
@@ -1014,8 +1023,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             .in('id', deptIds);
 
           const deptMap = new Map(depts?.map((d) => [d.id, d.name]) || []);
-          permData
-            .filter((p) => p.department_id !== user.departmentId)
+          scopedPerms
             .forEach((p) => {
               const name = deptMap.get(p.department_id);
               if (name) {

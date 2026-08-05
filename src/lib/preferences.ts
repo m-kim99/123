@@ -46,7 +46,8 @@ export async function savePreference(
 
     await supabase
       .from('users')
-      .update({ preferences: prefs })
+      // preferences 는 jsonb 컬럼 — 생성 타입의 Json 으로 좁혀 넘긴다
+      .update({ preferences: prefs as Record<string, string> })
       .eq('id', userId);
   } catch {
     // Silently fail — column may not exist yet

@@ -18,9 +18,13 @@ export async function registerNFCTag(request: NFCRegisterRequest): Promise<void>
     throw new Error('NFC 태그 등록은 로그인이 필요합니다.');
   }
 
+  // nfc_mappings 에는 category_id 컬럼이 없다 — subcategory_id 뿐이다.
+  // 이 파일은 위 @deprecated 주석대로 호출처가 없어 실행되지 않는다.
+  // 레거시 의미(카테고리 단위 매핑)를 세부 스토리지로 바꿔도 되는지 확정 전이라
+  // 스키마를 임의로 맞추지 않고 그대로 둔다.
   const { error } = await supabase.from('nfc_mappings').insert({
     tag_id: request.tagId,
-    category_id: request.categoryId,
+    subcategory_id: request.categoryId,
     registered_by: authData.user.id,
   });
 

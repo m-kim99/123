@@ -214,11 +214,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: {
           id: userData.id,
-          name: userData.name,
-          email: userData.email,
+          // users 의 name/email/company_id 는 DB 상 nullable.
+          // companyId 는 온보딩 전 사용자가 실제로 비어 있을 수 있고,
+          // 앱 전반이 falsy 체크(!user?.companyId)만 쓰므로 '' 로 맞춘다.
+          name: userData.name ?? '',
+          email: userData.email ?? '',
           role: userData.role as UserRole,
           departmentId: userData.department_id,
-          companyId: userData.company_id,
+          companyId: userData.company_id ?? '',
           companyCode: company?.code ?? '',
           companyName: company?.name ?? '',
         },
@@ -582,11 +585,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           user: {
             id: userData.id,
-            name: userData.name,
-            email: userData.email,
+            // users 의 name/email/company_id 는 DB 상 nullable.
+            // companyId 는 온보딩 전 사용자가 실제로 비어 있을 수 있고,
+            // 앱 전반이 falsy 체크(!user?.companyId)만 쓰므로 '' 로 맞춘다.
+            name: userData.name ?? '',
+            email: userData.email ?? '',
             role: userData.role as UserRole,
             departmentId: userData.department_id,
-            companyId: userData.company_id,
+            companyId: userData.company_id ?? '',
             companyCode: company?.code ?? '',
             companyName: company?.name ?? '',
           },
@@ -770,11 +776,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: {
           id: userData.id,
-          name: userData.name,
-          email: userData.email,
+          // users 의 name/email/company_id 는 DB 상 nullable.
+          // companyId 는 온보딩 전 사용자가 실제로 비어 있을 수 있고,
+          // 앱 전반이 falsy 체크(!user?.companyId)만 쓰므로 '' 로 맞춘다.
+          name: userData.name ?? '',
+          email: userData.email ?? '',
           role: userData.role as UserRole,
           departmentId: userData.department_id,
-          companyId: userData.company_id,
+          companyId: userData.company_id ?? '',
           companyCode: companyInfo?.code ?? '',
           companyName: companyInfo?.name ?? '',
         },

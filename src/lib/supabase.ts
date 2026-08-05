@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
 // 환경변수에서 Supabase 설정 가져오기
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -12,8 +13,8 @@ const isSupabaseConfigured =
 
 // Supabase 클라이언트 초기화
 // 환경변수 미설정 시 null as any 대신 Proxy를 사용해 즉시 명확한 에러를 던짐
-export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase: SupabaseClient<Database> = isSupabaseConfigured
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -24,7 +25,7 @@ export const supabase: SupabaseClient = isSupabaseConfigured
         flowType: 'pkce',
       },
     })
-  : (new Proxy({} as SupabaseClient, {
+  : (new Proxy({} as SupabaseClient<Database>, {
       get(_target, prop) {
         throw new Error(
           `[Supabase 미설정] .${String(prop)} 호출 불가. ` +

@@ -158,7 +158,17 @@ export function UserManagement() {
       return;
     }
 
-    setUsers(data || []);
+    // users 테이블의 name/email/role 은 DB 상 nullable — 화면 표시용으로 좁힌다.
+    // role 이 비어 있으면 권한이 낮은 쪽(team)으로 표시한다.
+    setUsers(
+      (data || []).map((u) => ({
+        id: u.id,
+        name: u.name ?? '',
+        email: u.email ?? '',
+        role: u.role === 'admin' ? ('admin' as const) : ('team' as const),
+        department_id: u.department_id,
+      })),
+    );
   };
 
   const fetchDepartments = async () => {
@@ -190,21 +200,31 @@ export function UserManagement() {
       .eq('user_id', user.id);
 
     const allPermissions: UserPermission[] = departments.map((dept) => {
-      const existing = existingPermissions?.find(
-        (p: UserPermission) => p.department_id === dept.id
-      );
+      const existing = existingPermissions?.find((p) => p.department_id === dept.id);
 
       // 기본값: 소속 부서는 viewer, 나머지는 none
       const defaultRole = dept.id === user.department_id ? 'viewer' : 'none';
 
-      return (
-        existing || {
-          user_id: user.id,
+      if (existing) {
+        // user_permissions.department_id 는 DB 상 nullable 이지만 위에서 dept.id 로 매칭돼 값이 보장된다
+        return {
+          id: existing.id,
+          // user_permissions.user_id 도 nullable — 위 쿼리가 user.id 로 필터하므로 값이 보장된다
+          user_id: existing.user_id ?? user.id,
           department_id: dept.id,
-          role: defaultRole,
-          company_id: authUser?.companyId || null,
-        }
-      );
+          role: existing.role as UserPermission['role'],
+          company_id: existing.company_id ?? undefined,
+          created_at: existing.created_at ?? undefined,
+          updated_at: existing.updated_at ?? undefined,
+        };
+      }
+
+      return {
+        user_id: user.id,
+        department_id: dept.id,
+        role: defaultRole as UserPermission['role'],
+        company_id: authUser?.companyId || undefined,
+      };
     });
 
     setPermissions(allPermissions);

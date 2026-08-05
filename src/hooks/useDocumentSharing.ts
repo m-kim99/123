@@ -85,7 +85,12 @@ export function useDocumentSharing({ context, getDocumentTitle }: Options) {
           .order('name');
 
         if (usersError) throw usersError;
-        setCompanyUsers(usersData || []);
+        // users.name/email 은 DB 상 nullable — 표시용이라 빈 문자열로 채운다
+        setCompanyUsers((usersData || []).map((u) => ({
+          id: u.id,
+          name: u.name ?? '',
+          email: u.email ?? '',
+        })));
 
         // 2. 현재 공유 현황 (FK JOIN 대신 별도 쿼리)
         const { data: sharesData, error: sharesError } = await supabase
@@ -106,11 +111,20 @@ export function useDocumentSharing({ context, getDocumentTitle }: Options) {
             .select('id, name, email')
             .in('id', sharedToUserIds);
 
-          const usersMap = new Map((sharedUsersData || []).map((u) => [u.id, u]));
+          const usersMap = new Map(
+            (sharedUsersData || []).map((u) => [
+              u.id,
+              { id: u.id, name: u.name ?? '', email: u.email ?? '' },
+            ]),
+          );
           setExistingShares(
             sharesData.map((share) => ({
-              ...share,
-              users: usersMap.get(share.shared_to_user_id) || null,
+              id: share.id,
+              shared_to_user_id: share.shared_to_user_id ?? '',
+              // shared_at 은 DB 상 nullable — 목록 정렬/표시용이라 빈 값으로 둔다
+              shared_at: share.shared_at ?? '',
+              permission: share.permission ?? '',
+              users: (share.shared_to_user_id && usersMap.get(share.shared_to_user_id)) || null,
             })),
           );
         } else {

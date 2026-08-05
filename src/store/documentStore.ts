@@ -1,13 +1,6 @@
 import { create } from 'zustand';
 import { toast } from '@/hooks/use-toast';
-import {
-  supabase,
-  type Department as SupabaseDepartment,
-  type Category as SupabaseCategory,
-  type Document as SupabaseDocument,
-  type ParentCategory as SupabaseParentCategory,
-  type Subcategory as SupabaseSubcategory,
-} from '@/lib/supabase';
+import { supabase, type Document as SupabaseDocument } from '@/lib/supabase';
 import { r2Storage } from '@/lib/r2';
 import { addDays } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
@@ -267,7 +260,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         return;
       }
 
-      const deptIds = data.map((d: SupabaseDepartment) => d.id);
+      const deptIds = data.map((d) => d.id);
 
       // 2. 모든 부서의 카테고리 한 번에 (N쿼리 → 1쿼리)
       const { data: allCategories } = await supabase
@@ -275,7 +268,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .select('id, department_id')
         .in('department_id', deptIds);
 
-      const allCategoryIds = (allCategories || []).map((c: { id: string }) => c.id);
+      const allCategoryIds = (allCategories || []).map((c) => c.id);
 
       // 3. 전체 문서 parent_category_id 한 번에 조회 후 JS에서 집계 (N쿼리 → 1쿼리)
       const docsByCategory: Record<string, number> = {};
@@ -286,20 +279,24 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           .in('parent_category_id', allCategoryIds)
           .is('deleted_at', null);
 
-        (docData || []).forEach((doc: { parent_category_id: string }) => {
-          docsByCategory[doc.parent_category_id] =
-            (docsByCategory[doc.parent_category_id] || 0) + 1;
+        (docData || []).forEach((doc) => {
+          // parent_category_id 는 DB 상 nullable — 없는 문서는 어떤 카테고리에도 집계되지 않는다
+          const key = doc.parent_category_id;
+          if (!key) return;
+          docsByCategory[key] = (docsByCategory[key] || 0) + 1;
         });
       }
 
       // 부서별 카테고리 매핑
       const catsByDept: Record<string, string[]> = {};
-      (allCategories || []).forEach((cat: { id: string; department_id: string }) => {
-        if (!catsByDept[cat.department_id]) catsByDept[cat.department_id] = [];
-        catsByDept[cat.department_id].push(cat.id);
+      (allCategories || []).forEach((cat) => {
+        const deptId = cat.department_id;
+        if (!deptId) return;
+        if (!catsByDept[deptId]) catsByDept[deptId] = [];
+        catsByDept[deptId].push(cat.id);
       });
 
-      const departments: Department[] = data.map((dept: SupabaseDepartment) => {
+      const departments: Department[] = data.map((dept) => {
         const deptCatIds = catsByDept[dept.id] || [];
         const documentCount = deptCatIds.reduce(
           (sum, catId) => sum + (docsByCategory[catId] || 0),
@@ -347,7 +344,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (deptError) throw deptError;
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
 
       if (deptIds.length === 0) {
         set({ categories: [] });
@@ -368,7 +365,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         return;
       }
 
-      const categoryIds = data.map((cat: SupabaseCategory) => cat.id);
+      const categoryIds = data.map((cat) => cat.id);
 
       // 3. 문서 parent_category_id 전체 조회 후 JS에서 집계 (N쿼리 → 1쿼리)
       const docsByCategory: Record<string, number> = {};
@@ -378,20 +375,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .in('parent_category_id', categoryIds)
         .is('deleted_at', null);
 
-      (docData || []).forEach((doc: { parent_category_id: string }) => {
-        docsByCategory[doc.parent_category_id] =
-          (docsByCategory[doc.parent_category_id] || 0) + 1;
+      (docData || []).forEach((doc) => {
+        const key = doc.parent_category_id;
+        if (!key) return;
+        docsByCategory[key] = (docsByCategory[key] || 0) + 1;
       });
 
-      const categories: Category[] = data.map((cat: SupabaseCategory) => ({
+      const categories: Category[] = data.map((cat) => ({
         id: cat.id,
         name: cat.name,
         description: cat.description || '',
-        departmentId: cat.department_id,
+        departmentId: cat.department_id ?? '',
         documentCount: docsByCategory[cat.id] || 0,
-        nfcRegistered: !!(cat as SupabaseCategory & { nfc_tag_id?: string }).nfc_tag_id,
-        storageLocation:
-          (cat as SupabaseCategory & { storage_location?: string }).storage_location || undefined,
+        // categories 테이블에는 nfc_tag_id/storage_location 컬럼이 없다(라이브 스키마 확인).
+        // NFC 는 subcategories.nfc_tag_id 로 옮겨갔고, 이 값들은 지금까지 항상 비어 있었다.
+        nfcRegistered: false,
+        storageLocation: undefined,
       }));
 
       set({ categories });
@@ -428,7 +427,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (deptError) throw deptError;
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
 
       if (deptIds.length === 0) {
         set({ parentCategories: [] });
@@ -465,23 +464,24 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       ]);
 
       const subCountByCategory: Record<string, number> = {};
-      (subData.data || []).forEach((s: { parent_category_id: string }) => {
+      (subData.data || []).forEach((s) => {
         subCountByCategory[s.parent_category_id] =
           (subCountByCategory[s.parent_category_id] || 0) + 1;
       });
 
       const docCountByCategory: Record<string, number> = {};
-      (docData.data || []).forEach((d: { parent_category_id: string }) => {
-        docCountByCategory[d.parent_category_id] =
-          (docCountByCategory[d.parent_category_id] || 0) + 1;
+      (docData.data || []).forEach((d) => {
+        const key = d.parent_category_id;
+        if (!key) return;
+        docCountByCategory[key] = (docCountByCategory[key] || 0) + 1;
       });
 
       const parentCategories: ParentCategory[] = catData.map(
-        (cat: SupabaseParentCategory & { department_id: string }) => ({
+        (cat) => ({
           id: cat.id,
           name: cat.name,
           description: (cat as any).description || '',
-          departmentId: cat.department_id,
+          departmentId: cat.department_id ?? '',
           subcategoryCount: subCountByCategory[cat.id] || 0,
           documentCount: docCountByCategory[cat.id] || 0,
         })
@@ -520,7 +520,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (deptError) throw deptError;
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
 
       if (deptIds.length === 0) {
         set({ subcategories: [] });
@@ -556,19 +556,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .is('deleted_at', null);
 
       const docCountBySub: Record<string, number> = {};
-      (docData || []).forEach((d: { subcategory_id: string }) => {
-        docCountBySub[d.subcategory_id] = (docCountBySub[d.subcategory_id] || 0) + 1;
+      (docData || []).forEach((d) => {
+        const key = d.subcategory_id;
+        if (!key) return;
+        docCountBySub[key] = (docCountBySub[key] || 0) + 1;
       });
 
       const subcategories: Subcategory[] = data.map(
-        (sub: SupabaseSubcategory & { department_id: string; parent_category_id: string }) => ({
+        (sub) => ({
           id: sub.id,
           name: sub.name,
           description: sub.description || '',
-          parentCategoryId: sub.parent_category_id,
-          departmentId: sub.department_id,
+          parentCategoryId: sub.parent_category_id ?? '',
+          departmentId: sub.department_id ?? '',
           nfcUid: sub.nfc_tag_id || null,
-          nfcRegistered: sub.nfc_registered,
+          nfcRegistered: sub.nfc_registered ?? false,
           storageLocation: sub.storage_location || undefined,
           managementNumber: (sub as any).management_number || undefined,
           defaultExpiryDays: (sub as any).default_expiry_days || null,
@@ -621,7 +623,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (deptError) throw deptError;
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
 
       if (deptIds.length === 0) {
         set({ documents: [] });
@@ -653,7 +655,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             .in('id', uploaderIds);
           if (usersData) {
             uploaderMap = Object.fromEntries(
-              usersData.map((u: { id: string; name: string }) => [u.id, u.name])
+              usersData.map((u) => [u.id, u.name ?? ''])
             );
           }
         }
@@ -711,7 +713,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       if (deptError) throw deptError;
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
 
       if (deptIds.length === 0) {
         set({ trashedDocuments: [] });
@@ -743,7 +745,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             .in('id', uploaderIds);
           if (usersData) {
             uploaderMap = Object.fromEntries(
-              usersData.map((u: { id: string; name: string }) => [u.id, u.name])
+              usersData.map((u) => [u.id, u.name ?? ''])
             );
           }
         }
@@ -794,7 +796,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           description: category.description || null,
           department_id: category.departmentId,
           code: code,
-          nfc_tag_id: category.nfcRegistered ? `NFC_${Date.now()}` : null, // nfcRegistered가 true면 nfc_tag_id 생성
+          // categories 에는 nfc_tag_id 컬럼이 없다 — NFC 는 subcategories 로 옮겨갔다
         })
         .select()
         .single();
@@ -809,10 +811,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               id: data.id,
               name: data.name,
               description: data.description || '',
-              departmentId: data.department_id,
+              departmentId: data.department_id ?? '',
               documentCount: 0,
-              nfcRegistered: !!data.nfc_tag_id,
-              storageLocation: data.storage_location || undefined,
+              nfcRegistered: false,
+              storageLocation: undefined,
             },
           ],
         }));
@@ -869,7 +871,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           id: data.id,
           name: data.name,
           description: data.description || '',
-          departmentId: data.department_id,
+          departmentId: data.department_id ?? '',
           subcategoryCount: 0,
           documentCount: 0,
         };
@@ -967,10 +969,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         id: data.id,
         name: data.name,
         description: data.description || '',
-        parentCategoryId: data.parent_category_id,
-        departmentId: data.department_id,
+        parentCategoryId: data.parent_category_id ?? '',
+        departmentId: data.department_id ?? '',
         nfcUid: data.nfc_tag_id || null,
-        nfcRegistered: data.nfc_registered,
+        nfcRegistered: data.nfc_registered ?? false,
         storageLocation: data.storage_location || undefined,
         managementNumber: data.management_number || undefined,
         defaultExpiryDays: data.default_expiry_days || null,
@@ -1442,10 +1444,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         id: data.id,
         name: data.name,
         description: data.description || '',
-        parentCategoryId: data.parent_category_id,
-        departmentId: data.department_id,
+        parentCategoryId: data.parent_category_id ?? '',
+        departmentId: data.department_id ?? '',
         nfcUid: data.nfc_tag_id || null,
-        nfcRegistered: data.nfc_registered,
+        nfcRegistered: data.nfc_registered ?? false,
         storageLocation: data.storage_location || undefined,
         documentCount: 0,
       };
@@ -1520,31 +1522,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const updateData: any = {};
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.storageLocation !== undefined) updateData.storage_location = updates.storageLocation;
-      
-      // nfcRegistered 업데이트 시 nfc_tag_id 처리
-      if (updates.nfcRegistered !== undefined) {
-        if (updates.nfcRegistered) {
-          // 기존 nfc_tag_id가 없으면 새로 생성
-          try {
-            const { data: currentCategory } = await supabase
-              .from('categories')
-              .select('nfc_tag_id')
-              .eq('id', id)
-              .single();
-            
-            if (!currentCategory?.nfc_tag_id) {
-              updateData.nfc_tag_id = `NFC_${Date.now()}`;
-            }
-          } catch {
-            // 조회 실패 시 새로운 nfc_tag_id 생성
-            updateData.nfc_tag_id = `NFC_${Date.now()}`;
-          }
-        } else {
-          // nfcRegistered가 false면 nfc_tag_id를 null로 설정
-          updateData.nfc_tag_id = null;
-        }
-      }
+
+      // categories 에는 storage_location / nfc_tag_id 컬럼이 없다(라이브 스키마 확인).
+      // 넣으면 PostgREST 가 거부하므로 보내지 않는다.
+      // NFC 등록은 subcategories.nfc_tag_id(registerNfcTag)로 옮겨갔다.
 
       const { error } = await supabase
         .from('categories')
@@ -1729,10 +1710,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               categoryId: (data as any).category_id || undefined,
               parentCategoryId: parentCategoryIdFromDb,
               subcategoryId: subcategoryIdFromDb,
-              departmentId: data.department_id,
-              uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
+              departmentId: data.department_id ?? '',
+              uploadDate: data.uploaded_at ?? new Date().toISOString(), // uploaded_at을 uploadDate로 매핑
               uploader: useAuthStore.getState().user?.name || '', // 업로드한 본인의 이름 표시
-              classified: data.is_classified, // is_classified를 classified로 매핑
+              classified: data.is_classified ?? false, // is_classified를 classified로 매핑
               ocrText: data.ocr_text || null,
             },
             ...state.documents,
@@ -1979,7 +1960,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .select('id')
         .eq('company_id', user.companyId);
 
-      const deptIds = (deptData || []).map((d: { id: string }) => d.id);
+      const deptIds = (deptData || []).map((d) => d.id);
       if (deptIds.length === 0) return;
 
       // 휴지통에 있는 모든 문서의 파일 경로 조회
