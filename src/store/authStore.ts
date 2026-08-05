@@ -55,7 +55,9 @@ interface AuthState {
     role: UserRole,
     companyCode: string,
     companyName: string,
-    departmentId?: string
+    departmentId?: string,
+    /** OTP 인증을 마친 관리자 휴대폰 — 체험 부여 이력 원장 기록용(서버가 인증 기록과 대조) */
+    verifiedPhone?: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
@@ -278,7 +280,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     role: UserRole,
     companyCode: string,
     companyName: string,
-    departmentId?: string
+    departmentId?: string,
+    verifiedPhone?: string
   ) => {
     set({ isLoading: true, error: null });
 
@@ -373,6 +376,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             company_code: companyCode || null,
             company_name: isNewCompany ? companyName.trim() : null,
             department_id: departmentId || null,
+            // 트리거가 phone_verifications 의 실제 인증 기록과 대조한 뒤
+            // 해시로만 원장에 남긴다 (평문 저장 안 함)
+            phone: verifiedPhone || null,
           },
         },
       });

@@ -1409,6 +1409,7 @@
     "resumeSuccess": "Cancellation undone. Auto-renewal will continue.",
     "resumeFailed": "Failed to undo the cancellation. Please try again.",
     "refundRequest": "Request a refund (withdrawal)",
+    "refundMailSubject": "[TrayStorage] Refund request",
     "refundConfirmTitle": "Request a refund?",
     "refundConfirmDesc": "A full refund is available within 7 days of your first payment. The subscription ends immediately upon refund and access will be restricted.\nFor other cases, contact support@traystorage.net.",
     "refundConfirmBtn": "Refund in full",

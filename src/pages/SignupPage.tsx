@@ -344,7 +344,9 @@ export function SignupPage() {
       signupRole,
       companyCodeToUse,
       companyNameToUse,
-      undefined
+      undefined,
+      // 인증을 마친 번호만 전달 — 서버가 인증 기록과 대조해 해시로만 원장에 남긴다
+      adminOtpVerified ? normalizePhone(adminPhone) : undefined
     );
 
     if (result.success) {

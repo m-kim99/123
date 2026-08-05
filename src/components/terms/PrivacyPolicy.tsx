@@ -50,6 +50,7 @@ const PrivacyKoCurrent = () => (
         <tr><td className="border border-slate-300 p-2">서비스 이용 기록, 접속 로그</td><td className="border border-slate-300 p-2">3개월</td><td className="border border-slate-300 p-2">통신비밀보호법</td></tr>
         <tr><td className="border border-slate-300 p-2">백업 데이터</td><td className="border border-slate-300 p-2">1년</td><td className="border border-slate-300 p-2">내부 정책</td></tr>
         <tr><td className="border border-slate-300 p-2">AI 처리 로그</td><td className="border border-slate-300 p-2">1년</td><td className="border border-slate-300 p-2">내부 정책</td></tr>
+        <tr><td className="border border-slate-300 p-2">부정 가입·재가입 방지 기록(휴대폰번호·이메일의 단방향 해시)</td><td className="border border-slate-300 p-2">2년</td><td className="border border-slate-300 p-2">내부 정책</td></tr>
       </tbody>
     </table>
     <p>② 휴면회원 전환 시 개인정보는 별도 분리하여 보관하며, 휴면 전환 후 3년이 경과하면 완전히 삭제됩니다.</p>
@@ -258,6 +259,7 @@ const PrivacyKoRevised = () => (
         <tr><td className="border border-slate-300 p-2">결제 정보</td><td className="border border-slate-300 p-2">결제 관련 기록</td><td className="border border-slate-300 p-2">회원 탈퇴 후 5년</td><td className="border border-slate-300 p-2">전자상거래법 제6조에 따라 보존</td></tr>
         <tr><td className="border border-slate-300 p-2">고충 처리</td><td className="border border-slate-300 p-2">회원 고충 접수 시 수집한 정보</td><td className="border border-slate-300 p-2">해당 고충 및 분쟁 처리 시까지</td><td className="border border-slate-300 p-2">처리 과정 및 결과 기록은 전자상거래법에 따라 최소 3년 보유</td></tr>
         <tr><td className="border border-slate-300 p-2">정보통신 기록</td><td className="border border-slate-300 p-2">서비스 방문 및 이용 기록, 검색 기록</td><td className="border border-slate-300 p-2">회원 탈퇴 및 말소 시까지</td><td className="border border-slate-300 p-2">통신비밀보호법 시행령에 따라 최소 3개월 보유, 최종 접속기록은 1년 보유</td></tr>
+        <tr><td className="border border-slate-300 p-2">부정 가입 방지</td><td className="border border-slate-300 p-2">무료 체험 부여 이력(휴대폰번호·이메일의 단방향 해시)</td><td className="border border-slate-300 p-2">부여 시점부터 2년</td><td className="border border-slate-300 p-2">평문을 보관하지 않으며, 무료 체험 중복 제공 방지 목적으로만 이용</td></tr>
       </tbody>
     </table>
 
@@ -464,6 +466,7 @@ const PrivacyEn = () => (
         <tr><td className="border border-slate-300 p-2">Payment information</td><td className="border border-slate-300 p-2">Payment-related records</td><td className="border border-slate-300 p-2">5 years after membership withdrawal</td><td className="border border-slate-300 p-2">Preserved pursuant to the Act on Consumer Protection in Electronic Commerce, Etc.</td></tr>
         <tr><td className="border border-slate-300 p-2">Grievance handling</td><td className="border border-slate-300 p-2">Information collected at time of grievance</td><td className="border border-slate-300 p-2">Until the grievance or dispute is resolved</td><td className="border border-slate-300 p-2">Records of processing and results retained for a minimum of 3 years</td></tr>
         <tr><td className="border border-slate-300 p-2">Information and communications records</td><td className="border border-slate-300 p-2">Service access and usage logs, search records</td><td className="border border-slate-300 p-2">Until membership withdrawal or cancellation</td><td className="border border-slate-300 p-2">Retained for a minimum of 3 months pursuant to the Protection of Communications Secrets Act</td></tr>
+        <tr><td className="border border-slate-300 p-2">Prevention of fraudulent registration</td><td className="border border-slate-300 p-2">Free trial grant history (one-way hash of mobile number and email)</td><td className="border border-slate-300 p-2">2 years from the date granted</td><td className="border border-slate-300 p-2">Plaintext is not retained; used solely to prevent duplicate free trials</td></tr>
       </tbody>
     </table>
 
@@ -671,6 +674,7 @@ const PrivacyJa = () => (
         <tr><td className="border border-slate-300 p-2">サービス利用記録、アクセスログ</td><td className="border border-slate-300 p-2">3か月</td><td className="border border-slate-300 p-2">通信秘密保護法</td></tr>
         <tr><td className="border border-slate-300 p-2">バックアップデータ</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部方針</td></tr>
         <tr><td className="border border-slate-300 p-2">AI処理ログ</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部方針</td></tr>
+        <tr><td className="border border-slate-300 p-2">不正登録・再登録防止記録（携帯電話番号・メールアドレスの一方向ハッシュ）</td><td className="border border-slate-300 p-2">2年</td><td className="border border-slate-300 p-2">内部方針</td></tr>
       </tbody>
     </table>
     <p>② 休眠会員への転換時、個人情報は別途分離して保管され、休眠転換後3年が経過すると完全に削除されます。</p>
@@ -881,6 +885,7 @@ const PrivacyDe = () => (
         <tr><td className="border border-slate-300 p-2">Zahlungsinformationen</td><td className="border border-slate-300 p-2">Zahlungsbezogene Aufzeichnungen</td><td className="border border-slate-300 p-2">5 Jahre nach Austritt</td><td className="border border-slate-300 p-2">Aufbewahrt gemäß dem Gesetz zum Verbraucherschutz im elektronischen Geschäftsverkehr</td></tr>
         <tr><td className="border border-slate-300 p-2">Bearbeitung von Anliegen</td><td className="border border-slate-300 p-2">Bei Anliegen erhobene Angaben</td><td className="border border-slate-300 p-2">Bis zur Klärung des Anliegens oder Streits</td><td className="border border-slate-300 p-2">Bearbeitungsunterlagen und Ergebnisse mindestens 3 Jahre aufbewahrt</td></tr>
         <tr><td className="border border-slate-300 p-2">Informations- und Kommunikationsprotokolle</td><td className="border border-slate-300 p-2">Zugriffs- und Nutzungsprotokolle, Suchverlauf</td><td className="border border-slate-300 p-2">Bis zum Austritt oder zur Kündigung der Mitgliedschaft</td><td className="border border-slate-300 p-2">Mindestens 3 Monate gemäß dem Gesetz zum Schutz von Kommunikationsgeheimnissen aufbewahrt</td></tr>
+        <tr><td className="border border-slate-300 p-2">Verhinderung missbräuchlicher Registrierung</td><td className="border border-slate-300 p-2">Verlauf gewährter kostenloser Testphasen (Einweg-Hash von Mobilnummer und E-Mail)</td><td className="border border-slate-300 p-2">2 Jahre ab Gewährung</td><td className="border border-slate-300 p-2">Keine Speicherung im Klartext; ausschließlich zur Verhinderung mehrfacher Testphasen</td></tr>
       </tbody>
     </table>
 
@@ -1088,6 +1093,7 @@ const PrivacyZh = () => (
         <tr><td className="border border-slate-300 p-2">服务使用记录、访问日志</td><td className="border border-slate-300 p-2">3个月</td><td className="border border-slate-300 p-2">通信秘密保护法</td></tr>
         <tr><td className="border border-slate-300 p-2">备份数据</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部政策</td></tr>
         <tr><td className="border border-slate-300 p-2">AI处理日志</td><td className="border border-slate-300 p-2">1年</td><td className="border border-slate-300 p-2">内部政策</td></tr>
+        <tr><td className="border border-slate-300 p-2">防止违规注册·重复注册记录（手机号码·电子邮件的单向哈希）</td><td className="border border-slate-300 p-2">2年</td><td className="border border-slate-300 p-2">内部政策</td></tr>
       </tbody>
     </table>
     <p>② 转换为休眠会员时，个人信息将单独分离保管，休眠转换后经过3年将被完全删除。</p>

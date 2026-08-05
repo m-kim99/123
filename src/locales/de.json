@@ -1409,6 +1409,7 @@
     "resumeSuccess": "Kündigung rückgängig gemacht. Die automatische Verlängerung wird fortgesetzt.",
     "resumeFailed": "Rückgängigmachen der Kündigung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "refundRequest": "Rückerstattung anfordern (Widerruf)",
+    "refundMailSubject": "[TrayStorage] Rückerstattungsanfrage",
     "refundConfirmTitle": "Rückerstattung anfordern?",
     "refundConfirmDesc": "Innerhalb von 7 Tagen nach der ersten Zahlung ist eine vollständige Rückerstattung möglich. Mit der Rückerstattung endet das Abonnement sofort und der Zugriff wird eingeschränkt.\nIn anderen Fällen wenden Sie sich an support@traystorage.net.",
     "refundConfirmBtn": "Vollständig erstatten",

@@ -512,7 +512,7 @@ model account_deletion_requests {
   completed_at          DateTime?    @db.Timestamptz(6)
   created_at            DateTime     @default(now()) @db.Timestamptz(6)
   updated_at            DateTime     @default(now()) @db.Timestamptz(6)
-  users                 public_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  /// users FK 제거됨 — 계정 삭제 후에도 탈퇴 완료 기록을 보존하기 위함(20260805070000)
 
   @@index([scheduled_deletion_at], map: "idx_account_deletion_requests_scheduled", where: raw("(status = 'pending'::text)"))
   @@index([status], map: "idx_account_deletion_requests_status")
@@ -1031,6 +1031,35 @@ model subscriptions {
   @@schema("public")
 }
 
+/// 무료 체험 부여 이력(해시). 계정·회사 삭제 후에도 남는다. 기록 전용 — 부여를 차단하지 않는다.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model trial_grant_ledger {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 참고용 — FK 없음(회사가 삭제돼도 기록 유지)
+  company_id         String?  @db.Uuid
+  company_code       String?
+  phone_hash         String?
+  email_hash         String?
+  email_domain       String?
+  phone_verified     Boolean  @default(false)
+  prior_phone_grants Int      @default(0)
+  prior_email_grants Int      @default(0)
+  granted_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([granted_at(sort: Desc)], map: "idx_trial_ledger_granted_at")
+  @@schema("public")
+}
+
+/// pepper 등 서버 전용 시크릿 — service_role 만 접근 가능(클라이언트 롤 REVOKE + RLS 정책 없음)
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model app_secrets {
+  key        String   @id
+  value      String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("public")
+}
+
 /// 결제 내역 — 쓰기는 service_role(엣지함수) 전용, 같은 회사 admin 은 SELECT 만.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model payments {
@@ -1287,7 +1316,6 @@ model public_users {
   push_id                                                     String?                    @db.VarChar(64)
   preferences                                                 Json?                      @default("{}")
   last_login_at                                               DateTime?                  @db.Timestamptz(6)
-  account_deletion_requests                                   account_deletion_requests?
   announcement_comments                                       announcement_comments[]
   announcements                                               announcements[]
   notifications                                               notifications[]

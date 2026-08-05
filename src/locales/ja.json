@@ -1409,6 +1409,7 @@
     "resumeSuccess": "解約を取り消しました。自動決済が継続されます。",
     "resumeFailed": "解約の取り消しに失敗しました。もう一度お試しください。",
     "refundRequest": "返金リクエスト (クーリングオフ)",
+    "refundMailSubject": "[TrayStorage] 返金リクエスト",
     "refundConfirmTitle": "返金をリクエストしますか？",
     "refundConfirmDesc": "初回決済から7日以内は全額返金が可能です。返金と同時に購読が終了し、サービスの利用が制限されます。\n条件に該当しない場合は support@traystorage.net までお問い合わせください。",
     "refundConfirmBtn": "全額返金する",

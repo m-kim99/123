@@ -67,7 +67,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { startInnopayAutopay, cancelInnopaySubscription, resumeInnopaySubscription, requestSelfRefund, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { startInnopayAutopay, cancelInnopaySubscription, resumeInnopaySubscription, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { TrialCountdownBanner } from '@/components/TrialCountdownBanner';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
@@ -169,8 +169,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
-  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
-  const [isRefunding, setIsRefunding] = useState(false);
 
   // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·3인 고정, 프로: 인당 15,000원·3~20인
   const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
@@ -286,42 +284,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
-  // 셀프 청약철회 (약관 제11조 ①) — 조건(첫 결제 + 7일 이내) 검증은 서버(innopay-payment-cancel)가 수행
-  const handleSelfRefund = async () => {
-    if (!user?.companyId) return;
-    setIsRefunding(true);
-    try {
-      const { data: latestPayment } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('company_id', user.companyId)
-        .eq('status', 'DONE')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!latestPayment) {
-        toast({ title: t('billing.refundFailed'), variant: 'destructive' });
-        return;
-      }
-
-      const res = await requestSelfRefund(latestPayment.id);
-      if (res.success) {
-        toast({ title: t('billing.refundSuccess') });
-        setRefundDialogOpen(false);
-        setSubscriptionDialogOpen(false);
-        // 구독 즉시 종료됨 → 접근 상태 갱신 (구독 게이트로 전환)
-        useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
-      } else {
-        toast({ title: res.message || t('billing.refundFailed'), variant: 'destructive' });
-      }
-    } catch (error) {
-      console.error('환불 요청 실패:', error);
-      toast({ title: t('billing.refundFailed'), variant: 'destructive' });
-    } finally {
-      setIsRefunding(false);
-    }
-  };
 
   const [mobilePermExpanded, setMobilePermExpanded] = useState(false);
   const [mobileLangExpanded, setMobileLangExpanded] = useState(false);
@@ -2548,16 +2510,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           {t('billing.cancelAutoRenew')}
                         </Button>
                       )}
-                      {/* 예약 결제(체험 중)는 아직 결제 건이 없어 환불 대상이 아니다 */}
+                      {/* 환불은 고객센터 메일 접수로 처리한다 (앱에서 직접 PG 취소를 호출하지 않음).
+                          예약 결제(체험 중)는 아직 결제 건이 없어 환불 대상이 아니다. */}
                       {subscriptionInfo.paymentProvider === 'innopay' &&
                         subscriptionInfo.status === 'active' && (
-                        <button
-                          type="button"
-                          className="w-full text-center text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
-                          onClick={() => setRefundDialogOpen(true)}
+                        <a
+                          href={`mailto:support@traystorage.net?subject=${encodeURIComponent(
+                            t('billing.refundMailSubject'),
+                          )}`}
+                          className="block w-full text-center text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
                         >
                           {t('billing.refundRequest')}
-                        </button>
+                        </a>
                       )}
                     </div>
                   )}
@@ -2660,35 +2624,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={handleCancelSubscription}
             >
               {isCanceling ? t('common.loading') : t('billing.cancelConfirmBtn')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('billing.refundConfirmTitle')}</DialogTitle>
-            <DialogDescription className="whitespace-pre-line">
-              {t('billing.refundConfirmDesc')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              disabled={isRefunding}
-              onClick={() => setRefundDialogOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              disabled={isRefunding}
-              onClick={handleSelfRefund}
-            >
-              {isRefunding ? t('common.loading') : t('billing.refundConfirmBtn')}
             </Button>
           </div>
         </DialogContent>

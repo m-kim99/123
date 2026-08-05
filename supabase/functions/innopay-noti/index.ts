@@ -232,21 +232,29 @@ serve(async (req) => {
       // 이 엔드포인트는 공개(--no-verify-jwt)이고 이노페이 통보에 서명이 없으므로,
       // 거래번호(tid)와 주문번호(moid)가 '동시에' 일치하는 우리 결제건만 반영한다.
       // (둘 중 하나만 아는 위조 요청으로 임의 결제를 취소 처리하지 못하게 함)
-      const cancelTid = f.cancelPgTid || pgTid;
-      if (!cancelTid || !moid) {
-        console.warn('innopay-noti: 취소 통보에 tid/moid 누락 — 무시', { cancelTid, moid });
+      // payments.payment_key 에는 이노페이 `tid`(가맹점 거래번호)가 저장된다.
+      // 취소 통보에는 tid 외에 pgTid/cancelPgTid(PG 내부 번호)도 함께 오는데,
+      // 이 둘은 payment_key 와 형식이 달라 매칭되지 않는다 — tid 를 우선으로 두고
+      // 나머지는 보조 후보로만 쓴다. (tid 로만 매칭하던 것이 아니라 pgTid 로만
+      // 매칭해서 실제 취소 통보가 통째로 무시된 사례가 있었다.)
+      const tidCandidates = [f.tid, f.cancelPgTid, pgTid].filter(
+        (v): v is string => typeof v === 'string' && v.length > 0,
+      );
+      if (tidCandidates.length === 0 || !moid) {
+        console.warn('innopay-noti: 취소 통보에 tid/moid 누락 — 무시', { tidCandidates, moid });
         return OK();
       }
 
+      // moid + tid 후보 중 하나가 동시에 일치해야만 반영 (위조 요청 차단 조건 유지)
       const { data: pay } = await supabaseAdmin
         .from('payments')
         .select('id, amount, cancel_amount, status')
-        .eq('payment_key', cancelTid)
+        .in('payment_key', tidCandidates)
         .eq('order_id', moid)
         .maybeSingle();
 
       if (!pay) {
-        console.warn('innopay-noti: 일치하는 결제 없음 — 무시', { cancelTid, moid });
+        console.warn('innopay-noti: 일치하는 결제 없음 — 무시', { tidCandidates, moid });
         return OK();
       }
       if (pay.status === 'CANCELED') return OK(); // 멱등 (재전송 대비)
