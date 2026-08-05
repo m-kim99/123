@@ -53,7 +53,7 @@ export function AccountDeletionPage() {
       }
 
       setStep('confirm');
-    } catch (error) {
+    } catch (_error) {
       setLoginError(t('common.error', { defaultValue: '오류가 발생했습니다.' }));
     } finally {
       setIsLoggingIn(false);

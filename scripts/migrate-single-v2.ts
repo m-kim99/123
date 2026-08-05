@@ -24,7 +24,7 @@ async function uploadWithRetry(key: string, body: Uint8Array, retries = 3): Prom
         ContentType: 'application/pdf',
       }));
       return;
-    } catch (err) {
+    } catch (_err) {
       console.log(`시도 ${i + 1} 실패, 재시도...`);
       await new Promise(r => setTimeout(r, 2000));
     }

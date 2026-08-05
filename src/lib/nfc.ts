@@ -63,7 +63,6 @@ export function isNFCSupported(): boolean {
   if (Capacitor.isNativePlatform()) {
     return true;
   }
-  // @ts-ignore - NDEFReader는 TypeScript 타입 정의가 없을 수 있음
   return 'NDEFReader' in window;
 }
 
@@ -81,8 +80,9 @@ export async function requestNFCPermission(): Promise<boolean> {
       const { enabled } = await NfcPlugin.isEnabled();
       return enabled;
     }
-    // @ts-ignore
-    const ndef = new NDEFReader();
+    // 생성 자체가 가용성 확인 — 값은 쓰지 않는다
+    // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
+    new NDEFReader();
     return true;
   } catch (error) {
     console.error('NFC 권한 요청 오류:', error);
@@ -118,10 +118,9 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
     }
 
     // 브라우저: Web NFC API
-    // @ts-ignore
+    // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
     const ndef = new NDEFReader();
     const encoder = new TextEncoder();
-    // @ts-ignore
     await ndef.write({
       records: [{
         recordType: 'mime',
@@ -193,7 +192,7 @@ export async function writeNFCUrl(
     }
 
     // 브라우저: Web NFC API
-    // @ts-ignore
+    // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
     const ndef = new NDEFReader();
     await ndef.write({
       records: [{ recordType: 'url', data: uploadUrl }],
@@ -224,7 +223,10 @@ export async function readNFCTag(): Promise<NFCTagData> {
   }
 
   if (Capacitor.isNativePlatform()) {
-    return new Promise(async (resolve, reject) => {
+    // executor 는 동기로 두고 비동기 준비는 안쪽 IIFE 에서 한다.
+    // executor 를 async 로 두면 addListener 가 던졌을 때 그 거부가 이 Promise 로
+    // 전달되지 않아, 30초 뒤 타임아웃이 "읽기 시간 초과"라는 엉뚱한 이유로 실패했다.
+    return new Promise((resolve, reject) => {
       let resolved = false;
 
       const cleanup = (tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>, cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>) => {
@@ -240,45 +242,56 @@ export async function readNFCTag(): Promise<NFCTagData> {
         }
       }, 30000);
 
-      const tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+      const fail = (e: unknown) => {
         if (resolved) return;
         resolved = true;
         clearTimeout(timeout);
-        cleanup(tagHandle, cancelHandle);
         NfcPlugin.stopScan().catch(() => {});
-        const tagData = parseTagPayload(tag.payload, tag.recordType);
-        console.log('NFC 태그 읽기 완료 (네이티브):', tagData);
-        resolve(tagData);
-      });
+        reject(e);
+      };
 
-      const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timeout);
-        cleanup(tagHandle, cancelHandle);
-        reject(new Error(event.reason === 'userCancelled'
-          ? 'NFC 스캔이 취소되었습니다.'
-          : `NFC 스캔 실패: ${event.reason}`));
-      });
+      void (async () => {
+        let tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>> | undefined;
+        let cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>> | undefined;
+        try {
+          tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+            NfcPlugin.stopScan().catch(() => {});
+            const tagData = parseTagPayload(tag.payload, tag.recordType);
+            console.log('NFC 태그 읽기 완료 (네이티브):', tagData);
+            resolve(tagData);
+          });
 
-      try {
-        await NfcPlugin.startScan();
-      } catch (e) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timeout);
-          cleanup(tagHandle, cancelHandle);
-          reject(e);
+          cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+            reject(new Error(event.reason === 'userCancelled'
+              ? 'NFC 스캔이 취소되었습니다.'
+              : `NFC 스캔 실패: ${event.reason}`));
+          });
+
+          await NfcPlugin.startScan();
+        } catch (e) {
+          if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+          else {
+            tagHandle?.remove();
+            cancelHandle?.remove();
+          }
+          fail(e);
         }
-      }
+      })();
     });
   }
 
   // 브라우저: Web NFC API
   console.log('NFC 태그 읽기 시작 (Web NFC)...');
-  // @ts-ignore
+  // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
   const ndef = new NDEFReader();
-  // @ts-ignore
   await ndef.scan();
 
   return new Promise((resolve, reject) => {
@@ -301,7 +314,7 @@ export async function readNFCTag(): Promise<NFCTagData> {
         } catch (_) {}
         const tagData = parseTagPayload(decodedData, record.recordType);
         resolve(tagData);
-      } catch (parseError) {
+      } catch (_parseError) {
         reject(new Error('NFC 태그 데이터를 파싱할 수 없습니다.'));
       }
     };
@@ -352,7 +365,8 @@ export async function readNFCUid(): Promise<string> {
 
     if (Capacitor.isNativePlatform()) {
       console.log('NFC startScan() 호출 직전');
-      return await new Promise(async (resolve, reject) => {
+      // executor 는 동기로 두고 비동기 준비는 안쪽 IIFE 에서 한다 (readNFCTag 와 동일한 이유).
+      return await new Promise<string>((resolve, reject) => {
         let resolved = false;
 
         const cleanup = (tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>, cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>>) => {
@@ -369,45 +383,54 @@ export async function readNFCUid(): Promise<string> {
           }
         }, 30000);
 
-        const tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
-          if (resolved) return;
-          resolved = true;
-          clearTimeout(timeout);
-          cleanup(tagHandle, cancelHandle);
-          NfcPlugin.stopScan().catch(() => {});
-          console.log('NFC UID 읽음 (네이티브):', tag.uid);
-          resolve(tag.uid);
-        });
+        void (async () => {
+          let tagHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>> | undefined;
+          let cancelHandle: Awaited<ReturnType<typeof NfcPlugin.addListener>> | undefined;
+          try {
+            tagHandle = await NfcPlugin.addListener('nfcTagDetected', (tag) => {
+              if (resolved) return;
+              resolved = true;
+              clearTimeout(timeout);
+              if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+              NfcPlugin.stopScan().catch(() => {});
+              console.log('NFC UID 읽음 (네이티브):', tag.uid);
+              resolve(tag.uid);
+            });
 
-        const cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
-          if (resolved) return;
-          resolved = true;
-          clearTimeout(timeout);
-          cleanup(tagHandle, cancelHandle);
-          setNfcMode('idle');
-          reject(new Error(event.reason === 'userCancelled'
-            ? 'NFC 스캔이 취소되었습니다.'
-            : `NFC 스캔 실패: ${event.reason}`));
-        });
+            cancelHandle = await NfcPlugin.addListener('nfcScanCancelled', (event) => {
+              if (resolved) return;
+              resolved = true;
+              clearTimeout(timeout);
+              if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+              setNfcMode('idle');
+              reject(new Error(event.reason === 'userCancelled'
+                ? 'NFC 스캔이 취소되었습니다.'
+                : `NFC 스캔 실패: ${event.reason}`));
+            });
 
-        try {
-          await NfcPlugin.startScan();
-          console.log('NFC startScan() 응답 받음 (네이티브 세션 시작 요청 완료) - 이제 태그 감지 대기 중');
-        } catch (e) {
-          console.error('NFC startScan() 실패:', e);
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timeout);
-            cleanup(tagHandle, cancelHandle);
-            setNfcMode('idle');
-            reject(e);
+            await NfcPlugin.startScan();
+            console.log('NFC startScan() 응답 받음 (네이티브 세션 시작 요청 완료) - 이제 태그 감지 대기 중');
+          } catch (e) {
+            console.error('NFC 스캔 준비 실패:', e);
+            if (tagHandle && cancelHandle) cleanup(tagHandle, cancelHandle);
+            else {
+              tagHandle?.remove();
+              cancelHandle?.remove();
+            }
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timeout);
+              NfcPlugin.stopScan().catch(() => {});
+              setNfcMode('idle');
+              reject(e);
+            }
           }
-        }
+        })();
       });
     }
 
     // 브라우저: Web NFC API
-    // @ts-ignore
+    // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
     const ndef = new NDEFReader();
     await ndef.scan();
 
@@ -416,7 +439,6 @@ export async function readNFCUid(): Promise<string> {
         reject(new Error('NFC 태그 읽기 시간 초과 (30초)'));
       }, 30000);
 
-      // @ts-ignore
       ndef.addEventListener('reading', ({ serialNumber }: any) => {
         clearTimeout(timeout);
         const uid = serialNumber.replace(/:/g, '').toUpperCase();
@@ -424,7 +446,6 @@ export async function readNFCUid(): Promise<string> {
         resolve(uid);
       });
 
-      // @ts-ignore
       ndef.addEventListener('readingerror', () => {
         clearTimeout(timeout);
         reject(new Error('NFC 태그 읽기 실패'));

@@ -111,7 +111,6 @@ async function main() {
 
   let success = 0;
   let failed = 0;
-  let skipped = 0;
 
   for (const filePath of files) {
     const result = await migrateFile(filePath);

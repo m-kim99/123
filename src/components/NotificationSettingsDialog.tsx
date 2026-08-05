@@ -39,7 +39,7 @@ export function NotificationSettingsDialog({
       toast({
         title: t('notificationSettings.saved'),
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: t('notificationSettings.saveFailed'),
         description: t('notificationSettings.saveFailedDesc'),

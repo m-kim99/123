@@ -452,7 +452,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } = await supabase.auth.getSession();
 
       if (session?.user) {
-        let { data: userData, error } = await supabase
+        const { data: initialUserData, error } = await supabase
           .from('users')
           .select(
             `id, name, email, role, department_id, company_id,
@@ -460,6 +460,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           )
           .eq('id', session.user.id)
           .single();
+
+        // 자동 생성 경로에서 새 행으로 교체되므로 let (error 는 재할당되지 않아 분리)
+        let userData = initialUserData;
 
         // users 테이블에 없으면 자동 생성 (신규 OAuth 사용자에 한함)
         if (error && (error as any).code === 'PGRST116') {

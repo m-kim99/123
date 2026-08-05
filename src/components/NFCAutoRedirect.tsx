@@ -40,7 +40,7 @@ export function NFCAutoRedirect() {
         const basePath = user.role === 'admin' ? '/admin' : '/team';
 
         if (payload && (recordType === 'url' || payload.includes('/nfc-redirect?subcategoryId='))) {
-          let urlString = payload;
+          const urlString = payload;
           try {
             const url = new URL(urlString, window.location.origin);
             const subcategoryId = url.searchParams.get('subcategoryId');
@@ -116,7 +116,6 @@ export function NFCAutoRedirect() {
           );
           console.log('NFC 리스너 등록 완료 (Android 네이티브)');
         } else {
-          // @ts-ignore - NDEFReader is not in TypeScript types
           const ndef = new (window as any).NDEFReader();
           ndefReaderRef.current = ndef;
           await ndef.scan();

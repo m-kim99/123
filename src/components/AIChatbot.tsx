@@ -1387,6 +1387,7 @@ export const AIChatbot = React.memo(function AIChatbot(_props: AIChatbotProps) {
                 </button>
               </div>
               {/* 음성 대화 버튼 (네이티브 앱에서만 표시) — 음성모드 기능 임시 비활성화 (false && 로 항상 숨김, 필요 시 false 제거) */}
+              {/* eslint-disable-next-line no-constant-binary-expression -- 음성모드 임시 비활성화용 의도적 플래그 */}
               {false && Capacitor.isNativePlatform() && (
                 <button
                   type="button"

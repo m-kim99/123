@@ -46,7 +46,8 @@ export function useGeminiLive({
 
   // WebSocket 연결 - Promise로 setup 완료까지 대기
   const connect = useCallback(() => {
-    return new Promise<void>(async (resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      void (async () => {
       try {
         // 이미 연결되어 있으면 바로 resolve
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -176,6 +177,7 @@ export function useGeminiLive({
         if (onError) onError(error as Error);
         reject(error);
       }
+      })();
     });
   }, [fetchApiKey, systemPrompt, onTranscript, onUserTranscript, onAudioData, onError]);
 

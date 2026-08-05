@@ -334,7 +334,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
       // 정지 상태 확인을 위해 user_id 목록 추출
       const userIds = data?.map((u: any) => u.id) || [];
 
-      let suspensionMap: Record<string, { expiresAt: string | null }> = {};
+      const suspensionMap: Record<string, { expiresAt: string | null }> = {};
       if (userIds.length > 0) {
         const { data: suspensions } = await supabase
           .from('user_suspensions')
