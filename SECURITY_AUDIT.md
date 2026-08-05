@@ -241,9 +241,33 @@ Netlify/Vercel은 동일 헤더를 `[[headers]]` / `headers`로 추가.
 **조치:** `buildStoragePath()`로 교체 — `${companyId}/${crypto.randomUUID()}.${ext}`.
 기존 문서는 `file_path`가 DB에 그대로 남아 읽기·삭제 모두 정상 동작한다(하위 호환).
 
-**⚠️ 남은 작업:** 버킷이 여전히 **퍼블릭**이다. UUID로 열거는 막았지만, URL이 한 번 유출되면
-(로그·리퍼러·공유 링크) 인증 없이 영구 접근된다. `is_classified` 문서가 있는 앱이므로
-**presigned GET 전환**을 권장 — `r2.ts:getPublicUrl`이 동기 API라 호출부 17곳이 async로 바뀌는 구조 변경.
+**2차 조치(완료): presigned GET 전환.** `getPublicUrl`(동기) → `getSignedUrl(documentId)`(비동기, 1시간).
+`r2-presign`에 `action:'download'` 추가 — `file_path`가 아니라 `documentId`를 받아
+**호출자 토큰이 실린 클라이언트**로 `documents`를 SELECT 한다. 행이 보이면 권한이 있는 것이다.
+`documents` SELECT 정책이 관리자/같은 부서/`user_permissions`/`is_operator()` 네 규칙을 이미
+인코딩하고 있어, 함수에서 규칙을 재구현하면 정책과 어긋나기만 한다.
+`companyId` 조회는 upload/delete 전용으로 분리했다 — 오퍼레이터는 `users` 행이 없어
+공통 위치에 두면 403으로 ReportManagement 미리보기가 깨진다.
+
+## 10-2b. 🔴 R2 키가 rotate 되지 않았다 (미해결 — 최우선)
+
+**2026-08-05 확인:** `.env.local`의 옛 `VITE_R2_ACCESS_KEY`/`VITE_R2_SECRET_KEY`로
+`ListObjectsV2`가 **성공한다**. 즉 #1에서 "즉시 폐기 후 재발급"으로 적힌 rotate가 수행되지 않았다.
+(`GetBucketCors`는 AccessDenied — Object Read&Write 스코프 토큰으로 보인다.)
+
+이 키는 과거 프론트엔드 번들에 평문으로 박혀 배포됐으므로 **유출된 것으로 간주해야 한다.**
+버킷을 비공개로 돌려도, 이 키를 가진 사람은 S3 API로 버킷 전체를 그대로 읽고 쓸 수 있다.
+**키를 갈기 전까지 10-1·10-2의 조치는 실효가 없다.**
+
+**조치 순서:**
+1. Cloudflare에서 기존 R2 API 토큰 폐기 → 새 토큰 발급.
+2. `supabase secrets set R2_ACCESS_KEY=... R2_SECRET_KEY=...`
+3. `supabase functions deploy r2-presign`
+4. 로컬 `.env.local`의 `VITE_R2_*` 6개 항목 삭제 (코드에서 더 이상 참조하지 않음).
+5. 버킷 CORS: `https://traystorageconnect.com` 에 대해 `GET` 허용
+   (presigned GET은 `<account>.r2.cloudflarestorage.com` 으로 나가므로 퍼블릭 도메인과 별개다.
+   웹 다운로드가 `fetch()`이고 PdfViewer 인쇄·react-pdf도 fetch 한다 — CORS 없으면 막힌다).
+6. 마지막으로 버킷 퍼블릭 접근(r2.dev / 커스텀 도메인 공개 바인딩) 해제.
 
 ## 10-3. 🟠 이노페이 Noti 위조로 미결제 구독 활성화 (완화)
 
