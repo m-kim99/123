@@ -765,8 +765,9 @@ export function LoginPage() {
           <span className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-[6px] tracking-wide -translate-y-[25%]">BETA</span>
         </div>
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
-            {t('login.heroHeadline')}
+          <h1 className="text-2xl font-bold text-white leading-tight tracking-tight">
+            <span className="block font-normal whitespace-pre-line">{t('login.heroHeadline')}</span>
+            <span className="block">{t('login.heroBrand')}</span>
           </h1>
           <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm flex flex-col gap-2">
             {t('login.heroDescription').split('\n\n').map((block: string, i: number) => (
@@ -793,8 +794,9 @@ export function LoginPage() {
 
         <div className="relative z-10 w-full max-w-[400px] px-5 py-10 flex flex-col items-center">
           {/* 카드 위 헤드라인 */}
-          <h1 className="font-bold text-white text-center leading-snug tracking-tight mb-6 whitespace-pre-line" style={{ fontSize: 'clamp(14px, 4.8vw, 20px)' }}>
-            {t('login.heroHeadline')}
+          <h1 className="font-bold text-white text-center leading-snug tracking-tight mb-6" style={{ fontSize: 'clamp(14px, 4.8vw, 20px)' }}>
+            <span className="block font-normal whitespace-pre-line">{t('login.heroHeadline')}</span>
+            <span className="block">{t('login.heroBrand')}</span>
           </h1>
 
           {/* 로그인 카드 */}

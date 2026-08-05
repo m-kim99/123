@@ -376,6 +376,7 @@ export function SignupPage() {
     <>
       <AuthShell
         heroHeadline={t('login.heroHeadline')}
+        heroBrand={t('login.heroBrand')}
         heroDescription={t('signup.heroDescription')}
       >
         <div className="mb-6">

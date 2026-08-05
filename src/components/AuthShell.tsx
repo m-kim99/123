@@ -5,11 +5,12 @@ import logo from '@/assets/logos/logo.png';
 
 interface AuthShellProps {
   heroHeadline: string;
+  heroBrand?: string;
   heroDescription?: string;
   children: ReactNode;
 }
 
-export function AuthShell({ heroHeadline, heroDescription, children }: AuthShellProps) {
+export function AuthShell({ heroHeadline, heroBrand, heroDescription, children }: AuthShellProps) {
   const { t, i18n } = useTranslation();
   const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -33,8 +34,15 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
           <span className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-[6px] tracking-wide -translate-y-[25%]">BETA</span>
         </div>
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-white leading-tight tracking-tight whitespace-pre-line">
-            {heroHeadline}
+          <h1 className="text-2xl font-bold text-white leading-tight tracking-tight">
+            {heroBrand ? (
+              <>
+                <span className="block font-normal whitespace-pre-line">{heroHeadline}</span>
+                <span className="block">{heroBrand}</span>
+              </>
+            ) : (
+              <span className="whitespace-pre-line">{heroHeadline}</span>
+            )}
           </h1>
           {heroDescription && (
             <div className="mt-4 text-sm text-white/80 leading-relaxed max-w-sm flex flex-col gap-2">
@@ -64,8 +72,15 @@ export function AuthShell({ heroHeadline, heroDescription, children }: AuthShell
 
           <div className="relative z-10 w-full max-w-[400px] px-5 py-10 flex flex-col items-center">
             {/* 카드 위 헤드라인 */}
-            <h1 className="font-bold text-white text-center leading-snug tracking-tight mb-6 whitespace-pre-line" style={{ fontSize: 'clamp(14px, 4.8vw, 20px)' }}>
-              {heroHeadline}
+            <h1 className="font-bold text-white text-center leading-snug tracking-tight mb-6" style={{ fontSize: 'clamp(14px, 4.8vw, 20px)' }}>
+              {heroBrand ? (
+                <>
+                  <span className="block font-normal whitespace-pre-line">{heroHeadline}</span>
+                  <span className="block">{heroBrand}</span>
+                </>
+              ) : (
+                <span className="whitespace-pre-line">{heroHeadline}</span>
+              )}
             </h1>
 
             {/* 폼 카드 */}
