@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { S3Client, PutObjectCommand, DeleteObjectsCommand } from 'https://esm.sh/@aws-sdk/client-s3@3.632.0';
+import { S3Client, PutObjectCommand, DeleteObjectsCommand, GetObjectCommand } from 'https://esm.sh/@aws-sdk/client-s3@3.632.0';
 import { getSignedUrl } from 'https://esm.sh/@aws-sdk/s3-request-presigner@3.632.0';
 
 const corsHeaders = {
@@ -42,16 +42,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // 호출자의 회사 확인 (테넌트 경계)
-    const { data: caller } = await admin
-      .from('users')
-      .select('company_id')
-      .eq('id', user.id)
-      .single();
-    const companyId = caller?.company_id as string | undefined;
-    if (!companyId) {
-      return json({ error: '회사 정보를 확인할 수 없습니다' }, 403);
-    }
+    /**
+     * 호출자의 회사 (테넌트 경계) — upload/delete 에서만 필요.
+     * 오퍼레이터는 users 행이 없으므로 download 경로에서는 절대 요구하지 않는다.
+     */
+    const resolveCompanyId = async (): Promise<string | null> => {
+      const { data: caller } = await admin
+        .from('users')
+        .select('company_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      return (caller?.company_id as string | undefined) ?? null;
+    };
 
     const accountId = Deno.env.get('R2_ACCOUNT_ID');
     const accessKeyId = Deno.env.get('R2_ACCESS_KEY');
@@ -67,11 +69,38 @@ serve(async (req) => {
       credentials: { accessKeyId, secretAccessKey },
     });
 
-    const { action, key, keys, contentType } = await req.json();
+    const { action, key, keys, contentType, documentId } = await req.json();
+
+    if (action === 'download') {
+      if (!documentId || typeof documentId !== 'string') {
+        return json({ error: 'documentId가 필요합니다' }, 400);
+      }
+      // 권한 판정을 호출자의 RLS에 위임한다 (admin 클라이언트를 쓰지 않는 것이 핵심).
+      // documents SELECT 정책이 관리자 / 같은 부서 / user_permissions / is_operator()
+      // 네 가지 규칙을 이미 인코딩하고 있으므로, 여기서 규칙을 다시 구현하면
+      // 오히려 정책과 어긋날 수 있다. 행이 안 보이면 권한이 없는 것이다.
+      const { data: doc } = await supabase
+        .from('documents')
+        .select('file_path')
+        .eq('id', documentId)
+        .maybeSingle();
+      if (!doc?.file_path) {
+        return json({ error: '문서를 찾을 수 없거나 접근 권한이 없습니다' }, 403);
+      }
+      const cmd = new GetObjectCommand({ Bucket: bucket, Key: doc.file_path as string });
+      // 미리보기 다이얼로그가 열려 있는 동안, 그리고 네이티브 다운로더에
+      // URL을 넘긴 뒤에도 유효해야 하므로 1시간.
+      const url = await getSignedUrl(r2, cmd, { expiresIn: 3600 });
+      return json({ url });
+    }
 
     if (action === 'upload') {
       if (!key || typeof key !== 'string') {
         return json({ error: 'key가 필요합니다' }, 400);
+      }
+      const companyId = await resolveCompanyId();
+      if (!companyId) {
+        return json({ error: '회사 정보를 확인할 수 없습니다' }, 403);
       }
       // 업로드 키는 반드시 자기 회사 네임스페이스 안이어야 한다 (타사 객체 덮어쓰기 차단).
       const prefix = `${companyId}/`;
@@ -95,6 +124,11 @@ serve(async (req) => {
     if (action === 'delete') {
       const list: string[] = Array.isArray(keys) ? keys.filter((k) => typeof k === 'string' && k) : [];
       if (list.length === 0) return json({ success: true });
+
+      const companyId = await resolveCompanyId();
+      if (!companyId) {
+        return json({ error: '회사 정보를 확인할 수 없습니다' }, 403);
+      }
 
       // 삭제는 "자기 회사 문서로 등록된 경로"만 허용한다.
       // 경로 접두사 대신 documents 테이블을 근거로 확인하므로,

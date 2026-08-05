@@ -92,13 +92,13 @@ export function SharedDocuments() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      if (!publicData?.publicUrl) {
+      if (!signedUrl) {
         throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
-      await downloadFile(publicData.publicUrl, data.title || 'document');
+      await downloadFile(signedUrl, data.title || 'document');
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
 
@@ -130,11 +130,9 @@ export function SharedDocuments() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      const publicUrl = publicData?.publicUrl;
-
-      if (!publicUrl) {
+      if (!signedUrl) {
         throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
@@ -163,7 +161,7 @@ export function SharedDocuments() {
       setPreviewDoc({
         id: documentId,
         title: data.title,
-        url: publicUrl,
+        url: signedUrl,
         type,
         ocrText: (data as any).ocr_text ?? null,
         uploader: (data as any).uploaded_by ?? undefined,

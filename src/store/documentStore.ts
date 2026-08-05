@@ -77,7 +77,6 @@ export interface Document {
   uploadDate: string;
   uploader: string;
   classified: boolean;
-  fileUrl: string;
   ocrText?: string | null;
   deletedAt?: string | null;
 }
@@ -163,7 +162,7 @@ interface DocumentState {
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   uploadDocument: (
-    document: Omit<Document, 'id' | 'uploadDate' | 'fileUrl'> & {
+    document: Omit<Document, 'id' | 'uploadDate'> & {
       file: File;
       ocrText?: string;
       originalFileName?: string;
@@ -673,8 +672,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             uploadDate: doc.uploaded_at,
             uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
-            fileUrl:
-              r2Storage.getPublicUrl(doc.file_path).data.publicUrl || '#',
             ocrText: doc.ocr_text || null,
             deletedAt: null,
           };
@@ -765,8 +762,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             uploadDate: doc.uploaded_at,
             uploader: (doc.uploaded_by && uploaderMap[doc.uploaded_by]) || '',
             classified: doc.is_classified,
-            fileUrl:
-              r2Storage.getPublicUrl(doc.file_path).data.publicUrl || '#',
             ocrText: doc.ocr_text || null,
             deletedAt: (doc as any).deleted_at || null,
           };
@@ -1726,18 +1721,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           (s) => s.id === subcategoryIdFromDb,
         );
 
-        let fileUrl = '#';
-
-        try {
-          const { data: publicUrlData } = r2Storage.getPublicUrl(data.file_path);
-
-          if (publicUrlData?.publicUrl) {
-            fileUrl = publicUrlData.publicUrl;
-          }
-        } catch {
-          fileUrl = '#';
-        }
-
         set((state) => ({
           documents: [
             {
@@ -1750,7 +1733,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               uploadDate: data.uploaded_at, // uploaded_at을 uploadDate로 매핑
               uploader: useAuthStore.getState().user?.name || '', // 업로드한 본인의 이름 표시
               classified: data.is_classified, // is_classified를 classified로 매핑
-              fileUrl,
               ocrText: data.ocr_text || null,
             },
             ...state.documents,
@@ -1812,7 +1794,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         uploadDate: new Date().toISOString().split('T')[0],
         uploader: document.uploader,
         classified: document.classified ?? false,
-        fileUrl: '#',
         ocrText: document.ocrText || null,
       };
       set((state) => ({
@@ -2148,23 +2129,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (updateError) throw updateError;
 
       // 6. 로컬 상태 업데이트
-      let fileUrl = '#';
-      try {
-        const { data: publicUrlData } = r2Storage.getPublicUrl(newFilePath);
-
-        if (publicUrlData?.publicUrl) {
-          fileUrl = publicUrlData.publicUrl;
-        }
-      } catch {
-        fileUrl = '#';
-      }
-
       set((state) => ({
         documents: state.documents.map((doc) =>
           doc.id === id
             ? {
                 ...doc,
-                fileUrl,
                 ocrText: ocrText !== undefined ? ocrText : doc.ocrText,
               }
             : doc

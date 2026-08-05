@@ -936,11 +936,9 @@ export function DocumentManagement() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      const publicUrl = publicData?.publicUrl;
-
-      if (!publicUrl) {
+      if (!signedUrl) {
         throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
@@ -969,7 +967,7 @@ export function DocumentManagement() {
       setPreviewDoc({
         id: documentId,
         title: data.title,
-        url: publicUrl,
+        url: signedUrl,
         type,
         ocrText: (data as any).ocr_text ?? null,
         uploader: (data as any).uploaded_by ?? undefined,
@@ -1008,13 +1006,13 @@ export function DocumentManagement() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      if (!publicData?.publicUrl) {
+      if (!signedUrl) {
         throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
-      await downloadFile(publicData.publicUrl, data.title || 'document');
+      await downloadFile(signedUrl, data.title || 'document');
     } catch (error) {
       console.error('문서 다운로드 실패:', error);
 
@@ -1270,33 +1268,22 @@ export function DocumentManagement() {
 
       // 2. 이메일 전송 (선택사항)
       if (sendEmailNotification) {
-        const { data: docData, error: docError } = await supabase
-          .from('documents')
-          .select('file_path, title')
-          .eq('id', sharingDocumentId)
-          .single();
+        const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
+        const recipientEmails = selectedUsers.map((u) => u.email);
 
-        if (!docError && docData) {
-          const { data: publicData } = r2Storage.getPublicUrl(docData.file_path);
-
-          const documentUrl = publicData?.publicUrl || '';
-          const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
-          const recipientEmails = selectedUsers.map((u) => u.email);
-
-          // 이메일 전송 시도 (실패해도 공유는 성공으로 처리)
-          try {
-            await supabase.functions.invoke('send-share-email', {
-              body: {
-                recipientEmails,
-                documentTitle: doc.name,
-                documentUrl,
-                senderName: user?.name || '알 수 없음',
-                senderEmail: user?.email || '',
-              },
-            });
-          } catch (emailError) {
-            console.warn('이메일 전송 실패 (공유는 완료됨):', emailError);
-          }
+        // 이메일 전송 시도 (실패해도 공유는 성공으로 처리)
+        // 메일에는 파일 URL을 넣지 않는다 — send-share-email 은 앱의 공유함 링크만 보낸다.
+        try {
+          await supabase.functions.invoke('send-share-email', {
+            body: {
+              recipientEmails,
+              documentTitle: doc.name,
+              senderName: user?.name || '알 수 없음',
+              senderEmail: user?.email || '',
+            },
+          });
+        } catch (emailError) {
+          console.warn('이메일 전송 실패 (공유는 완료됨):', emailError);
         }
       }
 

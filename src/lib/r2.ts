@@ -1,8 +1,7 @@
 import { supabase } from './supabase';
 
-// 공개 버킷 URL만 클라이언트에 노출 (비밀 아님).
+// 버킷은 비공개다. 읽기도 서버가 발급한 presigned GET URL로만 가능하다.
 // R2 액세스 키/시크릿은 절대 클라이언트에 두지 않는다 → Edge Function(r2-presign)이 서버에서 처리.
-const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
 
 export const r2Storage = {
   async upload(filePath: string, file: File | Blob): Promise<{ error: Error | null }> {
@@ -31,12 +30,26 @@ export const r2Storage = {
     }
   },
 
-  getPublicUrl(filePath: string): { data: { publicUrl: string } } {
-    return {
-      data: {
-        publicUrl: `${R2_PUBLIC_URL}/${filePath}`,
-      },
-    };
+  /**
+   * 문서 읽기용 presigned GET URL (1시간 만료).
+   *
+   * 경로(file_path)가 아니라 documentId를 넘긴다 — 서버가 호출자의 RLS로
+   * documents 행을 직접 조회해 권한을 판정하므로, 경로를 아는 것만으로는
+   * 남의 파일을 받을 수 없다.
+   *
+   * 권한이 없거나 발급에 실패하면 null. 호출부는 사용자에게 안내해야 한다.
+   */
+  async getSignedUrl(documentId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.functions.invoke('r2-presign', {
+        body: { action: 'download', documentId },
+      });
+      if (error) throw error;
+      return data?.url ?? null;
+    } catch (e) {
+      console.error('R2 signed URL error:', e);
+      return null;
+    }
   },
 
   async remove(filePaths: string[]): Promise<{ error: Error | null }> {

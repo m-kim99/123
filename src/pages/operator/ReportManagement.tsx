@@ -249,10 +249,9 @@ export function ReportManagement() {
         throw error || new Error('문서를 찾을 수 없습니다.');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
-      const publicUrl = publicData?.publicUrl;
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      if (!publicUrl) {
+      if (!signedUrl) {
         throw new Error('파일 URL을 생성할 수 없습니다.');
       }
 
@@ -281,7 +280,7 @@ export function ReportManagement() {
       setPreviewDoc({
         id: documentId,
         title: data.title,
-        url: publicUrl,
+        url: signedUrl,
         type,
         ocrText: data.ocr_text ?? null,
         uploader: data.uploaded_by ?? undefined,

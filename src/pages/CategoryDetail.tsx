@@ -202,11 +202,9 @@ export function CategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      const publicUrl = publicData?.publicUrl;
-
-      if (!publicUrl) {
+      if (!signedUrl) {
         throw new Error('Could not generate file URL');
       }
 
@@ -235,7 +233,7 @@ export function CategoryDetail() {
       setPreviewDoc({
         id: documentId,
         title: data.title,
-        url: publicUrl,
+        url: signedUrl,
         type,
         ocrText: (data as any).ocr_text ?? null,
         uploader: (data as any).uploaded_by ?? undefined,
@@ -767,13 +765,13 @@ export function CategoryDetail() {
         throw error || new Error('Document not found');
       }
 
-      const { data: publicData } = r2Storage.getPublicUrl(data.file_path);
+      const signedUrl = await r2Storage.getSignedUrl(documentId);
 
-      if (!publicData?.publicUrl) {
+      if (!signedUrl) {
         throw new Error('Could not generate file URL');
       }
 
-      await downloadFile(publicData.publicUrl, data.title || 'document');
+      await downloadFile(signedUrl, data.title || 'document');
     } catch (error) {
       console.error('Document download failed:', error);
 
@@ -1005,33 +1003,22 @@ export function CategoryDetail() {
 
       // 2. 이메일 전송 (선택사항)
       if (sendEmailNotification) {
-        const { data: docData, error: docError } = await supabase
-          .from('documents')
-          .select('file_path, title')
-          .eq('id', sharingDocumentId)
-          .single();
+        const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
+        const recipientEmails = selectedUsers.map((u) => u.email);
 
-        if (!docError && docData) {
-          const { data: publicData } = r2Storage.getPublicUrl(docData.file_path);
-
-          const documentUrl = publicData?.publicUrl || '';
-          const selectedUsers = companyUsers.filter((u) => selectedUserIds.includes(u.id));
-          const recipientEmails = selectedUsers.map((u) => u.email);
-
-          // 이메일 전송 시도 (실패해도 공유는 성공으로 처리)
-          try {
-            await supabase.functions.invoke('send-share-email', {
-              body: {
-                recipientEmails,
-                documentTitle: doc.name,
-                documentUrl,
-                senderName: user?.name || t('common.unknown'),
-                senderEmail: user?.email || '',
-              },
-            });
-          } catch (emailError) {
-            console.warn('이메일 전송 실패 (공유는 완료됨):', emailError);
-          }
+        // 이메일 전송 시도 (실패해도 공유는 성공으로 처리)
+        // 메일에는 파일 URL을 넣지 않는다 — send-share-email 은 앱의 공유함 링크만 보낸다.
+        try {
+          await supabase.functions.invoke('send-share-email', {
+            body: {
+              recipientEmails,
+              documentTitle: doc.name,
+              senderName: user?.name || t('common.unknown'),
+              senderEmail: user?.email || '',
+            },
+          });
+        } catch (emailError) {
+          console.warn('이메일 전송 실패 (공유는 완료됨):', emailError);
         }
       }
 
