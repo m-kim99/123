@@ -1165,7 +1165,6 @@
     "permSavedDesc": "Berechtigungen für {{name}} wurden aktualisiert.",
     "permSaveFailed": "Berechtigung speichern fehlgeschlagen",
     "permSaveFailedDesc": "Beim Speichern der Berechtigungen ist ein Fehler aufgetreten.",
-    "dangerZone": "Gefahrenzone",
     "expelMember": "Mitglied entfernen",
     "expelDesc": "Nach dem Entfernen verliert dieses Mitglied sofort den Zugriff auf die Firmendaten. Das Konto selbst wird nicht gelöscht.",
     "expelConfirmTitle": "{{name}} entfernen?",

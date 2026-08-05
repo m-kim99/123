@@ -91,7 +91,31 @@ function makeMoid(prefix: string): string {
 }
 
 /**
- * 정산 원칙(true-up): 현재 실제 인원 기준 재결제 예상 금액 안내 문구 생성
+ * 정산 원칙(true-up): 그 시점 실제 인원(company_id 기준, 추방된 팀원은 이미 제외됨) ×
+ * 인당 단가로 청구액을 계산한다. 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로
+ * 청구된다(베이직·프로 모두 3인) — 인원이 줄어도 최소 인원분은 항상 청구.
+ * 판매 상한(프로 20인)을 넘는 인원은 상한 기준으로만 청구한다.
+ */
+async function computeTrueUpAmount(
+  supabase: SupabaseClient,
+  companyId: string,
+  planName: string | null | undefined,
+): Promise<{ members: number; billable: number; amount: number } | null> {
+  const pricing = planName ? PLAN_PRICING[planName] : undefined;
+  if (!pricing) return null;
+  const { count } = await supabase
+    .from('users')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId);
+  const members = count ?? 0;
+  if (members < 1) return null;
+  let billable = Math.max(members, pricing.minMembers);
+  if (pricing.maxMembers !== null) billable = Math.min(billable, pricing.maxMembers);
+  return { members, billable, amount: billable * pricing.pricePerMember };
+}
+
+/**
+ * 현재 실제 인원 기준 재결제 예상 금액 안내 문구 생성
  * (플랜/인원 조회 실패 시 빈 문자열 반환 — 기본 메시지만 발송)
  */
 async function renewalQuote(
@@ -101,22 +125,35 @@ async function renewalQuote(
 ): Promise<string> {
   const pricing = planName ? PLAN_PRICING[planName] : undefined;
   if (!pricing) return '';
-  const { count } = await supabase
-    .from('users')
-    .select('id', { count: 'exact', head: true })
-    .eq('company_id', companyId);
-  const members = count ?? 0;
-  if (members < 1) return '';
-  // 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로 청구된다 (베이직·프로 모두 3인).
-  // 판매 상한(프로 20인)을 넘는 인원은 상한 기준으로만 안내한다.
-  let billable = Math.max(members, pricing.minMembers);
-  if (pricing.maxMembers !== null) billable = Math.min(billable, pricing.maxMembers);
-  const total = billable * pricing.pricePerMember;
+  const quote = await computeTrueUpAmount(supabase, companyId, planName);
+  if (!quote) return '';
   // 금액을 먼저, 산출 내역은 괄호로 — 최소 인원이 적용된 경우에만 그 사실을 덧붙인다.
   const detail =
-    `${billable}명 × ${pricing.pricePerMember.toLocaleString('ko-KR')}원` +
-    (billable > members ? ` · 최소 결제 인원 ${pricing.minMembers}명` : '');
-  return ` 재결제 예상 금액은 월 ${total.toLocaleString('ko-KR')}원입니다(${detail}).`;
+    `${quote.billable}명 × ${pricing.pricePerMember.toLocaleString('ko-KR')}원` +
+    (quote.billable > quote.members ? ` · 최소 결제 인원 ${pricing.minMembers}명` : '');
+  return ` 재결제 예상 금액은 월 ${quote.amount.toLocaleString('ko-KR')}원입니다(${detail}).`;
+}
+
+/**
+ * 이번 청구주기 결제 금액을 그 시점 실인원 기준으로 재계산해 subscriptions에 반영한다(true-up).
+ * sub.monthly_amount를 in-place로 갱신하므로, 호출 이후의 청구·고지 문구는 새 금액을 그대로 쓴다.
+ * D-7 사전고지와 실제 청구 시점 둘 다에서 호출해 고지 금액과 청구 금액이 항상 일치하도록 한다.
+ */
+async function trueUpSubscriptionAmount(
+  supabase: SupabaseClient,
+  sub: SubscriptionRow,
+): Promise<void> {
+  const quote = await computeTrueUpAmount(supabase, sub.company_id, sub.plans?.name);
+  if (!quote || quote.amount === sub.monthly_amount) return;
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({ member_count: quote.billable, monthly_amount: quote.amount })
+    .eq('id', sub.id);
+  if (error) {
+    console.error('true-up 금액 반영 실패:', sub.id, error);
+    return;
+  }
+  sub.monthly_amount = quote.amount;
 }
 
 /** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */
@@ -477,6 +514,9 @@ serve(async (req) => {
             continue;
           }
 
+          // true-up: 청구 직전 그 시점 실인원 기준으로 금액을 재계산해 반영 (추방된 팀원 등은 이미 제외됨)
+          await trueUpSubscriptionAmount(supabaseAdmin, sub);
+
           const attempts = (sub.renewal_attempts ?? 0) + 1;
           const charge = await chargeBillkey(supabaseAdmin, INNOPAY_MID, sub);
 
@@ -574,6 +614,8 @@ serve(async (req) => {
           if (
             !(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_autorenew_upcoming', 10))
           ) {
+            // true-up: 고지 금액과 실제 청구 금액이 어긋나지 않도록 이 시점에도 미리 반영
+            await trueUpSubscriptionAmount(supabaseAdmin, sub);
             notified += await notifyAdmins(
               supabaseAdmin,
               sub.company_id,

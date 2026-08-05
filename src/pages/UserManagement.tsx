@@ -568,8 +568,7 @@ export function UserManagement() {
             {selectedUser && selectedUser.role !== 'admin' && selectedUser.id !== authUser?.id && (
               <div className="mt-2 p-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-between gap-3">
                 <div className="text-xs text-red-900">
-                  <p className="font-medium">{t('userMgmt.dangerZone')}</p>
-                  <p className="text-red-700 mt-0.5">{t('userMgmt.expelDesc')}</p>
+                  <p className="text-red-700">{t('userMgmt.expelDesc')}</p>
                 </div>
                 <Button
                   type="button"

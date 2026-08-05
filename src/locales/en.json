@@ -1165,7 +1165,6 @@
     "permSavedDesc": "Permissions for {{name}} have been updated.",
     "permSaveFailed": "Permission Save Failed",
     "permSaveFailedDesc": "An error occurred while saving permissions.",
-    "dangerZone": "Danger Zone",
     "expelMember": "Remove Member",
     "expelDesc": "Removing this member immediately revokes their access to company data. Their account itself is not deleted.",
     "expelConfirmTitle": "Remove {{name}}?",

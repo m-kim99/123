@@ -1165,7 +1165,6 @@
     "permSavedDesc": "{{name}}の権限が更新されました。",
     "permSaveFailed": "権限保存失敗",
     "permSaveFailedDesc": "権限の保存中にエラーが発生しました。",
-    "dangerZone": "危険な操作",
     "expelMember": "メンバーを追放",
     "expelDesc": "追放すると、このメンバーは会社データに即座にアクセスできなくなります。アカウント自体は削除されません。",
     "expelConfirmTitle": "{{name}}さんを追放しますか？",

@@ -1165,7 +1165,6 @@
     "permSavedDesc": "{{name}} 的权限已更新。",
     "permSaveFailed": "权限保存失败",
     "permSaveFailedDesc": "保存权限时发生错误。",
-    "dangerZone": "危险操作",
     "expelMember": "移除成员",
     "expelDesc": "移除后该成员将立即无法访问公司数据。账号本身不会被删除。",
     "expelConfirmTitle": "确定要移除{{name}}吗？",
