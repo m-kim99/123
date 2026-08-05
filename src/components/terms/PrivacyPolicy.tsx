@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 const PrivacyKoCurrent = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.07.01. 시행 2026.07.01.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09.</p>
 
     <p>주식회사 인포크리에이티브(이하 "회사")는 「개인정보 보호법」, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」(이하 "정보통신망법") 등 관련 법령에 따라 이용자의 개인정보를 보호하고, 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 다음과 같이 개인정보 처리방침을 수립·공개합니다.</p>
 
@@ -206,7 +206,7 @@ const PrivacyKoCurrent = () => (
 
 const PrivacyKoRevised = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.09.01. 시행 2026.09.01.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09.</p>
 
     <p>주식회사 인포크리에이티브(이하 "회사")는 「개인정보 보호법」 제30조에 따라 회사가 서비스하는 트레이스토리지 커넥트를 이용하는 사용자(이하 "정보주체")의 개인정보를 보호하고 이와 관련된 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보 처리방침을 운영합니다.</p>
 
@@ -410,7 +410,7 @@ const PrivacyKoRevised = () => (
 
 const PrivacyEn = () => (
   <>
-    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Revised: July 1, 2026 | Effective: July 1, 2026</p>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026</p>
 
     <p>InfoCreative Co., Ltd. (hereinafter "Company") operates this Privacy Policy in accordance with Article 30 of the Personal Information Protection Act to protect the personal information of users (hereinafter "Data Subjects") who use Tray Storage Connect, the Company's service, and to promptly and smoothly address related grievances.</p>
 
@@ -623,7 +623,7 @@ const PrivacyEn = () => (
 
 const PrivacyJa = () => (
   <>
-    <p className="text-xs text-slate-500">制定 2026.02.09. / 改定 2026.07.01. 施行 2026.07.01.</p>
+    <p className="text-xs text-slate-500">制定 2026.02.09.</p>
 
     <p>株式会社インフォクリエイティブ（以下「当社」）は、「個人情報保護法」、「情報通信網利用促進及び情報保護等に関する法律」（以下「情報通信網法」）等の関連法令に従って利用者の個人情報を保護し、これに関する苦情を迅速かつ円滑に処理できるよう、次のとおり個人情報処理方針を策定・公開します。</p>
 
@@ -827,7 +827,7 @@ const PrivacyJa = () => (
 
 const PrivacyDe = () => (
   <>
-    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Geändert: 01.07.2026 | Inkrafttreten: 01.07.2026</p>
+    <p className="text-xs text-slate-500">Erlassen: 09.02.2026</p>
 
     <p>Die InfoCreative Co., Ltd. (im Folgenden „Unternehmen") betreibt diese Datenschutzerklärung gemäß Artikel 30 des koreanischen Gesetzes zum Schutz personenbezogener Daten, um die personenbezogenen Daten der Nutzer von Tray Storage Connect, dem Dienst des Unternehmens, zu schützen und diesbezügliche Anliegen zügig und reibungslos zu bearbeiten.</p>
 
@@ -1040,7 +1040,7 @@ const PrivacyDe = () => (
 
 const PrivacyZh = () => (
   <>
-    <p className="text-xs text-slate-500">制定：2026年2月9日 / 修订：2026年7月1日 / 施行：2026年7月1日</p>
+    <p className="text-xs text-slate-500">制定：2026年2月9日</p>
 
     <p>InfoCreative股份有限公司（以下简称"公司"）依据《个人信息保护法》、《促进信息通信网络利用及信息保护等相关法律》（以下简称"信息通信网络法"）等相关法令，为保护用户的个人信息并迅速、妥善处理相关投诉，制定并公开以下个人信息处理方针。</p>
 

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 const TermsKoCurrent = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.07.01. 시행 2026.07.01.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09.</p>
 
     <h3 className="font-semibold text-slate-900">제1조 (목적)</h3>
     <p>이 약관은 주식회사 인포크리에이티브(이하 "회사")가 제공하는 문서 관리 서비스인 트레이 스토리지 커넥트(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 서비스 이용 조건 및 절차, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
@@ -293,7 +293,7 @@ const TermsKoCurrent = () => (
 
 const TermsKoRevised = () => (
   <>
-    <p className="text-xs text-slate-500">제정 2026.02.09. / 개정 2026.09.01. 시행 2026.09.01.</p>
+    <p className="text-xs text-slate-500">제정 2026.02.09.</p>
 
     <h3 className="font-semibold text-slate-900">제1조 (목적)</h3>
     <p>이 약관은 주식회사 인포크리에이티브(이하 "회사")가 제공하는 문서 관리 서비스인 트레이 스토리지 커넥트(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 서비스 이용 조건 및 절차, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
@@ -584,7 +584,7 @@ const TermsKoRevised = () => (
 
 const TermsEn = () => (
   <>
-    <p className="text-xs text-slate-500">Enacted: February 9, 2026 | Revised: July 1, 2026 | Effective: July 1, 2026</p>
+    <p className="text-xs text-slate-500">Enacted: February 9, 2026</p>
 
     <h3 className="font-semibold text-slate-900">Article 1 (Purpose)</h3>
     <p>These Terms of Service (hereinafter "Terms") are intended to prescribe the rights, obligations, and responsibilities between InfoCreative Co., Ltd. (hereinafter "Company") and its Members, as well as the conditions, procedures, and other necessary matters pertaining to the use of Tray Storage Connect (hereinafter "Service"), a document management service provided by the Company.</p>
@@ -875,7 +875,7 @@ const TermsEn = () => (
 
 const TermsJa = () => (
   <>
-    <p className="text-xs text-slate-500">制定 2026.02.09. / 改定 2026.07.01. 施行 2026.07.01.</p>
+    <p className="text-xs text-slate-500">制定 2026.02.09.</p>
 
     <h3 className="font-semibold text-slate-900">第1条 (目的)</h3>
     <p>この約款は、株式会社インフォクリエイティブ（以下「当社」）が提供する文書管理サービスであるトレイストレージコネクト（以下「本サービス」）の利用に関して、当社と会員との間の権利、義務及び責任事項、本サービスの利用条件及び手続き、その他必要な事項を定めることを目的とします。</p>
@@ -1166,7 +1166,7 @@ const TermsJa = () => (
 
 const TermsDe = () => (
   <>
-    <p className="text-xs text-slate-500">Erlassen: 09.02.2026 | Geändert: 01.07.2026 | Inkrafttreten: 01.07.2026</p>
+    <p className="text-xs text-slate-500">Erlassen: 09.02.2026</p>
 
     <h3 className="font-semibold text-slate-900">§ 1 (Zweck)</h3>
     <p>Diese Nutzungsbedingungen regeln die Rechte, Pflichten und Verantwortlichkeiten zwischen der InfoCreative Co., Ltd. (im Folgenden „Unternehmen") und ihren Mitgliedern sowie die Bedingungen, Verfahren und sonstigen erforderlichen Angelegenheiten im Zusammenhang mit der Nutzung von Tray Storage Connect (im Folgenden „Dienst"), einem vom Unternehmen bereitgestellten Dokumentenmanagement-Dienst.</p>
@@ -1457,7 +1457,7 @@ const TermsDe = () => (
 
 const TermsZh = () => (
   <>
-    <p className="text-xs text-slate-500">制定：2026年2月9日 / 修订：2026年7月1日 / 施行：2026年7月1日</p>
+    <p className="text-xs text-slate-500">制定：2026年2月9日</p>
 
     <h3 className="font-semibold text-slate-900">第1条（目的）</h3>
     <p>本条款旨在规定InfoCreative股份有限公司（以下简称"公司"）提供的文档管理服务TrayStorage Connect（以下简称"服务"）在使用过程中，公司与会员之间的权利、义务及责任事项，以及服务使用条件、程序等必要事项。</p>
