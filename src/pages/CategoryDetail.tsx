@@ -161,17 +161,6 @@ export function CategoryDetail() {
 
   const [documentTitle, setDocumentTitle] = useState('');
 
-  if (!category) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <BackButton className="mb-4" />
-          <p className="text-slate-500">{t('categoryDetail.categoryNotFound')}</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const handleUploadClick = () => {
     setUploadDialogOpen(true);
     setUploadFiles([]);
@@ -329,6 +318,19 @@ export function CategoryDetail() {
       }
     },
   });
+
+  // 조기 반환은 모든 훅(useCallback/useDropzone) 뒤에 둔다 — 카테고리가 사라지는
+  // 순간 렌더마다 훅 개수가 달라져 React 가 상태를 잘못 매칭한다.
+  if (!category) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <BackButton className="mb-4" />
+          <p className="text-slate-500">{t('categoryDetail.categoryNotFound')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const { pdfFiles: selectedPdfFiles, imageFiles: selectedImageFiles } =
     splitFilesByType(uploadFiles);

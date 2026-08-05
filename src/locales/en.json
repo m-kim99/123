@@ -1400,5 +1400,11 @@
     "failTitle": "Card Registration Failed",
     "failDesc": "Card registration failed. Please try again.",
     "backToApp": "Back to Team Management"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "A temporary error occurred. If reloading doesn't help, please contact your administrator.",
+    "reload": "Reload",
+    "goHome": "Go to start"
   }
 }

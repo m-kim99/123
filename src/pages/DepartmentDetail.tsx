@@ -61,19 +61,10 @@ export function DepartmentDetail() {
   const [teamMembersCount, setTeamMembersCount] = useState(0);
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest' | 'alpha'>('latest');
 
-  if (!department) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-4">
-          <BackButton />
-          <p className="text-slate-500">{t('deptDetail.notFound')}</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
+  // 훅은 조기 반환보다 반드시 앞에 있어야 한다 — 부서가 사라지는 순간(삭제 직후,
+  // 목록 갱신 중) 렌더마다 훅 개수가 달라져 React 가 상태를 잘못 매칭한다.
   const departmentParentCategories = useMemo(() => {
-    const filtered = parentCategories.filter((pc) => pc.departmentId === department.id);
+    const filtered = parentCategories.filter((pc) => pc.departmentId === department?.id);
     const arr = [...filtered];
     if (sortOrder === 'alpha') {
       arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
@@ -81,9 +72,7 @@ export function DepartmentDetail() {
       arr.reverse();
     }
     return arr;
-  }, [parentCategories, department.id, sortOrder]);
-  const departmentDocuments = documents.filter((d) => d.departmentId === department.id);
-  const nfcCategoryCount = departmentParentCategories.length;
+  }, [parentCategories, department?.id, sortOrder]);
 
   useEffect(() => {
     const loadTeamMembersCount = async () => {
@@ -112,6 +101,20 @@ export function DepartmentDetail() {
 
     loadTeamMembersCount();
   }, [department, user?.companyId]);
+
+  if (!department) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <BackButton />
+          <p className="text-slate-500">{t('deptDetail.notFound')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const departmentDocuments = documents.filter((d) => d.departmentId === department.id);
+  const nfcCategoryCount = departmentParentCategories.length;
 
   const handleOpenAddDialog = () => {
     setAddDialogOpen(true);

@@ -1400,5 +1400,11 @@
     "failTitle": "卡片注册失败",
     "failDesc": "卡片注册失败，请重试。",
     "backToApp": "返回团队成员管理"
+  },
+  "errorBoundary": {
+    "title": "无法显示页面",
+    "description": "发生了临时错误。如果刷新后仍然存在，请联系管理员。",
+    "reload": "刷新",
+    "goHome": "返回首页"
   }
 }

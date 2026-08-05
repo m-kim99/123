@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { NativeBottomBar } from '@/components/NativeBottomBar';
 import { NativeDeepLinkHandler } from '@/components/NativeDeepLinkHandler';
 import { SubscriptionGate } from '@/components/SubscriptionGate';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useOperatorStore } from './store/operatorStore';
@@ -429,6 +430,7 @@ function App() {
         <RouteAnalytics />
         <NativeDeepLinkHandler />
         <div className={Capacitor.isNativePlatform() ? 'app-content-safe-area' : ''}>
+        <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<RootRoute />} />
@@ -771,6 +773,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
         </div>
         <DeletionWarningDialog />
         <NativeBottomBar />

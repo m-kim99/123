@@ -1400,5 +1400,11 @@
     "failTitle": "Kartenregistrierung fehlgeschlagen",
     "failDesc": "Kartenregistrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "backToApp": "Zurück zur Teamverwaltung"
+  },
+  "errorBoundary": {
+    "title": "Die Seite konnte nicht angezeigt werden",
+    "description": "Es ist ein vorübergehender Fehler aufgetreten. Wenn das Neuladen nicht hilft, wenden Sie sich bitte an Ihren Administrator.",
+    "reload": "Neu laden",
+    "goHome": "Zum Anfang"
   }
 }
