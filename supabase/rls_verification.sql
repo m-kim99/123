@@ -55,7 +55,10 @@ ORDER BY policyname;
 -- ------------------------------------------------------------
 -- 조치 가이드
 --   (a) 결과 테이블 → ALTER TABLE public.<t> ENABLE ROW LEVEL SECURITY;
---   (b) 개방형 정책 → DROP POLICY "<name>" ON public.<t>; (apply_rls_policies.sql 재적용)
+--   (b) 개방형 정책 → DROP POLICY "<name>" ON public.<t>;
+--       (documents/categories/subcategories 는 20260219_update_rls_for_user_permissions.sql
+--        → 20260708000000 → 20260724030000 순으로 재적용. 루트 apply_rls_policies.sql 은
+--        20260219 시점 스냅샷이라 뒤 두 마이그레이션을 되돌리므로 사용 금지 — 삭제됨)
 --   (c) anon 과도 권한 → 20260701000000_tighten_grants.sql 참고
 --   (d) users 정책 → auth.uid() 기반 정책만 남기고 USING(true) 제거
 -- ============================================================

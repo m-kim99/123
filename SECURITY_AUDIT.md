@@ -2,6 +2,10 @@
 
 > 대상: Trayst Storage Connect — Supabase(Auth/DB/RLS) + Cloudflare R2 + Capacitor(모바일) + Supabase Edge Functions
 > 작성: 코드베이스 정적 분석 기반. "운영 DB 실제 상태"는 일부 추정이며 ✅ 표시된 검증 쿼리로 확인 필요.
+>
+> **최종 갱신: 2026-08-05.** 아래 1~9번은 재점검 결과 대부분 해결됨(상태 열 참조).
+> 이후 새로 발견된 항목은 §10 참조. 각 절의 본문은 **최초 발견 당시 기록**이므로
+> 현재 상태는 반드시 아래 보드의 "상태" 열을 기준으로 판단할 것.
 
 ---
 
@@ -9,15 +13,15 @@
 
 | # | 항목 | 심각도 | 상태 |
 |---|------|--------|------|
-| 1 | R2 액세스 키/시크릿이 프론트엔드 번들에 노출 | 🔴 치명 | 미해결 |
-| 2 | `data.sql` 운영 데이터 덤프가 git에 커밋됨 | 🔴 치명 | 미해결 |
-| 3 | `get-gemini-key`가 인증 사용자에게 원본 API 키를 그대로 반환 | 🟠 높음 | 미해결 |
-| 4 | RLS 운영 적용 여부 미검증 (`apply_rls_policies.sql` 수동 적용) | 🟠 높음 | 검증 필요 |
-| 5 | `.env.production.txt`로 시크릿 커밋 우회 패턴 | 🟡 중간 | 미해결 |
-| 6 | `GRANT ALL ... TO anon` (구독/사용량 테이블) | 🟡 중간 | 하드닝 |
-| 7 | `send-push-notification`: 호출자 토큰 소유권 미검증 | 🟡 중간 | 미해결 |
-| 8 | 보안 헤더(CSP/HSTS/X-Frame-Options 등) 부재 | 🟡 중간 | 미해결 |
-| 9 | Edge Function CORS `Allow-Origin: *` 전역 허용 | 🟢 낮음 | 하드닝 |
+| 1 | R2 액세스 키/시크릿이 프론트엔드 번들에 노출 | 🔴 치명 | ✅ 해결 (`f4accb5` — presign 서버화) |
+| 2 | `data.sql` 운영 데이터 덤프가 git에 커밋됨 | 🔴 치명 | ✅ 언트랙 (`f4accb5`) / ⚠️ git 히스토리 잔존 |
+| 3 | `get-gemini-key`가 인증 사용자에게 원본 API 키를 그대로 반환 | 🟠 높음 | ✅ 해결 (30분 임시 토큰) |
+| 4 | RLS 운영 적용 여부 미검증 | 🟠 높음 | ✅ 마이그레이션으로 이관 (`20260702000000`) |
+| 5 | `.env.production.txt`로 시크릿 커밋 우회 패턴 | 🟡 중간 | ✅ 해결 (`.gitignore:18-24`) |
+| 6 | `GRANT ALL ... TO anon` (구독/사용량 테이블) | 🟡 중간 | ✅ 해결 (`20260701000000`) |
+| 7 | `send-push-notification`: 호출자 토큰 소유권 미검증 | 🟡 중간 | ✅ 해결 (회사 경계 검증) |
+| 8 | 보안 헤더(CSP/HSTS/X-Frame-Options 등) 부재 | 🟡 중간 | ✅ 해결 (`netlify.toml`/`vercel.json`) |
+| 9 | Edge Function CORS `Allow-Origin: *` 전역 허용 | 🟢 낮음 | 미해결 (Bearer 인증이라 영향 낮음) |
 
 ---
 
@@ -206,3 +210,77 @@ Netlify/Vercel은 동일 헤더를 `[[headers]]` / `headers`로 추가.
 5. #5~#9 하드닝
 
 > 다음 단계: 위 순서대로 실제 코드/마이그레이션 작업을 진행하면 됩니다. 어느 항목부터 착수할지 알려주세요.
+
+---
+
+# §10. 2026-08-05 재점검 — 신규 발견 및 조치
+
+1~9번 재점검 결과는 상단 보드 참조. 아래는 이번에 새로 발견해 **조치한** 항목이다.
+
+## 10-1. 🔴 R2 presign 객체 소유권 미검증 (조치 완료)
+
+**위치:** `supabase/functions/r2-presign/index.ts`
+
+키 서버화(#1) 과정에서 자격증명은 서버로 옮겼지만 **어떤 객체에 대한 권한인지**는 검사하지 않았다.
+`key`/`keys[]`를 요청 바디에서 그대로 받아 presign/삭제하므로, 아무 회사 계정으로 로그인만 하면
+타사 객체를 덮어쓰거나 임의 목록을 `DeleteObjects` 할 수 있었다.
+
+**조치:**
+- 호출자의 `company_id`를 service_role로 확인.
+- 업로드: 키가 `${companyId}/` 접두사여야 하며, 나머지는 단일 파일명만 허용(하위 경로·`..` 차단).
+- 삭제: 접두사 대신 **`documents` 테이블에 해당 `file_path`가 자기 회사 문서로 등록되어 있는지** 확인.
+  접두사 규칙 이전에 업로드된 레거시 경로도 정상 삭제되며, 소유하지 않은 키는 조용히 제외 후 로그.
+
+## 10-2. 🔴 문서 파일명 열거 가능 + 퍼블릭 버킷 (부분 조치)
+
+**위치:** `src/store/documentStore.ts` (구 `sanitizeFileName`)
+
+저장 경로가 `${Date.now()}.${ext}` 였다. 업로드 시간대만 좁히면(시간당 약 360만 조합 × 확장자 몇 종)
+**비로그인 상태로 타사 문서를 열거·다운로드**할 수 있었고, 같은 밀리초 업로드 시 회사 간 키 충돌도 가능했다.
+
+**조치:** `buildStoragePath()`로 교체 — `${companyId}/${crypto.randomUUID()}.${ext}`.
+기존 문서는 `file_path`가 DB에 그대로 남아 읽기·삭제 모두 정상 동작한다(하위 호환).
+
+**⚠️ 남은 작업:** 버킷이 여전히 **퍼블릭**이다. UUID로 열거는 막았지만, URL이 한 번 유출되면
+(로그·리퍼러·공유 링크) 인증 없이 영구 접근된다. `is_classified` 문서가 있는 앱이므로
+**presigned GET 전환**을 권장 — `r2.ts:getPublicUrl`이 동기 API라 호출부 17곳이 async로 바뀌는 구조 변경.
+
+## 10-3. 🟠 이노페이 Noti 위조로 미결제 구독 활성화 (완화)
+
+**위치:** `supabase/functions/innopay-noti/index.ts`, `innopay-autopay-return/index.ts`
+
+`innopay-noti`는 `--no-verify-jwt` 공개 엔드포인트이고 **이노페이 통보에는 서명이 없다.**
+유일한 게이트가 `shopCode/pgMid == INNOPAY_MID`(비밀값 아닌 상점 ID)라, `status=25` 위조 POST로
+임의 `billing_key`와 함께 구독을 `active`로 만들 수 있었다.
+실제로 이를 막고 있던 것은 `charge_moid`의 추측 난이도뿐이었는데, 그 값이 `Math.random()` 기반이었다.
+
+**조치:**
+- `charge_moid`를 CSPRNG(`crypto.randomUUID()`)로 생성 → 설계가 암묵적으로 의존하던 방어를 실제로 성립시킴.
+  이 값은 클라이언트에 노출되지 않으며 `innopay_autopay_pending`은 service_role 전용이다.
+- 통보 금액(`approvalAmt`)이 대기건 금액과 다르면 백필 중단.
+- `status='failed'`로 종결된 건은 백필 대상에서 제외(뒤늦은 통보로 미결제 건이 되살아나는 것 차단).
+
+**⚠️ 남은 작업:** 위 조치는 위조를 **실현 불가능한 수준으로** 낮추지만 인증은 아니다.
+근본 해결은 (a) 이노페이 Noti URL에 시크릿 파라미터를 등록하고 서버에서 검증하거나,
+(b) 통보 수신 후 `pgTid`로 이노페이 거래조회 API를 호출해 재확인하는 것.
+둘 다 이노페이 상점관리 설정/API 스펙 확인이 선행되어야 한다.
+
+## 10-4. 🟡 `charging_at` 백필 누락 (조치 완료)
+
+`20260805000000`이 컬럼만 추가하고 기존 행을 백필하지 않아, 배포 시점에 이미 `charging`이던 행은
+`charging_at IS NULL` → 3분 유예를 건너뛰고 **결제 1건에 구독 기간이 이중 연장**될 수 있었다
+(`579f2dd`가 고치려던 바로 그 레이스).
+**조치:** `20260805020000_backfill_autopay_charging_at.sql` — `now()`로 백필(유예를 새로 부여).
+
+## 10-5. 🟢 `apply_rls_policies.sql` 삭제
+
+마이그레이션 `20260219`의 스냅샷으로, 이후 `20260708000000`(오퍼레이터 미리보기)·
+`20260724030000`(폐기 문서 제외)보다 2세대 뒤처져 있었다. 재실행 시 그 두 마이그레이션이 되돌아간다.
+`supabase/rls_verification.sql`의 재적용 안내도 마이그레이션 기준으로 수정했다.
+
+## 배포 순서 (중요)
+
+`r2-presign`이 `${companyId}/` 접두사를 **강제**하므로 순서를 지켜야 업로드가 끊기지 않는다.
+Capacitor 앱은 원격 URL(`traystorageconnect.com`)을 로드하므로 웹 배포 = 전 클라이언트 동시 반영이다.
+
+1. 웹 배포(신규 경로 생성) → 2. `supabase functions deploy r2-presign` → 3. 나머지 함수 배포 → 4. 마이그레이션 적용

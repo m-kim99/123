@@ -189,10 +189,20 @@ interface DocumentState {
   ) => Promise<boolean>;
 }
 
-const sanitizeFileName = (originalName: string) => {
-  const timestamp = Date.now();
-  const ext = originalName.split('.').pop();
-  return `${timestamp}.${ext}`;
+/**
+ * 저장 경로 생성 — 회사별 네임스페이스 + 추측 불가능한 파일명.
+ * 기존 `${Date.now()}.${ext}` 방식은 업로드 시간대만 좁히면 외부에서 열거가 가능했고,
+ * 같은 밀리초에 업로드한 다른 회사 파일과 키가 충돌할 수 있었다.
+ * 서버(r2-presign)도 동일한 `${companyId}/` 접두사를 강제한다.
+ */
+const buildStoragePath = (originalName: string) => {
+  const companyId = useAuthStore.getState().user?.companyId;
+  if (!companyId) {
+    throw new Error('회사 정보를 확인할 수 없어 파일을 업로드할 수 없습니다.');
+  }
+  const rawExt = originalName.includes('.') ? originalName.split('.').pop() ?? '' : '';
+  const ext = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16);
+  return `${companyId}/${crypto.randomUUID()}${ext ? `.${ext}` : ''}`;
 };
 
 /** isLoading을 카운터 기반으로 안전하게 증가/감소 */
@@ -1662,7 +1672,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }
 
       const originalNameForStorage = document.originalFileName || document.name;
-      const filePath = sanitizeFileName(originalNameForStorage);
+      const filePath = buildStoragePath(originalNameForStorage);
 
       const originalLower = (originalNameForStorage || '').toLowerCase();
       const fileExt = originalLower.includes('.') ? originalLower.split('.').pop() : undefined;
@@ -2105,20 +2115,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         throw new Error('문서를 찾을 수 없습니다.');
       }
 
-      // 2. 기존 파일 삭제
+      // 2. 새 경로부터 확정 (여기서 실패해도 기존 파일은 그대로 남도록 삭제보다 앞에 둔다)
+      const newFilePath = buildStoragePath(file.name);
+
+      // 3. 기존 파일 삭제
       if (existingDoc.file_path) {
         await r2Storage.remove([existingDoc.file_path]);
       }
 
-      // 3. 새 파일 업로드
-      const newFilePath = sanitizeFileName(file.name);
+      // 4. 새 파일 업로드
       const { error: storageError } = await r2Storage.upload(newFilePath, file);
 
       if (storageError) {
         throw storageError;
       }
 
-      // 4. DB 업데이트
+      // 5. DB 업데이트
       const updateData: any = {
         file_path: newFilePath,
         file_size: file.size,

@@ -133,7 +133,10 @@ serve(async (req) => {
     // ── 원자적 클레임: pending → charging (동시 2회 POST 이중청구 차단) ──
     // charge_moid도 여기서 확정 저장 → Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필.
     // charging_at 은 Noti 백필 유예(3분) 판단 기준 — 이 핸들러 생존 중 동시 백필 차단.
-    const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    // charge_moid 는 innopay-noti(공개 엔드포인트)에서 '우리가 만든 결제건'임을 확인하는
+    // 사실상 유일한 근거이므로 반드시 CSPRNG로 만든다.
+    // (Math.random()은 예측 가능 — 위조 Noti로 미결제 구독 활성화가 가능했다)
+    const payMoid = `dmswp${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
     const { data: claimed, error: claimError } = await supabaseAdmin
       .from('innopay_autopay_pending')
       .update({ status: 'charging', charge_moid: payMoid, charging_at: new Date().toISOString() })

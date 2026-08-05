@@ -91,9 +91,25 @@ serve(async (req) => {
         .eq('charge_moid', moid)
         .maybeSingle();
 
-      // 우리 첫 결제가 아니거나(=갱신 등) 이미 완료면 로그만 남기고 종료
-      if (!pending || pending.status === 'completed' || !billKey) {
+      // 우리 첫 결제가 아니거나(=갱신 등) 이미 완료면 로그만 남기고 종료.
+      // 'failed'(등록 실패/청구 실패로 종결)도 제외 — 뒤늦은 통보로 미결제 건이
+      // active 로 되살아나는 것을 막는다.
+      if (!pending || pending.status === 'completed' || pending.status === 'failed' || !billKey) {
         return OK();
+      }
+
+      // 금액 일치 확인 — 통보가 우리 대기건과 같은 금액이어야 한다.
+      // (금액 필드가 없는 통보는 기존 동작대로 통과시키고, '있는데 다른' 경우만 차단)
+      if (approvalAmt) {
+        const notified = Number(String(approvalAmt).replace(/[^0-9]/g, ''));
+        if (Number.isFinite(notified) && notified !== Number(pending.amount)) {
+          console.error('innopay-noti: 금액 불일치 — 백필 중단', {
+            moid,
+            notified,
+            expected: pending.amount,
+          });
+          return OK();
+        }
       }
 
       // 리턴 핸들러가 방금 클레임한 건이면 백필하지 않는다 — 둘 다 살아있는 상태에서
