@@ -23,6 +23,17 @@ const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number;
 };
 const INNOPAY_API_URL = 'https://api.innopay.co.kr/v1/transactions/pay';
 
+/** +1개월 — JS setMonth 오버플로(1/31→3/3) 대신 말일로 클램프 (SQL interval '1 month' 와 동일 의미) */
+function addOneMonthClamped(d: Date): Date {
+  const r = new Date(d.getTime());
+  const day = r.getUTCDate();
+  r.setUTCDate(1);
+  r.setUTCMonth(r.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate();
+  r.setUTCDate(Math.min(day, lastDay));
+  return r;
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -148,6 +159,28 @@ serve(async (req) => {
       );
     }
 
+    // 자동결제(빌키) 구독이 이미 있으면 단회 결제를 시작하지 않는다.
+    // (billing_key 를 tid 로 덮어쓰면 다음 갱신 크론이 잘못된 키로 청구를 시도해
+    //  auto_renew 구독이 파손된다 — 이 레거시 경로는 자동결제 도입 전 단회 결제 전용.
+    //  승인 API 호출 '전'에 거부해야 카드가 청구되지 않는다.)
+    const { data: autopaySub } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id')
+      .eq('company_id', profile.company_id)
+      .eq('auto_renew', true)
+      .in('status', ['active', 'trialing', 'past_due'])
+      .limit(1)
+      .maybeSingle();
+    if (autopaySub) {
+      return jsonResponse(
+        {
+          error: 'AUTOPAY_ACTIVE',
+          message: '자동결제 구독이 이미 등록되어 있어 단회 결제를 진행할 수 없습니다.',
+        },
+        400,
+      );
+    }
+
     // 이노페이 승인 API 호출
     const approveRes = await fetch(INNOPAY_API_URL, {
       method: 'POST',
@@ -200,8 +233,7 @@ serve(async (req) => {
     }
 
     const periodStart = new Date();
-    const periodEnd = new Date(periodStart);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    const periodEnd = addOneMonthClamped(periodStart);
 
     const orderId = approved.moid || moid;
     const cardCompany = approved.card?.fnName || approved.card?.acquCardName || null;
@@ -214,6 +246,7 @@ serve(async (req) => {
       payment_provider: 'innopay',
       payment_customer_id: customerKey,
       billing_key: approved.tid, // 1회성 결제: tid를 빌링 식별자로 보관
+      auto_renew: false, // 단회 결제 — 갱신 크론의 빌키 자동청구 대상이 아님을 명시
       member_count: parsedMembers,
       monthly_amount: parsedAmount,
       card_company: cardCompany,

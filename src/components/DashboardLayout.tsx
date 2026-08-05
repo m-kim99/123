@@ -2115,6 +2115,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </DialogTitle>
                 <DialogDescription>{t('subscription.planDetailDesc')}</DialogDescription>
               </DialogHeader>
+              {i18n.language !== 'ko' && selectedPlan !== 'enterprise' ? (
+                /* 이노페이는 국내(원화) 결제 전용 — 비한국어 로케일은 결제 대신 문의 안내 (SubscriptionGate 와 동일 정책) */
+                <div className="space-y-3 py-2">
+                  <p className="text-sm text-slate-600 text-center">
+                    {t('subscription.overseasGateNotice')}
+                  </p>
+                  <a
+                    href="mailto:support@traystorage.net"
+                    className="flex items-center justify-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-[#2563eb] hover:bg-blue-100 transition-colors"
+                  >
+                    <Mail className="h-4 w-4" />
+                    support@traystorage.net
+                  </a>
+                  <Button variant="outline" className="w-full" onClick={() => setSelectedPlan(null)}>
+                    {t('common.back')}
+                  </Button>
+                </div>
+              ) : (
               <div className="space-y-4">
                 {selectedPlan === 'basic' && (
                   <div className="space-y-3">
@@ -2183,6 +2201,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         </span>
                       </div>
                     </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      {t('subscription.autoBillingNotice')}
+                    </p>
                     <div className="flex items-start gap-2">
                       <Checkbox
                         id="basic-agree-terms"
@@ -2260,6 +2281,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         </span>
                       </div>
                     </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      {t('subscription.autoBillingNotice')}
+                    </p>
                     <div className="flex items-start gap-2">
                       <Checkbox
                         id="pro-agree-terms"
@@ -2339,6 +2363,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   )}
                 </div>
               </div>
+              )}
             </>
           ) : (
             <>

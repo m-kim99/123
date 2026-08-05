@@ -606,6 +606,7 @@ model companies {
   categories                    categories[]
   departments                   departments[]
   nfc_tags                      nfc_tags[]
+  payments                      payments[]
   permission_requests           permission_requests[]
   reports                       reports[]
   search_history                search_history[]
@@ -838,7 +839,7 @@ model plans {
   price_monthly               Int             @default(0)
   price_yearly                Int             @default(0)
   currency                    String          @default("KRW")
-  max_members                 Int?            @default(5)
+  max_members                 Int?            @default(10)
   max_departments             Int?            @default(2)
   max_documents               Int?            @default(100)
   max_storage_mb              Int?            @default(1024)
@@ -995,25 +996,65 @@ model storage_events {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model subscriptions {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id              String    @unique(map: "idx_subscriptions_company_active", where: raw("(status = ANY (ARRAY['active'::text, 'trialing'::text]))")) @db.Uuid
-  plan_id                 String    @db.Uuid
-  status                  String    @default("active")
-  billing_cycle           String    @default("monthly")
+  id                      String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id              String     @unique(map: "idx_subscriptions_company_active", where: raw("(status = ANY (ARRAY['active'::text, 'trialing'::text]))")) @db.Uuid
+  plan_id                 String     @db.Uuid
+  status                  String     @default("active")
+  billing_cycle           String     @default("monthly")
   payment_provider        String?
   payment_customer_id     String?
   payment_subscription_id String?
-  trial_ends_at           DateTime? @db.Timestamptz(6)
-  current_period_start    DateTime? @default(now()) @db.Timestamptz(6)
-  current_period_end      DateTime? @db.Timestamptz(6)
-  canceled_at             DateTime? @db.Timestamptz(6)
-  created_at              DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime  @default(now()) @db.Timestamptz(6)
-  companies               companies @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  plans                   plans     @relation(fields: [plan_id], references: [id], onUpdate: NoAction)
+  trial_ends_at           DateTime?  @db.Timestamptz(6)
+  current_period_start    DateTime?  @default(now()) @db.Timestamptz(6)
+  current_period_end      DateTime?  @db.Timestamptz(6)
+  canceled_at             DateTime?  @db.Timestamptz(6)
+  billing_key             String?
+  member_count            Int?
+  monthly_amount          Int?
+  card_company            String?
+  card_number             String?
+  auto_renew              Boolean    @default(false)
+  renewal_attempts        Int        @default(0)
+  last_renewal_attempt_at DateTime?  @db.Timestamptz(6)
+  created_at              DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime   @default(now()) @db.Timestamptz(6)
+  companies               companies  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  plans                   plans      @relation(fields: [plan_id], references: [id], onUpdate: NoAction)
+  payments                payments[]
 
   @@index([plan_id], map: "idx_subscriptions_plan_id")
   @@index([status], map: "idx_subscriptions_status")
+  @@schema("public")
+}
+
+/// 결제 내역 — 쓰기는 service_role(엣지함수) 전용, 같은 회사 admin 은 SELECT 만.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model payments {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id      String         @db.Uuid
+  subscription_id String?        @db.Uuid
+  order_id        String         @unique
+  payment_key     String?
+  amount          Int
+  currency        String         @default("KRW")
+  status          String
+  method          String?
+  card_company    String?
+  card_number     String?
+  receipt_url     String?
+  approved_at     DateTime?      @db.Timestamptz(6)
+  failure_code    String?
+  failure_message String?
+  canceled_at     DateTime?      @db.Timestamptz(6)
+  cancel_amount   Int            @default(0)
+  cancel_reason   String?
+  cancel_num      String?
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  companies       companies      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subscriptions   subscriptions? @relation(fields: [subscription_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([company_id, created_at(sort: Desc)], map: "idx_payments_company_id")
+  @@index([subscription_id], map: "idx_payments_subscription_id")
   @@schema("public")
 }
 
@@ -1026,10 +1067,11 @@ model innopay_autopay_pending {
   plan_name    String
   member_count Int
   amount       Int
-  status       String   @default("pending")
+  status       String    @default("pending")
   bill_key     String?
   charge_moid  String?
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  charging_at  DateTime? @db.Timestamptz(6)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([company_id, created_at(sort: Desc)], map: "idx_innopay_autopay_pending_company")
   @@schema("public")

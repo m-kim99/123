@@ -85,8 +85,10 @@ export async function getCompanyPlanLimits(companyId: string): Promise<PlanLimit
 
 export interface SubscriptionAccess {
   allowed: boolean;
-  status: 'active' | 'trialing' | 'expired' | 'none';
+  status: 'active' | 'trialing' | 'past_due' | 'expired' | 'none';
   currentPeriodEnd: string | null;
+  /** 조회 실패로 fail-open 된 결과 — 실제 상태가 확인되지 않았음 (성공 판정에 쓰지 말 것) */
+  degraded?: boolean;
   /** 입출고(반출·반납·폐기) 사용 가능 여부 — 프로 이상 전용. 무료체험은 pro라 이용 가능. */
   canUseStorageLifecycle: boolean;
 }
@@ -94,8 +96,9 @@ export interface SubscriptionAccess {
 /**
  * 서비스 이용 가능 여부 체크 (로그인 게이트용)
  * - 유효한 구독(active / 기간 내 trialing)이 있어야 이용 가능
+ * - 정기결제 실패(past_due)는 차단하되 게이트에서 '결제 실패'로 구분 표시
  * - 체험/구독 기간(current_period_end) 경과 시 expired → 차단
- * - 조회 실패(네트워크 등) 시에는 fail-open (잠금 오탐 방지)
+ * - 조회 실패(네트워크 등) 시에는 fail-open (잠금 오탐 방지, degraded 표시)
  * - 단 플랜 전용 기능(canUseStorageLifecycle)은 fail-closed — 최종 차단은 DB가 담당
  */
 export async function checkSubscriptionAccess(companyId: string): Promise<SubscriptionAccess> {
@@ -104,7 +107,9 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
       .from('subscriptions')
       .select('status, current_period_end, plan:plans (feature_storage_lifecycle)')
       .eq('company_id', companyId)
-      .in('status', ['active', 'trialing'])
+      .in('status', ['active', 'trialing', 'past_due'])
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) throw error;
@@ -117,6 +122,11 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
     const canUseStorageLifecycle = plan?.feature_storage_lifecycle === true;
 
     const end = data.current_period_end as string | null;
+
+    if (data.status === 'past_due') {
+      return { allowed: false, status: 'past_due', currentPeriodEnd: end, canUseStorageLifecycle: false };
+    }
+
     if (end && new Date(end).getTime() < Date.now()) {
       return { allowed: false, status: 'expired', currentPeriodEnd: end, canUseStorageLifecycle: false };
     }
@@ -129,7 +139,7 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
     };
   } catch (err) {
     console.error('checkSubscriptionAccess error:', err);
-    return { allowed: true, status: 'active', currentPeriodEnd: null, canUseStorageLifecycle: false };
+    return { allowed: true, status: 'active', currentPeriodEnd: null, degraded: true, canUseStorageLifecycle: false };
   }
 }
 

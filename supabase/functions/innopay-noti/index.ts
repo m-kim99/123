@@ -13,13 +13,19 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // 이노페이(외부)가 호출 → --no-verify-jwt 배포. 게이트: shopCode/pgMid == INNOPAY_MID.
 // ============================================================
 
-const PLAN_GOODS_NAME: Record<string, string> = {
-  basic: '베이직 플랜 월 구독',
-  pro: '프로 플랜 월 구독',
-};
-
 const OK = () => new Response('0000', { status: 200, headers: { 'Content-Type': 'text/plain' } });
 const RETRY = () => new Response('9999', { status: 200, headers: { 'Content-Type': 'text/plain' } });
+
+/** +1개월 — JS setMonth 오버플로(1/31→3/3) 대신 말일로 클램프 (SQL interval '1 month' 와 동일 의미) */
+function addOneMonthClamped(d: Date): Date {
+  const r = new Date(d.getTime());
+  const day = r.getUTCDate();
+  r.setUTCDate(1);
+  r.setUTCMonth(r.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate();
+  r.setUTCDate(Math.min(day, lastDay));
+  return r;
+}
 
 serve(async (req) => {
   const INNOPAY_MID = Deno.env.get('INNOPAY_MID');
@@ -49,7 +55,12 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // durable 로그 (best-effort — 실패해도 처리 계속)
+  // durable 로그 (best-effort — 실패해도 처리 계속).
+  // billKey 는 청구에 쓰이는 민감값이라 로그에는 남기지 않는다(마스킹) —
+  // 분쟁 대사는 tid/moid/금액으로 충분하고, 실제 빌키는 subscriptions 에만 보관.
+  const rawSafe: Record<string, string> = { ...f };
+  if (rawSafe.billKey) rawSafe.billKey = '(redacted)';
+  if (rawSafe.BillKey) rawSafe.BillKey = '(redacted)';
   try {
     await supabaseAdmin.from('innopay_noti_log').insert({
       shop_code: shopCode || null,
@@ -57,9 +68,9 @@ serve(async (req) => {
       moid: moid || null,
       status: status || null,
       pay_method: payMethod || null,
-      bill_key: billKey || null,
+      bill_key: billKey ? '(redacted)' : null,
       amount: approvalAmt ? Number(approvalAmt) : null,
-      raw: f,
+      raw: rawSafe,
     });
   } catch (e) {
     console.error('innopay-noti: 로그 적재 실패', e);
@@ -83,6 +94,14 @@ serve(async (req) => {
       // 우리 첫 결제가 아니거나(=갱신 등) 이미 완료면 로그만 남기고 종료
       if (!pending || pending.status === 'completed' || !billKey) {
         return OK();
+      }
+
+      // 리턴 핸들러가 방금 클레임한 건이면 백필하지 않는다 — 둘 다 살아있는 상태에서
+      // 동시 반영되면 결제 1건에 구독 기간이 이중 연장된다. 유예 중에는 9999로
+      // 재전송(1분 간격 10회)을 유도하고, 리턴이 죽어 3분이 지난 재전송분만 백필한다.
+      if (pending.status === 'charging' && pending.charging_at) {
+        const claimedAgoMs = Date.now() - new Date(pending.charging_at as string).getTime();
+        if (claimedAgoMs < 3 * 60 * 1000) return RETRY();
       }
 
       // 멱등성: 이미 payments 에 기록됐으면 no-op
@@ -127,8 +146,7 @@ serve(async (req) => {
         ? new Date(existingSub.current_period_end as string)
         : null;
       const periodStart = existingEnd && existingEnd.getTime() > now.getTime() ? existingEnd : now;
-      const periodEnd = new Date(periodStart);
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      const periodEnd = addOneMonthClamped(periodStart);
       const cardCompany = f.cardIssueName || f.cardAcquireName || null;
       const maskedCardNum = f.cardNo || null;
 
@@ -168,7 +186,7 @@ serve(async (req) => {
         subscriptionId = newSub.id;
       }
 
-      await supabaseAdmin.from('payments').insert({
+      const { error: payInsErr } = await supabaseAdmin.from('payments').insert({
         company_id: pending.company_id,
         subscription_id: subscriptionId,
         order_id: moid,
@@ -180,6 +198,9 @@ serve(async (req) => {
         card_number: maskedCardNum,
         approved_at: new Date().toISOString(),
       });
+      if (payInsErr) {
+        console.error('innopay-noti: payments 기록 실패 (수동 대사 필요)', { moid, pgTid }, payInsErr);
+      }
 
       await supabaseAdmin
         .from('innopay_autopay_pending')

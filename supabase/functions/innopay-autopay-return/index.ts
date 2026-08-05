@@ -16,6 +16,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const INNOPAY_AUTOPAY_BASE = 'https://api.innopay.co.kr/api';
 
+/** +1개월 — JS setMonth 오버플로(1/31→3/3) 대신 말일로 클램프 (SQL interval '1 month' 와 동일 의미) */
+function addOneMonthClamped(d: Date): Date {
+  const r = new Date(d.getTime());
+  const day = r.getUTCDate();
+  r.setUTCDate(1);
+  r.setUTCMonth(r.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate();
+  r.setUTCDate(Math.min(day, lastDay));
+  return r;
+}
+
 const PLAN_GOODS_NAME: Record<string, string> = {
   basic: '베이직 플랜 월 구독',
   pro: '프로 플랜 월 구독',
@@ -121,10 +132,11 @@ serve(async (req) => {
 
     // ── 원자적 클레임: pending → charging (동시 2회 POST 이중청구 차단) ──
     // charge_moid도 여기서 확정 저장 → Noti(status=25)가 이 moid로 첫 결제를 상관지어 백필.
+    // charging_at 은 Noti 백필 유예(3분) 판단 기준 — 이 핸들러 생존 중 동시 백필 차단.
     const payMoid = `dmswp${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     const { data: claimed, error: claimError } = await supabaseAdmin
       .from('innopay_autopay_pending')
-      .update({ status: 'charging', charge_moid: payMoid })
+      .update({ status: 'charging', charge_moid: payMoid, charging_at: new Date().toISOString() })
       .eq('moid', moid)
       .eq('status', 'pending')
       .select('moid');
@@ -181,6 +193,17 @@ serve(async (req) => {
       return redirect(origin, 'fail', { code: String(pay.resultCode ?? '') });
     }
 
+    // Noti 백필이 먼저 완료했으면 이중 반영 금지 — 그대로 성공 안내
+    // (백필은 charging_at + 3분 유예 뒤에만 동작하므로 정상 경로에선 도달하지 않음)
+    const { data: curPending } = await supabaseAdmin
+      .from('innopay_autopay_pending')
+      .select('status')
+      .eq('moid', moid)
+      .maybeSingle();
+    if (curPending?.status === 'completed') {
+      return redirect(origin, 'success', { plan: planName });
+    }
+
     // 구독 활성화
     const { data: planRow } = await supabaseAdmin
       .from('plans')
@@ -211,8 +234,7 @@ serve(async (req) => {
       ? new Date(existingSub.current_period_end as string)
       : null;
     const periodStart = existingEnd && existingEnd.getTime() > now.getTime() ? existingEnd : now;
-    const periodEnd = new Date(periodStart);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    const periodEnd = addOneMonthClamped(periodStart);
     const cardCompany = pay.appCardName || pay.acquCardName || null;
     const maskedCardNum = pay.cardNum || null;
 
@@ -252,7 +274,7 @@ serve(async (req) => {
       subscriptionId = newSub.id;
     }
 
-    await supabaseAdmin.from('payments').insert({
+    const { error: payInsErr } = await supabaseAdmin.from('payments').insert({
       company_id: pending.company_id,
       subscription_id: subscriptionId,
       order_id: payMoid,
@@ -264,6 +286,10 @@ serve(async (req) => {
       card_number: maskedCardNum,
       approved_at: new Date().toISOString(),
     });
+    if (payInsErr) {
+      // 결제는 완료된 상태 — tid/moid 로그로 수동 대사 가능하게 남긴다
+      console.error(`payments 기록 실패 (결제 완료 tid: ${pay.tid}, moid: ${payMoid}):`, payInsErr);
+    }
 
     await supabaseAdmin
       .from('innopay_autopay_pending')

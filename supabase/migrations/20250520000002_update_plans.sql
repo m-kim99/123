@@ -20,7 +20,9 @@ INSERT INTO public.plans (
   false, false, false, false,
   false, false, false, false, false,
   1
-);
+)
+-- 20250520000001 이 이미 basic 을 시드하므로 신규 DB 리플레이 시 UNIQUE(name) 충돌 방지
+ON CONFLICT (name) DO NOTHING;
 
 -- 3. pro 플랜 재삽입
 INSERT INTO public.plans (

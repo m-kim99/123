@@ -1,0 +1,41 @@
+# Supabase 프로젝트 설정 — 함수별 verify_jwt를 여기에 코드화한다.
+# `supabase functions deploy <name>` 은 이 파일의 값을 따르므로,
+# 과거처럼 배포 플래그(--no-verify-jwt) 누락으로 결제 콜백이 JWT 게이트로
+# 뒤집히는 사고를 방지한다. 여기에 없는 함수는 기본값(verify_jwt=true).
+
+project_id = "kqurgsqmrmtpglrbzpoc"
+
+# ── 외부(무토큰) 호출을 받는 공개 엔드포인트 — 반드시 false 유지 ──
+# 이노페이가 카드등록 결과(billKey)를 form POST 하는 returnUrl.
+# 신뢰 경계는 코드 내부(서버 생성 moid + userId 일치 + 실청구 검증).
+[functions.innopay-autopay-return]
+verify_jwt = false
+
+# 이노페이 결제결과 통보(Noti §10) 수신 — 이노페이 서버가 직접 POST.
+# 게이트: shopCode/pgMid == INNOPAY_MID.
+[functions.innopay-noti]
+verify_jwt = false
+
+# ── 인증 필요 엔드포인트 (명시적 문서화) ──
+[functions.innopay-autopay-start]
+verify_jwt = true
+
+[functions.innopay-subscription-cancel]
+verify_jwt = true
+
+[functions.innopay-payment-cancel]
+verify_jwt = true
+
+[functions.innopay-payment-confirm]
+verify_jwt = true
+
+[functions.innopay-billkey-register]
+verify_jwt = true
+
+# 크론 호출 함수 — pg_cron이 anon Bearer + x-cron-key(CRON_SECRET)로 호출.
+# JWT(anon)는 통과하고 실제 인증은 함수 내부의 x-cron-key 검증이 담당.
+[functions.innopay-billing-renewal]
+verify_jwt = true
+
+[functions.send-push-notification]
+verify_jwt = true

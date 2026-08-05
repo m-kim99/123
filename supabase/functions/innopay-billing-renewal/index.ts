@@ -36,11 +36,23 @@ interface SubscriptionRow {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_RENEWAL_ATTEMPTS = 3; // 자동결제 실패 허용 횟수 (일 1회 시도)
 
-// 유료 플랜 가격 (부가세 포함) — 클라이언트/innopay-billkey-register와 동일하게 유지할 것
+/** +1개월 — JS setMonth 오버플로(1/31→3/3) 대신 말일로 클램프 (SQL interval '1 month' 와 동일 의미) */
+function addOneMonthClamped(d: Date): Date {
+  const r = new Date(d.getTime());
+  const day = r.getUTCDate();
+  r.setUTCDate(1);
+  r.setUTCMonth(r.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate();
+  r.setUTCDate(Math.min(day, lastDay));
+  return r;
+}
+
+// 유료 플랜 가격 (부가세 포함) — 클라이언트/innopay-autopay-start와 동일하게 유지할 것
 // minMembers: 최소 결제 인원 — 실인원이 이보다 적어도 이 인원 기준으로 청구된다.
-const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number }> = {
-  basic: { pricePerMember: 6600, minMembers: 3 },
-  pro: { pricePerMember: 15000, minMembers: 3 },
+// maxMembers: 판매 상한 — 안내 금액 산출 시 이 인원을 넘겨 계산하지 않는다.
+const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
+  basic: { pricePerMember: 6600, minMembers: 3, maxMembers: 3 },
+  pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 },
 };
 
 const PLAN_GOODS_NAME: Record<string, string> = {
@@ -95,8 +107,10 @@ async function renewalQuote(
     .eq('company_id', companyId);
   const members = count ?? 0;
   if (members < 1) return '';
-  // 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로 청구된다 (베이직·프로 모두 3인)
-  const billable = Math.max(members, pricing.minMembers);
+  // 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로 청구된다 (베이직·프로 모두 3인).
+  // 판매 상한(프로 20인)을 넘는 인원은 상한 기준으로만 안내한다.
+  let billable = Math.max(members, pricing.minMembers);
+  if (pricing.maxMembers !== null) billable = Math.min(billable, pricing.maxMembers);
   const total = billable * pricing.pricePerMember;
   // 금액을 먼저, 산출 내역은 괄호로 — 최소 인원이 적용된 경우에만 그 사실을 덧붙인다.
   const detail =
@@ -393,8 +407,10 @@ serve(async (req) => {
       const periodEnd = new Date(sub.current_period_end!);
       const msLeft = periodEnd.getTime() - now.getTime();
 
-      // 4) past_due 리마인드 (7일마다) — 자동/수동 공통
+      // 4) past_due 리마인드 (7일마다, 만료 후 35일까지만) — 자동/수동 공통
       if (sub.status === 'past_due') {
+        // 영구 반복 방지: 만료가 35일 넘게 지난 구독은 더 알리지 않는다 (약 5회 발송 후 중단)
+        if (now.getTime() - periodEnd.getTime() > 35 * DAY_MS) continue;
         if (!(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_past_due', 7))) {
           const quote = await renewalQuote(supabaseAdmin, sub.company_id, sub.plans?.name);
           notified += await notifyAdmins(
@@ -447,8 +463,7 @@ serve(async (req) => {
             .eq('order_id', rmoid)
             .maybeSingle();
           if (paidAlready) {
-            const healEnd = new Date(periodEnd);
-            healEnd.setMonth(healEnd.getMonth() + 1);
+            const healEnd = addOneMonthClamped(periodEnd);
             await supabaseAdmin
               .from('subscriptions')
               .update({
@@ -466,10 +481,13 @@ serve(async (req) => {
           const charge = await chargeBillkey(supabaseAdmin, INNOPAY_MID, sub);
 
           if (charge.ok) {
-            // 기간 연장은 기존 만료일 기준 (결제 지연으로 이용 기간이 밀리지 않도록)
-            const newStart = periodEnd;
-            const newEnd = new Date(periodEnd);
-            newEnd.setMonth(newEnd.getMonth() + 1);
+            // 기간 연장은 기존 만료일 기준 (결제 지연으로 이용 기간이 밀리지 않도록).
+            // 단, 만료 후 7일 넘게 방치된 구독(크론 중단 등)은 오늘부터 시작한다 —
+            // 옛 만료일 기준으로 이어붙이면 갱신 후에도 여전히 만료 상태라
+            // 이용하지 못한 과거 기간을 하루 1건씩 연쇄 청구하게 되기 때문.
+            const stale = now.getTime() - periodEnd.getTime() > 7 * DAY_MS;
+            const newStart = stale ? now : periodEnd;
+            const newEnd = addOneMonthClamped(newStart);
 
             const { error: periodErr } = await supabaseAdmin
               .from('subscriptions')
@@ -485,7 +503,7 @@ serve(async (req) => {
               console.error(`[재청구 위험] 기간갱신 실패 (청구완료 tid:${charge.tid}, moid:${charge.moid}):`, periodErr);
             }
 
-            await supabaseAdmin.from('payments').insert({
+            const { error: payInsErr } = await supabaseAdmin.from('payments').insert({
               company_id: sub.company_id,
               subscription_id: sub.id,
               order_id: charge.moid,
@@ -497,6 +515,10 @@ serve(async (req) => {
               card_number: charge.cardNum,
               approved_at: now.toISOString(),
             });
+            if (payInsErr) {
+              // 이 기록은 다음 회차 멱등 가드(order_id 조회)의 근거 — 유실 시 수동 대사 필요
+              console.error(`payments 기록 실패 (청구완료 tid:${charge.tid}, moid:${charge.moid}):`, payInsErr);
+            }
 
             notified += await notifyAdmins(
               supabaseAdmin,
@@ -653,11 +675,15 @@ serve(async (req) => {
     if (trialQueryError) throw trialQueryError;
 
     for (const sub of (trials ?? []) as unknown as SubscriptionRow[]) {
+      // 해지 예약된 체험은 재결제 유도 알림을 보내지 않는다
+      if (sub.canceled_at) continue;
       const endDate = formatKstDate(sub.current_period_end!);
       const daysLeft = Math.ceil(
         (new Date(sub.current_period_end!).getTime() - now.getTime()) / DAY_MS,
       );
       if (daysLeft > 14) continue;
+      // 영구 반복 방지: 만료 후 30일이 지난 체험은 더 알리지 않는다
+      if (daysLeft < -30) continue;
 
       let type: string;
       let windowDays: number;

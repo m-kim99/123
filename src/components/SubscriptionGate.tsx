@@ -23,8 +23,11 @@ const SUPPORT_EMAIL = 'support@traystorage.net';
  */
 export function SubscriptionGate() {
   const { t, i18n } = useTranslation();
-  const { user, logout, trialEndsAt } = useAuthStore();
+  const { user, logout, trialEndsAt, subscriptionStatus } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  // 차단 사유별 안내 구분: past_due(정기결제 실패) / none(구독 이력 없음) / 그 외(체험·구독 만료)
+  const isPastDue = subscriptionStatus === 'past_due';
+  const isNoSubscription = subscriptionStatus === 'none';
   // 이노페이는 국내(원화) 결제 전용 — 비한국어 로케일에는 결제 대신 문의 안내 표시
   const isKorean = i18n.language === 'ko';
 
@@ -97,7 +100,13 @@ export function SubscriptionGate() {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <Lock className="h-12 w-12 text-amber-500 mx-auto mb-2" />
-          <CardTitle>{t('subscription.gateTitle')}</CardTitle>
+          <CardTitle>
+            {isPastDue
+              ? t('subscription.gatePastDueTitle')
+              : isNoSubscription
+                ? t('subscription.gateNoneTitle')
+                : t('subscription.gateTitle')}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {trialEndsAt && (
@@ -139,7 +148,7 @@ export function SubscriptionGate() {
           ) : isAdmin ? (
             <>
               <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
-                {t('subscription.gateDesc')}
+                {isPastDue ? t('subscription.gatePastDueDesc') : t('subscription.gateDesc')}
               </p>
               <div className="space-y-2">
                 <Label>{t('subscription.planSelectLabel')}</Label>
@@ -222,6 +231,9 @@ export function SubscriptionGate() {
                   </span>
                 </span>
               </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {t('subscription.autoBillingNotice')}
+              </p>
               <div className="flex items-start gap-2">
                 <Checkbox
                   id="gate-agree-terms"

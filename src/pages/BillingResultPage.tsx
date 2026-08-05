@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import {
-  confirmPayAppBilling,
   confirmInnopayPayment,
   getInnopayPaymentContext,
   clearInnopayPaymentContext,
   type ConfirmBillingResult,
 } from '@/lib/payments';
 import { useAuthStore } from '@/store/authStore';
+import { checkSubscriptionAccess } from '@/lib/subscription';
 
 // ============================================================
 // [토스 주석 처리] 토스페이먼츠 승인 대기 중 — 사용 불가
@@ -71,129 +71,6 @@ export function BillingFailPage() {
 }
 
 // ============================================================
-// PayApp 결제 결과 페이지
-// ============================================================
-
-export function PayAppBillingSuccessPage() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  const customerKey = searchParams.get('customerKey');
-  const rebillNo = searchParams.get('rebill_no');
-  const mulNo = searchParams.get('mul_no');
-  const members = searchParams.get('members');
-  const amount = searchParams.get('amount');
-
-  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
-  const [result, setResult] = useState<ConfirmBillingResult | null>(null);
-  const confirmStarted = useRef(false);
-
-  useEffect(() => {
-    if (confirmStarted.current) return;
-    confirmStarted.current = true;
-
-    if (!customerKey || !rebillNo || !members || !amount) {
-      setStatus('error');
-      return;
-    }
-
-    (async () => {
-      const res = await confirmPayAppBilling({
-        rebillNo,
-        mul_no: mulNo || '',
-        customerKey,
-        memberCount: Number(members),
-        amount: Number(amount),
-      });
-      setResult(res);
-      setStatus(res.success ? 'success' : 'error');
-    })();
-  }, [customerKey, rebillNo, mulNo, members, amount]);
-
-  if (status === 'processing') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <Loader2 className="h-12 w-12 text-[#2563eb] mx-auto mb-2 animate-spin" />
-            <CardTitle>{t('billing.processingTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-600 text-center">{t('billing.processingDesc')}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
-            <CardTitle>{t('billing.approvalFailTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600 text-center">
-              {result?.message || t('billing.approvalFailDesc')}
-              {result?.code && (
-                <span className="block mt-1 text-xs text-slate-400">({result.code})</span>
-              )}
-            </p>
-            <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>
-              {t('billing.backToApp')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-          <CardTitle>{t('billing.approvedTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-slate-50 rounded-lg border space-y-2 text-sm">
-            {members && (
-              <div className="flex justify-between">
-                <span className="text-slate-600">{t('subscription.memberCountLabel')}</span>
-                <span className="font-medium">{members}{t('subscription.personUnit')}</span>
-              </div>
-            )}
-            {amount && (
-              <div className="flex justify-between">
-                <span className="text-slate-600">{t('subscription.monthlyTotal')}</span>
-                <span className="font-bold text-[#2563eb]">
-                  ₩{Number(amount).toLocaleString()}{t('subscription.perMonth')}
-                </span>
-              </div>
-            )}
-            {result?.nextBillingDate && (
-              <div className="flex justify-between">
-                <span className="text-slate-600">{t('billing.nextBillingDate')}</span>
-                <span className="font-medium">
-                  {new Date(result.nextBillingDate).toLocaleDateString()}
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-slate-600 text-center">{t('billing.approvedDesc')}</p>
-          <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>
-            {t('billing.backToApp')}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ============================================================
 // 이노페이(INNOPAY) 결제 결과 페이지
 // 결제창(goPay) 인증 성공 후 returnUrl(/billing/innopay/return)로 복귀.
 // tid/paymentToken을 받아 승인 API(엣지함수)를 호출하고 구독을 활성화한다.
@@ -213,16 +90,52 @@ export function InnopayAutopayReturnPage() {
   const status = searchParams.get('status') || 'error';
   const code = searchParams.get('code');
   const refreshed = useRef(false);
+  // processing 폴링 결과 — 구독 활성화 확인(success) 또는 시간 초과(timeout)
+  const [resolved, setResolved] = useState<'success' | 'timeout' | null>(null);
 
   useEffect(() => {
-    if ((status === 'success' || status === 'processing') && !refreshed.current) {
+    if (status === 'success' && !refreshed.current) {
       refreshed.current = true;
       useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
     }
   }, [status]);
 
-  const isSuccess = status === 'success';
-  const isProcessing = status === 'processing';
+  // processing = 서버(리턴/Noti)가 아직 처리 중 — 3초 간격 최대 60초 동안
+  // 구독 상태를 폴링해 활성화가 확인되면 성공 화면으로 전환한다.
+  // (fail-open(degraded) 결과는 성공으로 치지 않는다 — 미결제 오탐 방지)
+  useEffect(() => {
+    if (status !== 'processing' || resolved) return;
+    let cancelled = false;
+    let tries = 0;
+    let timer = 0;
+    const tick = async () => {
+      tries += 1;
+      const companyId = useAuthStore.getState().user?.companyId;
+      if (companyId) {
+        const access = await checkSubscriptionAccess(companyId);
+        if (cancelled) return;
+        if (access.status === 'active' && !access.degraded) {
+          await useAuthStore.getState().refreshSubscriptionAccess().catch(() => {});
+          if (!cancelled) setResolved('success');
+          return;
+        }
+      }
+      if (tries >= 20) {
+        setResolved('timeout');
+        return;
+      }
+      timer = window.setTimeout(tick, 3000);
+    };
+    timer = window.setTimeout(tick, 3000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [status, resolved]);
+
+  const isSuccess = status === 'success' || resolved === 'success';
+  const isProcessing = status === 'processing' && !resolved;
+  const isTimeout = resolved === 'timeout';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -232,11 +145,13 @@ export function InnopayAutopayReturnPage() {
             <Loader2 className="h-12 w-12 text-[#2563eb] mx-auto mb-2 animate-spin" />
           ) : isSuccess ? (
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
+          ) : isTimeout ? (
+            <XCircle className="h-12 w-12 text-amber-500 mx-auto mb-2" />
           ) : (
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
           )}
           <CardTitle>
-            {isProcessing
+            {isProcessing || isTimeout
               ? t('billing.processingTitle')
               : isSuccess
                 ? t('billing.approvedTitle')
@@ -247,11 +162,13 @@ export function InnopayAutopayReturnPage() {
           <p className="text-sm text-slate-600 text-center">
             {isProcessing
               ? t('billing.processingDesc')
-              : isSuccess
-                ? t('billing.approvedDesc')
-                : status === 'cancel'
-                  ? t('billing.canceledDesc')
-                  : t('billing.approvalFailDesc')}
+              : isTimeout
+                ? t('billing.processingTimeout')
+                : isSuccess
+                  ? t('billing.approvedDesc')
+                  : status === 'cancel'
+                    ? t('billing.canceledDesc')
+                    : t('billing.approvalFailDesc')}
             {code && <span className="block mt-1 text-xs text-slate-400">({code})</span>}
           </p>
           <Button className="w-full rounded-[10px]" onClick={() => navigate('/admin/users')}>

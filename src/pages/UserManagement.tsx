@@ -18,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
 import { startInnopayAutopay, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
-import { Users, Shield, Edit, Crown } from 'lucide-react';
+import { Users, Shield, Edit, Crown, Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { BackButton } from '@/components/BackButton';
@@ -49,7 +49,7 @@ interface UserPermission {
 }
 
 export function UserManagement() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -527,6 +527,21 @@ export function UserManagement() {
               </DialogTitle>
               <DialogDescription>{t('subscription.addMembersDesc')}</DialogDescription>
             </DialogHeader>
+            {i18n.language !== 'ko' ? (
+              /* 이노페이는 국내(원화) 결제 전용 — 비한국어 로케일은 결제 대신 문의 안내 (SubscriptionGate 와 동일 정책) */
+              <div className="space-y-3 py-2">
+                <p className="text-sm text-slate-600 text-center">
+                  {t('subscription.overseasGateNotice')}
+                </p>
+                <a
+                  href="mailto:support@traystorage.net"
+                  className="flex items-center justify-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-[#2563eb] hover:bg-blue-100 transition-colors"
+                >
+                  <Mail className="h-4 w-4" />
+                  support@traystorage.net
+                </a>
+              </div>
+            ) : (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>{t('subscription.planSelectLabel')}</Label>
@@ -625,6 +640,9 @@ export function UserManagement() {
                   </span>
                 </div>
               </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {t('subscription.autoBillingNotice')}
+              </p>
               <div className="flex items-start gap-2">
                 <Checkbox
                   id="agree-terms"
@@ -638,6 +656,7 @@ export function UserManagement() {
               </div>
               <p className="text-xs text-slate-500">{t('subscription.weblinkNotice')}</p>
             </div>
+            )}
             <DialogFooter>
               <Button
                 variant="outline"
@@ -646,13 +665,15 @@ export function UserManagement() {
               >
                 {t('common.cancel')}
               </Button>
-              <Button
-                className="rounded-[10px] h-9"
-                disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || !customerPhone || isRequestingPayment}
-                onClick={handleSubscribe}
-              >
-                {isRequestingPayment ? t('common.loading') : t('subscription.payWeblink')}
-              </Button>
+              {i18n.language === 'ko' && (
+                <Button
+                  className="rounded-[10px] h-9"
+                  disabled={belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreedToTerms || !customerPhone || isRequestingPayment}
+                  onClick={handleSubscribe}
+                >
+                  {isRequestingPayment ? t('common.loading') : t('subscription.payWeblink')}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
