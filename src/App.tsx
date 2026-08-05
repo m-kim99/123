@@ -86,9 +86,6 @@ const TeamAnnouncements = lazy(() =>
 const Trash = lazy(() =>
   import('./pages/Trash').then((m) => ({ default: m.Trash })),
 );
-const AuditLog = lazy(() =>
-  import('./pages/AuditLog').then((m) => ({ default: m.AuditLog })),
-);
 const QnAPage = lazy(() =>
   import('./pages/QnAPage').then((m) => ({ default: m.QnAPage })),
 );
@@ -549,14 +546,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/audit-log"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AuditLog />
-                </ProtectedRoute>
-              }
-            />
+            {/* 삭제 로그는 휴지통 안 탭으로 편입됨 — 기존 링크/북마크는 휴지통으로 보낸다 */}
+            <Route path="/admin/audit-log" element={<Navigate to="/admin/trash" replace />} />
             <Route
               path="/admin/category/:categoryId"
               element={

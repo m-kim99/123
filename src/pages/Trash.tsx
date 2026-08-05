@@ -17,12 +17,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDocumentStore } from '@/store/documentStore';
+import { useAuthStore } from '@/store/authStore';
 import { BackButton } from '@/components/BackButton';
+import { DeletionLogPanel } from '@/pages/AuditLog';
 import binIcon from '@/assets/icons/bin.svg';
 
 export function Trash() {
   const { t } = useTranslation();
+  // 삭제 로그는 관리자 전용이었다(사이드바 메뉴가 isAdmin 조건) — 탭으로 옮기면서 같은 조건을 유지한다.
+  const isAdmin = useAuthStore((state) => state.user?.role === 'admin');
+  const [activeTab, setActiveTab] = useState<'trash' | 'auditLog'>('trash');
   const {
     trashedDocuments,
     fetchTrashedDocuments,
@@ -95,138 +101,171 @@ export function Trash() {
       <div className="space-y-6">
         <BackButton className="mb-4" />
 
-        <V1PageHeader
-          title={t('trash.title')}
-          sub={t('trash.subtitle')}
-          right={
-            <div className="flex gap-2">
-              <div className="relative w-48 sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder={t('trash.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-9 rounded-[10px] border-[#e5e7eb] text-[13px]"
-                />
+        {/* 문서관리 탭과 동일한 상단 가로 탭 바 — 휴지통(기본) / 삭제 로그.
+            삭제 로그는 관리자 전용이므로 팀원에게는 탭 없이 휴지통만 보인다. */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'trash' | 'auditLog')}
+          className="space-y-4"
+        >
+          {isAdmin && (
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-slate-100 p-1 rounded-xl h-auto">
+              <TabsTrigger
+                value="trash"
+                className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              >
+                {t('nav.trash')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="auditLog"
+                className="rounded-lg py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500 transition-all"
+              >
+                {t('nav.auditLog')}
+              </TabsTrigger>
+            </TabsList>
+          )}
+
+          <TabsContent value="trash" className="space-y-6 mt-0">
+            <V1PageHeader
+              title={t('trash.title')}
+              sub={t('trash.subtitle')}
+              right={
+                <div className="flex gap-2">
+                  <div className="relative w-48 sm:w-56">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder={t('trash.searchPlaceholder')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-9 rounded-[10px] border-[#e5e7eb] text-[13px]"
+                    />
+                  </div>
+                  {trashedDocuments.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-[10px] border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-[13px] font-semibold"
+                      onClick={() => setEmptyTrashDialogOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      {t('trash.emptyTrash')}
+                    </Button>
+                  )}
+                </div>
+              }
+            />
+
+            {/* V1 Warning Banner */}
+            {urgentCount > 0 && (
+              <div className="flex items-start gap-3 px-4 sm:px-[18px] py-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                  <Bell className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-amber-900">
+                    {t('trash.urgentWarning', { count: urgentCount, defaultValue: `${urgentCount}건의 문서가 7일 이내 영구 삭제 예정입니다.` })}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    {t('trash.urgentWarningDesc', { defaultValue: '복구가 필요한 문서가 있다면 지금 복구해주세요.' })}
+                  </p>
+                </div>
               </div>
-              {trashedDocuments.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 rounded-[10px] border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-[13px] font-semibold"
-                  onClick={() => setEmptyTrashDialogOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1.5" />
-                  {t('trash.emptyTrash')}
-                </Button>
+            )}
+
+            {/* V1 Table Card */}
+            <div className={v1Card}>
+              <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Trash2 className="h-[18px] w-[18px] text-[#2563eb]" />
+                  <h2 className="text-base font-semibold text-slate-900">{t('trash.deletedDocuments')}</h2>
+                  <span className="text-xs font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-full">
+                    {t('trash.totalCount', { count: filteredDocuments.length })}
+                  </span>
+                </div>
+              </div>
+
+              {isLoading ? (
+                <div className="text-center py-12"><p className="text-slate-500">{t('common.loading')}</p></div>
+              ) : filteredDocuments.length === 0 ? (
+                <div className="text-center py-12">
+                  <Trash2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">{searchQuery ? t('trash.noSearchResults') : t('trash.empty')}</p>
+                </div>
+              ) : (
+                <div>
+                  {/* Table Header (hidden on mobile) */}
+                  <div className="hidden md:grid grid-cols-[1.5fr_1fr_90px_140px] gap-3 px-5 sm:px-6 py-2.5 border-b border-slate-100 bg-slate-50/60">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.documentName')}</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.deletedAt')}</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.daysLeft', { defaultValue: '잔여' })}</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">{t('trash.actions')}</span>
+                  </div>
+
+                  {filteredDocuments.map((doc, idx) => {
+                    const daysLeft = getDaysLeft(doc.deletedAt);
+                    return (
+                      <div
+                        key={doc.id}
+                        className={`grid grid-cols-1 md:grid-cols-[1.5fr_1fr_90px_140px] gap-2 md:gap-3 px-5 sm:px-6 py-3 md:py-3 items-center ${
+                          idx < filteredDocuments.length - 1 ? 'border-b border-slate-50' : ''
+                        }`}
+                      >
+                        {/* Document Title */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
+                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                          </div>
+                          <span className="text-[13px] text-slate-500 line-through truncate">{doc.name}</span>
+                        </div>
+
+                        {/* Deleted At */}
+                        <div className="text-[11px] text-slate-400 font-mono">
+                          {doc.deletedAt ? format(new Date(doc.deletedAt), 'yyyy-MM-dd HH:mm') : '-'}
+                        </div>
+
+                        {/* D-day countdown */}
+                        <div>
+                          <span className={`text-[11px] font-semibold font-mono ${
+                            daysLeft <= 7 ? 'text-red-700' : daysLeft <= 14 ? 'text-amber-700' : 'text-slate-500'
+                          }`}>
+                            D−{daysLeft}
+                          </span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs rounded-md text-[#2563eb] border-[#e5e7eb]"
+                            onClick={() => handleRestore(doc.id)}
+                            disabled={isRestoring === doc.id}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                            {isRestoring === doc.id ? t('common.processing') : t('trash.restore')}
+                          </Button>
+                          <button
+                            className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-red-50 transition-colors"
+                            onClick={() => { setDeletingDocId(doc.id); setDeleteDialogOpen(true); }}
+                            title={t('trash.permanentDelete')}
+                          >
+                            <img src={binIcon} alt={t('trash.permanentDelete')} className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          }
-        />
+          </TabsContent>
 
-        {/* V1 Warning Banner */}
-        {urgentCount > 0 && (
-          <div className="flex items-start gap-3 px-4 sm:px-[18px] py-3.5 bg-amber-50 border border-amber-200 rounded-xl">
-            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-              <Bell className="h-4 w-4 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold text-amber-900">
-                {t('trash.urgentWarning', { count: urgentCount, defaultValue: `${urgentCount}건의 문서가 7일 이내 영구 삭제 예정입니다.` })}
-              </p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                {t('trash.urgentWarningDesc', { defaultValue: '복구가 필요한 문서가 있다면 지금 복구해주세요.' })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* V1 Table Card */}
-        <div className={v1Card}>
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trash2 className="h-[18px] w-[18px] text-[#2563eb]" />
-              <h2 className="text-base font-semibold text-slate-900">{t('trash.deletedDocuments')}</h2>
-              <span className="text-xs font-semibold text-[#2563eb] bg-[#eff6ff] px-2 py-0.5 rounded-full">
-                {t('trash.totalCount', { count: filteredDocuments.length })}
-              </span>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="text-center py-12"><p className="text-slate-500">{t('common.loading')}</p></div>
-          ) : filteredDocuments.length === 0 ? (
-            <div className="text-center py-12">
-              <Trash2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">{searchQuery ? t('trash.noSearchResults') : t('trash.empty')}</p>
-            </div>
-          ) : (
-            <div>
-              {/* Table Header (hidden on mobile) */}
-              <div className="hidden md:grid grid-cols-[1.5fr_1fr_90px_140px] gap-3 px-5 sm:px-6 py-2.5 border-b border-slate-100 bg-slate-50/60">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.documentName')}</span>
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.deletedAt')}</span>
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('trash.daysLeft', { defaultValue: '잔여' })}</span>
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">{t('trash.actions')}</span>
-              </div>
-
-              {filteredDocuments.map((doc, idx) => {
-                const daysLeft = getDaysLeft(doc.deletedAt);
-                return (
-                  <div
-                    key={doc.id}
-                    className={`grid grid-cols-1 md:grid-cols-[1.5fr_1fr_90px_140px] gap-2 md:gap-3 px-5 sm:px-6 py-3 md:py-3 items-center ${
-                      idx < filteredDocuments.length - 1 ? 'border-b border-slate-50' : ''
-                    }`}
-                  >
-                    {/* Document Title */}
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
-                        <FileText className="h-3.5 w-3.5 text-slate-400" />
-                      </div>
-                      <span className="text-[13px] text-slate-500 line-through truncate">{doc.name}</span>
-                    </div>
-
-                    {/* Deleted At */}
-                    <div className="text-[11px] text-slate-400 font-mono">
-                      {doc.deletedAt ? format(new Date(doc.deletedAt), 'yyyy-MM-dd HH:mm') : '-'}
-                    </div>
-
-                    {/* D-day countdown */}
-                    <div>
-                      <span className={`text-[11px] font-semibold font-mono ${
-                        daysLeft <= 7 ? 'text-red-700' : daysLeft <= 14 ? 'text-amber-700' : 'text-slate-500'
-                      }`}>
-                        D−{daysLeft}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2.5 text-xs rounded-md text-[#2563eb] border-[#e5e7eb]"
-                        onClick={() => handleRestore(doc.id)}
-                        disabled={isRestoring === doc.id}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                        {isRestoring === doc.id ? t('common.processing') : t('trash.restore')}
-                      </Button>
-                      <button
-                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-red-50 transition-colors"
-                        onClick={() => { setDeletingDocId(doc.id); setDeleteDialogOpen(true); }}
-                        title={t('trash.permanentDelete')}
-                      >
-                        <img src={binIcon} alt={t('trash.permanentDelete')} className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          {isAdmin && (
+            <TabsContent value="auditLog" className="mt-0">
+              <DeletionLogPanel />
+            </TabsContent>
           )}
-        </div>
+        </Tabs>
 
         {/* 영구 삭제 확인 다이얼로그 */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

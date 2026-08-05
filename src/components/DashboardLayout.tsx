@@ -35,7 +35,6 @@ import {
   HelpCircle,
   Mail,
   Phone,
-  History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -955,10 +954,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       : []),
     { name: t('nav.statistics'), href: `${basePath}/statistics`, icon: BarChart3 },
     { name: t('nav.announcements'), href: `${basePath}/announcements`, icon: Megaphone },
+    // 삭제 로그는 휴지통 페이지의 탭으로 편입됨 (관리자에게만 탭이 보인다)
     { name: t('nav.trash'), href: `${basePath}/trash`, icon: Trash2 },
-    ...(isAdmin
-      ? [{ name: t('nav.auditLog'), href: `${basePath}/audit-log`, icon: History }]
-      : []),
     { name: t('nav.qna'), href: `${basePath}/qna`, icon: HelpCircle },
     ...(isAdmin
       ? [
