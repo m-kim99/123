@@ -264,10 +264,12 @@ Netlify/Vercel은 동일 헤더를 `[[headers]]` / `headers`로 추가.
 2. `supabase secrets set R2_ACCESS_KEY=... R2_SECRET_KEY=...`
 3. `supabase functions deploy r2-presign`
 4. 로컬 `.env.local`의 `VITE_R2_*` 6개 항목 삭제 (코드에서 더 이상 참조하지 않음).
-5. 버킷 CORS: `https://traystorageconnect.com` 에 대해 `GET` 허용
-   (presigned GET은 `<account>.r2.cloudflarestorage.com` 으로 나가므로 퍼블릭 도메인과 별개다.
-   웹 다운로드가 `fetch()`이고 PdfViewer 인쇄·react-pdf도 fetch 한다 — CORS 없으면 막힌다).
-6. 마지막으로 버킷 퍼블릭 접근(r2.dev / 커스텀 도메인 공개 바인딩) 해제.
+5. 마지막으로 버킷 퍼블릭 접근(r2.dev / 커스텀 도메인 공개 바인딩) 해제.
+
+**CORS는 조치 불필요 (2026-08-05 실측).** presigned GET은 퍼블릭 도메인이 아니라
+`<account>.r2.cloudflarestorage.com` 으로 나가는데, 이 엔드포인트에 OPTIONS preflight를 보내면
+`Access-Control-Allow-Origin: *` / `Allow-Methods: GET, PUT, POST, DELETE, HEAD` 가 이미 돌아온다.
+웹 다운로드(`fetch`)·PdfViewer 인쇄·react-pdf 내부 fetch 모두 통과한다.
 
 ## 10-3. 🟠 이노페이 Noti 위조로 미결제 구독 활성화 (완화)
 
