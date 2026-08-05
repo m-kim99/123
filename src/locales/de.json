@@ -1424,5 +1424,222 @@
     "description": "Es ist ein vorübergehender Fehler aufgetreten. Wenn das Neuladen nicht hilft, wenden Sie sich bitte an Ihren Administrator.",
     "reload": "Neu laden",
     "goHome": "Zum Anfang"
+  },
+  "qnaPage": {
+    "eyebrow": "HELP CENTER",
+    "title": "FAQ",
+    "sub": "Finden Sie schnell Antworten auf Ihre Fragen zu TrayStorage Connect.",
+    "searchPlaceholder": "Nach Frage oder Stichwort suchen...",
+    "searchResult": "{{n}} Treffer für '{{query}}'",
+    "totalQuestions": "Insgesamt {{n}} Fragen",
+    "noResult": "Keine Ergebnisse gefunden.",
+    "noResultHint": "Versuchen Sie ein anderes Stichwort.",
+    "sections": {
+      "account": {
+        "title": "Konto und Anmeldung",
+        "items": [
+          {
+            "q": "Wie registriere ich mich bei TrayStorage Connect?",
+            "a": "Wählen Sie auf dem Anmeldebildschirm „Registrieren“, geben Sie E-Mail, Passwort und Namen ein und wählen Sie eine Rolle (Administrator / Teammitglied). Administratoren legen ein neues Unternehmen an, indem sie einen Firmennamen und einen Firmencode eingeben; Teammitglieder benötigen nur den vom Administrator erhaltenen Firmencode, um dem Unternehmen beizutreten. Eine Registrierung als Teammitglied ist auch ohne Firmencode möglich – in diesem Fall werden die Firmendaten nach der Anmeldung im Onboarding-Bildschirm eingegeben. Passwörter müssen die Sicherheitsprüfung (Länge und Komplexität) bestehen, und bereits registrierte E-Mail-Adressen werden für eine erneute Registrierung gesperrt."
+          },
+          {
+            "q": "Ich habe mein Passwort vergessen. Wie setze ich es zurück?",
+            "a": "Wählen Sie auf dem Anmeldebildschirm „Passwort vergessen?“ – anschließend wird ein Link zum Zurücksetzen an Ihre registrierte E-Mail-Adresse gesendet. Über den Link in der E-Mail gelangen Sie zur Seite zum Zurücksetzen des Passworts; auch das neue Passwort muss die Sicherheitsrichtlinie erfüllen."
+          },
+          {
+            "q": "Was ist der Unterschied zwischen Administrator und Teammitglied?",
+            "a": "Administratoren verwalten das gesamte Unternehmen – sie können Abteilungen erstellen, bearbeiten und löschen, Benutzer verwalten, auf Dokumente und Kategorien aller Abteilungen zugreifen, unternehmensweite Statistiken einsehen und Unternehmensankündigungen verfassen. Teammitglieder arbeiten vor allem in ihrer eigenen Abteilung: Sie sehen und laden Dokumente hoch, prüfen mit ihnen geteilte Dokumente und sehen nur Statistiken auf Abteilungsebene. Stimmt die bei der Anmeldung gewählte Rolle nicht mit der tatsächlichen Kontorolle überein, wird die Anmeldung abgelehnt."
+          },
+          {
+            "q": "Ich möchte mein Konto löschen.",
+            "a": "Das erfolgt in den Einstellungen oder auf der Seite zur Kontolöschung. Zur Bestätigung geben Sie Ihr Passwort erneut ein, stimmen allen drei Punkten zu endgültiger Datenlöschung, Nichtwiederherstellbarkeit und Karenzzeit zu und tippen die Bestätigungsformel exakt ein, um den Antrag zu stellen. Die Löschung erfolgt nicht sofort, sondern nach einer Karenzzeit; melden Sie sich während dieser Zeit erneut an, können Sie die Löschung im Warnhinweis abbrechen und Ihr Konto wiederherstellen."
+          },
+          {
+            "q": "Kann ich mich mit einem Naver-Konto anmelden?",
+            "a": "Ja, die Social-Anmeldung über Naver wird unterstützt. Liegen bei der ersten Naver-Anmeldung keine Firmendaten vor, gelangen Sie zum Onboarding-Bildschirm und geben dort Angaben wie den Firmencode ein, bevor Sie starten."
+          }
+        ]
+      },
+      "documents": {
+        "title": "Dokumentenverwaltung",
+        "items": [
+          {
+            "q": "Wie lade ich ein Dokument hoch?",
+            "a": "Drücken Sie auf der Seite „Dokumente“ (oder in einer Ablage) die Schaltfläche zum Hochladen, wählen Sie eine Datei und legen Sie anschließend die Ablage (Unterkategorie) sowie die Einstufung Vertraulich / Allgemein fest. Beim Hochladen wird der Fließtext per OCR automatisch extrahiert und später für die Inhaltssuche verwendet."
+          },
+          {
+            "q": "Welche Dateiformate kann ich hochladen?",
+            "a": "PDF ist der Standard; außerdem können JPG-, JPEG- und PNG-Bilder hochgeladen werden. Bilder werden beim Hochladen automatisch in PDF umgewandelt, sodass das Archivformat einheitlich bleibt."
+          },
+          {
+            "q": "Gibt es eine Begrenzung für die Anzahl der Dokumente?",
+            "a": "Ja, die Begrenzung hängt vom Abonnement Ihres Unternehmens ab. Der kostenlose Tarif erlaubt bis zu 100 Dokumente und 1 GB Speicher. In den Papierkorb verschobene Dokumente zählen nicht mit – nach dem Löschen entsteht also wieder Platz für neue Uploads. Höhere Tarife bieten größere oder unbegrenzte Kontingente."
+          },
+          {
+            "q": "Kann ich ein hochgeladenes Dokument ändern?",
+            "a": "Sie können die Dokumentdatei selbst durch eine neue Datei ersetzen (erneut hochladen); dabei wird auch der OCR-Text aktualisiert. Ebenso lassen sich Metadaten wie die Einstufung (Vertraulich / Allgemein) ändern."
+          },
+          {
+            "q": "Wird ein Dokument beim Löschen endgültig entfernt?",
+            "a": "Nein. Beim Löschen wandert das Dokument in den Papierkorb (Soft Delete) und kann jederzeit wiederhergestellt werden. Endgültig entfernt wird es erst, wenn Sie im Papierkorb „Dauerhaft löschen“ oder „Papierkorb leeren“ ausführen."
+          },
+          {
+            "q": "Wie stelle ich ein Dokument aus dem Papierkorb wieder her?",
+            "a": "Drücken Sie auf der Seite „Papierkorb“ beim gewünschten Dokument auf „Wiederherstellen“ – es kehrt an seinen ursprünglichen Ort zurück. Im Papierkorb können Sie einzelne Einträge auch dauerhaft löschen oder alles auf einmal leeren."
+          },
+          {
+            "q": "Wie funktioniert die Dokumentensuche?",
+            "a": "Über die Suche oben lassen sich Dokumentnamen und Kategorien durchsuchen; auch der per OCR extrahierte Fließtext ist Teil der Suche. Sie können den KI-Chatbot außerdem in natürlicher Sprache fragen, etwa „Finde Dokumente, in denen ○○ vorkommt“, oder nach Zeitraum suchen, etwa „diese Woche / letzten Monat hochgeladene Dokumente“."
+          },
+          {
+            "q": "Wie werden Dokumente mit personenbezogenen Daten behandelt?",
+            "a": "Während der OCR-Verarbeitung werden Muster personenbezogener Daten wie Personalausweisnummern, Führerscheinnummern, Passnummern, Kartennummern, Mobil- und Festnetznummern sowie E-Mail-Adressen automatisch erkannt und maskiert. Auch im Suchindex wird der maskierte Text gespeichert, wodurch das Risiko der Offenlegung sensibler Daten sinkt."
+          },
+          {
+            "q": "Was ist der Unterschied zwischen vertraulichen und allgemeinen Dokumenten?",
+            "a": "Es handelt sich um eine Einstufung, die Sie beim Hochladen festlegen. Als vertraulich markierte Dokumente werden gesondert gekennzeichnet und erfordern besondere Sorgfalt, während allgemeine Dokumente im Rahmen der Abteilungsberechtigungen eingesehen werden. Der tatsächliche Zugriff wird über Abteilungs- und Berechtigungsrichtlinien gesteuert."
+          },
+          {
+            "q": "Kann ich ein Dokument mit anderen teilen?",
+            "a": "Ja, Sie können Dokumente für bestimmte Benutzer freigeben und dabei die Berechtigung Ansehen (view) oder Herunterladen (download) vergeben. Beim Teilen wird die andere Person benachrichtigt, und erhaltene Dokumente erscheinen unter „Geteilte Dokumente“. Die Freigabe kann jederzeit wieder aufgehoben werden."
+          }
+        ]
+      },
+      "categories": {
+        "title": "Kategorien und Abteilungen",
+        "items": [
+          {
+            "q": "Wie ist die Kategoriestruktur aufgebaut?",
+            "a": "Die Hierarchie lautet Abteilung → Kategorie (Oberkategorie) → Ablage (Unterkategorie) → Dokument. Die eigentlichen Dokumente werden auf Ebene der Ablage aufbewahrt, und jede Ablage kann Eigenschaften wie NFC, Aufbewahrungsort, Verwaltungsnummer, Ablaufdatum und ein Farbetikett erhalten."
+          },
+          {
+            "q": "Wie erstelle ich eine neue Kategorie oder Ablage?",
+            "a": "Ein Administrator (oder ein berechtigter Benutzer) legt innerhalb der jeweiligen Abteilung eine Kategorie an und fügt darunter Ablagen hinzu. Beim Erstellen einer Ablage lassen sich zugleich Aufbewahrungsort, Verwaltungsnummer, Farbetikett und Ablaufregeln festlegen."
+          },
+          {
+            "q": "Was bedeutet Aufbewahrungsort?",
+            "a": "Damit ist der physische Ort gemeint, an dem das Papierdokument aufbewahrt wird (z. B. Schrank A-2, Archiv im 3. Stock). Wenn Sie den Aufbewahrungsort in der Ablage hinterlegen, finden Sie über einen NFC-Scan oder die Suche das digitale Dokument und seinen physischen Ort gemeinsam."
+          },
+          {
+            "q": "Wie füge ich eine Abteilung hinzu oder bearbeite sie?",
+            "a": "Nur Administratoren können in der Abteilungsverwaltung Abteilungen hinzufügen, bearbeiten oder löschen. Beim erstmaligen Anlegen eines Unternehmens wird automatisch eine „Standardabteilung“ erstellt, und neu beigetretene Teammitglieder werden ohne gesonderte Zuweisung automatisch der ersten Abteilung des Unternehmens zugeordnet. Die Anzahl der Abteilungen unterliegt dem Tariflimit (im kostenlosen Tarif maximal 3)."
+          },
+          {
+            "q": "Kann ich für Kategorien oder Ablagen ein Ablaufdatum festlegen?",
+            "a": "Ja. Wenn Sie auf Ebene der Ablage ein Ablaufdatum setzen, wird der Zugriff auf die Dokumente dieser Ablage nach Ablauf des Datums automatisch gesperrt (ein Ablaufdatum je Einzeldokument ist nicht nötig). 30 Tage und 7 Tage vor Ablauf werden Vorabbenachrichtigungen versendet, und auch zum Ablaufzeitpunkt erfolgt eine Benachrichtigung."
+          }
+        ]
+      },
+      "nfc": {
+        "title": "NFC-Funktionen",
+        "items": [
+          {
+            "q": "Wie registriere ich einen NFC-Tag?",
+            "a": "Wählen Sie in der Detailansicht einer Ablage „NFC-Registrierung“ und halten Sie den NFC-Tag an Ihr Gerät – die Informationen der Ablage werden auf den Tag geschrieben und damit verknüpft. Die NFC-Funktion hängt vom Tarif ab (der kostenlose Tarif enthält 0 NFC-Tags), und auf Geräten ohne NFC-Unterstützung werden die zugehörigen Schaltflächen nicht angezeigt."
+          },
+          {
+            "q": "Was passiert, wenn ich einen NFC-Tag scanne?",
+            "a": "Drücken Sie die NFC-Schaltfläche unten links, um zu scannen. Wird ein Tag erkannt, gelangen Sie automatisch zur verknüpften Ablage (oder Kategorie) und sehen dort sofort die zugehörige Dokumentliste und den Aufbewahrungsort. Tags älterer Bauart (mit gespeichertem Kategoriecode bzw. -namen) werden aus Kompatibilitätsgründen ebenfalls erkannt."
+          },
+          {
+            "q": "Wie prüfe ich, ob mein Smartphone NFC unterstützt?",
+            "a": "Die App erkennt automatisch, ob Ihr Gerät NFC unterstützt. Ist das nicht der Fall, wird die NFC-Schaltfläche gar nicht erst angezeigt. Unterstützt werden die nativen Android- und iOS-Apps sowie Web-NFC-Umgebungen; während des Scans werden Fortschritt sowie Erfolg oder Fehlschlag angezeigt."
+          },
+          {
+            "q": "Ich habe einen NFC-Tag verloren oder möchte ihn erneut verwenden.",
+            "a": "Sie können die NFC-Verknüpfung einer Ablage aufheben oder die Daten auf einen neuen Tag schreiben. Damit dieselbe UID nicht mehrfach mit verschiedenen Ablagen verknüpft wird, wird die bestehende Verknüpfung vor der Neuregistrierung entfernt."
+          }
+        ]
+      },
+      "statistics": {
+        "title": "Statistiken und Dashboard",
+        "items": [
+          {
+            "q": "Welche Informationen sehe ich im Dashboard?",
+            "a": "Sie sehen Kennzahlen wie den monatlichen Upload-Verlauf, die Dokumentverteilung nach Kategorie und Abteilung sowie Veränderungsraten. Zusätzlich erhalten Sie Schnellzugriffe auf zuletzt besuchte Ablagen und Ihre Favoriten."
+          },
+          {
+            "q": "Können Teammitglieder auch Statistiken sehen?",
+            "a": "Teammitglieder sehen nur Statistiken im Rahmen ihrer eigenen Abteilung; unternehmensweite Statistiken und Vergleiche zwischen Abteilungen sind Administratoren vorbehalten."
+          },
+          {
+            "q": "Ich möchte detailliertere Statistiken sehen.",
+            "a": "Erweiterte Statistiken sind eine Funktion der höheren Abonnements. Der kostenlose Tarif bietet Basisstatistiken; nach einem Upgrade stehen detailliertere Auswertungen zur Verfügung."
+          }
+        ]
+      },
+      "chatbot": {
+        "title": "KI-Chatbot",
+        "items": [
+          {
+            "q": "Wobei hilft der KI-Chatbot?",
+            "a": "Der Chatbot unten rechts unterstützt bei der Dokumentensuche (nach Inhalt, Zeitraum oder Abteilung), bei Hinweisen zur Bedienung, beim Abrufen des Kategorie- und Abteilungsstands sowie beim Nachschlagen von Teammitgliedern. Die Antworten enthalten Links, die direkt zum passenden Dokument oder zur passenden Seite führen."
+          },
+          {
+            "q": "Kann ich das KI-Modell wählen? Geht das auch per Sprache?",
+            "a": "Ja. Unten im Chatbot können Sie zwischen GPT-5.5 / GPT-5.4 / GPT-4.1 / GPT-4o wählen, und die Auswahl wird gespeichert. Über die Mikrofon-Schaltfläche ist Spracheingabe (STT) möglich, und im Sprachmodus können Antworten auch vorgelesen werden."
+          },
+          {
+            "q": "Gibt es Nutzungsgrenzen? Wird der Chatverlauf gespeichert?",
+            "a": "Für KI-Anfragen gilt je Tarif ein monatliches Nutzungslimit (im kostenlosen Tarif 20 pro Monat). Der Chatverlauf bleibt nur während der aktuellen Sitzung erhalten und wird beim Abmelden aus Sicherheitsgründen vollständig gelöscht."
+          }
+        ]
+      },
+      "announcements": {
+        "title": "Ankündigungen",
+        "items": [
+          {
+            "q": "Was unterscheidet Administrator- von Teamankündigungen?",
+            "a": "Administratorankündigungen richten sich an alle Mitglieder des Unternehmens, Teamankündigungen werden den Mitgliedern der jeweiligen Abteilung angezeigt. Wo sie verfasst werden, hängt von den Berechtigungen ab."
+          },
+          {
+            "q": "Wie verfasse ich eine Ankündigung?",
+            "a": "Administratoren können Unternehmensankündigungen im Menü zur Ankündigungsverwaltung erstellen, bearbeiten und löschen. Ankündigungen auf Teamebene werden im Bildschirm für Teamankündigungen verwaltet."
+          },
+          {
+            "q": "Gibt es auch eigene Ankündigungen des Anbieters?",
+            "a": "Ja. Es gibt gesonderte Systemankündigungen des Betriebsteams; Hinweise zu Wartungen, Updates und anderen dienstweiten Themen erscheinen an einer dafür vorgesehenen Stelle."
+          }
+        ]
+      },
+      "notifications": {
+        "title": "Benachrichtigungen",
+        "items": [
+          {
+            "q": "Welche Benachrichtigungen kann ich erhalten?",
+            "a": "Sie erhalten Benachrichtigungen zu Dokumentaktivitäten (erstellt, gelöscht, geteilt), zu Kategorieänderungen (erstellt, gelöscht) und zur Ablaufverwaltung (Ablage läuft bald ab / ist abgelaufen). Administratoren haben zusätzlich die Option, den Benachrichtigungsumfang auf „nur meine Abteilung“ zu beschränken."
+          },
+          {
+            "q": "Kann ich einzelne Benachrichtigungsarten ein- und ausschalten?",
+            "a": "Ja. In den Benachrichtigungseinstellungen können Sie Dokumenterstellung, -löschung und -freigabe, Kategorieänderungen und Ablaufbenachrichtigungen über einzelne Schalter separat aktivieren oder deaktivieren; Änderungen werden sofort gespeichert."
+          },
+          {
+            "q": "Wie erhalte ich Push-Benachrichtigungen?",
+            "a": "Wenn Sie sich in der mobilen App anmelden, wird die Push-Kennung automatisch registriert, sodass Sie Push-Benachrichtigungen erhalten. Damit sie ankommen, muss die Benachrichtigungsberechtigung auf Ihrem Gerät bzw. Betriebssystem erteilt sein."
+          }
+        ]
+      },
+      "etc": {
+        "title": "Sonstiges",
+        "items": [
+          {
+            "q": "Gibt es einen Dunkelmodus?",
+            "a": "Ja, helles und dunkles Design werden unterstützt und lassen sich in den Einstellungen umschalten. Die PDF-Vorschau behält auch im Dunkelmodus einen weißen Hintergrund, damit sie gut lesbar bleibt."
+          },
+          {
+            "q": "Welche Sprachen werden unterstützt?",
+            "a": "Unterstützt werden fünf Sprachen – Koreanisch, Englisch, Japanisch, Deutsch und Chinesisch –, und sowohl die Oberfläche als auch die Chatbot-Antworten richten sich nach der gewählten Sprache."
+          },
+          {
+            "q": "Wie melde ich unangemessene Inhalte?",
+            "a": "Drücken Sie beim betreffenden Dokument bzw. Beitrag auf „Melden“, wählen Sie einen Grund (Spam/Werbung, unangemessene Inhalte, pornografische Inhalte, Beleidigung/Belästigung, Gewalt, Falschinformationen, Offenlegung personenbezogener Daten, Urheberrechtsverletzung, illegale Inhalte, Sonstiges), ergänzen Sie Details und senden Sie die Meldung ab. Eingegangene Meldungen prüft das Betriebsteam und ergreift Maßnahmen; Mehrfachmeldungen zum selben Objekt werden automatisch verhindert."
+          },
+          {
+            "q": "Wie nehme ich Kontakt auf oder erhalte Hilfe?",
+            "a": "Wenn Sie über die Anfragefunktion in der App eine Anfrage einreichen, antwortet Ihnen das Betriebsteam. Bei Anmeldeproblemen wie einem gesperrten Konto oder Datenabweichungen wenden Sie sich gemäß der Hinweismeldung an den Kundenservice."
+          }
+        ]
+      }
+    }
   }
 }
