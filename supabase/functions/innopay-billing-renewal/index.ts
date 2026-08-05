@@ -14,7 +14,12 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 // [레거시 단회 구독] auto_renew=false (결제창 단회 결제 — 빌키 없음)
 //  기존 동작 유지: D-7/D-1 재결제 안내 → 만료 시 past_due 전환 → 7일마다 리마인드
 //
-// [무료 체험] trialing — D-14/7/1/만료 고지 (알림+푸시+이메일)
+// [무료 체험 + 카드 등록됨] trialing + auto_renew=true (예약 결제)
+//  체험 기간을 끝까지 쓰고, 종료일에 첫 결제 → 성공 시 scheduled_* 값으로 유료 전환
+//  (status='active', plan_id/member_count/monthly_amount 이관 후 예약값 비움).
+//  D-7 에 "체험 종료일에 첫 결제" 사전 고지. 그 전에 해지하면 청구되지 않는다.
+//
+// [무료 체험 — 카드 없음] trialing — D-14/7/1/만료 고지 (알림+푸시+이메일)
 //
 // 호출: pg_cron 등 스케줄러에서 x-cron-key 헤더와 함께 POST (CRON_SECRET 검증)
 // ============================================================
@@ -31,6 +36,28 @@ interface SubscriptionRow {
   monthly_amount: number | null;
   payment_customer_id: string | null;
   plans: { name: string } | null;
+  // 예약 결제(체험/잔여기간 종료 후 첫 결제)용 — status='trialing' 일 때만 의미 있다
+  scheduled_plan_name: string | null;
+  scheduled_member_count: number | null;
+  scheduled_monthly_amount: number | null;
+}
+
+/**
+ * 이번 청구에 적용할 플랜·금액.
+ * 체험 중 카드만 등록한 예약 결제(status='trialing')는 scheduled_* 가 청구 기준이고,
+ * 성공 시 유료 플랜으로 전환된다. 그 외(active 갱신)는 현재 값으로 청구한다.
+ */
+function billingTarget(sub: SubscriptionRow): {
+  deferred: boolean;
+  planName: string | null;
+  amount: number | null;
+} {
+  const deferred = sub.status === 'trialing';
+  return {
+    deferred,
+    planName: (deferred ? sub.scheduled_plan_name : sub.plans?.name) ?? null,
+    amount: deferred ? sub.scheduled_monthly_amount : sub.monthly_amount,
+  };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -143,17 +170,27 @@ async function trueUpSubscriptionAmount(
   supabase: SupabaseClient,
   sub: SubscriptionRow,
 ): Promise<void> {
-  const quote = await computeTrueUpAmount(supabase, sub.company_id, sub.plans?.name);
-  if (!quote || quote.amount === sub.monthly_amount) return;
-  const { error } = await supabase
-    .from('subscriptions')
-    .update({ member_count: quote.billable, monthly_amount: quote.amount })
-    .eq('id', sub.id);
+  const target = billingTarget(sub);
+  const quote = await computeTrueUpAmount(supabase, sub.company_id, target.planName);
+  if (!quote || quote.amount === target.amount) return;
+
+  // 예약 결제(체험 중)는 scheduled_* 만 갱신한다 — member_count 를 건드리면
+  // DB 쿼터 함수가 trialing 구독도 참조하므로 남은 체험 기간의 좌석 한도가 바뀐다.
+  const patch = target.deferred
+    ? { scheduled_member_count: quote.billable, scheduled_monthly_amount: quote.amount }
+    : { member_count: quote.billable, monthly_amount: quote.amount };
+
+  const { error } = await supabase.from('subscriptions').update(patch).eq('id', sub.id);
   if (error) {
     console.error('true-up 금액 반영 실패:', sub.id, error);
     return;
   }
-  sub.monthly_amount = quote.amount;
+  if (target.deferred) {
+    sub.scheduled_member_count = quote.billable;
+    sub.scheduled_monthly_amount = quote.amount;
+  } else {
+    sub.monthly_amount = quote.amount;
+  }
 }
 
 /** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */
@@ -341,8 +378,9 @@ async function chargeBillkey(
   sub: SubscriptionRow,
 ): Promise<{ ok: boolean; tid: string | null; cardCompany: string | null; cardNum: string | null; moid: string; code?: string; msg?: string }> {
   const moid = renewalMoid(sub);
-  const planName = sub.plans?.name || 'basic';
-  const amount = sub.monthly_amount;
+  const target = billingTarget(sub);
+  const planName = target.planName || 'basic';
+  const amount = target.amount;
 
   if (!sub.billing_key || !sub.payment_customer_id || !amount) {
     return { ok: false, tid: null, cardCompany: null, cardNum: null, moid, code: 'MISSING_BILLING_DATA', msg: '청구 정보 누락' };
@@ -429,13 +467,15 @@ serve(async (req) => {
     let notified = 0;
 
     // 대상: 이노페이 구독 중 active(만료 임박/만료) + past_due(리마인드)
+    //       + trialing(카드 등록된 예약 결제 — 체험 종료일에 첫 결제·유료 전환)
+    // 카드 미등록 체험은 payment_provider 가 없어 여기 걸리지 않고, 아래 체험 고지 루프가 담당한다.
     const { data: subs, error: queryError } = await supabaseAdmin
       .from('subscriptions')
       .select(
-        'id, company_id, status, current_period_end, canceled_at, auto_renew, renewal_attempts, billing_key, monthly_amount, payment_customer_id, plans(name)',
+        'id, company_id, status, current_period_end, canceled_at, auto_renew, renewal_attempts, billing_key, monthly_amount, payment_customer_id, scheduled_plan_name, scheduled_member_count, scheduled_monthly_amount, plans(name)',
       )
       .eq('payment_provider', 'innopay')
-      .in('status', ['active', 'past_due'])
+      .in('status', ['active', 'past_due', 'trialing'])
       .not('current_period_end', 'is', null);
 
     if (queryError) throw queryError;
@@ -491,6 +531,40 @@ serve(async (req) => {
             continue;
           }
 
+          // 예약 결제(체험 종료 후 첫 결제)는 전환할 플랜을 청구 '전'에 확인한다.
+          // 청구 후에 플랜을 못 찾으면 돈은 나갔는데 유료 전환이 안 되는 상태가 된다.
+          let convertPlanId: string | null = null;
+          if (sub.status === 'trialing') {
+            if (!sub.scheduled_plan_name) {
+              console.error('예약 결제 정보 없음 — 첫 결제 건너뜀:', sub.id);
+              continue;
+            }
+            const { data: schedPlan } = await supabaseAdmin
+              .from('plans')
+              .select('id')
+              .eq('name', sub.scheduled_plan_name)
+              .maybeSingle();
+            if (!schedPlan) {
+              console.error('예약 플랜 없음 — 첫 결제 건너뜀:', sub.id, sub.scheduled_plan_name);
+              continue;
+            }
+            convertPlanId = schedPlan.id as string;
+          }
+
+          /** 첫 결제 성공 시 유료 플랜으로 전환하고 예약값을 비우는 패치 (갱신이면 빈 객체) */
+          const conversionPatch = () =>
+            convertPlanId
+              ? {
+                  status: 'active',
+                  plan_id: convertPlanId,
+                  member_count: sub.scheduled_member_count,
+                  monthly_amount: sub.scheduled_monthly_amount,
+                  scheduled_plan_name: null,
+                  scheduled_member_count: null,
+                  scheduled_monthly_amount: null,
+                }
+              : {};
+
           // 멱등 가드: 이 청구주기(결정적 moid)가 이미 결제됐으면 재청구 금지 — 기간만 자가복구.
           // (직전 회차에 청구는 성공했으나 기간갱신이 유실된 경우를 안전하게 복구)
           const rmoid = renewalMoid(sub);
@@ -501,9 +575,12 @@ serve(async (req) => {
             .maybeSingle();
           if (paidAlready) {
             const healEnd = addOneMonthClamped(periodEnd);
+            // 예약 결제였다면 유료 전환까지 함께 복구한다 — 기간만 늘리면 체험 상태로
+            // 한 달이 더 열려 결제한 플랜이 영구히 적용되지 않는다.
             await supabaseAdmin
               .from('subscriptions')
               .update({
+                ...conversionPatch(),
                 current_period_start: periodEnd.toISOString(),
                 current_period_end: healEnd.toISOString(),
                 renewal_attempts: 0,
@@ -529,9 +606,14 @@ serve(async (req) => {
             const newStart = stale ? now : periodEnd;
             const newEnd = addOneMonthClamped(newStart);
 
+            // 청구된 금액 — 예약 결제(첫 결제)는 scheduled_monthly_amount 가 기준이다
+            const chargedAmount = billingTarget(sub).amount;
+            const converted = !!convertPlanId;
+
             const { error: periodErr } = await supabaseAdmin
               .from('subscriptions')
               .update({
+                ...conversionPatch(),
                 current_period_start: newStart.toISOString(),
                 current_period_end: newEnd.toISOString(),
                 renewal_attempts: 0,
@@ -548,7 +630,7 @@ serve(async (req) => {
               subscription_id: sub.id,
               order_id: charge.moid,
               payment_key: charge.tid,
-              amount: sub.monthly_amount,
+              amount: chargedAmount,
               status: 'DONE',
               method: 'CARD',
               card_company: charge.cardCompany,
@@ -560,13 +642,23 @@ serve(async (req) => {
               console.error(`payments 기록 실패 (청구완료 tid:${charge.tid}, moid:${charge.moid}):`, payInsErr);
             }
 
+            // 청구로 확보한 카드 정보는 화면 표시용으로 남긴다 (예약 등록 시점에는 알 수 없음)
+            if (charge.cardCompany || charge.cardNum) {
+              await supabaseAdmin
+                .from('subscriptions')
+                .update({ card_company: charge.cardCompany, card_number: charge.cardNum })
+                .eq('id', sub.id);
+            }
+
             notified += await notifyAdmins(
               supabaseAdmin,
               sub.company_id,
-              'subscription_renewed',
-              `✅ 정기결제가 완료되었습니다. (₩${Number(sub.monthly_amount).toLocaleString('ko-KR')} / 다음 결제일 ${formatKstDate(newEnd.toISOString())})`,
+              converted ? 'subscription_trial_converted' : 'subscription_renewed',
+              converted
+                ? `✅ 무료 체험이 종료되어 첫 정기결제가 완료되었습니다. (₩${Number(chargedAmount).toLocaleString('ko-KR')} / 다음 결제일 ${formatKstDate(newEnd.toISOString())})`
+                : `✅ 정기결제가 완료되었습니다. (₩${Number(chargedAmount).toLocaleString('ko-KR')} / 다음 결제일 ${formatKstDate(newEnd.toISOString())})`,
             );
-            results.push({ subscriptionId: sub.id, action: 'auto_renewed' });
+            results.push({ subscriptionId: sub.id, action: converted ? 'trial_converted' : 'auto_renewed' });
           } else {
             console.error('자동결제 실패:', sub.id, charge.code, charge.msg);
             if (attempts >= MAX_RENEWAL_ATTEMPTS) {
@@ -608,19 +700,23 @@ serve(async (req) => {
         // 해지 예약된 구독에는 사전 고지를 보내지 않음 (만료 시 종료 예정)
         if (sub.canceled_at) continue;
 
-        // D-7 사전 고지 (정기결제 사전 통지)
+        // D-7 사전 고지 (정기결제 사전 통지) — 예약 결제(체험 종료 후 첫 결제)도 동일하게 고지
         const daysLeft = Math.ceil(msLeft / DAY_MS);
-        if (daysLeft <= 7 && sub.monthly_amount) {
+        if (daysLeft <= 7 && billingTarget(sub).amount) {
           if (
             !(await alreadyNotified(supabaseAdmin, sub.company_id, 'subscription_autorenew_upcoming', 10))
           ) {
             // true-up: 고지 금액과 실제 청구 금액이 어긋나지 않도록 이 시점에도 미리 반영
             await trueUpSubscriptionAmount(supabaseAdmin, sub);
+            const upcomingAmount = Number(billingTarget(sub).amount).toLocaleString('ko-KR');
+            const upcomingDate = formatKstDate(sub.current_period_end!);
             notified += await notifyAdmins(
               supabaseAdmin,
               sub.company_id,
               'subscription_autorenew_upcoming',
-              `💳 ${formatKstDate(sub.current_period_end!)}에 등록된 카드로 ₩${Number(sub.monthly_amount).toLocaleString('ko-KR')}이 자동결제될 예정입니다.`,
+              sub.status === 'trialing'
+                ? `💳 무료 체험이 ${upcomingDate}에 종료되며, 같은 날 등록된 카드로 첫 결제 ₩${upcomingAmount}이 진행됩니다. 그 전에 해지하면 결제되지 않습니다.`
+                : `💳 ${upcomingDate}에 등록된 카드로 ₩${upcomingAmount}이 자동결제될 예정입니다.`,
             );
             results.push({ subscriptionId: sub.id, action: 'autorenew_notice_d7' });
           }
@@ -708,9 +804,11 @@ serve(async (req) => {
     // ── 무료 체험(trialing) 만료 사전 고지: D-14 / D-7 / D-1 / 만료 — 전 구성원 대상 ──
     // 체험 구독은 가입 트리거로 생성되어 payment_provider가 없으므로 provider 필터 없이 조회.
     // 앱스토어 3.1.1: 알림 문구에 결제 위치/버튼 지시 금지 — "구독하면 계속 이용" 수준까지만.
+    // 카드가 등록된 체험(예약 결제)은 제외한다 — 종료 시 이용이 끊기지 않고 자동 전환되므로
+    // "종료되면 접근 제한" 안내가 사실과 다르고, 위 루프의 첫 결제 사전고지가 대신 나간다.
     const { data: trials, error: trialQueryError } = await supabaseAdmin
       .from('subscriptions')
-      .select('id, company_id, status, current_period_end, canceled_at, plans(name)')
+      .select('id, company_id, status, current_period_end, canceled_at, auto_renew, billing_key, plans(name)')
       .eq('status', 'trialing')
       .not('current_period_end', 'is', null);
 
@@ -719,6 +817,8 @@ serve(async (req) => {
     for (const sub of (trials ?? []) as unknown as SubscriptionRow[]) {
       // 해지 예약된 체험은 재결제 유도 알림을 보내지 않는다
       if (sub.canceled_at) continue;
+      // 카드가 등록된 체험 = 종료일에 자동 전환 — 첫 결제 사전고지가 이미 발송된다
+      if (sub.auto_renew && sub.billing_key) continue;
       const endDate = formatKstDate(sub.current_period_end!);
       const daysLeft = Math.ceil(
         (new Date(sub.current_period_end!).getTime() - now.getTime()) / DAY_MS,

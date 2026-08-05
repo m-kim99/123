@@ -105,7 +105,7 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
   try {
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('status, current_period_end, plan:plans (feature_storage_lifecycle)')
+      .select('status, current_period_end, auto_renew, billing_key, plan:plans (feature_storage_lifecycle)')
       .eq('company_id', companyId)
       .in('status', ['active', 'trialing', 'past_due'])
       .order('created_at', { ascending: false })
@@ -128,7 +128,16 @@ export async function checkSubscriptionAccess(companyId: string): Promise<Subscr
     }
 
     if (end && new Date(end).getTime() < Date.now()) {
-      return { allowed: false, status: 'expired', currentPeriodEnd: end, canUseStorageLifecycle: false };
+      // 결제 수단이 등록된 자동갱신 구독은 만료 직후 짧게 유예한다.
+      // 청구는 하루 1회 도는 갱신 크론(KST 09:00)이 하므로, 만료 시각과 크론 사이
+      // 최대 ~24시간 동안 정상 결제 예정인 회사가 잠기는 공백이 생긴다.
+      // (체험 종료 후 첫 결제로 전환되는 구독도 이 구간을 지난다)
+      const RENEWAL_GRACE_MS = 2 * 24 * 60 * 60 * 1000;
+      const withinGrace = Date.now() - new Date(end).getTime() < RENEWAL_GRACE_MS;
+      const hasPaymentMethod = data.auto_renew === true && !!data.billing_key;
+      if (!(withinGrace && hasPaymentMethod)) {
+        return { allowed: false, status: 'expired', currentPeriodEnd: end, canUseStorageLifecycle: false };
+      }
     }
 
     return {

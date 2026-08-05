@@ -160,6 +160,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     cardCompany: string | null;
     cardNumber: string | null;
     monthlyAmount: number | null;
+    autoRenew: boolean;
+    /** 체험 종료 후 첫 결제가 예약된 경우의 예정 금액 (없으면 null) */
+    scheduledMonthlyAmount: number | null;
   } | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -517,6 +520,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         card_company?: string | null;
         card_number?: string | null;
         monthly_amount?: number | null;
+        auto_renew?: boolean | null;
+        scheduled_monthly_amount?: number | null;
       } | null;
 
       setSubscriptionInfo({
@@ -540,6 +545,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         cardCompany: subRow?.card_company ?? null,
         cardNumber: subRow?.card_number ?? null,
         monthlyAmount: subRow?.monthly_amount ?? null,
+        autoRenew: subRow?.auto_renew === true,
+        scheduledMonthlyAmount: subRow?.scheduled_monthly_amount ?? null,
       });
     } catch (err) {
       console.error('구독 정보 조회 실패:', err);
@@ -2455,7 +2462,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </div>
 
-                  {isAdmin && subscriptionInfo.status === 'active' && subscriptionInfo.planName !== 'free' && (
+                  {/* 결제 수단이 등록된 구독(유료 active + 체험 중 예약 결제)의 관리 블록.
+                      예약 결제는 아직 청구되지 않았으므로 '첫 결제일'로 표기하고 예정 금액을 보여준다 —
+                      결제 전에 해지할 수 있어야 하므로 체험 중에도 반드시 노출해야 한다. */}
+                  {isAdmin &&
+                    ((subscriptionInfo.status === 'active' && subscriptionInfo.planName !== 'free') ||
+                      (subscriptionInfo.status === 'trialing' && subscriptionInfo.autoRenew)) && (
                     <div className="p-4 bg-white border border-slate-200 rounded-lg space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-slate-800">{t('billing.billingManagement')}</h4>
@@ -2463,20 +2475,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
                             subscriptionInfo.canceledAt
                               ? 'bg-amber-100 text-amber-700'
-                              : 'bg-green-100 text-green-700'
+                              : subscriptionInfo.status === 'trialing'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
                           }`}
                         >
                           {subscriptionInfo.canceledAt
                             ? t('billing.autoRenewCanceled')
-                            : t('billing.autoRenewActive')}
+                            : subscriptionInfo.status === 'trialing'
+                              ? t('billing.autoRenewScheduled')
+                              : t('billing.autoRenewActive')}
                         </span>
                       </div>
                       <div className="space-y-2 text-sm">
-                        {subscriptionInfo.monthlyAmount != null && (
+                        {(subscriptionInfo.status === 'trialing'
+                          ? subscriptionInfo.scheduledMonthlyAmount
+                          : subscriptionInfo.monthlyAmount) != null && (
                           <div className="flex justify-between">
                             <span className="text-slate-500">{t('billing.monthlyAmountLabel')}</span>
                             <span className="font-medium">
-                              ₩{subscriptionInfo.monthlyAmount.toLocaleString()}
+                              ₩{(subscriptionInfo.status === 'trialing'
+                                ? subscriptionInfo.scheduledMonthlyAmount!
+                                : subscriptionInfo.monthlyAmount!
+                              ).toLocaleString()}
                               {t('subscription.perMonth')}
                             </span>
                           </div>
@@ -2491,7 +2512,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                         {subscriptionInfo.currentPeriodEnd && (
                           <div className="flex justify-between">
-                            <span className="text-slate-500">{t('billing.nextBillingDate')}</span>
+                            <span className="text-slate-500">
+                              {subscriptionInfo.status === 'trialing'
+                                ? t('billing.firstBillingDate')
+                                : t('billing.nextBillingDate')}
+                            </span>
                             <span className="font-medium">
                               {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString()}
                             </span>
@@ -2523,7 +2548,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           {t('billing.cancelAutoRenew')}
                         </Button>
                       )}
-                      {subscriptionInfo.paymentProvider === 'innopay' && (
+                      {/* 예약 결제(체험 중)는 아직 결제 건이 없어 환불 대상이 아니다 */}
+                      {subscriptionInfo.paymentProvider === 'innopay' &&
+                        subscriptionInfo.status === 'active' && (
                         <button
                           type="button"
                           className="w-full text-center text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"

@@ -1016,6 +1016,10 @@ model subscriptions {
   auto_renew              Boolean    @default(false)
   renewal_attempts        Int        @default(0)
   last_renewal_attempt_at DateTime?  @db.Timestamptz(6)
+  /// 체험/잔여기간 종료 후 첫 결제로 전환될 예약 정보 — 체험 중 쿼터에 영향을 주지 않도록 분리 보관
+  scheduled_plan_name      String?
+  scheduled_member_count   Int?
+  scheduled_monthly_amount Int?
   created_at              DateTime   @default(now()) @db.Timestamptz(6)
   updated_at              DateTime   @default(now()) @db.Timestamptz(6)
   companies               companies  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)

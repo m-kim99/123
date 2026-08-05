@@ -84,11 +84,13 @@ export function BillingFailPage() {
 // ============================================================
 
 export function InnopayAutopayReturnPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const status = searchParams.get('status') || 'error';
   const code = searchParams.get('code');
+  // 예약 등록(잔여 기간이 남아 지금 청구하지 않은 경우) — 첫 결제 예정일
+  const scheduledAt = searchParams.get('scheduledAt');
   const refreshed = useRef(false);
   // processing 폴링 결과 — 구독 활성화 확인(success) 또는 시간 초과(timeout)
   const [resolved, setResolved] = useState<'success' | 'timeout' | null>(null);
@@ -136,6 +138,8 @@ export function InnopayAutopayReturnPage() {
   const isSuccess = status === 'success' || resolved === 'success';
   const isProcessing = status === 'processing' && !resolved;
   const isTimeout = resolved === 'timeout';
+  // 카드만 등록되고 첫 결제가 예약된 경우 — "결제 완료"로 안내하지 않는다
+  const isScheduled = status === 'success' && !!scheduledAt && !Number.isNaN(Date.parse(scheduledAt));
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -154,7 +158,9 @@ export function InnopayAutopayReturnPage() {
             {isProcessing || isTimeout
               ? t('billing.processingTitle')
               : isSuccess
-                ? t('billing.approvedTitle')
+                ? isScheduled
+                  ? t('billing.registeredTitle')
+                  : t('billing.approvedTitle')
                 : t('billing.approvalFailTitle')}
           </CardTitle>
         </CardHeader>
@@ -165,7 +171,11 @@ export function InnopayAutopayReturnPage() {
               : isTimeout
                 ? t('billing.processingTimeout')
                 : isSuccess
-                  ? t('billing.approvedDesc')
+                  ? isScheduled
+                    ? t('billing.scheduledChargeDesc', {
+                        date: new Date(scheduledAt!).toLocaleDateString(i18n.language),
+                      })
+                    : t('billing.approvedDesc')
                   : status === 'cancel'
                     ? t('billing.canceledDesc')
                     : t('billing.approvalFailDesc')}
