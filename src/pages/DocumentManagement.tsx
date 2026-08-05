@@ -60,6 +60,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { splitFilesByType, getBaseNameWithoutExt, readFileAsDataURL } from '@/lib/uploadFiles';
 import { useDocumentStore } from '@/store/documentStore';
 import type { Subcategory } from '@/store/documentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -85,51 +86,8 @@ import { V1ModalHeader, V1ModalBody, V1ModalFooter } from '@/components/ui/v1-co
 import i18n from '@/lib/i18n';
 import { useSlowRender } from '@/lib/devSlowdown';
 
-function splitFilesByType(files: File[]) {
-  const pdfFiles: File[] = [];
-  const imageFiles: File[] = [];
 
-  files.forEach((file) => {
-    const lowerName = file.name.toLowerCase();
-    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
-    const isImage =
-      file.type.startsWith('image/') ||
-      lowerName.endsWith('.jpg') ||
-      lowerName.endsWith('.jpeg') ||
-      lowerName.endsWith('.png');
 
-    if (isPdf) {
-      pdfFiles.push(file);
-    } else if (isImage) {
-      imageFiles.push(file);
-    }
-  });
-
-  return { pdfFiles, imageFiles };
-}
-
-function getBaseNameWithoutExt(fileName: string) {
-  const lastDot = fileName.lastIndexOf('.');
-  if (lastDot === -1) return fileName;
-  return fileName.slice(0, lastDot);
-}
-
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-      } else {
-        reject(new Error(i18n.t('categoryDetail.imageDataReadError')));
-      }
-    };
-    reader.onerror = () => {
-      reject(reader.error || new Error(i18n.t('categoryDetail.imageReadError')));
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 function getExpiryStatus(expiryDate: string | null): {
   status: 'normal' | 'warning_30' | 'warning_7' | 'expired';
