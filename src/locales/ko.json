@@ -1164,7 +1164,18 @@
     "permSaved": "권한 저장 완료",
     "permSavedDesc": "{{name}}의 권한이 업데이트되었습니다.",
     "permSaveFailed": "권한 저장 실패",
-    "permSaveFailedDesc": "권한을 저장하는 중 오류가 발생했습니다."
+    "permSaveFailedDesc": "권한을 저장하는 중 오류가 발생했습니다.",
+    "dangerZone": "위험 영역",
+    "expelMember": "팀원 추방",
+    "expelDesc": "추방하면 이 팀원은 회사 데이터에 즉시 접근할 수 없게 됩니다. 계정 자체는 삭제되지 않습니다.",
+    "expelConfirmTitle": "{{name}}님을 추방하시겠습니까?",
+    "expelConfirmDesc": "추방 즉시 회사 소속이 해제되어 모든 문서·부서 접근이 차단됩니다. 이 작업은 되돌릴 수 없으며, 다시 이용하려면 재초대가 필요합니다.",
+    "expelConfirmButton": "추방",
+    "expelling": "추방 중...",
+    "expelSuccess": "팀원 추방 완료",
+    "expelSuccessDesc": "{{name}}님이 회사에서 추방되었습니다.",
+    "expelFailed": "추방 실패",
+    "expelFailedDesc": "팀원을 추방하는 중 오류가 발생했습니다."
   },
   "resetPw": {
     "invalidAccess": "유효하지 않은 접근",

@@ -1164,7 +1164,18 @@
     "permSaved": "Permissions Saved",
     "permSavedDesc": "Permissions for {{name}} have been updated.",
     "permSaveFailed": "Permission Save Failed",
-    "permSaveFailedDesc": "An error occurred while saving permissions."
+    "permSaveFailedDesc": "An error occurred while saving permissions.",
+    "dangerZone": "Danger Zone",
+    "expelMember": "Remove Member",
+    "expelDesc": "Removing this member immediately revokes their access to company data. Their account itself is not deleted.",
+    "expelConfirmTitle": "Remove {{name}}?",
+    "expelConfirmDesc": "This immediately removes them from the company, blocking all document and department access. This cannot be undone — they'll need to be re-invited to use the app again.",
+    "expelConfirmButton": "Remove",
+    "expelling": "Removing...",
+    "expelSuccess": "Member Removed",
+    "expelSuccessDesc": "{{name}} has been removed from the company.",
+    "expelFailed": "Removal Failed",
+    "expelFailedDesc": "An error occurred while removing the member."
   },
   "resetPw": {
     "invalidAccess": "Invalid Access",

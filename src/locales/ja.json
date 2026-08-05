@@ -1164,7 +1164,18 @@
     "permSaved": "権限保存完了",
     "permSavedDesc": "{{name}}の権限が更新されました。",
     "permSaveFailed": "権限保存失敗",
-    "permSaveFailedDesc": "権限の保存中にエラーが発生しました。"
+    "permSaveFailedDesc": "権限の保存中にエラーが発生しました。",
+    "dangerZone": "危険な操作",
+    "expelMember": "メンバーを追放",
+    "expelDesc": "追放すると、このメンバーは会社データに即座にアクセスできなくなります。アカウント自体は削除されません。",
+    "expelConfirmTitle": "{{name}}さんを追放しますか？",
+    "expelConfirmDesc": "追放すると即座に会社所属が解除され、すべての文書・部署へのアクセスが遮断されます。この操作は元に戻せません。再度利用するには再招待が必要です。",
+    "expelConfirmButton": "追放",
+    "expelling": "追放中...",
+    "expelSuccess": "メンバー追放完了",
+    "expelSuccessDesc": "{{name}}さんが会社から追放されました。",
+    "expelFailed": "追放失敗",
+    "expelFailedDesc": "メンバーの追放中にエラーが発生しました。"
   },
   "resetPw": {
     "invalidAccess": "無効なアクセス",

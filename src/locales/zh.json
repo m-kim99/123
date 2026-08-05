@@ -1164,7 +1164,18 @@
     "permSaved": "权限保存完成",
     "permSavedDesc": "{{name}} 的权限已更新。",
     "permSaveFailed": "权限保存失败",
-    "permSaveFailedDesc": "保存权限时发生错误。"
+    "permSaveFailedDesc": "保存权限时发生错误。",
+    "dangerZone": "危险操作",
+    "expelMember": "移除成员",
+    "expelDesc": "移除后该成员将立即无法访问公司数据。账号本身不会被删除。",
+    "expelConfirmTitle": "确定要移除{{name}}吗？",
+    "expelConfirmDesc": "移除后将立即解除其公司归属，所有文档和部门访问权限都会被阻止。此操作无法撤销，若要重新使用需重新邀请。",
+    "expelConfirmButton": "移除",
+    "expelling": "移除中...",
+    "expelSuccess": "成员移除完成",
+    "expelSuccessDesc": "{{name}}已被移出公司。",
+    "expelFailed": "移除失败",
+    "expelFailedDesc": "移除成员时发生错误。"
   },
   "resetPw": {
     "invalidAccess": "无效的访问",

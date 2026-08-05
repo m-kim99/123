@@ -2007,6 +2007,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_remove_team_member: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       auth_company_id: { Args: never; Returns: string }
       check_user_suspension: {
         Args: { check_user_id: string }

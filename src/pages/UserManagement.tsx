@@ -5,6 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { V1Chip, v1Card } from '@/components/ui/v1-components';
 import {
   Select,
@@ -18,7 +28,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
 import { startInnopayAutopay, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { toast } from '@/hooks/use-toast';
-import { Users, Shield, Edit, Crown, Mail } from 'lucide-react';
+import { Users, Shield, Edit, Crown, Mail, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { BackButton } from '@/components/BackButton';
@@ -56,6 +66,8 @@ export function UserManagement() {
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [expelDialogOpen, setExpelDialogOpen] = useState(false);
+  const [isExpelling, setIsExpelling] = useState(false);
   const { user: authUser } = useAuthStore();
   const [memberLimit, setMemberLimit] = useState<{ current: number; limit: number | null } | null>(null);
 
@@ -282,6 +294,42 @@ export function UserManagement() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // 팀원 추방: 회사/부서 소속을 해제해 즉시 접근 권한을 차단한다.
+  // (퇴사 후 본인이 회원 탈퇴를 하지 않는 경우 대비)
+  const handleExpelMember = async () => {
+    if (!selectedUser) return;
+
+    setIsExpelling(true);
+
+    try {
+      const { error } = await supabase.rpc('admin_remove_team_member', {
+        target_user_id: selectedUser.id,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t('userMgmt.expelSuccess'),
+        description: t('userMgmt.expelSuccessDesc', { name: selectedUser.name }),
+      });
+
+      setExpelDialogOpen(false);
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+      fetchMemberLimit();
+    } catch (error) {
+      console.error('팀원 추방 실패:', error);
+      toast({
+        title: t('userMgmt.expelFailed'),
+        description: t('userMgmt.expelFailedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExpelling(false);
     }
   };
 
@@ -517,6 +565,25 @@ export function UserManagement() {
               })}
             </div>
 
+            {selectedUser && selectedUser.role !== 'admin' && selectedUser.id !== authUser?.id && (
+              <div className="mt-2 p-3 rounded-lg border border-red-200 bg-red-50 flex items-center justify-between gap-3">
+                <div className="text-xs text-red-900">
+                  <p className="font-medium">{t('userMgmt.dangerZone')}</p>
+                  <p className="text-red-700 mt-0.5">{t('userMgmt.expelDesc')}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 rounded-[10px] text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700"
+                  onClick={() => setExpelDialogOpen(true)}
+                >
+                  <UserX className="h-4 w-4 mr-1.5" />
+                  {t('userMgmt.expelMember')}
+                </Button>
+              </div>
+            )}
+
             <DialogFooter>
               <Button
                 variant="outline"
@@ -536,6 +603,34 @@ export function UserManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={expelDialogOpen} onOpenChange={setExpelDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t('userMgmt.expelConfirmTitle', { name: selectedUser?.name })}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('userMgmt.expelConfirmDesc')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isExpelling}>
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleExpelMember();
+                }}
+                disabled={isExpelling}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              >
+                {isExpelling ? t('userMgmt.expelling') : t('userMgmt.expelConfirmButton')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* 플랜 업그레이드 — 인원 추가 다이얼로그 */}
         <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>

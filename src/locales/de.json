@@ -1164,7 +1164,18 @@
     "permSaved": "Berechtigungen gespeichert",
     "permSavedDesc": "Berechtigungen für {{name}} wurden aktualisiert.",
     "permSaveFailed": "Berechtigung speichern fehlgeschlagen",
-    "permSaveFailedDesc": "Beim Speichern der Berechtigungen ist ein Fehler aufgetreten."
+    "permSaveFailedDesc": "Beim Speichern der Berechtigungen ist ein Fehler aufgetreten.",
+    "dangerZone": "Gefahrenzone",
+    "expelMember": "Mitglied entfernen",
+    "expelDesc": "Nach dem Entfernen verliert dieses Mitglied sofort den Zugriff auf die Firmendaten. Das Konto selbst wird nicht gelöscht.",
+    "expelConfirmTitle": "{{name}} entfernen?",
+    "expelConfirmDesc": "Dies entfernt die Person sofort aus dem Unternehmen und sperrt den Zugriff auf alle Dokumente und Abteilungen. Dies kann nicht rückgängig gemacht werden — für eine erneute Nutzung ist eine neue Einladung erforderlich.",
+    "expelConfirmButton": "Entfernen",
+    "expelling": "Wird entfernt...",
+    "expelSuccess": "Mitglied entfernt",
+    "expelSuccessDesc": "{{name}} wurde aus dem Unternehmen entfernt.",
+    "expelFailed": "Entfernen fehlgeschlagen",
+    "expelFailedDesc": "Beim Entfernen des Mitglieds ist ein Fehler aufgetreten."
   },
   "resetPw": {
     "invalidAccess": "Ungültiger Zugriff",
