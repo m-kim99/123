@@ -1362,7 +1362,7 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
                     </p>
                     {subcategory.checkoutReason && (
                       <p className="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5 pl-5 break-all">
-                        {subcategory.checkoutReason}
+                        {t('subcategoryDetail.checkoutReason')}: {subcategory.checkoutReason}
                       </p>
                     )}
                   </div>
