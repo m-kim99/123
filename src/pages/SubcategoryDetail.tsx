@@ -564,7 +564,7 @@ export function SubcategoryDetail() {
     win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(subcategory.name)}</title>
 <style>body{font-family:-apple-system,'Malgun Gothic',sans-serif;display:flex;justify-content:center;margin:0;padding:24px}
 .label{border:1px solid #e5e7eb;border-radius:12px;padding:24px;text-align:center;width:280px}
-img{width:220px;height:220px}
+img{width:66px;height:66px}
 .name{font-size:16px;font-weight:700;margin-top:12px;word-break:break-all}
 .num{font-family:ui-monospace,monospace;font-size:13px;color:#334155;margin-top:4px}
 .loc{font-size:12px;color:#64748b;margin-top:2px}</style></head>
