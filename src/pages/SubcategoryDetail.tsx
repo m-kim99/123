@@ -37,8 +37,7 @@ import { formatDateTimeSimple } from '@/lib/utils';
 
 import { useFavoriteStore } from '@/store/favoriteStore';
 import { supabase } from '@/lib/supabase';
-import { r2Storage } from '@/lib/r2';
-import { downloadFile } from '@/lib/appBridge';
+import { useDocumentPreview } from '@/hooks/useDocumentPreview';
 import { Capacitor } from '@capacitor/core';
 import { createDocumentNotification } from '@/lib/notifications';
 import { PdfViewer } from '@/components/PdfViewer';
@@ -116,21 +115,14 @@ export function SubcategoryDetail() {
   });
   const [editNameError, setEditNameError] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState<
-    | {
-        id: string;
-        title: string;
-        url: string;
-        type: 'image' | 'pdf' | 'other';
-        ocrText?: string | null;
-        uploader?: string;
-        uploadDate?: string;
-        fileSize?: string;
-      }
-    | null
-  >(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  const {
+    previewOpen,
+    setPreviewOpen,
+    previewDoc,
+    previewLoading,
+    openPreview: handleOpenPreviewDocument,
+    downloadDocument: handleDownloadDocument,
+  } = useDocumentPreview({ context: 'subcategory_detail', i18nNamespace: 'subcategoryDetail' });
   const [imageZoom, setImageZoom] = useState(100);
   const [imageRotation, setImageRotation] = useState(0);
 
@@ -686,114 +678,6 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
       setEditDialogOpen(false);
     } finally {
       setIsSavingEdit(false);
-    }
-  };
-
-  const handleOpenPreviewDocument = async (documentId: string) => {
-    try {
-      trackEvent('document_preview_open', {
-        document_id: documentId,
-        preview_context: 'subcategory_detail',
-      });
-
-      setPreviewLoading(true);
-
-      const { data, error } = await supabase
-        .from('documents')
-        .select('file_path, title, ocr_text, uploaded_by, uploaded_at, file_size')
-        .eq('id', documentId)
-        .single();
-
-      if (error || !data) {
-        throw error || new Error('Document not found');
-      }
-
-      const signedUrl = await r2Storage.getSignedUrl(documentId);
-
-      if (!signedUrl) {
-        throw new Error('Could not generate file URL');
-      }
-
-      const lowerPath = data.file_path.toLowerCase();
-      let type: 'image' | 'pdf' | 'other' = 'other';
-
-      if (lowerPath.endsWith('.pdf')) {
-        type = 'pdf';
-      } else if (
-        lowerPath.endsWith('.jpg') ||
-        lowerPath.endsWith('.jpeg') ||
-        lowerPath.endsWith('.png')
-      ) {
-        type = 'image';
-      }
-
-      const fileSizeRaw = (data as any).file_size;
-      let fileSizeStr: string | undefined;
-      if (fileSizeRaw) {
-        const bytes = Number(fileSizeRaw);
-        if (bytes >= 1048576) fileSizeStr = `${(bytes / 1048576).toFixed(1)}MB`;
-        else if (bytes >= 1024) fileSizeStr = `${Math.round(bytes / 1024)}KB`;
-        else fileSizeStr = `${bytes}B`;
-      }
-
-      setPreviewDoc({
-        id: documentId,
-        title: data.title,
-        url: signedUrl,
-        type,
-        ocrText: (data as any).ocr_text ?? null,
-        uploader: (data as any).uploaded_by ?? undefined,
-        uploadDate: (data as any).uploaded_at ? new Date((data as any).uploaded_at).toLocaleDateString() : undefined,
-        fileSize: fileSizeStr,
-      });
-      setPreviewOpen(true);
-    } catch (error) {
-      console.error('문서 미리보기 로드 실패:', error);
-
-
-      toast({
-        title: t('subcategoryDetail.previewFailed'),
-        description: t('subcategoryDetail.previewFailedDesc'),
-        variant: 'destructive',
-      });
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  const handleDownloadDocument = async (documentId: string) => {
-    try {
-      trackEvent('document_download', {
-        document_id: documentId,
-        download_context: 'subcategory_detail',
-      });
-
-      const { data, error } = await supabase
-        .from('documents')
-        .select('file_path, title')
-        .eq('id', documentId)
-        .single();
-
-      if (error || !data) {
-        throw error || new Error('Document not found');
-      }
-
-      const signedUrl = await r2Storage.getSignedUrl(documentId);
-
-      if (!signedUrl) {
-        throw new Error('Could not generate file URL');
-      }
-
-      await downloadFile(signedUrl, data.title || 'document');
-    } catch (error) {
-      console.error('Document download failed:', error);
-
-
-      toast({
-        title: t('documentMgmt.downloadFailed'),
-        description: t('documentMgmt.downloadFailedDesc'),
-        variant: 'destructive',
-      });
     }
   };
 
