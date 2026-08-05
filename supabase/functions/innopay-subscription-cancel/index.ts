@@ -2,10 +2,12 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ============================================================
-// 이노페이 정기결제(자동갱신) 해지 예약
+// 이노페이 정기결제(자동갱신) 해지 예약 / 해지 취소
 // - 결제대행사 호출 없이 구독 상태만 변경한다.
-// - canceled_at을 기록하되 status는 active로 유지 → 현재 결제 기간까지 이용 가능.
-// - innopay-billing-renewal(cron)이 만료 시점에 canceled_at이 있으면 갱신하지 않고 종료 처리.
+// - action='cancel': canceled_at을 기록하되 status는 active로 유지 → 현재 결제 기간까지 이용 가능.
+//   innopay-billing-renewal(cron)이 만료 시점에 canceled_at이 있으면 갱신하지 않고 종료 처리.
+// - action='resume': canceled_at을 지워 해지 예약을 취소한다(빌키가 아직 살아있는 동안만 가능 —
+//   만료로 이미 status='canceled'가 된 뒤에는 되돌릴 수 없고 재구독해야 함).
 // ============================================================
 
 const corsHeaders = {
@@ -26,9 +28,9 @@ serve(async (req) => {
   }
 
   try {
-    const { subscriptionId } = await req.json();
+    const { subscriptionId, action = 'cancel' } = await req.json();
 
-    if (!subscriptionId) {
+    if (!subscriptionId || !['cancel', 'resume'].includes(action)) {
       return jsonResponse({ error: 'MISSING_PARAMS' }, 400);
     }
 
@@ -83,6 +85,25 @@ serve(async (req) => {
 
     if (!['active', 'trialing', 'past_due'].includes(subscription.status)) {
       return jsonResponse({ error: 'NOT_CANCELABLE', message: '해지할 수 없는 구독 상태입니다.' }, 400);
+    }
+
+    if (action === 'resume') {
+      if (!subscription.canceled_at) {
+        return jsonResponse({ error: 'NOT_CANCELED', message: '해지 예약된 구독이 아닙니다.' }, 400);
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('subscriptions')
+        .update({ canceled_at: null })
+        .eq('id', subscription.id);
+
+      if (updateError) throw updateError;
+
+      return jsonResponse({
+        success: true,
+        canceledAt: null,
+        currentPeriodEnd: subscription.current_period_end,
+      });
     }
 
     const canceledAt = new Date().toISOString();

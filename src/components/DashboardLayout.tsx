@@ -67,7 +67,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { savePreference } from '@/lib/preferences';
-import { startInnopayAutopay, cancelInnopaySubscription, requestSelfRefund, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
+import { startInnopayAutopay, cancelInnopaySubscription, resumeInnopaySubscription, requestSelfRefund, PLAN_PRICING, hidePaymentUi, type PaidPlanName } from '@/lib/payments';
 import { TrialCountdownBanner } from '@/components/TrialCountdownBanner';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
@@ -165,6 +165,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
 
@@ -259,6 +260,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       toast({ title: t('billing.cancelFailed'), variant: 'destructive' });
     } finally {
       setIsCanceling(false);
+    }
+  };
+
+  // 정기결제 해지 예약 취소 — 원래 구독 상태(자동갱신 유지)로 되돌림
+  const handleResumeSubscription = async () => {
+    if (!subscriptionInfo?.subscriptionId) return;
+    setIsResuming(true);
+    try {
+      const res = await resumeInnopaySubscription(subscriptionInfo.subscriptionId);
+      if (res.success) {
+        toast({ title: t('billing.resumeSuccess') });
+        setSubscriptionInfo((prev) => (prev ? { ...prev, canceledAt: null } : prev));
+      } else {
+        toast({ title: res.message || t('billing.resumeFailed'), variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('구독 해지 취소 실패:', error);
+      toast({ title: t('billing.resumeFailed'), variant: 'destructive' });
+    } finally {
+      setIsResuming(false);
     }
   };
 
@@ -2478,9 +2499,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         )}
                       </div>
                       {subscriptionInfo.canceledAt ? (
-                        <p className="text-xs text-amber-600 text-center pt-1">
-                          {t('billing.autoRenewCanceled')}
-                        </p>
+                        <div className="space-y-2 pt-1">
+                          <p className="text-xs text-amber-600 text-center">
+                            {t('billing.autoRenewCanceled')}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            disabled={isResuming}
+                            onClick={handleResumeSubscription}
+                          >
+                            {isResuming ? t('common.loading') : t('billing.resumeAutoRenew')}
+                          </Button>
+                        </div>
                       ) : (
                         <Button
                           variant="outline"

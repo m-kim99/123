@@ -153,22 +153,18 @@ export async function startInnopayAutopay(
 
 export interface CancelSubscriptionResult {
   success: boolean;
-  canceledAt?: string;
+  canceledAt?: string | null;
   currentPeriodEnd?: string;
   error?: string;
   message?: string;
 }
 
-/**
- * 정기결제(자동갱신) 해지 예약.
- * 현재 결제 기간(current_period_end)까지는 이용 가능하며, 이후 자동 갱신되지 않는다.
- * 결제대행사 호출 없이 구독 상태(canceled_at)만 변경한다.
- */
-export async function cancelInnopaySubscription(
+async function invokeSubscriptionCancel(
   subscriptionId: string,
+  action: 'cancel' | 'resume',
 ): Promise<CancelSubscriptionResult> {
   const { data, error } = await supabase.functions.invoke('innopay-subscription-cancel', {
-    body: { subscriptionId },
+    body: { subscriptionId, action },
   });
 
   if (error) {
@@ -185,6 +181,27 @@ export async function cancelInnopaySubscription(
   }
 
   return data as CancelSubscriptionResult;
+}
+
+/**
+ * 정기결제(자동갱신) 해지 예약.
+ * 현재 결제 기간(current_period_end)까지는 이용 가능하며, 이후 자동 갱신되지 않는다.
+ * 결제대행사 호출 없이 구독 상태(canceled_at)만 변경한다.
+ */
+export async function cancelInnopaySubscription(
+  subscriptionId: string,
+): Promise<CancelSubscriptionResult> {
+  return invokeSubscriptionCancel(subscriptionId, 'cancel');
+}
+
+/**
+ * 해지 예약 취소 — canceled_at을 지워 원래 구독 상태(자동갱신 유지)로 되돌린다.
+ * 현재 결제 기간이 아직 끝나지 않아 빌키가 살아있는 동안만 가능하다.
+ */
+export async function resumeInnopaySubscription(
+  subscriptionId: string,
+): Promise<CancelSubscriptionResult> {
+  return invokeSubscriptionCancel(subscriptionId, 'resume');
 }
 
 // ============================================================
