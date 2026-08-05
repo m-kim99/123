@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { V1ModalHeader, V1ModalFooter } from '@/components/ui/v1-components';
 import { Smartphone, X } from 'lucide-react';
 import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
+import { subscribeConsole, formatConsoleArg } from '@/lib/consoleTap';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
 
@@ -47,40 +48,11 @@ export function NFCRegistrationDialog({
   const isOpenRef = useRef(open);
   isOpenRef.current = open;
   useEffect(() => {
-    const originalLog = console.log;
-    const originalError = console.error;
-    const formatArg = (a: unknown): string => {
-      if (typeof a === 'string') return a;
-      if (a instanceof Error) return `${a.name}: ${a.message}`;
-      // Capacitor 브릿지 에러는 Error가 아닌 { message, code } 형태의 평범한 객체로 올 수 있음
-      if (a && typeof a === 'object' && 'message' in a) {
-        const code = 'code' in a ? ` (code: ${(a as { code: unknown }).code})` : '';
-        return `${(a as { message: unknown }).message}${code}`;
-      }
-      try {
-        const json = JSON.stringify(a);
-        // Error 등 열거 불가능한 속성만 가진 객체는 JSON.stringify가 "{}"를 반환함
-        return json && json !== '{}' ? json : String(a);
-      } catch {
-        return String(a);
-      }
-    };
-    const push = (prefix: string, args: unknown[]) => {
-      const line = `${prefix} ${args.map(formatArg).join(' ')}`;
+    return subscribeConsole((level, args) => {
+      if (!isOpenRef.current) return;
+      const line = `${level === 'error' ? '✗' : '•'} ${args.map(formatConsoleArg).join(' ')}`;
       setDebugLogs((prev) => [...prev.slice(-49), line]);
-    };
-    console.log = (...args: unknown[]) => {
-      if (isOpenRef.current) push('•', args);
-      originalLog(...args);
-    };
-    console.error = (...args: unknown[]) => {
-      if (isOpenRef.current) push('✗', args);
-      originalError(...args);
-    };
-    return () => {
-      console.log = originalLog;
-      console.error = originalError;
-    };
+    });
   }, []);
 
   useEffect(() => {
