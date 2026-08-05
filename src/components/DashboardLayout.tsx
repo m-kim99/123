@@ -168,9 +168,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
 
-  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·최대 3인, 프로: 인당 15,000원·3~20인
+  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·3인 고정, 프로: 인당 15,000원·3~20인
   const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
   const PRO_PRICE_PER_MEMBER = PLAN_PRICING.pro.pricePerMember;
+  const BASIC_MIN_MEMBERS = PLAN_PRICING.basic.minMembers;
   const BASIC_MAX_MEMBERS = PLAN_PRICING.basic.maxMembers ?? 3;
   const PRO_MIN_MEMBERS = PLAN_PRICING.pro.minMembers;
   const PRO_MAX_MEMBERS = PLAN_PRICING.pro.maxMembers ?? Infinity;
@@ -195,18 +196,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const storageBarColor = storagePct >= 100 ? 'bg-red-500' : storagePct >= 80 ? 'bg-amber-500' : 'bg-[#2563eb]';
   const storageTrackColor = storagePct >= 100 ? 'bg-red-100' : storagePct >= 80 ? 'bg-amber-100' : 'bg-blue-100';
 
-  // 구독 정보 로드 시 현재 팀원 수로 인원 기본값 설정
+  // 구독 정보 로드 시 현재 팀원 수로 인원 기본값 설정 (플랜 최소 인원 미만이면 최소값으로)
   useEffect(() => {
     if (actualMemberCount > 0) {
-      setBasicMembers(String(actualMemberCount));
-      setProMembers(String(actualMemberCount));
+      setBasicMembers(String(Math.max(actualMemberCount, BASIC_MIN_MEMBERS)));
+      setProMembers(String(Math.max(actualMemberCount, PRO_MIN_MEMBERS)));
     }
-  }, [actualMemberCount]);
+  }, [actualMemberCount, BASIC_MIN_MEMBERS, PRO_MIN_MEMBERS]);
 
   const handlePlanSubscribe = async (plan: PaidPlanName) => {
     const memberCount = plan === 'basic' ? parsedBasicMembers : parsedProMembers;
     if (!user || !basicAgreed || memberCount < 1) return;
-    if (plan === 'basic' && memberCount > BASIC_MAX_MEMBERS) return;
+    if (plan === 'basic' && (memberCount < BASIC_MIN_MEMBERS || memberCount > BASIC_MAX_MEMBERS)) return;
     if (plan === 'pro' && (memberCount < PRO_MIN_MEMBERS || memberCount > PRO_MAX_MEMBERS)) return;
     if (memberCount < actualMemberCount) return;
     if (!customerPhone) {
@@ -2137,13 +2138,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Input
                         id="basic-members"
                         type="number"
-                        min={actualMemberCount || 1}
+                        min={Math.max(BASIC_MIN_MEMBERS, actualMemberCount || 1)}
                         max={BASIC_MAX_MEMBERS}
                         value={basicMembers}
                         onChange={(e) => setBasicMembers(e.target.value)}
                       />
                       {parsedBasicMembers > BASIC_MAX_MEMBERS && (
                         <p className="text-xs text-red-500">{t('subscription.basicMemberLimit')}</p>
+                      )}
+                      {parsedBasicMembers < BASIC_MIN_MEMBERS && (
+                        <p className="text-xs text-red-500">{t('subscription.basicMemberMin')}</p>
                       )}
                       {actualMemberCount > BASIC_MAX_MEMBERS && (
                         <p className="text-xs text-red-500">
@@ -2321,7 +2325,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       disabled={
                         (selectedPlan !== 'basic' && selectedPlan !== 'pro') ||
                         (selectedPlan === 'basic' &&
-                          (parsedBasicMembers < 1 || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
+                          (parsedBasicMembers < BASIC_MIN_MEMBERS || parsedBasicMembers > BASIC_MAX_MEMBERS || basicBelowActual)) ||
                         (selectedPlan === 'pro' &&
                           (parsedProMembers < PRO_MIN_MEMBERS || parsedProMembers > PRO_MAX_MEMBERS || proBelowActual)) ||
                         !basicAgreed ||

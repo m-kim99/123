@@ -20,7 +20,7 @@ const corsHeaders = {
 
 // 유료 플랜 가격 정책 (부가세 포함) — 클라이언트 src/lib/payments.ts의 PLAN_PRICING과 동일하게 유지할 것
 const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
-  basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  basic: { pricePerMember: 6600, minMembers: 3, maxMembers: 3 }, // 베이직: 3인 고정 — 최소 결제 단위 3인 (클라 PLAN_PRICING과 동일하게 유지)
   pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 }, // 프로: 인당 15,000원, 3~20인 (클라 PLAN_PRICING과 동일하게 유지)
 };
 

@@ -109,6 +109,7 @@
     "basicMemberLimit": "Maximal 3 Mitglieder",
     "customMemberCount": "Teamgröße frei wählbar (3–20)",
     "proMemberMin": "Der Pro-Plan erfordert mindestens 3 Mitglieder.",
+    "basicMemberMin": "Der Basic-Tarif ist ab mindestens 3 Mitgliedern verfügbar.",
     "proMemberLimit": "Der Pro-Plan unterstützt bis zu 20 Mitglieder.",
     "planSelectLabel": "Tarif auswählen",
     "comingSoon": "In Vorbereitung",

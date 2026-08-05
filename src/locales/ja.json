@@ -109,6 +109,7 @@
     "basicMemberLimit": "最大3人",
     "customMemberCount": "人数指定可能（3～20人）",
     "proMemberMin": "プロプランは最低3人からご契約いただけます。",
+    "basicMemberMin": "ベーシックプランは最低3名からご利用いただけます。",
     "proMemberLimit": "プロプランは最大20人までご契約いただけます。",
     "planSelectLabel": "プラン選択",
     "comingSoon": "準備中",

@@ -56,6 +56,14 @@ export function SubscriptionGate() {
   const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
   const belowPlanMin = parsedMembers < pricing.minMembers;
 
+  // 실인원이 플랜 최소 인원보다 적으면 최소값으로 보정 (베이직·프로 모두 최소 3인)
+  useEffect(() => {
+    setMembers((m) => {
+      const n = Math.max(0, parseInt(m, 10) || 0);
+      return n < pricing.minMembers ? String(Math.max(actualMemberCount, pricing.minMembers)) : m;
+    });
+  }, [pricing.minMembers, actualMemberCount]);
+
   const handlePay = async () => {
     if (!user || belowPlanMin || exceedsPlanLimit || belowActualMembers || !agreed) return;
     if (!customerPhone) {
@@ -181,8 +189,10 @@ export function SubscriptionGate() {
                       : t('subscription.proMemberLimit')}
                   </p>
                 )}
-                {plan === 'pro' && belowPlanMin && !belowActualMembers && (
-                  <p className="text-xs text-red-500">{t('subscription.proMemberMin')}</p>
+                {belowPlanMin && !belowActualMembers && (
+                  <p className="text-xs text-red-500">
+                    {plan === 'pro' ? t('subscription.proMemberMin') : t('subscription.basicMemberMin')}
+                  </p>
                 )}
                 {belowActualMembers && !exceedsPlanLimit && (
                   <p className="text-xs text-red-500">

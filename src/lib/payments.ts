@@ -135,7 +135,7 @@ const INNOPAY_SDK_URL = 'https://pg.innopay.co.kr/tpay/js/v1/innopay.js';
 export type PaidPlanName = 'basic' | 'pro';
 
 export const PLAN_PRICING: Record<PaidPlanName, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
-  basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 }, // 베이직: 인당 6,600원, 최대 3인 (인원 추가 불가)
+  basic: { pricePerMember: 6600, minMembers: 3, maxMembers: 3 }, // 베이직: 인당 6,600원, 3인 고정 — 1인 회사도 최소 결제 단위 3인(19,800원)
   pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 }, // 프로: 인당 15,000원, 3~20인
 };
 

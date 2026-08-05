@@ -109,6 +109,7 @@
     "basicMemberLimit": "Up to 3 members",
     "customMemberCount": "Choose your team size (3–20)",
     "proMemberMin": "The Pro plan requires at least 3 members.",
+    "basicMemberMin": "The Basic plan requires a minimum of 3 members.",
     "proMemberLimit": "The Pro plan supports up to 20 members.",
     "planSelectLabel": "Select a plan",
     "comingSoon": "Coming Soon",
