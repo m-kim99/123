@@ -98,11 +98,11 @@ async function renewalQuote(
   // 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로 청구된다 (베이직·프로 모두 3인)
   const billable = Math.max(members, pricing.minMembers);
   const total = billable * pricing.pricePerMember;
-  const basis =
-    billable > members
-      ? `현재 인원 ${members}명 → 최소 결제 인원 ${billable}명`
-      : `현재 인원 ${members}명`;
-  return ` 재결제 예상 금액은 ${basis} 기준 ${pricing.pricePerMember.toLocaleString('ko-KR')}원 × ${billable}명 = ${total.toLocaleString('ko-KR')}원입니다.`;
+  // 금액을 먼저, 산출 내역은 괄호로 — 최소 인원이 적용된 경우에만 그 사실을 덧붙인다.
+  const detail =
+    `${billable}명 × ${pricing.pricePerMember.toLocaleString('ko-KR')}원` +
+    (billable > members ? ` · 최소 결제 인원 ${pricing.minMembers}명` : '');
+  return ` 재결제 예상 금액은 월 ${total.toLocaleString('ko-KR')}원입니다(${detail}).`;
 }
 
 /** 같은 회사+타입 알림이 최근 windowDays 내에 있으면 중복으로 간주 */

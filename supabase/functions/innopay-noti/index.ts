@@ -111,7 +111,22 @@ serve(async (req) => {
         return RETRY();
       }
 
-      const periodStart = new Date();
+      // 기존 구독(체험 포함) — 잔여 기간을 이어붙이기 위해 만료일까지 함께 조회
+      const { data: existingSub } = await supabaseAdmin
+        .from('subscriptions')
+        .select('id, current_period_end')
+        .eq('company_id', pending.company_id)
+        .in('status', ['active', 'trialing', 'past_due'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // 잔여 기간이 남아 있으면 그 만료일부터 유료 기간 시작 (innopay-autopay-return 과 동일 규칙)
+      const now = new Date();
+      const existingEnd = existingSub?.current_period_end
+        ? new Date(existingSub.current_period_end as string)
+        : null;
+      const periodStart = existingEnd && existingEnd.getTime() > now.getTime() ? existingEnd : now;
       const periodEnd = new Date(periodStart);
       periodEnd.setMonth(periodEnd.getMonth() + 1);
       const cardCompany = f.cardIssueName || f.cardAcquireName || null;
@@ -135,15 +150,6 @@ serve(async (req) => {
         current_period_end: periodEnd.toISOString(),
         canceled_at: null,
       };
-
-      const { data: existingSub } = await supabaseAdmin
-        .from('subscriptions')
-        .select('id')
-        .eq('company_id', pending.company_id)
-        .in('status', ['active', 'trialing', 'past_due'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
 
       let subscriptionId: string;
       if (existingSub) {

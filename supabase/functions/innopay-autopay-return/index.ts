@@ -192,7 +192,25 @@ serve(async (req) => {
       return redirect(origin, 'error');
     }
 
-    const periodStart = new Date();
+    // 기존 구독(체험 포함) — 잔여 기간을 이어붙이기 위해 만료일까지 함께 조회
+    const { data: existingSub } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, current_period_end')
+      .eq('company_id', pending.company_id)
+      .in('status', ['active', 'trialing', 'past_due'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // 체험·구독 잔여 기간이 남아 있으면 그 만료일부터 유료 기간을 시작한다.
+    // D-14/D-7 사전 고지가 "구독하면 중단 없이 계속 이용할 수 있습니다"라고 안내하므로,
+    // 미리 결제한 관리자가 남은 기간을 잃지 않도록 고지 문구와 동작을 일치시킨다.
+    // 이미 만료된 past_due 는 만료일이 과거라 자연히 '지금'부터 시작한다.
+    const now = new Date();
+    const existingEnd = existingSub?.current_period_end
+      ? new Date(existingSub.current_period_end as string)
+      : null;
+    const periodStart = existingEnd && existingEnd.getTime() > now.getTime() ? existingEnd : now;
     const periodEnd = new Date(periodStart);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
     const cardCompany = pay.appCardName || pay.acquCardName || null;
@@ -216,15 +234,6 @@ serve(async (req) => {
       current_period_end: periodEnd.toISOString(),
       canceled_at: null,
     };
-
-    const { data: existingSub } = await supabaseAdmin
-      .from('subscriptions')
-      .select('id')
-      .eq('company_id', pending.company_id)
-      .in('status', ['active', 'trialing', 'past_due'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
 
     let subscriptionId: string;
     if (existingSub) {
