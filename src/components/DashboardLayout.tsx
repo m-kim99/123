@@ -169,14 +169,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isCanceling, setIsCanceling] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
 
-  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·3인 고정, 프로: 인당 15,000원·3~20인
+  // 유료 플랜 결제 (이노페이) — 베이직: 인당 6,600원·1~3인, 프로: 인당 15,000원·3~20인
   const BASIC_PRICE_PER_MEMBER = PLAN_PRICING.basic.pricePerMember;
   const PRO_PRICE_PER_MEMBER = PLAN_PRICING.pro.pricePerMember;
   const BASIC_MIN_MEMBERS = PLAN_PRICING.basic.minMembers;
   const BASIC_MAX_MEMBERS = PLAN_PRICING.basic.maxMembers ?? 3;
   const PRO_MIN_MEMBERS = PLAN_PRICING.pro.minMembers;
   const PRO_MAX_MEMBERS = PLAN_PRICING.pro.maxMembers ?? Infinity;
-  const [basicMembers, setBasicMembers] = useState('3');
+  const [basicMembers, setBasicMembers] = useState('1');
   const [proMembers, setProMembers] = useState('5');
   const [basicAgreed, setBasicAgreed] = useState(false);
   const [isRequestingPayment, setIsRequestingPayment] = useState(false);

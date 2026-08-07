@@ -101,7 +101,7 @@
     "basicMemberLimit": "최대 3인",
     "customMemberCount": "인원수 지정 가능 (3~20인)",
     "proMemberMin": "프로 플랜은 최소 3인부터 구독할 수 있습니다.",
-    "basicMemberMin": "베이직 플랜은 최소 3인부터 구독할 수 있습니다.",
+    "basicMemberMin": "베이직 플랜은 최소 1인부터 구독할 수 있습니다.",
     "proMemberLimit": "프로 플랜은 최대 20인까지 구독할 수 있습니다.",
     "planSelectLabel": "요금제 선택",
     "contactSales": "문의하기",

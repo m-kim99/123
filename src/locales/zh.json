@@ -101,7 +101,7 @@
     "basicMemberLimit": "最多3人",
     "customMemberCount": "可指定人数（3～20人）",
     "proMemberMin": "专业版套餐至少需 3 人起订。",
-    "basicMemberMin": "基础版套餐最少需订阅 3 人。",
+    "basicMemberMin": "基础版套餐最少需订阅 1 人。",
     "proMemberLimit": "专业版套餐最多支持 20 人。",
     "planSelectLabel": "选择套餐",
     "contactSales": "联系我们",

@@ -79,7 +79,7 @@ function addOneMonthClamped(d: Date): Date {
 // minMembers: 최소 결제 인원 — 실인원이 이보다 적어도 이 인원 기준으로 청구된다.
 // maxMembers: 판매 상한 — 안내 금액 산출 시 이 인원을 넘겨 계산하지 않는다.
 const PLAN_PRICING: Record<string, { pricePerMember: number; minMembers: number; maxMembers: number | null }> = {
-  basic: { pricePerMember: 6600, minMembers: 3, maxMembers: 3 },
+  basic: { pricePerMember: 6600, minMembers: 1, maxMembers: 3 },
   pro: { pricePerMember: 15000, minMembers: 3, maxMembers: 20 },
 };
 
@@ -121,7 +121,7 @@ function makeMoid(prefix: string): string {
 /**
  * 정산 원칙(true-up): 그 시점 실제 인원(company_id 기준, 추방된 팀원은 이미 제외됨) ×
  * 인당 단가로 청구액을 계산한다. 실인원이 최소 결제 인원보다 적어도 최소 인원 기준으로
- * 청구된다(베이직·프로 모두 3인) — 인원이 줄어도 최소 인원분은 항상 청구.
+ * 청구된다(프로 3인, 베이직은 최소 단위 없음 1인) — 인원이 줄어도 최소 인원분은 항상 청구.
  * 판매 상한(프로 20인)을 넘는 인원은 상한 기준으로만 청구한다.
  */
 async function computeTrueUpAmount(

@@ -59,7 +59,7 @@ export function SubscriptionGate() {
   const belowActualMembers = actualMemberCount > 0 && parsedMembers < actualMemberCount;
   const belowPlanMin = parsedMembers < pricing.minMembers;
 
-  // 실인원이 플랜 최소 인원보다 적으면 최소값으로 보정 (베이직·프로 모두 최소 3인)
+  // 실인원이 플랜 최소 인원보다 적으면 최소값으로 보정 (프로 최소 3인, 베이직 최소 1인)
   useEffect(() => {
     setMembers((m) => {
       const n = Math.max(0, parseInt(m, 10) || 0);
