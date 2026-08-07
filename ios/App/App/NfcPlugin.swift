@@ -190,13 +190,42 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
 
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         log("didDetect (tags=\(tags.count))")
+
+        // 태그를 여러 장 겹쳐 두면 어느 것에 쓸지 알 수 없다. 그냥 first를 잡으면
+        // 엉뚱한 태그에 쓰고도 "성공"을 띄운다. 태그를 무더기로 놓고 등록하는
+        // 현장에서 실제로 일어나는 상황이라, 정상 동작하는 앱과 동일하게 재폴링한다.
+        guard tags.count == 1 else {
+            log("태그가 \(tags.count)장 감지됨 → 재폴링", error: true)
+            session.alertMessage = "태그가 여러 개 감지되었습니다. 한 장만 남기고 다시 대주세요."
+            DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(500)) {
+                session.restartPolling()
+            }
+            return
+        }
         guard let tag = tags.first else { return }
 
         session.connect(to: tag) { [weak self] error in
             guard let self = self else { return }
             if let error = error {
-                self.log("connect 실패: \(error.localizedDescription)", error: true)
-                session.invalidate(errorMessage: "연결 실패: \(error.localizedDescription)")
+                let code = (error as? NFCReaderError)?.code.rawValue ?? -1
+                self.log("connect 실패 code=\(code): \(error.localizedDescription)", error: true)
+                // 여기서 직접 settle해야 한다. invalidate만 하고 didInvalidateWithError에
+                // 맡기면 iOS가 프로그램적 invalidate를 code 200(사용자 취소)으로 보고해
+                // 하드웨어 연결 실패가 "사용자가 취소했습니다"로 오진된다.
+                let reason = "태그 연결 실패: \(error.localizedDescription) (code \(code))"
+                DispatchQueue.main.async {
+                    guard session === self.tagSession else {
+                        self.log("현재 세션이 아닌 connect 실패 → 무시")
+                        return
+                    }
+                    if self.isWriting {
+                        self.settleWrite(rejecting: reason)
+                    } else if self.isScanning {
+                        self.isScanning = false
+                        self.notifyListeners("nfcScanCancelled", data: ["reason": reason])
+                    }
+                    session.invalidate(errorMessage: "태그 연결에 실패했습니다. 다시 대주세요.")
+                }
                 return
             }
             let uid = self.uidString(from: tag)
@@ -337,6 +366,15 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
                       alert: "이 태그는 쓰기를 지원하지 않습니다.")
             return
         }
+        // UID는 쓰기 성공 시 DB 키로 등록된다. 빈 값이면 태그만 쓰고 DB에는
+        // 식별 불가능한 행이 남으므로, 태그를 건드리기 전에 멈춘다.
+        guard !uid.isEmpty else {
+            log("[write] UID를 읽을 수 없는 태그", error: true)
+            failWrite(session: session,
+                      reject: "Tag UID is unavailable",
+                      alert: "태그를 식별할 수 없습니다. 다른 태그를 사용해 주세요.")
+            return
+        }
 
         ndefTag.queryNDEFStatus { [weak self] status, capacity, error in
             guard let self = self else { return }
@@ -388,9 +426,19 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
                 if let error = error {
                     let code = (error as? NFCReaderError)?.code.rawValue ?? -1
                     self.log("[write] writeNDEF 실패 code=\(code): \(error.localizedDescription)", error: true)
+                    // 용량 사전검사를 없앤 대신, CoreNFC가 직접 보고하는 코드를 사람이
+                    // 읽고 행동할 수 있는 문구로 옮긴다. 사전검사와 달리 실제 쓰기 시도
+                    // 후에만 나오므로 오탐이 없다.
+                    let alert: String
+                    switch code {
+                    case 402: alert = "태그 용량이 부족합니다. 용량이 더 큰 태그를 사용해 주세요."
+                    case 400: alert = "이 태그는 읽기 전용이라 쓸 수 없습니다."
+                    case 100, 102: alert = "태그가 떨어졌습니다. 쓰기가 끝날 때까지 태그를 대고 계세요."
+                    default:  alert = "쓰기에 실패했습니다."
+                    }
                     self.failWrite(session: session,
                                    reject: "NFC write failed: \(error.localizedDescription) (code \(code))",
-                                   alert: "쓰기에 실패했습니다.")
+                                   alert: alert)
                     return
                 }
                 self.log("[write] 쓰기 성공 uid=\(uid)")
