@@ -6,6 +6,7 @@ CAP_PLUGIN(NfcPlugin, "NfcPlugin",
     CAP_PLUGIN_METHOD(isEnabled, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(startScan, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(stopScan, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(cancelWrite, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(writeUrl, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(writeData, CAPPluginReturnPromise);
 )

@@ -27,6 +27,7 @@ const writeUrl = vi.fn();
 const startScan = vi.fn();
 const stopScan = vi.fn();
 const addListener = vi.fn();
+const cancelWrite = vi.fn();
 
 vi.mock('@/plugins/nfc-plugin', () => ({
   NfcPlugin: {
@@ -34,11 +35,12 @@ vi.mock('@/plugins/nfc-plugin', () => ({
     startScan: (...args: unknown[]) => startScan(...args),
     stopScan: (...args: unknown[]) => stopScan(...args),
     addListener: (...args: unknown[]) => addListener(...args),
+    cancelWrite: (...args: unknown[]) => cancelWrite(...args),
     isEnabled: () => Promise.resolve({ enabled: true }),
   },
 }));
 
-import { writeNFCUrl, getNfcMode, setNfcMode } from '@/lib/nfc';
+import { writeNFCUrl, getNfcMode, setNfcMode, cancelNFCWrite } from '@/lib/nfc';
 
 const SUBCATEGORY_ID = '3f8b1c22-9a41-4d7e-b0f5-2c6de91a4477';
 const TAG_UID = '047364B2767281';
@@ -58,6 +60,7 @@ beforeEach(() => {
   getPlatform.mockReturnValue('ios');
   writeUrl.mockResolvedValue({ uid: TAG_UID });
   stopScan.mockResolvedValue(undefined);
+  cancelWrite.mockResolvedValue(undefined);
   setNfcMode('idle');
 });
 
@@ -142,5 +145,49 @@ describe('writeNFCUrl - 실패 경로', () => {
     await assertion;
 
     vi.useRealTimers();
+  });
+});
+
+describe('쓰기 해제 (cancelWrite)', () => {
+  /**
+   * 안드로이드는 시스템 시트가 없고 foreground dispatch가 계속 켜져 있어서,
+   * 쓰기가 걸린 채로 남으면 사용자가 나중에 아무 태그나 대는 순간 그 태그가
+   * 이전 대상의 URL로 덮어써진다. JS 쪽 Promise만 끊는 것으로는 부족하다.
+   */
+  it('타임아웃으로 JS가 포기할 때 네이티브 쓰기도 반드시 해제한다', async () => {
+    vi.useFakeTimers();
+    writeUrl.mockReturnValue(new Promise(() => {}));
+
+    const promise = writeNFCUrl(SUBCATEGORY_ID, '3층 서고');
+    const assertion = expect(promise).rejects.toThrow('NFC 쓰기 응답 시간 초과');
+
+    await vi.advanceTimersByTimeAsync(70_000);
+    await assertion;
+
+    expect(cancelWrite).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('쓰기가 실패했을 때도 네이티브 쓰기를 해제한다', async () => {
+    writeUrl.mockRejectedValue(new Error('NFC write failed: Tag was lost'));
+
+    await expect(writeNFCUrl(SUBCATEGORY_ID, '3층 서고')).rejects.toThrow();
+    expect(cancelWrite).toHaveBeenCalledTimes(1);
+  });
+
+  it('쓰기가 성공하면 해제를 부르지 않는다', async () => {
+    await writeNFCUrl(SUBCATEGORY_ID, '3층 서고');
+    expect(cancelWrite).not.toHaveBeenCalled();
+  });
+
+  it('해제가 실패해도 예외를 밖으로 던지지 않는다 (다이얼로그 닫기를 막으면 안 됨)', async () => {
+    cancelWrite.mockRejectedValue(new Error('UNIMPLEMENTED'));
+    await expect(cancelNFCWrite()).resolves.toBeUndefined();
+  });
+
+  it('브라우저에서는 네이티브 해제를 시도하지 않는다', async () => {
+    isNativePlatform.mockReturnValue(false);
+    await cancelNFCWrite();
+    expect(cancelWrite).not.toHaveBeenCalled();
   });
 });

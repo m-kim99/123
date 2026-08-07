@@ -1414,12 +1414,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     } catch (err) {
       console.error('Failed to register NFC tag for subcategory:', err);
 
-
       toast({
         title: 'NFC 태그 등록 실패',
         description: '세부 스토리지의 NFC 정보를 업데이트하지 못했습니다.',
         variant: 'destructive',
       });
+
+      // 여기서 삼키면 호출자가 성공으로 오해해 "등록 완료"를 띄운다.
+      // 태그에는 써졌는데 DB는 비어 있는 상태를 사용자가 성공으로 아는 것이
+      // 가장 나쁜 결말이라, 반드시 호출자에게 실패를 전달한다.
+      throw new Error('NFC 정보를 저장하지 못했습니다. 태그에는 기록되었으니 다시 등록해 주세요.');
     }
   },
 

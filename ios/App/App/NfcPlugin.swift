@@ -67,6 +67,20 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
         call.resolve()
     }
 
+    /// 대기 중인 쓰기를 취소한다. 다이얼로그를 닫거나 타임아웃이 났을 때 호출한다.
+    /// iOS는 시스템 시트가 모달이라 안드로이드만큼 급하진 않지만, JS가 플랫폼 분기 없이
+    /// 같은 경로를 쓰도록 두 플랫폼에 모두 둔다.
+    @objc func cancelWrite(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if self.isWriting || self.pendingWriteCall != nil {
+                self.log("cancelWrite → 대기 중이던 쓰기 해제")
+                self.settleWrite(rejecting: "NFC 쓰기가 취소되었습니다.")
+                self.tagSession?.invalidate()
+            }
+            call.resolve()
+        }
+    }
+
     @objc func writeUrl(_ call: CAPPluginCall) {
         guard let url = call.getString("url"), !url.isEmpty else {
             call.reject("url parameter is required"); return

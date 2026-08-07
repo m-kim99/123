@@ -28,12 +28,17 @@ public class NfcPlugin extends Plugin {
 
     private NfcAdapter nfcAdapter;
 
-    private boolean isScanning = false;
-    private boolean isWriting = false;
+    // 아래 상태는 두 스레드에서 만진다.
+    // 플러그인 메서드(writeUrl/startScan/...)는 Capacitor의 "CapacitorPlugins" 스레드에서,
+    // handleNfcIntent는 메인 스레드에서 실행된다. volatile이 없으면 메인 스레드가
+    // isWriting=true를 보면서 pendingWriteUrl은 아직 null로 보는 조합이 가능해,
+    // 멀쩡한 태그에 "No data to write"를 뱉는다.
+    private volatile boolean isScanning = false;
+    private volatile boolean isWriting = false;
     private boolean isForegroundDispatchEnabled = false;
-    private String pendingWriteUrl = null;
-    private String pendingWriteData = null;
-    private PluginCall pendingWriteCall = null;
+    private volatile String pendingWriteUrl = null;
+    private volatile String pendingWriteData = null;
+    private volatile PluginCall pendingWriteCall = null;
 
     @Override
     public void load() {
@@ -62,10 +67,33 @@ public class NfcPlugin extends Plugin {
             call.reject("NFC is disabled. Please enable NFC in device settings.");
             return;
         }
+        // 쓰기가 걸려 있는 채로 스캔을 시작하면 handleNfcIntent가 isWriting을 먼저 보므로
+        // 다음 태그가 읽히는 대신 덮어써진다. 매달린 쓰기를 명시적으로 끝낸다(iOS와 동일).
+        if (isWriting) {
+            Log.w(TAG, "startScan called while a write was pending → cancelling that write");
+            settleWrite("쓰기 도중 새 스캔이 시작되었습니다.");
+        }
         isScanning = true;
         enableForegroundDispatch();
         Log.d(TAG, "NFC scan started");
         call.resolve();
+    }
+
+    /**
+     * 대기 중인 쓰기를 취소한다. 다이얼로그를 닫거나 타임아웃이 났을 때 반드시 불러야 한다.
+     * 이걸 안 부르면 isWriting이 true인 채로 남아, 사용자가 나중에 아무 태그나 대는 순간
+     * 그 태그가 조용히 덮어써진다.
+     */
+    @PluginMethod
+    public void cancelWrite(PluginCall call) {
+        // handleNfcIntent와 같은 스레드(메인)에서 정리해야 경합이 없다.
+        getActivity().runOnUiThread(() -> {
+            if (isWriting || pendingWriteCall != null) {
+                Log.d(TAG, "cancelWrite → 대기 중이던 쓰기 해제");
+                settleWrite("NFC 쓰기가 취소되었습니다.");
+            }
+            call.resolve();
+        });
     }
 
     @PluginMethod
@@ -91,6 +119,9 @@ public class NfcPlugin extends Plugin {
             call.reject("NFC is disabled");
             return;
         }
+        // 앞선 쓰기가 아직 매달려 있으면 여기서 끝낸다. 덮어쓰기만 하면 그 call은
+        // 영원히 settle되지 않고 bridge에 저장된 채로 샌다.
+        if (isWriting) settleWrite("새 쓰기 요청으로 대체되었습니다.");
         pendingWriteUrl = url;
         pendingWriteData = null;
         pendingWriteCall = call;
@@ -117,6 +148,7 @@ public class NfcPlugin extends Plugin {
             call.reject("NFC is disabled");
             return;
         }
+        if (isWriting) settleWrite("새 쓰기 요청으로 대체되었습니다.");
         pendingWriteData = data;
         pendingWriteUrl = null;
         pendingWriteCall = call;
@@ -226,6 +258,15 @@ public class NfcPlugin extends Plugin {
     // ─────────────────────────────────────────────
 
     private void performWrite(Tag tag, String uid) {
+        // UID는 쓰기 성공 시 DB 키로 등록된다. 빈 값이면 태그만 쓰고 DB에는 식별
+        // 불가능한 행이 남으므로, 태그를 건드리기 전에 멈춘다(iOS와 동일).
+        if (uid == null || uid.isEmpty()) {
+            Log.e(TAG, "Tag UID unavailable → aborting write");
+            settleWrite("태그를 식별할 수 없습니다. 다른 태그를 사용해 주세요.");
+            return;
+        }
+        Ndef ndef = null;
+        NdefFormatable formatable = null;
         try {
             NdefMessage message;
             if (pendingWriteUrl != null) {
@@ -236,65 +277,97 @@ public class NfcPlugin extends Plugin {
                 NdefRecord mimeRecord = NdefRecord.createMime("application/json", payload);
                 message = new NdefMessage(new NdefRecord[]{ mimeRecord });
             } else {
-                if (pendingWriteCall != null) pendingWriteCall.reject("No data to write");
-                resetWriteState();
+                settleWrite("쓸 데이터가 없습니다.");
                 return;
             }
 
-            Ndef ndef = Ndef.get(tag);
+            ndef = Ndef.get(tag);
             if (ndef == null) {
-                NdefFormatable formatable = NdefFormatable.get(tag);
+                // 공장 출하 상태의 미포맷 태그. 포맷하면서 쓴다.
+                // (iOS CoreNFC에는 이에 해당하는 API가 없어 안드로이드만 가능하다)
+                formatable = NdefFormatable.get(tag);
                 if (formatable == null) {
-                    if (pendingWriteCall != null) pendingWriteCall.reject("Tag does not support NDEF format");
-                    resetWriteState();
+                    settleWrite("이 태그는 NDEF 쓰기를 지원하지 않습니다.");
                     return;
                 }
                 formatable.connect();
                 formatable.format(message);
-                formatable.close();
 
                 Log.d(TAG, "NFC format+write successful");
-                if (pendingWriteCall != null) pendingWriteCall.resolve(uidResult(uid));
-                resetWriteState();
+                settleWriteSuccess(uid);
                 return;
             }
 
             ndef.connect();
 
             if (!ndef.isWritable()) {
-                if (pendingWriteCall != null) pendingWriteCall.reject("NFC tag is read-only");
-                ndef.close();
-                resetWriteState();
+                settleWrite("이 태그는 읽기 전용이라 쓸 수 없습니다.");
                 return;
             }
-            if (ndef.getMaxSize() < message.toByteArray().length) {
-                if (pendingWriteCall != null) pendingWriteCall.reject("NFC tag storage is insufficient");
-                ndef.close();
-                resetWriteState();
+            int needed = message.toByteArray().length;
+            if (ndef.getMaxSize() < needed) {
+                settleWrite("태그 용량이 부족합니다. 용량이 더 큰 태그를 사용해 주세요. ("
+                        + needed + " > " + ndef.getMaxSize() + ")");
                 return;
             }
 
             ndef.writeNdefMessage(message);
-            ndef.close();
 
             Log.d(TAG, "NFC write successful");
-            if (pendingWriteCall != null) pendingWriteCall.resolve(uidResult(uid));
+            settleWriteSuccess(uid);
 
         } catch (Exception e) {
+            // 쓰기 도중 태그가 떨어지면 IOException이 난다. 사용자가 바로 고칠 수 있는
+            // 상황이므로 원문 대신 행동 가능한 안내를 준다(원문은 로그에 남는다).
             Log.e(TAG, "NFC write failed", e);
-            if (pendingWriteCall != null) {
-                pendingWriteCall.reject("NFC write failed: " + e.getMessage());
-            }
+            String reason = (e instanceof java.io.IOException)
+                    ? "태그가 떨어졌습니다. 쓰기가 끝날 때까지 태그를 대고 계세요."
+                    : "쓰기에 실패했습니다: " + e.getMessage();
+            settleWrite(reason);
         } finally {
+            // 예외가 나도 태그 연결을 반드시 끊는다. 안 그러면 다음 재시도가 막힌다.
+            closeQuietly(ndef);
+            closeQuietly(formatable);
             resetWriteState();
         }
     }
 
-    /** 쓰기 성공 시 태그 UID를 함께 돌려준다 (iOS와 동일한 반환 형태). */
-    private JSObject uidResult(String uid) {
+    private void closeQuietly(android.nfc.tech.TagTechnology tech) {
+        if (tech == null) return;
+        try {
+            tech.close();
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to close tag technology", e);
+        }
+    }
+
+    /** 쓰기 call을 정확히 한 번만 settle한다. bridge에 저장된 call도 함께 해제한다. */
+    private void settleWriteSuccess(String uid) {
+        PluginCall call = pendingWriteCall;
+        resetWriteState();
+        if (call == null) return;
         JSObject ret = new JSObject();
         ret.put("uid", uid);
-        return ret;
+        call.resolve(ret);
+        releaseWriteCall(call);
+    }
+
+    /** 쓰기 call을 정확히 한 번만 settle한다. bridge에 저장된 call도 함께 해제한다. */
+    private void settleWrite(String rejectMessage) {
+        PluginCall call = pendingWriteCall;
+        resetWriteState();
+        if (call == null) return;
+        call.reject(rejectMessage);
+        releaseWriteCall(call);
+    }
+
+    /** setKeepAlive(true)로 bridge에 저장된 call을 해제한다. 안 하면 호출마다 하나씩 샌다. */
+    private void releaseWriteCall(PluginCall call) {
+        if (bridge != null) {
+            call.release(bridge);
+        } else {
+            call.setKeepAlive(false);
+        }
     }
 
     private void resetWriteState() {

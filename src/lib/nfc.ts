@@ -143,6 +143,22 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
 }
  
 /**
+ * 대기 중인 네이티브 쓰기를 해제한다. 등록 다이얼로그를 닫을 때 반드시 호출할 것.
+ *
+ * 호출하지 않으면 네이티브는 쓰기가 걸린 상태로 남는다. 안드로이드는 시스템 시트가
+ * 없고 foreground dispatch가 계속 켜져 있으므로, 사용자가 나중에 아무 태그나 대는
+ * 순간 그 태그가 이전 대상의 URL로 조용히 덮어써진다.
+ */
+export async function cancelNFCWrite(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await NfcPlugin.cancelWrite();
+  } catch (e) {
+    console.warn('NFC 쓰기 취소 실패:', e);
+  }
+}
+
+/**
  * NFC 태그에 URL 쓰기 (iOS/Android 호환)
  * 현재 구현에서는 세부 스토리지(subcategory)를 대상으로 동작하며,
  * 태그에 /nfc-redirect?subcategoryId=... 형태의 URL을 기록합니다.
@@ -188,6 +204,11 @@ export async function writeNFCUrl(
         ]);
         console.log('NFC URL 쓰기 완료 (네이티브), uid:', uid);
         return uid;
+      } catch (e) {
+        // 타임아웃으로 JS Promise만 끊어지면 네이티브는 여전히 쓰기가 걸린 상태다.
+        // 그대로 두면 이후 사용자가 아무 태그나 대는 순간 덮어써진다(특히 안드로이드).
+        await cancelNFCWrite();
+        throw e;
       } finally {
         clearTimeout(writeTimeout);
       }

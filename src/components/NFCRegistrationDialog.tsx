@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { V1ModalHeader, V1ModalFooter } from '@/components/ui/v1-components';
 import { Smartphone, X } from 'lucide-react';
-import { readNFCUid, writeNFCUrl, setNfcMode } from '@/lib/nfc';
+import { readNFCUid, writeNFCUrl, setNfcMode, cancelNFCWrite } from '@/lib/nfc';
 import { subscribeConsole, formatConsoleArg } from '@/lib/consoleTap';
 import { useDocumentStore } from '@/store/documentStore';
 import { toast } from '@/hooks/use-toast';
@@ -61,7 +61,12 @@ export function NFCRegistrationDialog({
 
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
+      // 네이티브에 걸려 있는 쓰기를 반드시 해제한다. 안 하면 안드로이드는 쓰기가
+      // 걸린 채로 남아, 이후 사용자가 아무 태그나 대는 순간 그 태그를 덮어쓴다.
+      void cancelNFCWrite();
       setError(null);
+      // 쓰기 도중 닫았다가 다시 열면 버튼이 "스캔 중"으로 잠긴 채 남았다.
+      setIsRegistering(false);
       setNfcMode('idle'); // 닫기 시 모드 초기화
     }
     onOpenChange(nextOpen);
