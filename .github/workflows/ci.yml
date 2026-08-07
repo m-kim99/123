@@ -1,0 +1,37 @@
+name: CI
+
+# 배포는 Supabase GitHub 연동(마이그레이션·엣지 함수)과 Netlify(프론트엔드)가 맡는다.
+# 이 워크플로는 배포하지 않고 검사만 한다 — 그래서 저장소 시크릿이 필요 없다.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      # bun.lock 도 커밋돼 있지만 실제 의존성 트리는 package-lock.json 기준이다.
+      - run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      # payments.test.ts 가 클라이언트와 결제 엣지 함수 3곳의 PLAN_PRICING 일치를 검사한다.
+      # 어긋난 채로 배포되면 innopay-payment-confirm 이 금액 불일치로 정상 결제를 거부한다.
+      # (연동 배포는 이 검사를 기다려주지 않으므로, 실패하면 알림을 보고 바로 되돌릴 것)
+      - name: test
+        run: npm test
