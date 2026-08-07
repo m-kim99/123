@@ -72,13 +72,12 @@ export function NFCRegistrationDialog({
       setIsRegistering(true);
       setError(null);
 
-      const uid = await readNFCUid();
-
-      // Mode B: scan-only — UID만 전달하고 종료
+      // Mode B: scan-only — 쓰기 없이 UID만 전달하고 종료
       if (onUidScanned) {
+        const scannedUid = await readNFCUid();
         setNfcMode('idle');
         onOpenChange(false);
-        await onUidScanned(uid);
+        await onUidScanned(scannedUid);
         return;
       }
 
@@ -87,14 +86,17 @@ export function NFCRegistrationDialog({
         throw new Error('categoryId is required when onUidScanned is not provided');
       }
 
-      // 이미 다른 서브카테고리에 등록된 UID인지 확인 후 해제
+      // NFC 태그에 URL 쓰기. 쓰기 세션이 UID까지 함께 돌려주므로 태그를 한 번만 대면 된다.
+      // (예전에는 UID를 얻으려고 읽기 세션을 먼저 열어 두 번 대야 했고, iOS는 그
+      //  세션 전환 구간에서 쓰기가 실패했다)
+      const uid = await writeNFCUrl(categoryId, categoryName);
+
+      // 이미 다른 서브카테고리에 등록된 UID인지 확인 후 해제.
+      // 물리적 쓰기가 성공한 뒤에 DB를 건드리므로, 쓰기 실패 시 DB가 오염되지 않는다.
       const existing = await findSubcategoryByNfcUid(uid);
       if (existing && existing.id !== categoryId) {
         await clearNfcByUid(uid, categoryId);
       }
-
-      // NFC 태그에 URL 쓰기
-      await writeNFCUrl(categoryId, categoryName);
 
       // subcategories 테이블에 UID 등록
       await registerNfcTag(categoryId, uid);

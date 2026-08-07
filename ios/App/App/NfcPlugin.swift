@@ -341,13 +341,15 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
         ndefTag.queryNDEFStatus { [weak self] status, capacity, error in
             guard let self = self else { return }
 
-            // ★ error를 status/capacity보다 먼저 검사한다.
-            // 에러가 나면 status와 capacity는 의미 없는 값(실무상 capacity=0)이라,
-            // 아래 용량 비교가 항상 참이 되어 멀쩡한 태그에 "용량 부족"을 뱉었다.
+            // ★ error를 status보다 먼저 검사한다.
+            // 에러가 나면 status/capacity는 의미 없는 값이라 그대로 분기하면 오진한다.
             if let error = error {
-                self.log("[write] queryNDEFStatus 실패: \(error.localizedDescription)", error: true)
+                // 숫자 코드를 반드시 함께 남긴다. "Stack Error" 한 문자열이
+                // 100(태그 이탈)/400(읽기전용)/401(쓰기실패)를 전부 가리켜 구분이 안 됐다.
+                let code = (error as? NFCReaderError)?.code.rawValue ?? -1
+                self.log("[write] queryNDEFStatus 실패 code=\(code): \(error.localizedDescription)", error: true)
                 self.failWrite(session: session,
-                               reject: "NDEF status query failed: \(error.localizedDescription)",
+                               reject: "NDEF status query failed: \(error.localizedDescription) (code \(code))",
                                alert: "태그 상태를 확인할 수 없습니다. 다시 시도해 주세요.")
                 return
             }
@@ -377,25 +379,26 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
                 return
             }
 
-            guard message.length <= capacity else {
-                self.failWrite(session: session,
-                               reject: "NFC tag storage is insufficient (\(message.length) > \(capacity))",
-                               alert: "태그 용량이 부족합니다.")
-                return
-            }
-
+            // 용량 사전 검사는 두지 않는다.
+            // NFCTagReaderSession의 .miFare 태그에서 capacity가 0/무의미한 값으로 오면
+            // 멀쩡한 태그에 "용량 부족"을 뱉는다(실제로 겪은 증상). 진짜 용량 초과는
+            // CoreNFC가 writeNDEF에서 tagSizeTooSmall(402)로 직접 보고한다.
+            // capacity 값 자체는 위 로그에 남으므로 진단 정보는 잃지 않는다.
             ndefTag.writeNDEF(message) { error in
                 if let error = error {
-                    self.log("[write] writeNDEF 실패: \(error.localizedDescription)", error: true)
+                    let code = (error as? NFCReaderError)?.code.rawValue ?? -1
+                    self.log("[write] writeNDEF 실패 code=\(code): \(error.localizedDescription)", error: true)
                     self.failWrite(session: session,
-                                   reject: "NFC write failed: \(error.localizedDescription)",
+                                   reject: "NFC write failed: \(error.localizedDescription) (code \(code))",
                                    alert: "쓰기에 실패했습니다.")
                     return
                 }
-                self.log("[write] 쓰기 성공")
+                self.log("[write] 쓰기 성공 uid=\(uid)")
                 DispatchQueue.main.async {
                     session.alertMessage = "쓰기 완료!"
-                    self.settleWriteSuccess()
+                    // 읽기 세션 없이 UID를 함께 반환한다. 이 세션이 이미 태그를 물고 있으므로
+                    // UID를 얻자고 별도 읽기 세션을 먼저 여는 2세션 구조가 필요 없다.
+                    self.settleWriteSuccess(uid: uid)
                     session.invalidate()
                 }
             }
@@ -430,14 +433,14 @@ public class NfcPlugin: CAPPlugin, NFCTagReaderSessionDelegate {
     }
 
     /// 쓰기 call을 정확히 한 번만 settle한다. main 큐에서만 호출할 것.
-    private func settleWriteSuccess() {
+    private func settleWriteSuccess(uid: String) {
         guard let call = pendingWriteCall else {
             log("settleWriteSuccess: 이미 settle된 call → 무시", error: true)
             resetWriteState()
             return
         }
         resetWriteState()
-        call.resolve()
+        call.resolve(["uid": uid])
         bridge?.releaseCall(call)
     }
 

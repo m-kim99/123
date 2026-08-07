@@ -254,7 +254,7 @@ public class NfcPlugin extends Plugin {
                 formatable.close();
 
                 Log.d(TAG, "NFC format+write successful");
-                if (pendingWriteCall != null) pendingWriteCall.resolve();
+                if (pendingWriteCall != null) pendingWriteCall.resolve(uidResult(uid));
                 resetWriteState();
                 return;
             }
@@ -278,7 +278,7 @@ public class NfcPlugin extends Plugin {
             ndef.close();
 
             Log.d(TAG, "NFC write successful");
-            if (pendingWriteCall != null) pendingWriteCall.resolve();
+            if (pendingWriteCall != null) pendingWriteCall.resolve(uidResult(uid));
 
         } catch (Exception e) {
             Log.e(TAG, "NFC write failed", e);
@@ -288,6 +288,13 @@ public class NfcPlugin extends Plugin {
         } finally {
             resetWriteState();
         }
+    }
+
+    /** 쓰기 성공 시 태그 UID를 함께 돌려준다 (iOS와 동일한 반환 형태). */
+    private JSObject uidResult(String uid) {
+        JSObject ret = new JSObject();
+        ret.put("uid", uid);
+        return ret;
     }
 
     private void resetWriteState() {

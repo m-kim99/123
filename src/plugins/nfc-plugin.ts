@@ -15,7 +15,8 @@ export interface NfcPluginDefinition {
   isEnabled(): Promise<{ enabled: boolean }>;
   startScan(): Promise<void>;
   stopScan(): Promise<void>;
-  writeUrl(options: { url: string }): Promise<void>;
+  /** 쓰기 세션이 물고 있는 태그의 UID를 함께 반환한다 (UID만 얻으려고 별도 읽기 세션을 열 필요 없음). */
+  writeUrl(options: { url: string }): Promise<{ uid: string }>;
   writeData(options: { data: string }): Promise<void>;
   addListener(
     event: 'nfcTagDetected',

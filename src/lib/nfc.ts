@@ -146,36 +146,38 @@ export async function writeNFCTag(data: NFCTagData): Promise<boolean> {
  * NFC 태그에 URL 쓰기 (iOS/Android 호환)
  * 현재 구현에서는 세부 스토리지(subcategory)를 대상으로 동작하며,
  * 태그에 /nfc-redirect?subcategoryId=... 형태의 URL을 기록합니다.
+ *
+ * 네이티브에서는 **1세션 1탭**이다. 쓰기 세션이 이미 태그를 물고 있으므로 UID를 함께
+ * 돌려받는다. 예전에는 UID를 얻으려고 readNFCUid()로 읽기 세션을 먼저 열고 끝낸 뒤
+ * 쓰기 세션을 다시 여는 2세션 구조였는데, iOS는 그 세션 전환 구간에서
+ * systemIsBusy(203)·teardown 경합·백그라운드 태그리딩에 노출돼 쓰기가 실패했다.
+ *
  * @param subcategoryId 세부 스토리지 ID
  * @param _subcategoryName 세부 스토리지 이름 (현재는 로깅/확장용으로만 사용)
- * @returns 쓰기 성공 여부
+ * @returns 쓰기에 성공한 태그의 UID
  */
 export async function writeNFCUrl(
   subcategoryId: string,
   _subcategoryName: string
-): Promise<boolean> {
-  // 주의: setNfcMode('writing')은 호출자(readNFCUid)에서 이미 설정됨
-  // 여기서는 모드를 변경하지 않음 - 전체 등록 플로우가 끝날 때까지 'writing' 유지
+): Promise<string> {
   if (!isNFCSupported()) {
     throw new Error('NFC가 지원되지 않습니다.');
   }
 
   const uploadUrl = `${window.location.origin}/nfc-redirect?subcategoryId=${subcategoryId}`;
+  // 쓰기 직후 iOS 백그라운드 태그리딩이 방금 쓴 URL로 유니버설 링크를 걸어
+  // 화면을 튕기지 않도록 등록 플로우 내내 'writing'을 유지한다.
+  // 'idle' 복귀 책임은 호출자(proceedNfcRegistration)에 있다.
+  setNfcMode('writing');
   console.log('NFC URL 쓰기 시작:', uploadUrl, '| platform:', Capacitor.getPlatform(), '| isNative:', Capacitor.isNativePlatform());
 
   try {
     if (Capacitor.isNativePlatform()) {
-      if (Capacitor.getPlatform() === 'ios') {
-        // readNFCUid()의 읽기 세션을 invalidate()한 직후 바로 새 NFCTagReaderSession을
-        // begin()하면 iOS가 리더 하드웨어를 아직 정리 중이라 "태그를 가까이 대세요" 시트가
-        // 뜨지 않는 경우가 있음. 쓰기 세션 시작 전 짧게 대기해 회피.
-        await new Promise((r) => setTimeout(r, 600));
-      }
       // 네이티브 세션이 응답 없이 죽어도 Promise가 영구 pending되지 않도록 안전장치
       // (iOS 세션 자체 타임아웃 60초보다 길게 잡아 네이티브 오류 메시지가 우선하도록)
       let writeTimeout: ReturnType<typeof setTimeout> | undefined;
       try {
-        await Promise.race([
+        const { uid } = await Promise.race([
           NfcPlugin.writeUrl({ url: uploadUrl }),
           new Promise<never>((_, timeoutReject) => {
             writeTimeout = setTimeout(
@@ -184,21 +186,23 @@ export async function writeNFCUrl(
             );
           }),
         ]);
+        console.log('NFC URL 쓰기 완료 (네이티브), uid:', uid);
+        return uid;
       } finally {
         clearTimeout(writeTimeout);
       }
-      console.log('NFC URL 쓰기 완료 (네이티브)');
-      return true;
     }
 
-    // 브라우저: Web NFC API
+    // 브라우저: Web NFC의 write()는 태그 UID를 주지 않으므로 스캔으로 UID를 먼저 얻는다.
+    // (네이티브와 달리 여기서는 2단계가 불가피하다)
+    const uid = await readNFCUid();
     // @ts-expect-error Web NFC(NDEFReader)는 TypeScript 표준 타입에 없다
     const ndef = new NDEFReader();
     await ndef.write({
       records: [{ recordType: 'url', data: uploadUrl }],
     });
-    console.log('NFC URL 쓰기 완료 (Web NFC)');
-    return true;
+    console.log('NFC URL 쓰기 완료 (Web NFC), uid:', uid);
+    return uid;
   } catch (error) {
     console.error('NFC URL 쓰기 오류:', error);
     if (error instanceof Error) {
