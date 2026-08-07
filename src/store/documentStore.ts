@@ -1754,7 +1754,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     } catch (err) {
       console.error('Failed to upload document to Supabase:', err);
 
-      // 플랜 제한으로 차단된 경우: 로컬 폴백 추가 없이 중단
+      // 플랜 제한으로 차단된 경우: 사전 체크에서 이미 안내했으면 토스트를 중복하지 않는다
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes('LIMIT_REACHED')) {
         // DB 트리거에서 차단된 경우(사전 체크 통과 후)에는 여기서 안내
@@ -1765,31 +1765,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
             variant: 'destructive',
           });
         }
-        return;
+        throw err;
       }
 
-      // Supabase 실패 시 로컬 상태에만 추가 (mock 데이터처럼)
-      const newDocument: Document = {
-        id: `temp_${Date.now()}`,
-        name: document.name,
-        categoryId: document.categoryId,
-        parentCategoryId: document.parentCategoryId,
-        subcategoryId: document.subcategoryId,
-        departmentId: document.departmentId,
-        uploadDate: new Date().toISOString().split('T')[0],
-        uploader: document.uploader,
-        classified: document.classified ?? false,
-        ocrText: document.ocrText || null,
-      };
-      set((state) => ({
-        documents: [newDocument, ...state.documents],
-        error: 'Failed to upload document to Supabase, added locally only',
-      }));
-      toast({
-        title: '문서 업로드 실패',
-        description: '네트워크 오류로 인해 문서를 로컬에만 추가했습니다.',
-        variant: 'destructive',
-      });
+      // 실패를 호출자에게 그대로 전파한다.
+      // (과거에는 temp_ 로컬 행을 추가하고 정상 반환했는데, 호출부 6곳이 모두
+      //  이를 성공으로 집계해 "N개 업로드 성공"을 띄웠고 직후 fetchDocuments 가
+      //  가짜 행을 덮어써 문서가 조용히 사라졌다. temp_ id 는 후속 작업
+      //  (미리보기·삭제·공유)도 전부 실패한다 — addParentCategory:907 와 동일한 판단.)
+      set({ error: 'Failed to upload document to Supabase' });
+      throw err;
     }
   },
 
@@ -1905,15 +1890,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       } catch {
       }
 
-      // 스토리지에서 파일 삭제
-      if (filePath) {
-        const { error: storageError } = await r2Storage.remove([filePath]);
-
-        if (storageError) {
-          console.error('Failed to delete file from storage:', storageError);
-        }
-      }
-
       // 완전삭제 전에 감사 이력부터 기록 (문서 행이 사라져도 조회 가능하도록)
       await logStorageEvent({
         documentTitle: docTitle,
@@ -1928,6 +1904,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      // DB 행이 사라진 뒤에야 스토리지 파일 삭제.
+      // (반대 순서였을 때는 DB 삭제가 실패하면 파일 없는 행이 휴지통에 남아
+      //  restoreDocument 로 복원됐고, 미리보기·다운로드가 전부 404 였다.)
+      if (filePath) {
+        const { error: storageError } = await r2Storage.remove([filePath]);
+
+        if (storageError) {
+          console.error('Failed to delete file from storage:', storageError);
+        }
+      }
 
       set((state) => ({
         trashedDocuments: state.trashedDocuments.filter((doc) => doc.id !== id),
@@ -1975,14 +1962,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .not('deleted_at', 'is', null);
 
       if (trashedDocs && trashedDocs.length > 0) {
-        // 스토리지에서 파일들 삭제
         const filePaths = trashedDocs
           .map((doc: any) => doc.file_path)
           .filter((path: string | null) => path);
-
-        if (filePaths.length > 0) {
-          await r2Storage.remove(filePaths);
-        }
 
         // 완전삭제 전에 문서별 감사 이력부터 기록 (문서 행이 사라져도 조회 가능하도록)
         await Promise.all(
@@ -1995,12 +1977,24 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           )
         );
 
-        // DB에서 영구 삭제
+        // DB에서 영구 삭제 — 실패하면 파일을 지우지 않고 중단한다.
+        // (반대 순서였을 때는 한 번의 삭제 실패로 휴지통 전체가 파일 없는
+        //  복원 가능 상태로 남았다.)
         const docIds = trashedDocs.map((doc: any) => doc.id);
-        await supabase
+        const { error: deleteError } = await supabase
           .from('documents')
           .delete()
           .in('id', docIds);
+
+        if (deleteError) throw deleteError;
+
+        // DB 행이 사라진 뒤에야 스토리지 파일 삭제
+        if (filePaths.length > 0) {
+          const { error: storageError } = await r2Storage.remove(filePaths);
+          if (storageError) {
+            console.error('Failed to delete files from storage:', storageError);
+          }
+        }
       }
 
       set({ trashedDocuments: [] });
@@ -2081,22 +2075,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         throw new Error('문서를 찾을 수 없습니다.');
       }
 
-      // 2. 새 경로부터 확정 (여기서 실패해도 기존 파일은 그대로 남도록 삭제보다 앞에 둔다)
+      // 2. 새 경로 확정 (항상 새 UUID 이므로 기존 키와 충돌하지 않는다)
       const newFilePath = buildStoragePath(file.name);
 
-      // 3. 기존 파일 삭제
-      if (existingDoc.file_path) {
-        await r2Storage.remove([existingDoc.file_path]);
-      }
-
-      // 4. 새 파일 업로드
+      // 3. 새 파일 업로드 — 기존 파일 삭제보다 반드시 앞에 둔다.
+      //    (과거에는 삭제가 먼저였고, 업로드가 실패하면 DB 의 file_path 는
+      //     이미 지워진 객체를 가리켜 문서가 영구히 열람 불가가 됐다.)
       const { error: storageError } = await r2Storage.upload(newFilePath, file);
 
       if (storageError) {
         throw storageError;
       }
 
-      // 5. DB 업데이트
+      // 4. DB 업데이트
       const updateData: any = {
         file_path: newFilePath,
         file_size: file.size,
@@ -2111,7 +2102,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         .update(updateData)
         .eq('id', id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        // DB 반영 실패 — 방금 올린 새 객체를 정리하고 기존 파일은 그대로 둔다
+        await r2Storage.remove([newFilePath]);
+        throw updateError;
+      }
+
+      // 5. DB 가 새 경로를 가리킨 뒤에야 기존 파일 삭제.
+      //    실패해도 진행한다 — 고아 객체는 복구 가능하지만 없는 파일은 복구 불가.
+      if (existingDoc.file_path && existingDoc.file_path !== newFilePath) {
+        const { error: removeError } = await r2Storage.remove([existingDoc.file_path]);
+        if (removeError) {
+          console.error('기존 파일 삭제 실패(고아 객체로 잔존):', removeError);
+        }
+      }
 
       // 6. 로컬 상태 업데이트
       set((state) => ({

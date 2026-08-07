@@ -28,6 +28,8 @@ export function useDocumentUpload() {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   // PII 마스킹된 파일 맵 (원본 파일 인덱스 → 마스킹된 파일)
   const [maskedFiles, setMaskedFiles] = useState<Map<number, File>>(new Map());
+  // PII 가 감지됐는데 마스킹에 실패한 파일 인덱스 — 원본을 올리면 개인정보가 그대로 노출되므로 업로드를 막는다
+  const [maskFailedIndexes, setMaskFailedIndexes] = useState<Set<number>>(new Set());
   const [uploadSelection, setUploadSelection] = useState({
     departmentId: '',
     parentCategoryId: '',
@@ -110,6 +112,7 @@ export function useDocumentUpload() {
     try {
       let allOcrText = '';
       const newMaskedFiles = new Map<number, File>();
+      const newMaskFailedIndexes = new Set<number>();
 
       // PDF 파일 OCR 추출
       for (let i = 0; i < pdfFiles.length; i++) {
@@ -125,7 +128,7 @@ export function useDocumentUpload() {
         });
 
         try {
-          const { text: ocrText, maskedFile } = await extractText(file, (progress) => {
+          const { text: ocrText, maskedFile, maskFailed } = await extractText(file, (progress) => {
             setOcrPageProgress({
               page: progress.page ?? 0,
               totalPages: progress.totalPages ?? 0,
@@ -134,6 +137,9 @@ export function useDocumentUpload() {
           });
           if (maskedFile) {
             newMaskedFiles.set(index, maskedFile);
+          }
+          if (maskFailed) {
+            newMaskFailedIndexes.add(index);
           }
           if (pdfFiles.length === 1 && imageFiles.length === 0) {
             allOcrText = ocrText;
@@ -177,7 +183,7 @@ export function useDocumentUpload() {
           });
 
           try {
-            const { text: ocrText, maskedFile } = await extractText(file, (progress) => {
+            const { text: ocrText, maskedFile, maskFailed } = await extractText(file, (progress) => {
               setOcrPageProgress({
                 page: i + 1,
                 totalPages: imageFiles.length,
@@ -186,6 +192,9 @@ export function useDocumentUpload() {
             });
             if (maskedFile) {
               newMaskedFiles.set(index, maskedFile);
+            }
+            if (maskFailed) {
+              newMaskFailedIndexes.add(index);
             }
             if (ocrText && ocrText.trim()) {
               ocrParts.push({
@@ -230,6 +239,7 @@ export function useDocumentUpload() {
 
       // 마스킹된 파일 맵 저장
       setMaskedFiles(newMaskedFiles);
+      setMaskFailedIndexes(newMaskFailedIndexes);
       setExtractedOcrText(allOcrText);
       setOcrTextPreview(allOcrText);
       setUploadStatus('OCR 추출 완료. 업로드 버튼을 눌러 업로드하세요.');
@@ -262,6 +272,18 @@ export function useDocumentUpload() {
       }
     },
   });
+
+  /**
+   * 업로드할 실제 파일을 고른다.
+   * PII 가 감지됐는데 마스킹에 실패한 파일은 원본에 개인정보가 그대로 남아 있으므로
+   * 폴백하지 않고 throw 한다 — 호출부의 try/catch 가 해당 파일을 실패 처리한다.
+   */
+  const resolveFileToUpload = (index: number, file: File): File => {
+    if (maskFailedIndexes.has(index)) {
+      throw new Error(t('documentMgmt.maskFailedBlocked'));
+    }
+    return maskedFiles.get(index) || file;
+  };
 
   const handleUpload = async () => {
     if (!uploadFiles.length || !uploadSelection.subcategoryId || !user) {
@@ -345,7 +367,7 @@ export function useDocumentUpload() {
             : '';
 
           // 마스킹된 파일이 있으면 그것을 업로드
-          const fileToUpload = maskedFiles.get(index) || file;
+          const fileToUpload = resolveFileToUpload(index, file);
 
           await uploadDocument({
             name: title,
@@ -422,8 +444,8 @@ export function useDocumentUpload() {
           for (let i = 0; i < imageFiles.length; i++) {
             const file = imageFiles[i];
             const index = uploadFiles.indexOf(file);
-            // 마스킹된 파일이 있으면 그것을 사용
-            const fileForPdf = maskedFiles.get(index) || file;
+            // 마스킹된 파일이 있으면 그것을 사용 (마스킹 실패 시 throw → 묶음 전체 실패)
+            const fileForPdf = resolveFileToUpload(index, file);
             const imgData = await readFileAsDataURL(fileForPdf);
 
             if (i > 0) {
@@ -512,7 +534,7 @@ export function useDocumentUpload() {
               : getBaseNameWithoutExt(file.name);
 
           // 마스킹된 파일이 있으면 그것을 업로드
-          const fileToUpload = maskedFiles.get(index) || file;
+          const fileToUpload = resolveFileToUpload(index, file);
 
           await uploadDocument({
             name: imageTitle,

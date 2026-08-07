@@ -1040,7 +1040,17 @@ export function DocumentManagement() {
     setIsExtractingReplaceOcr(true);
 
     try {
-      const { text: ocrText, maskedFile } = await extractText(file);
+      const { text: ocrText, maskedFile, maskFailed } = await extractText(file);
+      // PII 마스킹 실패 — 원본에 개인정보가 그대로 남아 있으므로 교체 대상에서 제외한다
+      if (maskFailed) {
+        setReplaceFile(null);
+        setReplaceOcrText('');
+        toast({
+          title: t('documentMgmt.maskFailedBlocked'),
+          variant: 'destructive',
+        });
+        return;
+      }
       setReplaceOcrText(ocrText);
       // 마스킹된 파일이 있으면 그것을 교체 파일로 사용
       if (maskedFile) {

@@ -629,6 +629,7 @@
     "ocrComplete": "OCR Extraction Complete",
     "ocrCharCount": "{{count}} characters extracted.",
     "ocrFailed": "OCR Extraction Failed",
+    "maskFailedBlocked": "Upload cancelled because personal-information masking failed. The original still contains personal information and cannot be uploaded.",
     "ocrFailedFileUploaded": "Text extraction failed. File will still be uploaded.",
     "selectFile": "Please select a file",
     "selectFileFirst": "Please select a replacement file first.",

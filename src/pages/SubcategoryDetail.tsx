@@ -378,6 +378,19 @@ export function SubcategoryDetail() {
           percent: progress.percent,
         });
       });
+      // PII 마스킹 실패 — 원본에 개인정보가 그대로 남아 있으므로 선택 자체를 취소한다
+      if (result.maskFailed) {
+        setSelectedFile(null);
+        setUploadMaskedFile(null);
+        setUploadOcrText('');
+        setUploadOcrPreview('');
+        setUploadOcrStatus('');
+        toast({
+          title: t('documentMgmt.maskFailedBlocked'),
+          variant: 'destructive',
+        });
+        return;
+      }
       setUploadOcrText(result.text);
       setUploadOcrPreview(result.text);
       setUploadMaskedFile(result.maskedFile);
@@ -799,6 +812,17 @@ ${subcategory.storageLocation ? `<div class="loc">${esc(subcategory.storageLocat
 
     try {
       const result = await extractText(file);
+      // PII 마스킹 실패 — 원본에 개인정보가 그대로 남아 있으므로 교체 대상에서 제외한다
+      if (result.maskFailed) {
+        setReplaceFile(null);
+        setReplaceMaskedFile(null);
+        setReplaceOcrText('');
+        toast({
+          title: t('documentMgmt.maskFailedBlocked'),
+          variant: 'destructive',
+        });
+        return;
+      }
       setReplaceOcrText(result.text);
       setReplaceMaskedFile(result.maskedFile);
       toast({

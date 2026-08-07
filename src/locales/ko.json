@@ -628,6 +628,7 @@
     "ocrComplete": "OCR 추출 완료",
     "ocrCharCount": "{{count}}자가 추출되었습니다.",
     "ocrFailed": "OCR 추출 실패",
+    "maskFailedBlocked": "개인정보 마스킹에 실패하여 업로드가 취소되었습니다. 원본에 개인정보가 남아 있어 업로드할 수 없습니다.",
     "ocrFailedFileUploaded": "텍스트 추출에 실패했습니다. 파일은 업로드됩니다.",
     "selectFile": "파일을 선택해주세요",
     "selectFileFirst": "교체할 파일을 먼저 선택해주세요.",

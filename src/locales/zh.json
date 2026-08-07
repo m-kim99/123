@@ -628,6 +628,7 @@
     "ocrComplete": "OCR 提取完成",
     "ocrCharCount": "已提取 {{count}} 个字符。",
     "ocrFailed": "OCR 提取失败",
+    "maskFailedBlocked": "个人信息遮蔽失败，已取消上传。原件仍包含个人信息，无法上传。",
     "ocrFailedFileUploaded": "文字提取失败，文件仍会上传。",
     "selectFile": "请选择文件",
     "selectFileFirst": "请先选择要替换的文件。",

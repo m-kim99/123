@@ -628,6 +628,7 @@
     "ocrComplete": "OCR抽出完了",
     "ocrCharCount": "{{count}}文字が抽出されました。",
     "ocrFailed": "OCR抽出失敗",
+    "maskFailedBlocked": "個人情報のマスキングに失敗したためアップロードを中止しました。原本に個人情報が残っているためアップロードできません。",
     "ocrFailedFileUploaded": "テキスト抽出に失敗しました。ファイルはアップロードされます。",
     "selectFile": "ファイルを選択してください",
     "selectFileFirst": "置き換えるファイルをまず選択してください。",

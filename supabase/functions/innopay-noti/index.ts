@@ -248,7 +248,7 @@ serve(async (req) => {
       // moid + tid 후보 중 하나가 동시에 일치해야만 반영 (위조 요청 차단 조건 유지)
       const { data: pay } = await supabaseAdmin
         .from('payments')
-        .select('id, amount, cancel_amount, status')
+        .select('id, amount, cancel_amount, status, cancel_num')
         .in('payment_key', tidCandidates)
         .eq('order_id', moid)
         .maybeSingle();
@@ -257,7 +257,16 @@ serve(async (req) => {
         console.warn('innopay-noti: 일치하는 결제 없음 — 무시', { tidCandidates, moid });
         return OK();
       }
-      if (pay.status === 'CANCELED') return OK(); // 멱등 (재전송 대비)
+      if (pay.status === 'CANCELED') return OK(); // 멱등 (전액 취소 후 재전송)
+
+      // 부분 취소는 status 가 'DONE' 으로 남으므로 위 가드로는 재전송을 못 거른다.
+      // 이노페이 취소번호(cancelNum)로 "이 취소 건"의 멱등성을 따로 확인한다 —
+      // 없으면 재전송마다 cancel_amount 가 누적돼 부분취소가 전액취소로 부풀어 오른다.
+      const cancelNum = f.cancelNum || '';
+      if (cancelNum && pay.cancel_num === cancelNum) {
+        console.log('innopay-noti: 이미 반영된 취소번호 — 무시', { cancelNum, moid });
+        return OK();
+      }
 
       const paidAmount = Number(pay.amount);
       const reported = Number(f.cancelApprovalAmt || f.cancelAmt || approvalAmt);
@@ -270,11 +279,12 @@ serve(async (req) => {
           status: totalCanceled >= paidAmount ? 'CANCELED' : 'DONE',
           cancel_amount: totalCanceled,
           cancel_reason: f.cancelMsg || '이노페이 취소 통보',
+          cancel_num: cancelNum || null,
           canceled_at: new Date().toISOString(),
         })
         .eq('id', pay.id);
 
-      console.log('innopay-noti: 취소 통보 반영', { cancelTid, moid, totalCanceled });
+      console.log('innopay-noti: 취소 통보 반영', { tidCandidates, cancelNum, moid, totalCanceled });
       return OK();
     }
 

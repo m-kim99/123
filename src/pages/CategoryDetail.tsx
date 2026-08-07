@@ -298,13 +298,20 @@ export function CategoryDetail() {
 
           let ocrText = '';
           let maskedFile: File | null = null;
+          let maskFailed = false;
 
           try {
             const result = await extractText(file);
             ocrText = result.text;
             maskedFile = result.maskedFile;
+            maskFailed = result.maskFailed;
           } catch (ocrError) {
             console.error('OCR 처리 오류:', file.name, ocrError);
+          }
+
+          // PII 마스킹 실패 — 원본에 개인정보가 그대로 남아 있으므로 업로드하지 않는다
+          if (maskFailed) {
+            throw new Error(t('documentMgmt.maskFailedBlocked'));
           }
 
           const baseName = getBaseNameWithoutExt(file.name);
@@ -392,12 +399,19 @@ export function CategoryDetail() {
 
             let ocrText = '';
             let maskedFile: File | null = null;
+            let maskFailed = false;
             try {
               const result = await extractText(file);
               ocrText = result.text;
               maskedFile = result.maskedFile;
+              maskFailed = result.maskFailed;
             } catch (ocrError) {
               console.error('OCR 처리 오류:', file.name, ocrError);
+            }
+
+            // PII 마스킹 실패 — 이 이미지가 들어간 묶음 PDF 전체를 실패시킨다
+            if (maskFailed) {
+              throw new Error(t('documentMgmt.maskFailedBlocked'));
             }
 
             setFileStatuses((prev) => {
@@ -542,12 +556,19 @@ export function CategoryDetail() {
 
           let ocrText = '';
           let maskedFile: File | null = null;
+          let maskFailed = false;
           try {
             const result = await extractText(file);
             ocrText = result.text;
             maskedFile = result.maskedFile;
+            maskFailed = result.maskFailed;
           } catch (ocrError) {
             console.error('OCR 처리 오류:', file.name, ocrError);
+          }
+
+          // PII 마스킹 실패 — 원본에 개인정보가 그대로 남아 있으므로 업로드하지 않는다
+          if (maskFailed) {
+            throw new Error(t('documentMgmt.maskFailedBlocked'));
           }
 
           const imageTitle =

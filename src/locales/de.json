@@ -629,6 +629,7 @@
     "ocrComplete": "OCR-Extraktion abgeschlossen",
     "ocrCharCount": "{{count}} Zeichen extrahiert.",
     "ocrFailed": "OCR-Extraktion fehlgeschlagen",
+    "maskFailedBlocked": "Upload abgebrochen, da die Maskierung personenbezogener Daten fehlgeschlagen ist. Das Original enthält weiterhin personenbezogene Daten und kann nicht hochgeladen werden.",
     "ocrFailedFileUploaded": "Textextraktion fehlgeschlagen. Datei wird trotzdem hochgeladen.",
     "selectFile": "Bitte Datei auswählen",
     "selectFileFirst": "Bitte wählen Sie zuerst eine Ersatzdatei aus.",

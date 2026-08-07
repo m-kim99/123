@@ -10,6 +10,12 @@ export interface PiiRegion {
 export interface OcrExtractResult {
   text: string;
   maskedFile: File | null;
+  /**
+   * PII 가 감지됐는데 마스킹 파일 생성에 실패했음.
+   * true 이면 원본에 개인정보가 그대로 남아 있으므로 절대 업로드하면 안 된다
+   * (`maskedFile || file` 폴백 금지). 호출부는 해당 파일을 실패 처리해야 한다.
+   */
+  maskFailed: boolean;
 }
 
 /**
@@ -459,6 +465,7 @@ export async function extractTextFromPDF(
 
     // PII가 감지된 페이지가 있으면 마스킹된 PDF 생성
     let maskedFile: File | null = null;
+    let maskFailed = false;
     if (piiRegionsByPage.size > 0) {
       console.log(`🔒 PDF PII 마스킹 시작 (${piiRegionsByPage.size}페이지에 PII 감지)`);
       try {
@@ -523,14 +530,19 @@ export async function extractTextFromPDF(
         maskedFile = new File([pdfBlob], `${baseName}.pdf`, { type: 'application/pdf' });
         console.log(`🔒 PDF PII 마스킹 완료`);
       } catch (maskError) {
-        console.error('PDF 마스킹 실패 (원본 파일 사용):', maskError);
+        // 원본에는 개인정보가 그대로 남아 있다. 과거에는 여기서 로그만 남기고
+        // maskedFile=null 로 반환했는데, 호출부의 `maskedFile || file` 폴백이
+        // 원본 PDF 를 그대로 업로드했다(UI 는 마스킹된 텍스트와 '완료'를 표시).
+        console.error('PDF 마스킹 실패 — 원본 업로드 금지:', maskError);
+        maskedFile = null;
+        maskFailed = true;
       }
     }
 
     // 렌더 이미지 캐시 해제
     pageDataUrls.clear();
 
-    return { text: fullText.trim(), maskedFile };
+    return { text: fullText.trim(), maskedFile, maskFailed };
   } catch (error) {
     console.error('❌ PDF 텍스트 추출 오류:', error);
     throw new Error(
@@ -659,7 +671,9 @@ export async function extractTextFromImage(
 
     onProgress?.({ percent: 100, status: 'OCR 처리 완료' });
 
-    return { text: result, maskedFile };
+    // 이미지 경로는 maskImageDataUrl 실패가 아래 catch 로 전파돼 호출 자체가
+    // 실패하므로, 마스킹 실패인 채로 반환되는 경우가 없다.
+    return { text: result, maskedFile, maskFailed: false };
   } catch (error) {
     console.error('❌ 이미지 텍스트 추출 오류:', error);
     throw new Error(
